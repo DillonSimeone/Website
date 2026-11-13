@@ -1,0 +1,800 @@
+/*=======================================================
+            ESP32 In-Browser Web Serial Uploader
+=========================================================*/
+.esp32-web-uploader-console {
+    width: 100%;
+    background: var(--bg-glass);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin: 8px 0 24px 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(12px);
+    transition: var(--theme-transition);
+    overflow: visible;
+}
+
+.flasher-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 6px;
+}
+
+.flasher-title-group h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+    letter-spacing: 0.4px;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.flasher-subtitle {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.74rem;
+    color: var(--text-secondary);
+    margin: 2px 0 0 0;
+}
+
+.flasher-badges {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.flasher-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.68rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    letter-spacing: 0.3px;
+    font-weight: 600;
+}
+
+.flasher-badge.ready {
+    background: rgba(0, 255, 102, 0.12);
+    border: 1px solid var(--neon-green, #10b981);
+    color: var(--neon-green, #047857);
+}
+
+.flasher-badge.unsupported {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid #ef4444;
+    color: #ef4444;
+}
+
+.flasher-badge.studio-active {
+    background: rgba(0, 240, 255, 0.12);
+    border: 1px solid var(--neon-cyan, #0284c7);
+}
+
+.flasher-badge.studio-active a {
+    color: var(--neon-cyan, #0284c7);
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.flasher-badge.studio-active a:hover {
+    text-decoration: underline;
+}
+
+.flasher-body {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 14px;
+    align-items: stretch;
+}
+
+.flasher-controls-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.flasher-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 2px;
+    gap: 6px;
+}
+
+.flasher-tab-btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.flasher-tab-btn.active {
+    color: var(--neon-cyan, #0d47a1);
+    border-bottom-color: var(--neon-cyan, #0d47a1);
+}
+
+.flasher-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.flasher-field label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.4px;
+    font-weight: 600;
+}
+
+.flasher-select,
+.flasher-input {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    padding: 5px 8px;
+    border-radius: 6px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s ease;
+    width: 100%;
+}
+
+.flasher-select:focus,
+.flasher-input:focus {
+    border-color: var(--neon-cyan, #0d47a1);
+}
+
+.firmware-details-card {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.78rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.firmware-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.detail-label {
+    color: var(--text-secondary);
+    font-size: 0.74rem;
+}
+
+.chip-tag {
+    background: rgba(0, 240, 255, 0.15);
+    color: var(--neon-cyan, #0284c7);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.74rem;
+}
+
+.firmware-detail-desc {
+    margin-top: 2px;
+    padding-top: 3px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+    font-size: 0.74rem;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.firmware-pinout-box {
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pinout-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.pinout-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--neon-cyan, #0284c7);
+    letter-spacing: 0.4px;
+}
+
+.pinout-count {
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+}
+
+.firmware-pin-table-scroll {
+    max-height: 110px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 240, 255, 0.35) rgba(0, 0, 0, 0.2);
+}
+
+.firmware-pin-table-scroll::-webkit-scrollbar {
+    width: 5px;
+}
+
+.firmware-pin-table-scroll::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 3px;
+}
+
+.firmware-pin-table-scroll::-webkit-scrollbar-thumb {
+    background: rgba(0, 240, 255, 0.35);
+    border-radius: 3px;
+}
+
+.firmware-pin-table-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 240, 255, 0.7);
+}
+
+.firmware-pin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.74rem;
+    margin: 0;
+}
+
+.firmware-pin-table th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    text-align: left;
+    padding: 3px 6px;
+    background: #0d0e18;
+    color: var(--neon-green, #00ff88);
+    font-size: 0.68rem;
+    letter-spacing: 0.4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.firmware-pin-table td {
+    padding: 3px 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    vertical-align: middle;
+    line-height: 1.25;
+    transition: background 0.15s ease;
+}
+
+.firmware-pin-table tr:hover td {
+    background: rgba(0, 240, 255, 0.06);
+}
+
+.firmware-pin-table tr:last-child td {
+    border-bottom: none;
+}
+
+.firmware-pin-table td.pin-code {
+    font-weight: 700;
+    color: var(--neon-magenta, #ff007f);
+    white-space: nowrap;
+    width: 28%;
+}
+
+.firmware-pin-table td.pin-role {
+    color: var(--text-primary, #ffffff);
+}
+
+body:not(.dark-mode) .firmware-pin-table th {
+    background: #f1f5f9;
+    color: #047857;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+body:not(.dark-mode) .firmware-pin-table-scroll {
+    background: rgba(255, 255, 255, 0.6);
+}
+
+body:not(.dark-mode) .firmware-pin-table tr:hover td {
+    background: rgba(13, 71, 161, 0.06);
+}
+
+/* High-contrast surface & text polish for Web Serial Flasher */
+body:not(.dark-mode) .esp32-web-uploader-console {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(15, 23, 42, 0.16);
+}
+
+body:not(.dark-mode) .firmware-details-card {
+    background: rgba(248, 250, 252, 0.95);
+    border-color: rgba(15, 23, 42, 0.16);
+}
+
+body:not(.dark-mode) .flasher-subtitle,
+body:not(.dark-mode) .flasher-field label,
+body:not(.dark-mode) .detail-label,
+body:not(.dark-mode) .firmware-detail-desc,
+body:not(.dark-mode) .pinout-count {
+    color: #334155;
+}
+
+body:not(.dark-mode) .firmware-detail-desc,
+body:not(.dark-mode) .firmware-pinout-box {
+    border-top-color: rgba(15, 23, 42, 0.12);
+}
+
+body:not(.dark-mode) .chip-tag {
+    background: rgba(3, 105, 161, 0.12);
+    color: #0c4a6e;
+}
+
+body:not(.dark-mode) .pinout-title {
+    color: #004d80;
+}
+
+body:not(.dark-mode) .firmware-pin-table th {
+    background: #e2e8f0;
+    color: #065f46;
+}
+
+body:not(.dark-mode) .firmware-pin-table-scroll {
+    background: #ffffff;
+    border-color: rgba(15, 23, 42, 0.16);
+}
+
+body:not(.dark-mode) .firmware-pin-table td {
+    border-bottom-color: rgba(15, 23, 42, 0.08);
+}
+
+body:not(.dark-mode) .firmware-pin-table td.pin-code {
+    color: #9d174d;
+}
+
+.item a.universe-launch-btn {
+    display: inline-block;
+    padding: 12px 30px;
+    background: #0d47a1;
+    color: #ffffff;
+    text-decoration: none;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    border-radius: 4px;
+    box-shadow: 0 4px 14px rgba(13, 71, 161, 0.3);
+    transition: all 0.3s ease;
+}
+
+.item a.universe-launch-btn:hover {
+    background: #002171;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(13, 71, 161, 0.4);
+}
+
+body.dark-mode .item a.universe-launch-btn {
+    background: var(--neon-cyan);
+    color: #000000;
+    font-family: 'Orbitron', sans-serif;
+    box-shadow: 0 0 15px var(--neon-cyan);
+}
+
+body.dark-mode .item a.universe-launch-btn:hover {
+    background: #ffffff;
+    color: #000000;
+    text-shadow: none;
+    box-shadow: 0 0 22px var(--neon-cyan);
+}
+
+body.dark-mode .esp32-web-uploader-console {
+    background: rgba(10, 12, 22, 0.88);
+}
+
+body.dark-mode .firmware-details-card {
+    background: rgba(5, 7, 14, 0.72);
+    border-color: rgba(0, 240, 255, 0.22);
+}
+
+body.dark-mode .flasher-subtitle,
+body.dark-mode .flasher-field label,
+body.dark-mode .detail-label,
+body.dark-mode .firmware-detail-desc,
+body.dark-mode .pinout-count {
+    color: #cbd5e1;
+}
+
+body.dark-mode .chip-tag {
+    background: rgba(0, 240, 255, 0.16);
+    color: #67e8f9;
+}
+
+body.dark-mode .firmware-pin-table td.pin-code {
+    color: #f472b6;
+}
+
+.custom-dropzone {
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 10px 14px;
+    text-align: center;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.02);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.25s ease;
+}
+
+.custom-dropzone:hover,
+.custom-dropzone.dragover {
+    border-color: var(--neon-cyan, #0d47a1);
+    background: rgba(0, 240, 255, 0.05);
+}
+
+.custom-dropzone p {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.78rem;
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+.file-browse-link {
+    color: var(--neon-cyan, #0d47a1);
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.custom-file-info {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--neon-green, #047857);
+    background: rgba(0, 255, 102, 0.08);
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-top: 4px;
+}
+
+.flasher-custom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+/* Actions & Baud Toolbar */
+.flasher-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+
+.flasher-baud-group {
+    flex: 0 0 115px;
+}
+
+.flasher-baud-select {
+    font-size: 0.76rem;
+    padding: 5px 6px;
+}
+
+.flasher-btn {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 0.74rem;
+    letter-spacing: 0.3px;
+    padding: 6px 12px;
+    border-radius: 5px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.flasher-btn.primary {
+    background: #0d47a1;
+    color: #ffffff;
+    border-color: #0d47a1;
+    box-shadow: 0 2px 8px rgba(13, 71, 161, 0.3);
+    flex: 1 1 auto;
+}
+
+.flasher-btn.primary:hover {
+    background: #1565c0;
+    box-shadow: 0 3px 14px rgba(13, 71, 161, 0.5);
+    transform: translateY(-1px);
+}
+
+body.dark-mode .flasher-btn.primary {
+    background: rgba(0, 240, 255, 0.15);
+    border-color: var(--neon-cyan);
+    color: var(--neon-cyan, #004d80);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+}
+
+body.dark-mode .flasher-btn.primary:hover {
+    background: var(--neon-cyan);
+    color: #050508;
+    box-shadow: 0 0 18px rgba(0, 240, 255, 0.6);
+}
+
+.flasher-btn.secondary {
+    background: transparent;
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.flasher-btn.secondary:hover {
+    border-color: var(--neon-cyan, #0d47a1);
+    color: var(--neon-cyan, #0d47a1);
+}
+
+.flasher-btn.outline {
+    background: transparent;
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+.flasher-btn.outline:hover {
+    color: var(--text-primary);
+    border-color: var(--text-primary);
+}
+
+/* Hardware Console / Terminal Column */
+.flasher-terminal-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.terminal-card {
+    background: #08080f;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 160px;
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+
+.terminal-bar {
+    background: #11111e;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.terminal-dots {
+    display: flex;
+    gap: 4px;
+}
+
+.terminal-dots .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.terminal-dots .dot.red { background: #ef4444; }
+.terminal-dots .dot.yellow { background: #f59e0b; }
+.terminal-dots .dot.green { background: #10b981; }
+
+.terminal-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.68rem;
+    color: #8888aa;
+    letter-spacing: 0.4px;
+}
+
+.terminal-clear-btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.66rem;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #aaaaaa;
+    padding: 1px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.terminal-clear-btn:hover {
+    color: #ffffff;
+    border-color: #ffffff;
+}
+
+.flash-progress-track {
+    width: 100%;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.flash-progress-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--neon-cyan, #0d47a1), var(--neon-green, #10b981));
+    transition: width 0.15s ease;
+}
+
+.flash-stats-bar {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    background: rgba(0, 0, 0, 0.4);
+    color: #00ffcc;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.terminal-log {
+    flex: 1;
+    margin: 0;
+    padding: 6px 10px;
+    font-family: 'Share Tech Mono', 'Fira Code', monospace;
+    font-size: 0.74rem;
+    line-height: 1.35;
+    color: #38bdf8;
+    background: #08080f;
+    overflow-y: auto;
+    min-height: 100px;
+    max-height: 200px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 240, 255, 0.35) rgba(0, 0, 0, 0.3);
+}
+
+.terminal-log::-webkit-scrollbar {
+    width: 5px;
+}
+
+.terminal-log::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 3px;
+}
+
+.terminal-log::-webkit-scrollbar-thumb {
+    background: rgba(0, 240, 255, 0.35);
+    border-radius: 3px;
+}
+
+.terminal-log::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 240, 255, 0.7);
+}
+
+/* Responsive / Mobile Styling */
+@media only screen and (max-width: 860px) {
+    .esp32-web-uploader-console {
+        padding: 10px 12px;
+        margin: 8px 0 18px 0;
+        border-radius: 10px;
+    }
+
+    .flasher-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        margin-bottom: 6px;
+        padding-bottom: 6px;
+    }
+
+    .flasher-title-group h2 {
+        font-size: 1.05rem;
+    }
+
+    .flasher-subtitle {
+        font-size: 0.7rem;
+    }
+
+    .flasher-badges {
+        gap: 6px;
+    }
+
+    .flasher-badge {
+        font-size: 0.66rem;
+        padding: 2px 7px;
+    }
+
+    .flasher-body {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .flasher-actions-row {
+        display: grid;
+        grid-template-columns: 115px 1fr 1fr;
+        gap: 6px;
+    }
+
+    .flasher-actions-row #btnConnectFlash {
+        grid-column: 1 / -1;
+        width: 100%;
+        order: -1;
+    }
+
+    .flasher-actions-row .flasher-baud-group {
+        grid-column: 1 / 2;
+    }
+
+    .flasher-actions-row #btnToggleMonitor {
+        grid-column: 2 / 3;
+    }
+
+    .flasher-actions-row #btnResetChip {
+        grid-column: 3 / 4;
+    }
+
+    .firmware-pin-table-scroll {
+        max-height: 95px;
+    }
+
+    .terminal-card {
+        min-height: 130px;
+    }
+
+    .terminal-log {
+        min-height: 80px;
+        max-height: 130px;
+        font-size: 0.7rem;
+        padding: 5px 8px;
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    .flasher-actions-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .flasher-actions-row .flasher-baud-group {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    .flasher-actions-row #btnConnectFlash {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    .flasher-actions-row #btnToggleMonitor {
+        grid-column: 1 / 2;
+        width: 100%;
+    }
+
+    .flasher-actions-row #btnResetChip {
+        grid-column: 2 / 3;
+        width: 100%;
+    }
+
+    .firmware-pin-table th,
+    .firmware-pin-table td {
+        padding: 2px 4px;
+        font-size: 0.66rem;
+    }
+
+    .firmware-pin-table td.pin-code {
+        width: 34%;
+    }
+}
+

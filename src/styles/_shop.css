@@ -1,0 +1,697 @@
+/* ==================== COMMISSION PROCESS GUIDE ==================== */
+.commission-process-guide {
+    background: var(--bg-glass);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    border-radius: 14px;
+    padding: 24px;
+    margin: 24px auto 36px auto;
+    width: 100%;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+.commission-process-guide::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #00f0ff, #ff007f, #00ff66);
+}
+
+.commission-guide-header {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.commission-badge {
+    display: inline-block;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: rgba(0, 240, 255, 0.15);
+    border: 1px solid var(--neon-cyan, #00f0ff);
+    color: var(--neon-cyan, #0088cc);
+    margin-bottom: 8px;
+}
+
+.commission-guide-header h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
+    margin: 4px 0 10px 0;
+    color: var(--text-primary);
+    letter-spacing: 1px;
+}
+
+.commission-guide-header .guide-lead {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    max-width: 900px;
+}
+
+.commission-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.commission-step-card {
+    background: rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 240, 255, 0.15);
+    border-radius: 10px;
+    padding: 18px 16px;
+    position: relative;
+    transition: transform 0.25s ease, border-color 0.25s ease;
+}
+
+body.dark-mode .commission-step-card {
+    background: rgba(10, 15, 30, 0.6);
+}
+
+.commission-step-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(0, 240, 255, 0.4);
+}
+
+.step-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--neon-cyan, #0088cc);
+    color: #000;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: 0.8rem;
+    margin-bottom: 10px;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+
+.commission-step-card h4 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.95rem;
+    margin: 0 0 8px 0;
+    color: var(--text-primary);
+}
+
+.commission-step-card p {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.commission-guide-footer {
+    border-top: 1px dashed rgba(0, 240, 255, 0.2);
+    padding-top: 14px;
+    margin-top: 14px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.commission-guide-footer a {
+    color: var(--neon-cyan, #0088cc);
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+/* ==================== COMMISSION ACTIONS & BUTTONS ==================== */
+.shop-actions {
+    margin-top: 22px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.commission-button {
+    display: inline-block;
+    padding: 13px 32px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 1px;
+    text-decoration: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.commission-button.highlight-button {
+    background: #00f0ff;
+    color: #000;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+    border: 1px solid #00f0ff;
+}
+
+.commission-button.highlight-button:hover {
+    background: #ffffff;
+    color: #000;
+    box-shadow: 0 0 30px rgba(0, 240, 255, 0.8);
+    transform: translateY(-2px);
+}
+
+.commission-button.asl-btn {
+    background: #ec4899;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(236, 72, 153, 0.4);
+    border: 1px solid #ec4899;
+}
+
+.commission-button.asl-btn:hover {
+    background: #fff;
+    color: #ec4899;
+    box-shadow: 0 0 25px rgba(236, 72, 153, 0.7);
+    transform: translateY(-2px);
+}
+
+.commission-button.brain-btn {
+    background: #10b981;
+    color: #000;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+    border: 1px solid #10b981;
+}
+
+.commission-button.brain-btn:hover {
+    background: #fff;
+    color: #000;
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.7);
+    transform: translateY(-2px);
+}
+
+.commission-button.gelu-btn {
+    background: #0891b2;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(8, 145, 178, 0.4);
+    border: 1px solid #0891b2;
+}
+
+.commission-button.gelu-btn:hover {
+    background: #fff;
+    color: #0891b2;
+    box-shadow: 0 0 25px rgba(8, 145, 178, 0.7);
+    transform: translateY(-2px);
+}
+
+.commission-button.pulse-btn {
+    background: #3b82f6;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+    border: 1px solid #3b82f6;
+}
+
+.commission-button.pulse-btn:hover {
+    background: #fff;
+    color: #3b82f6;
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.7);
+    transform: translateY(-2px);
+}
+
+.commission-button.hypercube-btn {
+    background: #c026d3;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(192, 38, 211, 0.4);
+    border: 1px solid #c026d3;
+}
+
+.commission-button.hypercube-btn:hover {
+    background: #fff;
+    color: #c026d3;
+    box-shadow: 0 0 25px rgba(192, 38, 211, 0.7);
+    transform: translateY(-2px);
+}
+
+.commission-button.baton-btn {
+    background: #f59e0b;
+    color: #0f172a;
+    font-weight: 800;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+    border: 1px solid #f59e0b;
+}
+
+.commission-button.baton-btn:hover {
+    background: #fff;
+    color: #d97706;
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.7);
+    transform: translateY(-2px);
+}
+
+.commission-button.book-btn {
+    background: linear-gradient(135deg, #d4af5f 0%, #b8860b 100%);
+    color: #0c0e12 !important;
+    font-weight: 800;
+    box-shadow: 0 0 18px rgba(212, 175, 95, 0.45);
+    border: 1px solid #d4af5f;
+}
+
+.commission-button.book-btn:hover {
+    background: #fef3c7;
+    color: #0c0e12 !important;
+    box-shadow: 0 0 28px rgba(212, 175, 95, 0.8);
+    transform: translateY(-2px);
+}
+
+/* Enforce dark-mode text colors for ALL commission buttons over global .item a rule */
+body.dark-mode .item a.commission-button.highlight-button {
+    color: #000000 !important;
+}
+body.dark-mode .item a.commission-button.book-btn {
+    color: #0c0e12 !important;
+}
+body.dark-mode .item a.commission-button.brain-btn {
+    color: #000000 !important;
+}
+body.dark-mode .item a.commission-button.baton-btn {
+    color: #0f172a !important;
+}
+body.dark-mode .item a.commission-button.asl-btn {
+    color: #ffffff !important;
+}
+body.dark-mode .item a.commission-button.gelu-btn {
+    color: #ffffff !important;
+}
+body.dark-mode .item a.commission-button.pulse-btn {
+    color: #ffffff !important;
+}
+body.dark-mode .item a.commission-button.hypercube-btn {
+    color: #ffffff !important;
+}
+
+/* Ensure clean contrast for bold elements in pricing and captions */
+body.dark-mode .pricing-options-summary b,
+body.dark-mode .pricing-options-summary strong {
+    color: #f1f5f9;
+    font-family: inherit;
+    letter-spacing: normal;
+    font-weight: 700;
+}
+
+body.dark-mode .shop-photo-card .photo-caption b,
+body.dark-mode .shop-photo-card .photo-caption strong {
+    color: #f1f5f9;
+    font-family: inherit;
+    letter-spacing: normal;
+    font-weight: 700;
+}
+
+/* Featured shop item tweaks */
+.book-badge {
+    background: rgba(180, 83, 9, 0.12);
+    border-color: #b45309;
+    color: #78350f;
+}
+
+body.dark-mode .book-badge {
+    background: rgba(212, 175, 95, 0.18);
+    border-color: #d4af5f;
+    color: #f59e0b;
+}
+
+.book-lead {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #0f172a;
+}
+
+.book-lead strong {
+    color: #0f172a;
+    font-family: inherit;
+    letter-spacing: normal;
+}
+
+body.dark-mode .book-lead,
+body.dark-mode .book-lead strong {
+    color: #f8fafc;
+}
+
+.book-accent {
+    color: #92400e;
+    font-family: inherit;
+    letter-spacing: normal;
+}
+
+body.dark-mode .book-accent {
+    color: #f59e0b;
+}
+
+.book-caption-label {
+    color: #0f172a;
+    font-family: inherit;
+    letter-spacing: normal;
+}
+
+body.dark-mode .book-caption-label {
+    color: #f1f5f9;
+}
+
+.book-subnote {
+    color: #334155;
+}
+
+body.dark-mode .book-subnote {
+    color: #cbd5e1;
+}
+
+.book-subnote-muted {
+    color: #475569;
+}
+
+body.dark-mode .book-subnote-muted {
+    color: #94a3b8;
+}
+
+.book-itch-link {
+    color: #0369a1;
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+body.dark-mode .book-itch-link {
+    color: #38bdf8;
+}
+
+.shop-featured-item {
+    border: 2px solid rgba(0, 240, 255, 0.4) !important;
+    position: relative;
+}
+
+.shop-item-badge {
+    display: inline-block;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    background: rgba(190, 24, 93, 0.12);
+    border: 1px solid #be185d;
+    color: #9d174d;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+body.dark-mode .shop-item-badge {
+    background: rgba(255, 0, 127, 0.2);
+    border-color: #ff007f;
+    color: #ff4da6;
+}
+
+.shop-multi-img {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin: 12px 0;
+}
+
+.pricing-options-summary {
+    background: rgba(0, 0, 0, 0.1);
+    border-left: 3px solid var(--neon-cyan, #00f0ff);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 0.85rem;
+}
+
+body.dark-mode .pricing-options-summary {
+    background: rgba(10, 15, 30, 0.5);
+}
+
+.pricing-options-summary ul {
+    margin: 0;
+    padding-left: 15px;
+}
+
+.pricing-options-summary li {
+    margin: 4px 0;
+}
+
+.project-deep-dive-btn {
+    display: inline-block;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #004d80;
+    text-decoration: none;
+    border: 1px solid rgba(0, 77, 128, 0.4);
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: rgba(0, 77, 128, 0.08);
+    transition: all 0.2s ease;
+}
+
+body.dark-mode .project-deep-dive-btn {
+    color: var(--neon-cyan, #00f0ff);
+    border-color: rgba(0, 240, 255, 0.3);
+    background: rgba(0, 240, 255, 0.05);
+}
+
+.baton-evolution-note {
+    font-size: 0.85rem;
+    color: #065f46;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(5, 150, 105, 0.35);
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+body.dark-mode .baton-evolution-note {
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.baton-cad-btn {
+    font-size: 0.85rem;
+    padding: 10px 16px;
+    background: rgba(29, 78, 216, 0.1);
+    border: 1px solid rgba(29, 78, 216, 0.4);
+    color: #1e3a8a;
+    border-radius: 8px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+body.dark-mode .baton-cad-btn {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #93c5fd;
+}
+
+.baton-footer-note {
+    font-size: 0.75rem;
+    color: #475569;
+    text-align: center;
+    margin-top: 4px;
+}
+
+body.dark-mode .baton-footer-note {
+    color: #94a3b8;
+}
+
+.project-deep-dive-btn:hover {
+    background: rgba(0, 240, 255, 0.2);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+
+
+/* ==================== CARD TABS COMPONENT ==================== */
+.card-tab-container {
+    margin-top: 14px;
+}
+
+.card-tabs-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+    padding-bottom: 8px;
+}
+
+.card-tab-btn {
+    background: rgba(128, 128, 128, 0.12);
+    border: 1px solid rgba(128, 128, 128, 0.25);
+    color: var(--text-color, inherit);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.card-tab-btn:hover {
+    background: rgba(128, 128, 128, 0.25);
+}
+
+.card-tab-btn.active {
+    background: var(--button-color, #00ffaa);
+    color: #000;
+    font-weight: 700;
+    border-color: var(--button-color, #00ffaa);
+    box-shadow: 0 0 10px rgba(0, 255, 170, 0.25);
+}
+
+.card-tab-panel {
+    display: none;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.card-tab-panel.active {
+    display: block;
+}
+
+
+
+
+/* ==================== COMMISSION CLIPBOARD FALLBACK & CLEAN CARD UTILITIES ==================== */
+.copy-commission-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    min-height: 40px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: transparent;
+    border: 1px dashed var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copy-commission-btn:hover {
+    border-color: var(--link-color);
+    color: var(--link-color);
+    background: rgba(13, 71, 161, 0.06);
+}
+
+body.dark-mode .copy-commission-btn:hover {
+    background: rgba(0, 240, 255, 0.08);
+}
+
+.copy-commission-btn.is-copied {
+    border-style: solid;
+    border-color: #10b981;
+    color: #10b981;
+}
+
+.shop-featured-item.book-card {
+    border-color: rgba(212, 175, 95, 0.45);
+}
+
+.book-photo-front {
+    flex: 1;
+    min-width: 240px;
+    max-width: 340px;
+}
+
+.book-photo-wrap {
+    flex: 1.4;
+    min-width: 280px;
+    max-width: 460px;
+}
+
+.book-cover-img {
+    height: 320px;
+    object-fit: contain;
+    background: #0c0e12;
+    border-radius: 6px;
+}
+
+.book-itch-row {
+    margin: 18px 0;
+    text-align: center;
+}
+
+.book-itch-btn {
+    padding: 10px 22px;
+}
+
+.book-pricing-summary {
+    border-left-color: #d4af5f;
+}
+
+.book-btn-link {
+    text-align: center;
+    text-decoration: none;
+}
+
+.book-subnote {
+    font-size: 0.85rem;
+    margin-top: 10px;
+    text-align: center;
+    line-height: 1.5;
+}
+
+.book-subnote-muted {
+    font-size: 0.8rem;
+    text-align: center;
+    margin-top: 6px;
+}
+
+.shop-media-centered {
+    margin: 1.5rem auto;
+    justify-content: center;
+}
+
+.shop-photo-single {
+    max-width: 440px;
+    width: 100%;
+}
+
+.shop-photo-single img {
+    height: 300px;
+    object-fit: cover;
+}
+
+.shop-email-hint {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+    text-align: center;
+}
+
+.shop-email-hint a {
+    color: var(--accent-magenta);
+    text-decoration: underline;
+}
+
+.shop-shipping-note {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 4px;
+}
+
+.work-cta-row {
+    text-align: center;
+    margin: 16px 0;
+}
+
+.work-cta-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #b3822a;
+    color: #111111;
+    font-weight: 700;
+    border-radius: 4px;
+    text-decoration: none;
+}

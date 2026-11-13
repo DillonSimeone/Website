@@ -32,7 +32,7 @@ export function createBinFromPreset(partId, pos = { x: 0, y: 0 }) {
         w: preset.w,
         d: preset.d,
         wallHeight: preset.wallHeight ?? state.global.defaultWallHeight,
-        tolerance: state.global.tolerance,
+        tolerance: preset.isSpacer ? 0 : state.global.tolerance,
         cradle: Boolean(preset.cradle),
         strainRelief: false,
         fanOrientation: preset.isFan ? 'horizontal' : null,
@@ -75,8 +75,9 @@ export function getSelectedBin() {
 
 export function serializeLayout() {
     return JSON.stringify({
-        version: 1,
+        version: 2,
         global: state.global,
+        lid: state.lid,
         bins: state.bins
     }, null, 2);
 }
@@ -86,6 +87,9 @@ export function deserializeLayout(jsonStr) {
     if (!data || !Array.isArray(data.bins)) throw new Error('Invalid layout JSON');
     if (data.global) {
         Object.assign(state.global, data.global);
+    }
+    if (data.lid) {
+        Object.assign(state.lid, data.lid);
     }
     state.bins = data.bins.map((b, i) => ({
         ...b,

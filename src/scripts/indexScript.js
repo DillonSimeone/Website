@@ -7,6 +7,16 @@ import { initEsp32WebUploader } from './esp32WebUploader.js';
  * Initialize theme from localStorage or system preference.
  */
 function initTheme() {
+    const themeParam = new URLSearchParams(window.location.search).get('theme');
+    if (themeParam === 'dark') {
+        document.body.classList.add('dark-mode');
+        return;
+    }
+    if (themeParam === 'light') {
+        document.body.classList.remove('dark-mode');
+        return;
+    }
+
     const savedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
@@ -65,6 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     initEsp32WebUploader();
+    initProjectsFilter();
+    initCommissionCopyFallbacks();
 });
 
 /*=======================================================
@@ -449,9 +461,9 @@ function randomizeColor() {
             });
         } else {
             Object.assign(hireMe.style, {
-                backgroundColor: typeof randomPaletteColor === 'function' ? randomPaletteColor() : '#666',
-                borderColor: 'transparent',
-                color: '#000',
+                backgroundColor: '',
+                borderColor: '',
+                color: '',
                 boxShadow: ''
             });
         }
@@ -487,9 +499,9 @@ const _sentinelObservers = {};
 const _progressiveConfigs = [
     {
         id: 'projects',
-        getContainer: () => document.querySelector('#projects .grid'),
-        getCards: () => Array.from(document.querySelectorAll('#projects .grid > .grid-item')),
-        label: 'projects'
+        getContainer: () => document.querySelectorAll('#projects .grid')[1],
+        getCards: () => Array.from(document.querySelectorAll('#projects .grid')[1]?.querySelectorAll(':scope > .grid-item') || []),
+        label: 'mini-projects'
     },
     {
         id: 'embedded',
@@ -778,15 +790,62 @@ function restoreAllCards() {
 }
 window.restoreAllCards = restoreAllCards;
 
+const SECTION_TO_BUTTON = {
+    elevatorPitch: 'LandingPage',
+    shop: 'Shop',
+    work: 'PastWork',
+    projects: 'Projects',
+    embedded: 'ESP32',
+    hobby: 'Hobby'
+};
+
 /**
- * Checks if the page was opened with an anchor hash and expands up to that card.
+ * Checks if the page was opened with an anchor hash, ensures its section is revealed
+ * and its card is expanded, then scrolls smoothly to it once the page is ready.
  */
-function handleInitialAnchor() {
-    const hash = window.location.hash ? window.location.hash.substring(1) : '';
+function handleInitialAnchor(hashOverride = '', { waitForTransition = false } = {}) {
+    const rawHash = hashOverride || window.location.hash || '';
+    const hash = rawHash.startsWith('#') ? rawHash.substring(1) : rawHash;
     if (!hash) return;
 
     for (const cfg of _progressiveConfigs) {
         expandToCard(cfg.id, hash);
+    }
+
+    const targetEl = document.getElementById(hash);
+    if (!targetEl) return;
+
+    const parentSection = targetEl.closest('.item');
+    let needsSectionReveal = false;
+    if (parentSection && !parentSection.classList.contains('reveal')) {
+        const btnId = SECTION_TO_BUTTON[parentSection.id];
+        if (btnId) {
+            needsSectionReveal = true;
+            reveal(parentSection.id, btnId, 0, true);
+            if (HistoryAPIControlsEnable) {
+                history.replaceState(
+                    { previousPage: parentSection.id, previousButton: btnId },
+                    '',
+                    `?page=${btnId}#${hash}`
+                );
+            }
+        }
+    }
+
+    const scrollToTarget = () => {
+        const scrollTarget = targetEl.closest('.grid-item, .artwork') || targetEl;
+        requestAnimationFrame(() => {
+            scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    };
+
+    const delayMs = (needsSectionReveal || waitForTransition) ? 520 : 120;
+    const scheduleScroll = () => setTimeout(scrollToTarget, delayMs);
+
+    if (document.readyState === 'complete') {
+        scheduleScroll();
+    } else {
+        window.addEventListener('load', scheduleScroll, { once: true });
     }
 }
 
@@ -799,6 +858,7 @@ window.addEventListener('hashchange', () => handleInitialAnchor());
 function setUp() {
     const urlParams = new URLSearchParams(window.location.search);
     const page = urlParams.get('page');
+    const initialHash = window.location.hash;
     // Handle resize in JS instead of HTML
     window.addEventListener('resize', () => {
         if (typeof window.redraw === 'function') {
@@ -843,10 +903,23 @@ function setUp() {
             };
             const btnId = aliasMap[page.toLowerCase()] || page;
             const targetBtn = document.querySelector(`#${btnId}`);
-            if (targetBtn) targetBtn.click();
+            if (targetBtn) {
+                targetBtn.click();
+                if (initialHash && HistoryAPIControlsEnable) {
+                    history.replaceState(
+                        history.state,
+                        '',
+                        `${window.location.pathname}${window.location.search}${initialHash}`
+                    );
+                }
+            }
         } else {
             ensureGalleries('elevatorPitch');
             resetSectionChrome('elevatorPitch');
+        }
+
+        if (initialHash) {
+            handleInitialAnchor(initialHash, { waitForTransition: Boolean(page) });
         }
     }
 
@@ -948,8 +1021,9 @@ function startNudgeAnimation() {
 function toggleLocalNav(btn) {
     const section = btn.closest('.item');
     const nav = section.querySelector('.section-nav');
-    nav.classList.toggle('active');
-    btn.classList.toggle('active');
+    const isActive = nav.classList.toggle('active');
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-expanded', String(isActive));
 }
 window.toggleLocalNav = toggleLocalNav;
 
@@ -959,8 +1033,9 @@ function toggleGlobalNav() {
     if (visibleSection) {
         const nav = visibleSection.querySelector('.section-nav');
         if (nav) {
-            nav.classList.toggle('active');
-            globalToggle.classList.toggle('active');
+            const isActive = nav.classList.toggle('active');
+            globalToggle.classList.toggle('active', isActive);
+            globalToggle.setAttribute('aria-expanded', String(isActive));
         }
     }
 }
@@ -978,14 +1053,26 @@ document.addEventListener('click', (e) => {
                 expandToCard(section.id, targetId);
             }
             const target = document.getElementById(targetId);
-            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (HistoryAPIControlsEnable) {
+                    history.replaceState(
+                        history.state,
+                        '',
+                        `${window.location.pathname}${window.location.search}#${targetId}`
+                    );
+                }
+            }
         }
 
         if (window.innerWidth <= 1024) {
             const globalToggle = document.getElementById('globalNavToggle');
             setTimeout(() => {
                 nav.classList.remove('active');
-                if (globalToggle) globalToggle.classList.remove('active');
+                if (globalToggle) {
+                    globalToggle.classList.remove('active');
+                    globalToggle.setAttribute('aria-expanded', 'false');
+                }
             }, 300);
         }
     }
@@ -1156,6 +1243,9 @@ window.initSectionGalleries = initSectionGalleries;
 /**
  * Dynamically loads and displays modal gallery.
  */
+let _galleryLastFocused = null;
+let _galleryEscHandler = null;
+
 function openGallery(title, images) {
     const modal = document.getElementById('galleryModal');
     const container = document.getElementById('galleryScrollContainer');
@@ -1163,12 +1253,17 @@ function openGallery(title, images) {
 
     if (!modal || !container) return;
 
+    _galleryLastFocused = document.activeElement;
     titleEl.textContent = title;
     container.innerHTML = '';
     document.body.style.overflow = 'hidden';
 
     modal.style.display = 'flex';
-    setTimeout(() => modal.classList.add('active'), 10);
+    setTimeout(() => {
+        modal.classList.add('active');
+        const closeBtn = modal.querySelector('.gallery-close');
+        if (closeBtn) closeBtn.focus();
+    }, 10);
 
     images.forEach((media, index) => {
         let el;
@@ -1207,13 +1302,15 @@ function openGallery(title, images) {
         if (e.target === modal) closeGallery();
     };
 
-    const escHandler = (e) => {
+    if (_galleryEscHandler) {
+        document.removeEventListener('keydown', _galleryEscHandler);
+    }
+    _galleryEscHandler = (e) => {
         if (e.key === 'Escape') {
             closeGallery();
-            document.removeEventListener('keydown', escHandler);
         }
     };
-    document.addEventListener('keydown', escHandler);
+    document.addEventListener('keydown', _galleryEscHandler);
 }
 window.openGallery = openGallery;
 
@@ -1222,6 +1319,10 @@ function closeGallery() {
     const container = document.getElementById('galleryScrollContainer');
 
     if (!modal) return;
+    if (_galleryEscHandler) {
+        document.removeEventListener('keydown', _galleryEscHandler);
+        _galleryEscHandler = null;
+    }
     modal.classList.remove('active');
 
     setTimeout(() => {
@@ -1230,6 +1331,10 @@ function closeGallery() {
 
         const activeItem = document.querySelector('.item.reveal');
         document.body.style.overflow = activeItem ? 'hidden' : '';
+        if (_galleryLastFocused && typeof _galleryLastFocused.focus === 'function') {
+            _galleryLastFocused.focus();
+        }
+        _galleryLastFocused = null;
     }, 400);
 }
 window.closeGallery = closeGallery;
@@ -1444,3 +1549,78 @@ document.addEventListener('pointerover', (e) => {
 document.addEventListener('click', (e) => {
     if (e.target.closest('a[data-zip-root]')) loadZipModule();
 });
+/*=======================================================
+        Projects Category Filter & Mailto Copy Fallback
+=========================================================*/
+
+function initProjectsFilter() {
+    const projectsArticle = document.getElementById('projects');
+    if (!projectsArticle) return;
+
+    const pills = projectsArticle.querySelectorAll('[data-projects-filter]');
+    const groups = projectsArticle.querySelectorAll('[data-projects-group]');
+    if (!pills.length || !groups.length) return;
+
+    pills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            const filter = pill.getAttribute('data-projects-filter');
+
+            // Ensure pooled mini-project cards are loaded when filtering to mini
+            if (filter === 'mini' && _cardPools.projects && _cardPools.projects.length > 0) {
+                loadNextBatch('projects', _cardPools.projects.length);
+            }
+
+            pills.forEach(btn => {
+                const isSelected = btn === pill;
+                btn.classList.toggle('active', isSelected);
+                btn.setAttribute('aria-pressed', String(isSelected));
+            });
+
+            groups.forEach(group => {
+                const groupName = group.getAttribute('data-projects-group');
+                const shouldShow = filter === 'all' || filter === groupName;
+                group.classList.toggle('is-filtered-hidden', !shouldShow);
+            });
+        });
+    });
+}
+
+function initCommissionCopyFallbacks() {
+    const mailtoButtons = document.querySelectorAll('#shop .commission-button[href^="mailto:"], #shop .commission-guide-footer a[href^="mailto:"]');
+    mailtoButtons.forEach(link => {
+        if (link.dataset.copyFallbackAttached) return;
+        link.dataset.copyFallbackAttached = 'true';
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'copy-commission-btn';
+        btn.textContent = '📋 Copy email & template';
+
+        btn.addEventListener('click', () => {
+            const href = link.getAttribute('href') || '';
+            const raw = href.replace(/^mailto:/i, '');
+            const [emailPart, queryPart = ''] = raw.split('?');
+            const params = new URLSearchParams(queryPart);
+            const subject = params.get('subject') || 'Hardware Commission Inquiry';
+            const body = params.get('body') || '';
+            const formatted = `To: ${emailPart}\nSubject: ${subject}\n\n${body}`.trim();
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(formatted).then(() => {
+                    btn.classList.add('is-copied');
+                    btn.textContent = `✓ Copied! (${emailPart})`;
+                    setTimeout(() => {
+                        btn.classList.remove('is-copied');
+                        btn.textContent = '📋 Copy email & template';
+                    }, 2500);
+                }).catch(() => {
+                    window.prompt('Copy commission template:', formatted);
+                });
+            } else {
+                window.prompt('Copy commission template:', formatted);
+            }
+        });
+
+        link.insertAdjacentElement('afterend', btn);
+    });
+}

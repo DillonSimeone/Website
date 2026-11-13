@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Portfolio website of Dillon Simeone, showcasing custom 3D printing, laser cutting, embedded systems, and other projects.">
+    <meta name="description" content="Dillon Simeone - Multifaceted innovator, maker, developer, and designer specializing in accessibility, embedded tech, haptics, and creative hardware.">
     <title>Dillon Simeone</title>
     <link rel="preload" href="/fonts/Orbitron-Variable.woff2" as="font" type="font/woff2" crossorigin fetchpriority="high">
     <link rel="preload" href="/fonts/ShareTechMono-Regular.woff2" as="font" type="font/woff2" crossorigin fetchpriority="high">
@@ -37,13 +37,62 @@
             padding-bottom: clamp(16px, 2.5vh, 32px);
             margin: 0 auto;
             width: 90%;
-            max-width: 960px;
+            max-width: 1120px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             justify-content: safe center;
             align-items: flex-start;
             text-align: left;
+        }
+        .hero-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 240px;
+            gap: clamp(20px, 3vw, 40px);
+            align-items: center;
+            width: 100%;
+        }
+        .hero-main {
+            min-width: 0;
+        }
+        .hero-showcase {
+            width: 100%;
+        }
+        .hero-media-card {
+            margin: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 77, 128, 0.25);
+            background: rgba(255, 255, 255, 0.65);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+        .hero-media-link {
+            display: block;
+            aspect-ratio: 9 / 16;
+            max-height: 52vh;
+            width: 100%;
+            overflow: hidden;
+            background: #050508;
+        }
+        .hero-media-link video {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .hero-media-caption {
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            line-height: 1.4;
+        }
+        .hero-media-caption strong {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            letter-spacing: 0.3px;
         }
         #elevatorPitch h1#name { font-family: 'Orbitron', sans-serif; font-weight: 800; letter-spacing: 0.5px; font-size: clamp(2.2rem, 3.8vw, 3.2rem); line-height: 1.05; margin: 0 0 4px 0; }
         #elevatorPitch h2 { font-family: 'Orbitron', sans-serif; font-weight: 600; letter-spacing: 0.3px; font-size: clamp(0.95rem, 1.25vw, 1.15rem); line-height: 1.35; margin: 0 0 clamp(10px, 1.8vh, 18px) 0; }
@@ -67,6 +116,7 @@
             flex-wrap: wrap;
             align-items: center;
             gap: 14px;
+            justify-content: center;
             margin-top: clamp(8px, 1.8vh, 18px);
             width: 100%;
         }
@@ -137,6 +187,14 @@
                 padding-bottom: 90px !important;
                 width: 90% !important;
             }
+            .hero-layout {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            .hero-showcase {
+                max-width: 240px;
+                margin: 0 auto;
+            }
             #elevatorPitch #jobs {
                 flex-direction: column;
                 align-items: stretch;
@@ -145,12 +203,13 @@
                 text-align: center;
             }
         }
+
     </style>
-    <meta charset="utf-8">
+
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.p5js.org https://code.jquery.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://api.github.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com;">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description"
-        content="Dillon Simeone - Multifaceted innovator, maker, developer, and designer specializing in accessibility, embedded tech, haptics, and creative hardware.">
+
+
+
     <meta name="author" content="Dillon Simeone">
     <meta name="keywords"
         content="accessibility, embedded tech, laser cutting, 3D printing, web development, haptics, Deaf, creative coding">
@@ -233,11 +292,11 @@
     {{> nav }}
 
     <!-- Global mobile toggle for section navigation -->
-    <div class="global-nav-toggle" id="globalNavToggle" style="display: none;">
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-    </div>
+    <button type="button" class="global-nav-toggle" id="globalNavToggle" aria-label="Toggle section directory" aria-expanded="false" style="display: none;">
+        <span class="bar" aria-hidden="true"></span>
+        <span class="bar" aria-hidden="true"></span>
+        <span class="bar" aria-hidden="true"></span>
+    </button>
 
     <div class="items">
         <div class="item hide spin" id="loading"></div>
@@ -245,11 +304,11 @@
         {{> hero }}
 
         <article class="item hide spin" id="hobby">
-            <div class="section-nav-toggle">
-                <div class="bar"></div>
-                <div class="bar"></div>
-                <div class="bar"></div>
-            </div>
+            <button type="button" class="section-nav-toggle" aria-label="Toggle section directory" aria-expanded="false">
+                <span class="bar" aria-hidden="true"></span>
+                <span class="bar" aria-hidden="true"></span>
+                <span class="bar" aria-hidden="true"></span>
+            </button>
             <aside class="section-nav" data-target-container=".artwork" data-title-selector="h2">
                 <div class="sideNavContent">
                     <h3>Hobby Directory</h3>
@@ -298,7 +357,7 @@
                 <div class="hobby-category-divider">
                     <div class="category-divider-line"></div>
                     <div class="category-header-wrap">
-                        <h1 class="category-title">Lasered Artworks</h1>
+                        <h2 class="category-title">Lasered Artworks</h2>
                         <p class="category-subtitle">High-precision CO2 laser engravings, wood reliefs, and anodized metal etching.</p>
                     </div>
                 </div>
@@ -310,7 +369,7 @@
                 <div class="hobby-category-divider">
                     <div class="category-divider-line"></div>
                     <div class="category-header-wrap">
-                        <h1 class="category-title">3D Printed Artworks</h1>
+                        <h2 class="category-title">3D Printed Artworks</h2>
                         <p class="category-subtitle">Additive manufacturing, functional mechanical prints, and articulated resin prototypes.</p>
                     </div>
                 </div>
@@ -322,11 +381,11 @@
         </article>
 
         <article class="item hide spin" id="work">
-            <div class="section-nav-toggle">
-                <div class="bar"></div>
-                <div class="bar"></div>
-                <div class="bar"></div>
-            </div>
+            <button type="button" class="section-nav-toggle" aria-label="Toggle section directory" aria-expanded="false">
+                <span class="bar" aria-hidden="true"></span>
+                <span class="bar" aria-hidden="true"></span>
+                <span class="bar" aria-hidden="true"></span>
+            </button>
             <aside class="section-nav" data-target-container="section > div" data-title-selector="h2">
                 <div class="sideNavContent">
                     <h3>Projects Directory</h3>
@@ -335,6 +394,7 @@
             </aside>
             <section>
                 <h1>Past Works</h1>
+                <p class="section-subtitle">Client engineering, grant-funded installations, and community workshops.</p>
                 {{#each workCards}}
                 {{{ this }}}
                 {{/each}}
@@ -342,11 +402,11 @@
         </article>
 
         <article class="item hide spin" id="projects">
-            <div class="section-nav-toggle">
-                <div class="bar"></div>
-                <div class="bar"></div>
-                <div class="bar"></div>
-            </div>
+            <button type="button" class="section-nav-toggle" aria-label="Toggle section directory" aria-expanded="false">
+                <span class="bar" aria-hidden="true"></span>
+                <span class="bar" aria-hidden="true"></span>
+                <span class="bar" aria-hidden="true"></span>
+            </button>
             <aside class="section-nav" data-target-container=".grid-item" data-title-selector="h2">
                 <div class="sideNavContent">
                     <h3>Projects Directory</h3>
@@ -354,31 +414,45 @@
                 </div>
             </aside>
             <section>
-                <h1>Major Projects</h1>
-                <h2>Full-scale platforms, standalone systems, and deep engineering architectures.</h2>
-                <div class="grid">
-                    {{#each majorProjectCards}}
-                    {{{ this }}}
-                    {{/each}}
+                <div class="section-scope-bar">
+                    <h1>Projects &amp; Experiments</h1>
+                    <p class="section-subtitle">Independent flagship systems, interactive tools, and creative algorithms.</p>
+                    <div class="filter-pills" role="group" aria-label="Filter projects by category">
+                        <button type="button" class="filter-pill active" data-projects-filter="all" aria-pressed="true">All</button>
+                        <button type="button" class="filter-pill" data-projects-filter="major" aria-pressed="false">Major Systems</button>
+                        <button type="button" class="filter-pill" data-projects-filter="mini" aria-pressed="false">Mini-Projects &amp; Experiments</button>
+                    </div>
                 </div>
 
-                <h1>Mini-Projects &amp; Experiments</h1>
-                <h2>Interactive tools, sensory doodles, creative algorithms, and research notes.</h2>
-                <div class="grid">
-                    {{#each miniProjectCards}}
-                    {{{ this }}}
-                    {{/each}}
+                <div class="projects-group" data-projects-group="major">
+                    <h2>Major Projects</h2>
+                    <p class="section-subtitle">Full-scale platforms, standalone systems, and deep engineering architectures.</p>
+                    <div class="grid">
+                        {{#each majorProjectCards}}
+                        {{{ this }}}
+                        {{/each}}
+                    </div>
+                </div>
+
+                <div class="projects-group" data-projects-group="mini">
+                    <h2>Mini-Projects &amp; Experiments</h2>
+                    <p class="section-subtitle">Interactive tools, sensory doodles, creative algorithms, and research notes.</p>
+                    <div class="grid">
+                        {{#each miniProjectCards}}
+                        {{{ this }}}
+                        {{/each}}
+                    </div>
                 </div>
             </section>
         </article>
 
         <!-- ESP32 Section from index.html (renamed to embedded in nav but matches ID) -->
         <article class="item hide spin" id="embedded">
-            <div class="section-nav-toggle">
-                <div class="bar"></div>
-                <div class="bar"></div>
-                <div class="bar"></div>
-            </div>
+            <button type="button" class="section-nav-toggle" aria-label="Toggle section directory" aria-expanded="false">
+                <span class="bar" aria-hidden="true"></span>
+                <span class="bar" aria-hidden="true"></span>
+                <span class="bar" aria-hidden="true"></span>
+            </button>
             <aside class="section-nav" data-target-container=".grid-item" data-title-selector="h2">
                 <div class="sideNavContent">
                     <h3>Embedded Directory</h3>
@@ -481,7 +555,7 @@ Plug in an ESP32 or ESP32-C3 via USB, select firmware, and click "Connect &amp; 
                 </div>
 
                 <h1>ESP32 / Embedded Tech</h1>
-                <h2>Microcontrollers, IoT projects, and tiny computers doing big things.</h2>
+                <p class="section-subtitle">Microcontrollers, IoT projects, and tiny computers doing big things.</p>
                 <div class="grid">
                     {{#each esp32Cards}}
                     {{{ this }}}
@@ -491,11 +565,11 @@ Plug in an ESP32 or ESP32-C3 via USB, select firmware, and click "Connect &amp; 
         </article>
 
         <article class="item hide spin" id="shop">
-            <div class="section-nav-toggle">
-                <div class="bar"></div>
-                <div class="bar"></div>
-                <div class="bar"></div>
-            </div>
+            <button type="button" class="section-nav-toggle" aria-label="Toggle section directory" aria-expanded="false">
+                <span class="bar" aria-hidden="true"></span>
+                <span class="bar" aria-hidden="true"></span>
+                <span class="bar" aria-hidden="true"></span>
+            </button>
             <aside class="section-nav" data-target-container=".grid-item" data-title-selector="h2">
                 <div class="sideNavContent">
                     <h3>Shop Directory</h3>
@@ -504,7 +578,7 @@ Plug in an ESP32 or ESP32-C3 via USB, select firmware, and click "Connect &amp; 
             </aside>
             <section>
                 <h1>Dillon's Shop & Hardware Commissions</h1>
-                <h2>Hand-crafted hardware, assistive tech, and bespoke electronic art.</h2>
+                <p class="section-subtitle">Hand-crafted hardware, assistive tech, and bespoke electronic art.</p>
 
                 {{> shop-book }}
 
@@ -556,11 +630,11 @@ Plug in an ESP32 or ESP32-C3 via USB, select firmware, and click "Connect &amp; 
     </div>
 
     <!-- Gallery Modal -->
-    <div id="galleryModal" class="gallery-modal">
+    <div id="galleryModal" class="gallery-modal" role="dialog" aria-modal="true" aria-labelledby="galleryTitle">
         <div class="gallery-modal-content">
             <div class="gallery-header">
                 <h2 id="galleryTitle">Project Gallery</h2>
-                <button class="gallery-close" onclick="closeGallery()">&times;</button>
+                <button type="button" class="gallery-close" aria-label="Close gallery" onclick="closeGallery()">&times;</button>
             </div>
             <div id="galleryScrollContainer" class="gallery-scroll-container">
                 <!-- Images injected here -->

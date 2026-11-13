@@ -134,17 +134,23 @@ export const PARTS_CATALOG = [
         w: 17.0,
         d: 33.5,
         wallHeight: 7.0,
-        summary: '17×33.5mm • Front/Rear high-current wire gaps',
+        summary: '17×33.5mm • Front E/W terminal gaps, Rear trig, Pin slots',
         cutouts: {
-            N: { width: 12.5, height: 5.5, zOffset: 1.0 },
-            S: { width: 12.5, height: 5.5, zOffset: 1.0 }
+            E: { width: 11.5, yOffset: 10.0, zOffset: 1.0 },
+            W: { width: 11.5, yOffset: 10.0, zOffset: 1.0 },
+            S: { width: 11.5, zOffset: 1.0 }
         },
+        floorSlots: [
+            { xOffset: -4.5, yOffset: 10.2, w: 3.6, d: 11.0 },
+            { xOffset: 4.5, yOffset: 10.2, w: 3.6, d: 11.0 }
+        ],
         buildGhost: (M) => {
             const pcb = makeBox(M, 17.0, 33.5, 1.6, true).translate([0, 0, 0.8]);
-            const termN = makeBox(M, 10.0, 7.5, 6.0, true).translate([0, 33.5 / 2 - 4.0, 1.6 + 3.0]);
-            const termS = makeBox(M, 10.0, 7.5, 6.0, true).translate([0, -33.5 / 2 + 4.0, 1.6 + 3.0]);
-            const res = pcb.add(termN).add(termS);
-            pcb.delete(); termN.delete(); termS.delete();
+            const termW = makeBox(M, 7.5, 10.5, 8.5, true).translate([-4.5, 33.5 / 2 - 6.2, 1.6 + 4.25]);
+            const termE = makeBox(M, 7.5, 10.5, 8.5, true).translate([4.5, 33.5 / 2 - 6.2, 1.6 + 4.25]);
+            const trigS = makeBox(M, 10.0, 3.0, 2.5, true).translate([0, -33.5 / 2 + 2.0, 1.6 + 1.25]);
+            const res = pcb.add(termW).add(termE).add(trigS);
+            pcb.delete(); termW.delete(); termE.delete(); trigS.delete();
             return res;
         }
     },
@@ -284,10 +290,27 @@ export const PARTS_CATALOG = [
         w: 25.0,
         d: 25.0,
         wallHeight: 6.0,
+        allowStrainRelief: true,
         summary: 'Customizable pocket • Right-click to resize',
         cutouts: {},
         buildGhost: null
     },
+
+    // --- Spacers (Floor-only bridges, no walls) ---
+    ...([10, 20, 30].map(sz => ({
+        id: `spacer_${sz}mm`,
+        name: `Space Filler (${sz}×${sz}mm)`,
+        folder: ['Custom', 'Space Fillers'],
+        color: '#64748b',
+        w: sz,
+        d: sz,
+        wallHeight: 0,
+        isSpacer: true,
+        excludeFromLid: true,
+        summary: `${sz}×${sz}mm floor-only bridge (no walls)`,
+        cutouts: {},
+        buildGhost: null
+    }))),
 
     // --- Cable Management ---
     {

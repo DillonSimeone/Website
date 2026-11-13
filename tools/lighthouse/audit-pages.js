@@ -37,14 +37,21 @@ async function verifyServer(url) {
     }
 }
 
-// Pages to audit
+const portfolioRoutes = [
+    { name: 'Portfolio: Home (Bio)', page: 'Home' },
+    { name: 'Portfolio: Shop', page: 'Shop' },
+    { name: 'Portfolio: Past Work', page: 'PastWork' },
+    { name: 'Portfolio: Projects', page: 'Projects' },
+    { name: 'Portfolio: Embedded (ESP32)', page: 'Embedded' },
+    { name: 'Portfolio: Hobby', page: 'Hobby' }
+];
+
+// Pages to audit (Portfolio routes tested in both Daytime/Light and Nighttime/Dark modes)
 const targetPages = [
-    { name: 'Portfolio: Home (Bio)', url: `${baseUrl}/?page=Home` },
-    { name: 'Portfolio: Shop', url: `${baseUrl}/?page=Shop` },
-    { name: 'Portfolio: Past Work', url: `${baseUrl}/?page=PastWork` },
-    { name: 'Portfolio: Projects', url: `${baseUrl}/?page=Projects` },
-    { name: 'Portfolio: Embedded (ESP32)', url: `${baseUrl}/?page=Embedded` },
-    { name: 'Portfolio: Hobby', url: `${baseUrl}/?page=Hobby` },
+    ...portfolioRoutes.flatMap(r => [
+        { name: `${r.name} [Daytime]`, url: `${baseUrl}/?page=${r.page}&theme=light` },
+        { name: `${r.name} [Nighttime]`, url: `${baseUrl}/?page=${r.page}&theme=dark` }
+    ]),
     { name: 'Project: Universe Hub', url: `${baseUrl}/Projects/Universe/index.html` },
     { name: 'Project: Parametric PCB', url: `${baseUrl}/Projects/ParametricPCB/index.html` },
     { name: 'Project: Sound Reactive Stage', url: `${baseUrl}/Projects/SoundReactive/index.html` },

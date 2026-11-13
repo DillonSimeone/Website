@@ -16,7 +16,7 @@ export function buildTrayLidManifold(M, forExport = false) {
     const isExcluded = (bin) => {
         const p = getPartPreset(bin.partId);
         return Boolean(
-            bin.cradle || p.isLedStrip || p.shapeLoopSides || p.isFan || p.excludeFromLid
+            bin.cradle || p.isLedStrip || p.shapeLoopSides || p.isFan || p.excludeFromLid || p.isSpacer
         );
     };
     const lidBins = state.bins.filter(b => !isExcluded(b));

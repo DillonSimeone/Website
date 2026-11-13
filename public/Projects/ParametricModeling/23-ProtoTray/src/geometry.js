@@ -233,11 +233,13 @@ function buildCutoutBox(side, innerW, innerD, wall, base, wallHeight, spec) {
     const cutH = wallHeight + 2.0; // Always cuts all the way through the top!
     const zCenter = base + zOff + cutH / 2;
     const thick = wall + 0.8;
+    const xOff = spec.xOffset ?? 0;
+    const yOff = spec.yOffset ?? 0;
 
-    if (side === 'N') return makeBox(M, cutW, thick, cutH, true).translate([0, innerD / 2 + wall / 2, zCenter]);
-    if (side === 'S') return makeBox(M, cutW, thick, cutH, true).translate([0, -innerD / 2 - wall / 2, zCenter]);
-    if (side === 'E') return makeBox(M, thick, cutW, cutH, true).translate([innerW / 2 + wall / 2, 0, zCenter]);
-    return makeBox(M, thick, cutW, cutH, true).translate([-innerW / 2 - wall / 2, 0, zCenter]);
+    if (side === 'N') return makeBox(M, cutW, thick, cutH, true).translate([xOff, innerD / 2 + wall / 2, zCenter]);
+    if (side === 'S') return makeBox(M, cutW, thick, cutH, true).translate([xOff, -innerD / 2 - wall / 2, zCenter]);
+    if (side === 'E') return makeBox(M, thick, cutW, cutH, true).translate([innerW / 2 + wall / 2, yOff, zCenter]);
+    return makeBox(M, thick, cutW, cutH, true).translate([-innerW / 2 - wall / 2, yOff, zCenter]);
 }
 
 function buildCradleWalls(innerW, innerD, wall, base) {
@@ -371,6 +373,9 @@ function buildSingleBinManifold(bin) {
     const totalH = base + bin.wallHeight;
 
     let acc;
+    if (preset.isSpacer) {
+        return makeBox(M, ow, od, base, true).translate([0, 0, base / 2]);
+    }
     if (preset.shapeLoopSides) {
         // Baseplate + 8mm LED channels joined into a Triangle / Square / Hexagon loop
         const basePlate = makeBox(M, ow, od, base, true).translate([0, 0, base / 2]);

@@ -503,9 +503,24 @@ function bindGlobalControls() {
         if (!file) return;
         try {
             deserializeLayout(await file.text());
-            compactCluster();
+            // Sync UI sliders & lid toggle with imported JSON
+            document.getElementById('param-wall').value = state.global.wallThickness;
+            document.getElementById('val-wall').textContent = `${state.global.wallThickness} mm`;
+            document.getElementById('param-base').value = state.global.baseThickness;
+            document.getElementById('val-base').textContent = `${state.global.baseThickness} mm`;
+            document.getElementById('param-height').value = state.global.defaultWallHeight;
+            document.getElementById('val-height').textContent = `${state.global.defaultWallHeight} mm`;
+            document.getElementById('param-tol').value = state.global.tolerance;
+            document.getElementById('val-tol').textContent = `${state.global.tolerance} mm`;
+            document.getElementById('param-lid-skirt').value = state.lid.skirtHeight;
+            document.getElementById('val-lid-skirt').textContent = `${state.lid.skirtHeight} mm`;
+            const lidBtn = document.getElementById('btn-toggle-lid');
+            lidBtn.classList.toggle('active', state.lid.preview);
+            lidBtn.textContent = state.lid.preview ? '🧢 Lid: ON' : '🧢 Lid: OFF';
+
+            sound.playPop(520);
             await refreshScene();
-            showToast('Loaded layout JSON');
+            showToast(`Imported ${state.bins.length} bins from JSON!`);
         } catch (err) {
             showToast('Invalid layout JSON');
         }
