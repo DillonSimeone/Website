@@ -101,8 +101,28 @@ export function placeNewBin(newBin) {
             }
         }
     }
-    // Settle just like drag-drop so all bins stay flush with zero clipping
-    compactCluster(newBin.id);
+    // Keep all existing bins anchored — only the newly added bin is placed!
+}
+
+/**
+ * Anchored settle: only moves the active bin (if it overlaps any stationary neighbor)
+ * to the nearest non-overlapping flush spot. Never moves other bins.
+ */
+export function compactCluster(anchorId = null) {
+    const wall = state.global.wallThickness;
+    if (!anchorId || state.bins.length <= 1) return;
+
+    const active = state.bins.find(b => b.id === anchorId);
+    if (!active) return;
+
+    const others = state.bins.filter(b => b.id !== anchorId).map(b => getMetrics(b, wall));
+    const am = getMetrics(active, wall);
+
+    if (others.some(ex => overlaps(ex, am, wall))) {
+        const snap = previewDragSnap(anchorId, active.x, active.y);
+        active.x = snap.x;
+        active.y = snap.y;
+    }
 }
 
 /**
@@ -114,7 +134,7 @@ export function previewDragSnap(binId, cursorX, cursorY) {
     if (!dragged) return { x: cursorX, y: cursorY };
 
     const others = state.bins.filter(b => b.id !== binId).map(b => getMetrics(b, wall));
-    if (others.length === 0) return { x: 0, y: 0 };
+    if (others.length === 0) return { x: cursorX, y: cursorY };
 
     const dm = getMetrics(dragged, wall);
     const candidates = [];
@@ -151,137 +171,25 @@ export function previewDragSnap(binId, cursorX, cursorY) {
         }
     }
 
+    // Spiral fallback if all immediate edge candidates are blocked
+    if (!best) {
+        for (let r = 10; r < 500 && !best; r += 10) {
+            for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
+                const cx = cursorX + Math.cos(a) * r;
+                const cy = cursorY + Math.sin(a) * r;
+                dragged.x = cx;
+                dragged.y = cy;
+                if (!others.some(ex => overlaps(ex, dm, wall))) {
+                    best = { x: cx, y: cy };
+                    break;
+                }
+            }
+        }
+    }
+
     dragged.x = savedX;
     dragged.y = savedY;
     return best || { x: cursorX, y: cursorY };
-}
-
-/**
- * Resolves any overlaps and pulls all bins tightly together with zero clipping.
- */
-export function compactCluster(anchorId = null) {
-    const wall = state.global.wallThickness;
-    if (state.bins.length === 0) return;
-
-    const items = state.bins.map(b => getMetrics(b, wall));
-
-    // 1. De-overlap pass
-    for (let iter = 0; iter < 40; iter++) {
-        let moved = false;
-        for (let i = 0; i < items.length; i++) {
-            for (let j = i + 1; j < items.length; j++) {
-                const a = items[i];
-                const b = items[j];
-                const pw = pairWall(a, b, wall);
-                const minX = (a.ew + b.ew) / 2 - pw;
-                const minY = (a.ed + b.ed) / 2 - pw;
-                const dx = b.bin.x - a.bin.x;
-                const dy = b.bin.y - a.bin.y;
-                const penX = minX - Math.abs(dx);
-                const penY = minY - Math.abs(dy);
-
-                if (penX > EPS && penY > EPS) {
-                    moved = true;
-                    const pushAlongX = penX <= penY;
-                    const aFixed = a.bin.id === anchorId;
-                    const bFixed = b.bin.id === anchorId;
-
-                    if (pushAlongX) {
-                        const dir = dx >= 0 ? 1 : -1;
-                        if (aFixed && !bFixed) b.bin.x += dir * penX;
-                        else if (bFixed && !aFixed) a.bin.x -= dir * penX;
-                        else {
-                            a.bin.x -= dir * (penX / 2);
-                            b.bin.x += dir * (penX / 2);
-                        }
-                    } else {
-                        const dir = dy >= 0 ? 1 : -1;
-                        if (aFixed && !bFixed) b.bin.y += dir * penY;
-                        else if (bFixed && !aFixed) a.bin.y -= dir * penY;
-                        else {
-                            a.bin.y -= dir * (penY / 2);
-                            b.bin.y += dir * (penY / 2);
-                        }
-                    }
-                }
-            }
-        }
-        if (!moved) break;
-    }
-
-    // 2. Safe inward compaction toward (0, 0)
-    for (let pass = 0; pass < 3; pass++) {
-        items.sort((a, b) => Math.hypot(a.bin.x, a.bin.y) - Math.hypot(b.bin.x, b.bin.y));
-        for (const item of items) {
-            slideTowardZeroSafe(item, items, 'x', wall);
-            slideTowardZeroSafe(item, items, 'y', wall);
-        }
-    }
-
-    // 3. Final strict clip-checker: guarantee zero overlaps
-    for (let safety = 0; safety < 20; safety++) {
-        let clipped = false;
-        for (let i = 0; i < items.length; i++) {
-            for (let j = i + 1; j < items.length; j++) {
-                if (overlaps(items[i], items[j], wall)) {
-                    clipped = true;
-                    const mover = items[j].bin.id === anchorId ? items[i] : items[j];
-                    const other = mover === items[i] ? items[j] : items[i];
-                    const pw = pairWall(mover, other, wall);
-                    const sepX = (mover.ew + other.ew) / 2 - pw;
-                    const sepY = (mover.ed + other.ed) / 2 - pw;
-                    const dx = mover.bin.x - other.bin.x;
-                    const dy = mover.bin.y - other.bin.y;
-                    if (sepX - Math.abs(dx) <= sepY - Math.abs(dy)) {
-                        mover.bin.x = other.bin.x + (dx >= 0 ? 1 : -1) * sepX;
-                    } else {
-                        mover.bin.y = other.bin.y + (dy >= 0 ? 1 : -1) * sepY;
-                    }
-                }
-            }
-        }
-        if (!clipped) break;
-    }
-
-    recenterCluster();
-}
-
-function slideTowardZeroSafe(item, allItems, axis, wall) {
-    const val = item.bin[axis];
-    if (Math.abs(val) < EPS) return;
-    const dir = val > 0 ? -1 : 1;
-    let target = 0;
-
-    for (const other of allItems) {
-        if (other === item) continue;
-        const pw = pairWall(item, other, wall);
-        const otherAxis = axis === 'x' ? 'y' : 'x';
-        const otherDimA = axis === 'x' ? item.ed : item.ew;
-        const otherDimB = axis === 'x' ? other.ed : other.ew;
-        const minOtherSep = (otherDimA + otherDimB) / 2 - pw;
-
-        if (Math.abs(item.bin[otherAxis] - other.bin[otherAxis]) >= minOtherSep - EPS) {
-            continue;
-        }
-
-        const dimA = axis === 'x' ? item.ew : item.ed;
-        const dimB = axis === 'x' ? other.ew : other.ed;
-        const minSep = (dimA + dimB) / 2 - pw;
-
-        if (dir < 0 && other.bin[axis] < item.bin[axis]) {
-            target = Math.max(target, other.bin[axis] + minSep);
-        } else if (dir > 0 && other.bin[axis] > item.bin[axis]) {
-            target = Math.min(target, other.bin[axis] - minSep);
-        }
-    }
-
-    const oldVal = item.bin[axis];
-    if ((dir < 0 && target < oldVal) || (dir > 0 && target > oldVal)) {
-        item.bin[axis] = target;
-        if (allItems.some(o => o !== item && overlaps(item, o, wall))) {
-            item.bin[axis] = oldVal;
-        }
-    }
 }
 
 export function recenterCluster() {

@@ -462,9 +462,9 @@ function buildSingleBinManifold(bin) {
             const slotDepth = Math.min(fThick, 8.0) + 2 * bin.tolerance;
             const lipThick = 2.0;
             const frameT = Math.max(slotDepth + lipThick, 8.5);
-            const diaSpan = fSize * Math.SQRT2;
-            const frameW = Math.max(ow, diaSpan + wall * 2.5);
-            const frameH = diaSpan + wall * 2.0;
+            const diaSpan = (fSize + 2 * bin.tolerance) * Math.SQRT2;
+            const frameW = Math.max(ow, diaSpan + wall * 4.5);
+            const frameH = diaSpan + wall * 4.5;
             const zCenter = base + frameH / 2;
 
             const basePlate = makeBox(M, Math.max(ow, frameW), Math.max(od, frameT + 2.0), base, true)
@@ -491,15 +491,22 @@ function buildSingleBinManifold(bin) {
             vHolder.delete(); fanPocket.delete(); airWin.delete(); cableHole.delete();
             vHolder = hn;
 
-            // Side-entry M2/M3 locking screws (±X through left/right frame sides)
+            // M2/M3 locking screws aimed directly into the Top, Left, and Right corners of the diamond
             const screwY = lipThick / 2;
-            for (const pz of [-diaSpan * 0.22, diaSpan * 0.22]) {
-                const sideHole = makeCylinder(M, screwR, frameW + 4.0, 16, true)
-                    .rotate([0, 90, 0])
-                    .translate([0, screwY, zCenter + pz]);
-                hn = vHolder.subtract(sideHole);
-                vHolder.delete(); sideHole.delete(); vHolder = hn;
-            }
+            const lrLen = (frameW - diaSpan * 0.5) / 2 + 2.0;
+            const leftScrew = makeCylinder(M, screwR, lrLen, 16, true)
+                .rotate([0, 90, 0])
+                .translate([-frameW / 2 + lrLen / 2 - 1.0, screwY, zCenter]);
+            const rightScrew = makeCylinder(M, screwR, lrLen, 16, true)
+                .rotate([0, 90, 0])
+                .translate([frameW / 2 - lrLen / 2 + 1.0, screwY, zCenter]);
+            const topLen = (frameH - diaSpan * 0.5) / 2 + 2.0;
+            const topScrew = makeCylinder(M, screwR, topLen, 16, true)
+                .translate([0, screwY, base + frameH - topLen / 2 + 1.0]);
+
+            hn = vHolder.subtract(leftScrew).subtract(rightScrew).subtract(topScrew);
+            vHolder.delete(); leftScrew.delete(); rightScrew.delete(); topScrew.delete();
+            vHolder = hn;
 
             acc.delete();
             return vHolder;
@@ -655,7 +662,7 @@ export async function rebuildTrayGeometry() {
                     opacity: 0.42,
                     roughness: 0.3
                 }));
-                ghostMesh.position.z = state.global.baseThickness + (isVertFan ? state.global.wallThickness : 0) - minZ;
+                ghostMesh.position.z = state.global.baseThickness + (isVertFan ? state.global.wallThickness * 2.25 : 0) - minZ;
                 ghostMesh.visible = state.showGhosts;
                 group.add(ghostMesh);
             }
