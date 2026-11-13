@@ -78,12 +78,14 @@
   will-change: transform;
 }
 
-.carouselItem:nth-child(2n) .carouselThumb {
+.carouselItem:nth-child(5n + 2) .carouselThumb,
+.carouselItem:nth-child(5n + 4) .carouselThumb {
   animation-duration: 2.8s;
   animation-delay: -0.7s;
 }
 
-.carouselItem:nth-child(3n) .carouselThumb {
+.carouselItem:nth-child(5n + 3) .carouselThumb,
+.carouselItem:nth-child(5n + 5) .carouselThumb {
   animation-duration: 2.1s;
   animation-delay: -1.3s;
 }

@@ -210,43 +210,38 @@ export class PropSpawner {
   spawnSuspendedTroffer(x, ceilingY, hangY, lightConfig) {
     const fixtureGroup = new THREE.Group();
 
-    // Troffer fixture body hanging at hangY
-    const bodyGeo = new THREE.BoxGeometry(1.6, 0.12, 0.4);
-    const bodyMat = new THREE.MeshStandardMaterial({
-      color: 0xdddddd,
-      roughness: 0.3,
-      metalness: 0.4,
-      emissive: 0xffffee,
-      emissiveIntensity: 0.95
-    });
-    const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
+    if (!this._trofferBodyGeo) {
+      this._trofferBodyGeo = new THREE.BoxGeometry(1.6, 0.12, 0.4);
+      this._trofferBodyGeo.userData.isShared = true;
+      this._trofferBodyMat = new THREE.MeshStandardMaterial({
+        color: 0xdddddd,
+        roughness: 0.3,
+        metalness: 0.4,
+        emissive: 0xffffee,
+        emissiveIntensity: 1.1
+      });
+      this._trofferWireMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8 });
+    }
+
+    const bodyMesh = new THREE.Mesh(this._trofferBodyGeo, this._trofferBodyMat);
     bodyMesh.position.set(x, hangY, 0);
     fixtureGroup.add(bodyMesh);
 
     // Two hanging steel conduit drop wires spanning from ceilingY down to hangY
     const wireLength = Math.max(0.5, ceilingY - hangY);
     const wireGeo = new THREE.CylinderGeometry(0.012, 0.012, wireLength, 6);
-    const wireMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8 });
 
-    const wire1 = new THREE.Mesh(wireGeo, wireMat);
+    const wire1 = new THREE.Mesh(wireGeo, this._trofferWireMat);
     wire1.position.set(x - 0.65, hangY + (wireLength / 2), 0);
     fixtureGroup.add(wire1);
 
-    const wire2 = new THREE.Mesh(wireGeo, wireMat);
+    const wire2 = new THREE.Mesh(wireGeo, this._trofferWireMat);
     wire2.position.set(x + 0.65, hangY + (wireLength / 2), 0);
     fixtureGroup.add(wire2);
 
-    // Localized PointLight
-    const pLight = new THREE.PointLight(
-      lightConfig.color || 0xfff5bf,
-      lightConfig.intensity || 2.0,
-      lightConfig.distance || 16,
-      lightConfig.decay || 1.1
-    );
-    pLight.position.set(x, hangY - 0.3, 0);
-    fixtureGroup.add(pLight);
-
-    const fixtureObj = new Fixture(bodyMesh, pLight, {
+    const fixtureObj = new Fixture(bodyMesh, lightConfig, {
+      position: new THREE.Vector3(x, hangY, 0),
+      lightPos: new THREE.Vector3(x, hangY - 0.3, 0),
       title: 'Suspended High-Voltage Troffer',
       hp: 30,
       xp: 25,

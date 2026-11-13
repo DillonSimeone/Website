@@ -1,21 +1,22 @@
 # *****************************************************************************
-# Author:        Dillon Simeone (Navigator)
-# Partner:       Rusty (Driver)
+# Author:        Dillon Simeone (Driver)
+# Partner:       Rusty Jennings (Navigator)
 # Assignment:    Lab 8 - Calculator
 # Date:          11/10/2026
-# Description:   App A: Filament Mass to Extruded Length Calculator for standard
-#                1.75 mm PLA filament.
+# Description:   App A: Filament Mass to Extruded Length Calculator for
+#                standard 1.75 mm PLA filament.
 # Inputs:        Filament mass in grams
 # Output:        Calculated length in meters and feet
-# Sources:       - Lab 8 Assignment Instructions
-#                - PLA Material Density & Formulas (1.24 g/cm³):
-#                  https://kg-m3.com/material/pla-polylactide
+# Sources:       Lab 8 Assignment Instructions
+#                PLA Material Density & Formulas (1.24 g/cm³):
+#                https://kg-m3.com/material/pla-polylactide
 # *****************************************************************************
 
 import math
 import os
 import tkinter as tk
 import tkinter.messagebox as mb
+
 import pygubu
 
 PROJECT_PATH = os.path.dirname(__file__)
@@ -50,17 +51,21 @@ class FilamentMassToLengthApp:
 
         # UI elements
         self.__mass_entry = builder.get_object("mass_entry", master)
-        self.__meters_entry_variable = builder.get_variable("meters_entry_variable")
-        self.__feet_entry_variable = builder.get_variable("feet_entry_variable")
+        self.__meters_entry_variable = builder.get_variable(
+            "meters_entry_variable"
+        )
+        self.__feet_entry_variable = builder.get_variable(
+            "feet_entry_variable"
+        )
 
     def calculate(self):
         """Converts mass in grams to extruded length in meters and feet."""
         try:
             mass = float(self.__mass_entry.get().strip())
-            if mass < 0:
+            if not math.isfinite(mass) or mass < 0:
                 mb.showerror(
                     title="Invalid Input",
-                    message="Filament mass cannot be negative."
+                    message="Filament mass must be a non-negative, finite number."
                 )
                 return
 

@@ -33,8 +33,8 @@ export class WorldManager {
     this.chunkWidth = this.gridWidth * this.voxelSize; // 12.0m per chunk
     this.chunkDepth = this.gridWidth * this.voxelSize; // 12.0m per chunk
 
-    this.radiusH = options.radiusH || 3; // Horizontal streaming radius
-    this.radiusV = options.radiusV !== undefined ? options.radiusV : 1; // Vertical streaming: 1 keeps adjacent floors loaded
+    this.radiusH = options.radiusH !== undefined ? options.radiusH : 2; // 5x5 horizontal bubble (fog hides >36m)
+    this.radiusV = options.radiusV !== undefined ? options.radiusV : 1; // 1 keeps adjacent vertical strata ready
 
     // Registered Biomes
     this.biomes = {
@@ -46,9 +46,21 @@ export class WorldManager {
     };
 
     this.loadedChunks = new Map(); // key -> Chunk
+    this.buildQueue = [];          // Time-sliced chunk build queue
     this.lastChunkCoords = { cx: null, cy: null, cz: null };
 
-    // Cached aggregation arrays for physics and rendering efficiency
+    // Player-placed standalone objects (barricades, scaffolding, beacons, jump pads)
+    this.extraDestructibles = [];
+    this.extraCollidables = [];
+    this.extraLights = [];
+    this.jumpPads = [];
+
+    // Scratch arrays returned by spatial queries (reused to avoid per-frame GC)
+    this._nearbyDestructibles = [];
+    this._nearbyCollidables = [];
+    this._nearbyLights = [];
+
+    // Legacy cached aggregation arrays (kept for compatibility if needed)
     this.cachedDestructibles = [];
     this.cachedCollidables = [];
     this.cachedLights = [];
@@ -59,32 +71,27 @@ export class WorldManager {
    * Determine biome for chunk based on vertical layer and 2D horizontal noise threshold
    */
   selectBiome(cx, cy, cz) {
-    if (cy > 0) {
-      // Upper plenum / utility crawlspaces
-      return this.biomes.crawlspace;
-    }
     if (cy === 0) {
-      // Level 0: The Classic Monosodium Yellow Office Complex
-      // Very rare lateral noclip boundary into Poolrooms when exploring far out
-      const sample = Math.sin(cx * 0.35 + cz * 0.22) + Math.cos(cx * 0.18 - cz * 0.41);
-      if (sample > 0.82) {
-        return this.biomes.poolrooms;
+      // Spawn chunk and immediate neighborhood start in classic Level 0
+      if (Math.abs(cx) <= 1 && Math.abs(cz) <= 1) {
+        return this.biomes.level0;
       }
+      const sample = Math.sin(cx * 0.35 + cz * 0.22) + Math.cos(cx * 0.18 - cz * 0.41);
+      if (sample > 0.82) return this.biomes.poolrooms;
       return this.biomes.level0;
     }
-    if (cy === -1) {
-      // Directly below Level 0: Industrial Pipe Dreams & Habitable Maintenance
-      return this.biomes.level1;
-    }
-    if (cy === -2) {
-      // Subterranean Aquifer: Level 37 The Poolrooms
-      return this.biomes.poolrooms;
-    }
-    if (cy === -3) {
-      // Deep Foundations: Level -2 Subbasement Crypt & Heavy Machinery
-      return this.biomes.subbasement;
-    }
-    // cy <= -4: Deepest maintenance conduits
+
+    // All other vertical strata (above or below Level 0) procedurally select random Backrooms levels
+    // using a deterministic per-stratum + regional hash so digging down reveals varied, unpredictable biomes!
+    const regionX = Math.floor(cx / 2);
+    const regionZ = Math.floor(cz / 2);
+    const h = Math.sin(regionX * 19.7 + cy * 73.1 + regionZ * 37.3) * 43758.5453;
+    const roll = h - Math.floor(h);
+
+    if (roll < 0.22) return this.biomes.level0;
+    if (roll < 0.44) return this.biomes.level1;
+    if (roll < 0.64) return this.biomes.poolrooms;
+    if (roll < 0.84) return this.biomes.subbasement;
     return this.biomes.crawlspace;
   }
 
@@ -174,12 +181,42 @@ export class WorldManager {
       this.lastChunkCoords = { cx, cy, cz };
       this.streamChunks(cx, cy, cz);
     }
+
+    // Time-sliced chunk building: build up to 2 queued chunks per frame to prevent hitches
+    let builtThisFrame = 0;
+    while (this.buildQueue.length > 0 && builtThisFrame < 2) {
+      const item = this.buildQueue.shift();
+      if (!this.loadedChunks.has(item.key)) {
+        this._buildAndRegisterChunk(item.cx, item.cy, item.cz, item.key);
+        builtThisFrame++;
+      }
+    }
+  }
+
+  _buildAndRegisterChunk(cx, cy, cz, key) {
+    const biome = this.selectBiome(cx, cy, cz);
+    const roomType = this.getRoomType(cx, cy, cz);
+    const roomHeight = this.getRoomHeight(roomType, cy);
+    const connectivity = this.getConnectivity(cx, cy, cz);
+
+    const chunk = new Chunk(cx, cy, cz, biome, {
+      voxelSize: this.voxelSize,
+      gridWidth: this.gridWidth,
+      layerHeight: this.layerHeight,
+      roomType,
+      roomHeight,
+      connectivity
+    });
+    chunk.build(this.scene);
+    this.loadedChunks.set(key, chunk);
+    this.dirtyCaches = true;
+    return chunk;
   }
 
   streamChunks(centerCx, centerCy, centerCz) {
     const activeKeys = new Set();
+    const pending = [];
 
-    // Load / retain chunks within 3D bounding bubble
     for (let dx = -this.radiusH; dx <= this.radiusH; dx++) {
       for (let dz = -this.radiusH; dz <= this.radiusH; dz++) {
         for (let dy = -this.radiusV; dy <= this.radiusV; dy++) {
@@ -190,26 +227,21 @@ export class WorldManager {
           activeKeys.add(key);
 
           if (!this.loadedChunks.has(key)) {
-            const biome = this.selectBiome(cx, cy, cz);
-            const roomType = this.getRoomType(cx, cy, cz);
-            const roomHeight = this.getRoomHeight(roomType, cy);
-            const connectivity = this.getConnectivity(cx, cy, cz);
-
-            const chunk = new Chunk(cx, cy, cz, biome, {
-              voxelSize: this.voxelSize,
-              gridWidth: this.gridWidth,
-              layerHeight: this.layerHeight,
-              roomType,
-              roomHeight,
-              connectivity
-            });
-            chunk.build(this.scene);
-            this.loadedChunks.set(key, chunk);
-            this.dirtyCaches = true;
+            const distSq = dx * dx + dz * dz + dy * dy * 4;
+            // Immediate chunk (and its direct vertical neighbors) build synchronously
+            if (distSq === 0) {
+              this._buildAndRegisterChunk(cx, cy, cz, key);
+            } else {
+              pending.push({ cx, cy, cz, key, distSq });
+            }
           }
         }
       }
     }
+
+    // Sort pending chunks nearest-first so close rooms pop in immediately
+    pending.sort((a, b) => a.distSq - b.distSq);
+    this.buildQueue = pending;
 
     // Unload chunks outside radius
     for (const [key, chunk] of this.loadedChunks.entries()) {
@@ -219,10 +251,97 @@ export class WorldManager {
         this.dirtyCaches = true;
       }
     }
+  }
 
-    if (this.dirtyCaches) {
-      this.rebuildCaches();
+  /**
+   * Spatial Query: Return only destructible meshes within [radiusH, radiusV] chunks of position.
+   * Cuts raycast candidate count from ~30,000 down to ~20-80!
+   */
+  getNearbyDestructibles(position, radiusH = 1, radiusV = 0) {
+    const out = this._nearbyDestructibles;
+    out.length = 0;
+
+    const ccx = Math.floor(position.x / this.chunkWidth);
+    const ccy = Math.floor(position.y / this.layerHeight);
+    const ccz = Math.floor(position.z / this.chunkDepth);
+
+    for (let dx = -radiusH; dx <= radiusH; dx++) {
+      for (let dz = -radiusH; dz <= radiusH; dz++) {
+        for (let dy = -radiusV; dy <= radiusV; dy++) {
+          const chunk = this.loadedChunks.get(`${ccx + dx},${ccy + dy},${ccz + dz}`);
+          if (!chunk) continue;
+          const arr = chunk.destructibleMeshes;
+          for (let i = 0; i < arr.length; i++) {
+            out.push(arr[i]);
+          }
+        }
+      }
     }
+
+    for (let i = 0; i < this.extraDestructibles.length; i++) {
+      out.push(this.extraDestructibles[i]);
+    }
+    return out;
+  }
+
+  /**
+   * Spatial Query: Return only collidable AABBs within [radiusH, radiusV] chunks of position.
+   */
+  getNearbyCollidables(position, radiusH = 1, radiusV = 0) {
+    const out = this._nearbyCollidables;
+    out.length = 0;
+
+    const ccx = Math.floor(position.x / this.chunkWidth);
+    const ccy = Math.floor(position.y / this.layerHeight);
+    const ccz = Math.floor(position.z / this.chunkDepth);
+
+    for (let dx = -radiusH; dx <= radiusH; dx++) {
+      for (let dz = -radiusH; dz <= radiusH; dz++) {
+        for (let dy = -radiusV; dy <= radiusV; dy++) {
+          const chunk = this.loadedChunks.get(`${ccx + dx},${ccy + dy},${ccz + dz}`);
+          if (!chunk) continue;
+          const arr = chunk.collidables;
+          for (let i = 0; i < arr.length; i++) {
+            out.push(arr[i]);
+          }
+        }
+      }
+    }
+
+    for (let i = 0; i < this.extraCollidables.length; i++) {
+      out.push(this.extraCollidables[i]);
+    }
+    return out;
+  }
+
+  /**
+   * Spatial Query: Return light fixtures within nearby chunks + player beacons.
+   */
+  getNearbyLightFixtures(position, radiusH = 2, radiusV = 0) {
+    const out = this._nearbyLights;
+    out.length = 0;
+
+    const ccx = Math.floor(position.x / this.chunkWidth);
+    const ccy = Math.floor(position.y / this.layerHeight);
+    const ccz = Math.floor(position.z / this.chunkDepth);
+
+    for (let dx = -radiusH; dx <= radiusH; dx++) {
+      for (let dz = -radiusH; dz <= radiusH; dz++) {
+        for (let dy = -radiusV; dy <= radiusV; dy++) {
+          const chunk = this.loadedChunks.get(`${ccx + dx},${ccy + dy},${ccz + dz}`);
+          if (!chunk) continue;
+          const arr = chunk.lights;
+          for (let i = 0; i < arr.length; i++) {
+            if (arr[i].alive) out.push(arr[i]);
+          }
+        }
+      }
+    }
+
+    for (let i = 0; i < this.extraLights.length; i++) {
+      if (this.extraLights[i].alive) out.push(this.extraLights[i]);
+    }
+    return out;
   }
 
   rebuildCaches() {
@@ -231,25 +350,24 @@ export class WorldManager {
     this.cachedLights = [];
 
     for (const chunk of this.loadedChunks.values()) {
-      for (const obj of chunk.objects) {
-        if (obj.mesh) {
-          if (obj.mesh.isGroup) {
-            obj.mesh.traverse(child => {
-              if (child.isMesh) {
-                this.cachedDestructibles.push(child);
-              }
-            });
-          } else {
-            this.cachedDestructibles.push(obj.mesh);
-          }
-        }
+      for (let i = 0; i < chunk.destructibleMeshes.length; i++) {
+        this.cachedDestructibles.push(chunk.destructibleMeshes[i]);
       }
-      for (const wallMesh of chunk.collidables) {
-        this.cachedCollidables.push(wallMesh);
+      for (let i = 0; i < chunk.collidables.length; i++) {
+        this.cachedCollidables.push(chunk.collidables[i]);
       }
-      for (const fixture of chunk.lights) {
-        this.cachedLights.push(fixture);
+      for (let i = 0; i < chunk.lights.length; i++) {
+        this.cachedLights.push(chunk.lights[i]);
       }
+    }
+    for (let i = 0; i < this.extraDestructibles.length; i++) {
+      this.cachedDestructibles.push(this.extraDestructibles[i]);
+    }
+    for (let i = 0; i < this.extraCollidables.length; i++) {
+      this.cachedCollidables.push(this.extraCollidables[i]);
+    }
+    for (let i = 0; i < this.extraLights.length; i++) {
+      this.cachedLights.push(this.extraLights[i]);
     }
 
     this.dirtyCaches = false;
@@ -275,9 +393,25 @@ export class WorldManager {
     return this.selectBiome(cx, cy, cz);
   }
 
-  removeObject(mesh) {
-    if (!mesh) return;
+  removeObject(target) {
+    if (!target) return;
 
+    // Handle instanced WorldObject directly
+    if (target.instancedMesh) {
+      const pos = target.position;
+      const { cx, cy, cz } = this.getChunkCoords(pos);
+      const chunk = this.loadedChunks.get(`${cx},${cy},${cz}`);
+      if (chunk) {
+        chunk.removeObject(target);
+      } else {
+        for (const ch of this.loadedChunks.values()) {
+          ch.removeObject(target);
+        }
+      }
+      return;
+    }
+
+    const mesh = target.mesh || target;
     const root = mesh.userData?.rootMesh || mesh;
     const meshesToRemove = new Set([mesh, root]);
     if (root.traverse) {
@@ -287,17 +421,16 @@ export class WorldManager {
     // 1. Remove from parent chunk records
     for (const chunk of this.loadedChunks.values()) {
       for (const m of meshesToRemove) {
-        if (chunk.removeObject) {
-          chunk.removeObject(m);
-        }
-      }
-      const idx = chunk.objects.findIndex(o => o.mesh === root || o.mesh === mesh);
-      if (idx > -1) {
-        chunk.objects.splice(idx, 1);
+        chunk.removeObject(m);
       }
     }
 
-    // 2. Remove from active caches
+    // 2. Remove from player-placed extra lists & legacy caches
+    this.extraDestructibles = this.extraDestructibles.filter(m => !meshesToRemove.has(m));
+    this.extraCollidables = this.extraCollidables.filter(m => !meshesToRemove.has(m));
+    this.extraLights = this.extraLights.filter(f => !meshesToRemove.has(f.mesh));
+    this.jumpPads = this.jumpPads.filter(m => !meshesToRemove.has(m));
+
     this.cachedDestructibles = this.cachedDestructibles.filter(m => !meshesToRemove.has(m));
     this.cachedCollidables = this.cachedCollidables.filter(m => !meshesToRemove.has(m));
 

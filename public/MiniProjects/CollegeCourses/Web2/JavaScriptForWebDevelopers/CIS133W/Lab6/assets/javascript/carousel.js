@@ -10,29 +10,45 @@ let attractInterval = null;
 
 const ITEM_WIDTH = 200;
 
+let jumpRaf = null;
+
 function updateCarousel() {
   const offset = -currentIndex * ITEM_WIDTH;
   track.style.transform = `translateX(${offset}px)`;
 }
 
 function jumpAndSlide(direction) {
+  const currentX = new DOMMatrix(getComputedStyle(track).transform).m41;
+  const loopWidth = onions.length * ITEM_WIDTH;
+  const shiftedX = currentX + (direction === 1 ? loopWidth : -loopWidth);
+
   track.style.transition = "none";
-  updateCarousel();
-  setTimeout(() => {
+  track.style.transform = `translateX(${shiftedX}px)`;
+  void track.offsetWidth;
+
+  currentIndex += direction;
+
+  if (jumpRaf) cancelAnimationFrame(jumpRaf);
+  jumpRaf = requestAnimationFrame(() => {
+    jumpRaf = null;
     track.style.transition = "transform 0.5s ease";
-    currentIndex += direction;
     updateCarousel();
-  }, 0);
+  });
 }
 
 function transition(direction) {
-  if (currentIndex === onions.length && direction === 1) {
-    currentIndex = 0;
+  if (currentIndex >= onions.length * 2 && direction === 1) {
+    currentIndex -= onions.length;
     jumpAndSlide(direction);
-  } else if (currentIndex === 0 && direction === -1) {
-    currentIndex = onions.length;
+  } else if (currentIndex <= 1 && direction === -1) {
+    currentIndex += onions.length;
     jumpAndSlide(direction);
   } else {
+    if (jumpRaf) {
+      cancelAnimationFrame(jumpRaf);
+      jumpRaf = null;
+      track.style.transition = "transform 0.5s ease";
+    }
     currentIndex += direction;
     updateCarousel();
   }
@@ -103,8 +119,10 @@ function createItems() {
 function appendToCarousel(onion) {
   if (!track) return;
   onions.push(onion);
-  track.appendChild(createCarouselItem(onion));
-  track.appendChild(createCarouselItem(onion));
+  track.innerHTML = "";
+  createItems();
+  createItems();
+  createItems();
   updateCarousel();
 }
 
@@ -118,6 +136,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (typeof onions !== "undefined" && Array.isArray(onions)) {
     createItems();
     createItems();
+    createItems();
+    currentIndex = onions.length;
   }
 
   if (prevButton) {
@@ -131,7 +151,11 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener(event, resetIdleTimer, { passive: true });
   });
 
+  track.style.transition = "none";
   updateCarousel();
+  void track.offsetWidth;
+  track.style.transition = "transform 0.5s ease";
+
   resetIdleTimer();
 });
 

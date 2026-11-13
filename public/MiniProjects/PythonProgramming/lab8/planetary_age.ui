@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <interface version="1.1">
   <object class="ttk.Frame" id="top_frame">
-    <property name="height">200</property>
-    <property name="padding">10</property>
-    <property name="width">200</property>
+    <property name="height">250</property>
+    <property name="padding">15</property>
+    <property name="width">350</property>
     <layout manager="grid">
       <property name="column">0</property>
       <property name="propagate">True</property>
@@ -13,9 +13,10 @@
       <property type="row" id="0" name="weight">1</property>
     </layout>
     <child>
-      <object class="ttk.Label" id="top_label">
+      <object class="ttk.Label" id="title_label">
         <property name="font">{Arial} 16 {bold}</property>
-        <property name="text" translatable="yes">Grams to Ounces</property>
+        <property name="text"
+          translatable="yes">Planetary Age Calculator</property>
         <layout manager="grid">
           <property name="column">0</property>
           <property name="propagate">True</property>
@@ -25,22 +26,34 @@
       </object>
     </child>
     <child>
-      <object class="ttk.Frame" id="control_frame">
-        <property name="height">200</property>
-        <property name="padding">10</property>
-        <property name="width">200</property>
+      <object class="ttk.Label" id="desc_label">
+        <property name="padding">5</property>
+        <property name="text" translatable="yes"
+          >Convert your Earth age to Venus and Mars years.</property>
         <layout manager="grid">
           <property name="column">0</property>
           <property name="propagate">True</property>
           <property name="row">1</property>
+        </layout>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Frame" id="input_frame">
+        <property name="padding">10</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="propagate">True</property>
+          <property name="row">2</property>
           <property type="col" id="0" name="weight">1</property>
-          <property type="row" id="1" name="weight">1</property>
         </layout>
         <child>
-          <object class="ttk.Label" id="label4">
-            <property name="text" translatable="yes">Grams:</property>
+          <object class="ttk.Label" id="age_label">
+            <property name="text"
+              translatable="yes">Age (Earth years):</property>
             <layout manager="grid">
               <property name="column">0</property>
+              <property name="padx">5</property>
+              <property name="pady">5</property>
               <property name="propagate">True</property>
               <property name="row">0</property>
               <property name="sticky">e</property>
@@ -48,10 +61,12 @@
           </object>
         </child>
         <child>
-          <object class="ttk.Entry" id="grams_entry">
-            <property name="width">10</property>
+          <object class="ttk.Entry" id="age_entry">
+            <property name="width">12</property>
             <layout manager="grid">
               <property name="column">1</property>
+              <property name="padx">5</property>
+              <property name="pady">5</property>
               <property name="propagate">True</property>
               <property name="row">0</property>
               <property name="sticky">w</property>
@@ -61,13 +76,15 @@
       </object>
     </child>
     <child>
-      <object class="ttk.Button" id="button2">
-        <property name="command" type="command" cbtype="simple">calculate</property>
-        <property name="text" translatable="yes">Calculate</property>
+      <object class="ttk.Button" id="calc_button">
+        <property name="command" type="command"
+          cbtype="simple">calculate</property>
+        <property name="text" translatable="yes">Calculate Age</property>
         <layout manager="grid">
           <property name="column">0</property>
+          <property name="pady">8</property>
           <property name="propagate">True</property>
-          <property name="row">2</property>
+          <property name="row">3</property>
         </layout>
       </object>
     </child>
@@ -85,19 +102,18 @@
     </child>
     <child>
       <object class="ttk.Frame" id="result_frame">
-        <property name="height">200</property>
-        <property name="width">200</property>
+        <property name="padding">5</property>
         <layout manager="grid">
           <property name="column">0</property>
           <property name="propagate">True</property>
           <property name="row">5</property>
+          <property type="col" id="0" name="weight">1</property>
         </layout>
         <child>
-          <object class="ttk.Label" id="result_label">
-            <property name="font">{Arial} 12 {bold}</property>
-            <property name="padding">10</property>
-            <property name="text" translatable="yes">Results...</property>
-            <property name="textvariable">string:result_label_variable</property>
+          <object class="ttk.Label" id="result_header">
+            <property name="font">{Arial} 11 {bold}</property>
+            <property name="padding">4</property>
+            <property name="text" translatable="yes">Calculated Age:</property>
             <layout manager="grid">
               <property name="column">0</property>
               <property name="columnspan">2</property>
@@ -107,10 +123,12 @@
           </object>
         </child>
         <child>
-          <object class="ttk.Label" id="ounces_label">
-            <property name="text" translatable="yes">Ounces:</property>
+          <object class="ttk.Label" id="venus_label">
+            <property name="text" translatable="yes">Age (Venus):</property>
             <layout manager="grid">
               <property name="column">0</property>
+              <property name="padx">5</property>
+              <property name="pady">4</property>
               <property name="propagate">True</property>
               <property name="row">1</property>
               <property name="sticky">e</property>
@@ -118,14 +136,45 @@
           </object>
         </child>
         <child>
-          <object class="ttk.Entry" id="ounces_entry">
+          <object class="ttk.Entry" id="venus_entry">
             <property name="state">readonly</property>
-            <property name="textvariable">string:ounces_entry_variable</property>
-            <property name="width">15</property>
+            <property
+              name="textvariable">string:venus_entry_variable</property>
+            <property name="width">16</property>
             <layout manager="grid">
               <property name="column">1</property>
+              <property name="padx">5</property>
+              <property name="pady">4</property>
               <property name="propagate">True</property>
               <property name="row">1</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="mars_label">
+            <property name="text" translatable="yes">Age (Mars):</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="padx">5</property>
+              <property name="pady">4</property>
+              <property name="propagate">True</property>
+              <property name="row">2</property>
+              <property name="sticky">e</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Entry" id="mars_entry">
+            <property name="state">readonly</property>
+            <property name="textvariable">string:mars_entry_variable</property>
+            <property name="width">16</property>
+            <layout manager="grid">
+              <property name="column">1</property>
+              <property name="padx">5</property>
+              <property name="pady">4</property>
+              <property name="propagate">True</property>
+              <property name="row">2</property>
               <property name="sticky">w</property>
             </layout>
           </object>

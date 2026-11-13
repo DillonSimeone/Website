@@ -1,4 +1,16 @@
+# *****************************************************************************
+# Authors:       Rusty Jennings, Dillon Simeone
+# Assignment:    Lab 8 - Calculator
+# Date:          11/10/2026
+# Description:   About tab displaying project overview, calculator
+#                descriptions, and partner credits.
+# Inputs:        None
+# Outputs:       About information displayed in GUI
+# Sources:       Lab 8 Assignment Instructions
+# *****************************************************************************
+
 import os
+
 import pygubu
 
 PROJECT_PATH = os.path.dirname(__file__)
@@ -13,8 +25,8 @@ class AboutApp:
 
     def __init__(self, master):
 
-        # Boilerplate from pygubu-designer. Renamed builder and mainwindow to use
-        # name mangling.
+        # Boilerplate from pygubu-designer. Renamed builder and mainwindow to
+        # use name mangling.
         self.__builder = builder = pygubu.Builder()
         builder.add_resource_path(PROJECT_PATH)
         builder.add_from_file(PROJECT_UI)
@@ -22,7 +34,8 @@ class AboutApp:
         builder.connect_callbacks(self)
 
     def get_top_frame(self):
-        # Return the top frame for the app so that it can be displayed in a tabbed notebook.
+        # Return the top frame for the app so that it can be displayed in a
+        # tabbed notebook.
         return self.__mainwindow
 
     def run(self):
@@ -35,4 +48,3 @@ if __name__ == '__main__':
     root = tk.Tk()
     app = AboutApp(root)
     app.run()
-

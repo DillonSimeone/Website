@@ -15,7 +15,8 @@
     <child>
       <object class="ttk.Label" id="title_label">
         <property name="font">{Arial} 16 {bold}</property>
-        <property name="text" translatable="yes">Filament Mass to Length</property>
+        <property name="text"
+          translatable="yes">Filament Mass to Length</property>
         <layout manager="grid">
           <property name="column">0</property>
           <property name="propagate">True</property>
@@ -27,7 +28,8 @@
     <child>
       <object class="ttk.Label" id="desc_label">
         <property name="padding">5</property>
-        <property name="text" translatable="yes">Estimate printable 1.75 mm PLA length from spool weight.</property>
+        <property name="text" translatable="yes"
+          >Estimate printable 1.75 mm PLA length from spool weight.</property>
         <layout manager="grid">
           <property name="column">0</property>
           <property name="propagate">True</property>
@@ -46,7 +48,8 @@
         </layout>
         <child>
           <object class="ttk.Label" id="mass_label">
-            <property name="text" translatable="yes">Filament Mass (grams):</property>
+            <property name="text"
+              translatable="yes">Filament Mass (grams):</property>
             <layout manager="grid">
               <property name="column">0</property>
               <property name="padx">5</property>
@@ -74,7 +77,8 @@
     </child>
     <child>
       <object class="ttk.Button" id="calc_button">
-        <property name="command" type="command" cbtype="simple">calculate</property>
+        <property name="command" type="command"
+          cbtype="simple">calculate</property>
         <property name="text" translatable="yes">Calculate Length</property>
         <layout manager="grid">
           <property name="column">0</property>
@@ -109,7 +113,8 @@
           <object class="ttk.Label" id="result_header">
             <property name="font">{Arial} 11 {bold}</property>
             <property name="padding">4</property>
-            <property name="text" translatable="yes">Calculated Length:</property>
+            <property name="text"
+              translatable="yes">Calculated Length:</property>
             <layout manager="grid">
               <property name="column">0</property>
               <property name="columnspan">2</property>
@@ -120,7 +125,8 @@
         </child>
         <child>
           <object class="ttk.Label" id="meters_label">
-            <property name="text" translatable="yes">Length (Meters):</property>
+            <property name="text"
+              translatable="yes">Length (Meters):</property>
             <layout manager="grid">
               <property name="column">0</property>
               <property name="padx">5</property>
@@ -134,7 +140,8 @@
         <child>
           <object class="ttk.Entry" id="meters_entry">
             <property name="state">readonly</property>
-            <property name="textvariable">string:meters_entry_variable</property>
+            <property
+              name="textvariable">string:meters_entry_variable</property>
             <property name="width">16</property>
             <layout manager="grid">
               <property name="column">1</property>

@@ -1,0 +1,16 @@
+{
+  "id": "phase_wraith",
+  "name": "Phase Wraith",
+  "isBoss": false,
+  "nodes": [
+    { "id": 0, "parentId": null, "type": "core", "pos": [0, 1.65, 0], "dir": [0, 1, 0], "scale": 0.95 },
+    { "id": 1, "parentId": 0, "type": "ocular", "pos": [-0.18, 0.2, 0.36], "dir": [0, 0, 1], "scale": 1.0 },
+    { "id": 2, "parentId": 0, "type": "ocular", "pos": [0.18, 0.2, 0.36], "dir": [0, 0, 1], "scale": 1.0 },
+    { "id": 3, "parentId": 0, "type": "tendril", "pos": [-0.28, -0.1, 0], "dir": [-0.5, -0.8, -0.2], "scale": 1.2 },
+    { "id": 4, "parentId": 0, "type": "tendril", "pos": [0.28, -0.1, 0], "dir": [0.5, -0.8, -0.2], "scale": 1.2 },
+    { "id": 5, "parentId": 0, "type": "tendril", "pos": [0, -0.2, -0.2], "dir": [0, -0.85, -0.5], "scale": 1.25 },
+    { "id": 6, "parentId": 0, "type": "claw", "pos": [-0.35, 0.15, 0.15], "dir": [-0.4, -0.2, 0.9], "scale": 1.0 },
+    { "id": 7, "parentId": 0, "type": "claw", "pos": [0.35, 0.15, 0.15], "dir": [0.4, -0.2, 0.9], "scale": 1.0 },
+    { "id": 8, "parentId": 0, "type": "arccoil", "pos": [0, 0.35, -0.1], "dir": [0, 1, 0], "scale": 0.9 }
+  ]
+}

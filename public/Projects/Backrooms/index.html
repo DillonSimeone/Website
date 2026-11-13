@@ -23,8 +23,8 @@
 
   <!-- WebGL Render Canvas Container -->
   <div id="canvas-container"></div>
-  <div class="vhs-overlay"></div>
   <div id="screen-flash"></div>
+  <div id="damage-vignette"></div>
 
   <!-- Reticle & Targeted Component HUD -->
   <div id="crosshair-container">
@@ -50,12 +50,22 @@
           <div id="xp-fill"></div>
         </div>
       </div>
+      <div id="hp-container">
+        <div class="hp-label">
+          <span>INTEGRITY</span>
+          <span id="hp-numbers">100 / 100</span>
+        </div>
+        <div class="hp-track">
+          <div id="hp-fill"></div>
+        </div>
+      </div>
     </div>
 
     <div class="status-badge" style="gap: 12px;">
       <span id="zone-info">STRATA // LEVEL 0: MONOSODIUM YELLOW</span>
       <span id="coord-info">X: 0.0 | Y: 1.6 (FL 0) | Z: 0.0</span>
-      <span id="fps-counter" style="color: #666; font-size: 10px;">60 FPS</span>
+      <span id="wave-info" style="color: #ff4a4a; font-size: 13px; display: none;">WAVE 1</span>
+      <span id="fps-counter" style="color: #9e9; font-size: 13px;">60 FPS</span>
     </div>
   </div>
 
@@ -93,26 +103,24 @@
       <span class="res-name">🪜 Scaffolding</span>
       <span class="res-val" id="res-scaffolding">0</span>
     </div>
-  </div>
-
-  <!-- Improvised Workbench (Bottom-Right) -->
-  <div id="crafting-panel" class="hud-layer">
-    <div class="panel-header">
-      <span>IMPROVISED WORKBENCH</span>
-      <span style="color: #88c0d0;">[CLICK / HOTKEYS 1-7 / R]</span>
+    <div class="res-row">
+      <span class="res-name" style="color: #ff66dd;">🔮 Anomalous Cores</span>
+      <span class="res-val" id="res-core" style="color: #ff66dd;">0</span>
     </div>
-    <div class="recipe-list" id="recipe-list-el"></div>
   </div>
 
-  <!-- Active Anomalous Perks Dock (Bottom Center) -->
-  <div id="perks-dock" class="hud-layer"></div>
+  <!-- 6-Slot Drag-and-Drop HUD Hotbar (Bottom-Center) -->
+  <div id="hud-hotbar" class="hud-layer"></div>
+
+  <!-- CRT Radar Minimap (Top-Right under Top Bar) -->
+  <canvas id="radar-canvas" class="hud-layer" width="160" height="160"></canvas>
 
   <!-- Realtime Notification Toast Feed -->
   <div id="notification-feed"></div>
 
   <!-- Hotkey Navigation Banner -->
   <div id="controls-banner">
-    [WASD] MOVE &nbsp;|&nbsp; [SPACE] JUMP &nbsp;|&nbsp; [HOLD LMB] DEMOLISH &nbsp;|&nbsp; [RMB / B] BARRICADE &nbsp;|&nbsp; [L] SCAFFOLDING &nbsp;|&nbsp; [F] LANTERN &nbsp;|&nbsp; [Q] PHASE &nbsp;|&nbsp; [1-6] CRAFT
+    [WASD] MOVE &nbsp;|&nbsp; [SPACE] JUMP &nbsp;|&nbsp; [LMB] USE/FIRE &nbsp;|&nbsp; [1-6] HOTBAR &nbsp;|&nbsp; [E] INVENTORY &nbsp;|&nbsp; [TAB] BUILD MENU &nbsp;|&nbsp; [RMB] BARRICADE &nbsp;|&nbsp; [F] LANTERN &nbsp;|&nbsp; [Q] PHASE
   </div>
 
   <!-- PointerLock Start Screen -->
@@ -132,9 +140,62 @@
   <div id="levelup-modal">
     <div class="modal-header">
       <div class="modal-title">ANOMALOUS ADAPTATION</div>
-      <div class="modal-subtitle">CHOOSE ONE PERMANENT REALITY DISTORTION BENEFIT</div>
+      <div class="modal-subtitle">CHOOSE ONE PERMANENT REALITY DISTORTION BENEFIT [CLICK OR PRESS 1-3]</div>
     </div>
     <div class="card-deck" id="card-deck-el"></div>
+  </div>
+
+  <!-- Keyboard-Driven Build & Fabrication Menu [TAB] -->
+  <div id="build-menu-modal">
+    <div class="build-window">
+      <div class="build-header">
+        <div>
+          <div class="build-title">IMPROVISED FABRICATION MATRIX</div>
+          <div id="build-feedback-el" class="build-feedback">[A/D OR LEFT/RIGHT] SWITCH FOLDER // [W/S OR UP/DOWN] SELECT // [ENTER/SPACE] FABRICATE</div>
+        </div>
+        <div class="build-close-hint">[TAB] CLOSE</div>
+      </div>
+      <div class="build-folders" id="build-folders-el"></div>
+      <div class="build-body">
+        <div class="build-grid" id="build-grid-el"></div>
+        <div class="build-inspector" id="build-inspector-el"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inventory & Drag-and-Drop Loadout Modal [E] -->
+  <div id="inventory-modal">
+    <div class="inv-window">
+      <div class="build-header">
+        <div>
+          <div class="build-title">ANOMALOUS GEAR &amp; LOADOUT MATRIX</div>
+          <div class="build-feedback">DRAG ITEMS BETWEEN SLOTS // [RIGHT-CLICK] WEAPON TO LEVEL UP (NO CAP) // [E] TO CLOSE</div>
+        </div>
+        <div class="build-close-hint">[E] CLOSE</div>
+      </div>
+      <div class="inv-section-label">BACKPACK STORAGE (18 SLOTS)</div>
+      <div id="backpack-grid-el" class="inv-grid"></div>
+      <div class="inv-section-label" style="margin-top: 14px;">ACTIVE HOTBAR (KEYS 1–6)</div>
+      <div id="modal-hotbar-el" class="inv-hotbar-row"></div>
+      <div class="inv-section-label" style="margin-top: 14px;">ACTIVE ANOMALOUS PERKS</div>
+      <div id="perks-dock"></div>
+    </div>
+  </div>
+
+  <!-- Uncapped Weapon Leveling Modal [RMB on weapon] -->
+  <div id="weapon-level-modal">
+    <div class="wlv-window">
+      <div id="weapon-level-body"></div>
+    </div>
+  </div>
+
+  <!-- Game Over / Reality Collapse Modal -->
+  <div id="gameover-modal">
+    <div class="gameover-window">
+      <div class="gameover-title">REALITY INTEGRITY COLLAPSED</div>
+      <div id="gameover-stats" class="gameover-stats"></div>
+      <button id="gameover-restart-btn" class="gameover-btn">RE-ENTER THE BACKROOMS</button>
+    </div>
   </div>
 
   <!-- Modular Game Entry Point -->

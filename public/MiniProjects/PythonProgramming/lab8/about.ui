@@ -1,0 +1,94 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface version="1.1">
+  <object class="ttk.Frame" id="top_frame">
+    <property name="height">200</property>
+    <property name="padding">15</property>
+    <property name="width">200</property>
+    <layout manager="grid">
+      <property name="column">0</property>
+      <property name="propagate">True</property>
+      <property name="row">0</property>
+      <property name="sticky">nsew</property>
+      <property type="col" id="0" name="weight">1</property>
+      <property type="row" id="0" name="weight">1</property>
+    </layout>
+    <child>
+      <object class="ttk.Label" id="label6">
+        <property name="font">{Arial} 16 {bold}</property>
+        <property name="text" translatable="yes">Dillon and Rusty Calculator Project</property>
+        <layout manager="grid">
+          <property type="col" id="0" name="weight">1</property>
+        </layout>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Frame" id="frame6">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="propagate">True</property>
+          <property name="row">5</property>
+          <property type="col" id="0" name="weight">1</property>
+          <property type="row" id="5" name="weight">1</property>
+        </layout>
+        <child>
+          <object class="ttk.Label" id="label7">
+            <property name="justify">center</property>
+            <property name="text" translatable="yes">Proper 3D printing requires both spool mass and interplanetary timing. Before starting any overnight print, makers must check their filament length and confirm their age on Venus and Mars to account for planetary gravity drift and bed-leveling alignment. Never slice blind: check your grams, check your planets, then hit print.</property>
+            <property name="wraplength">400</property>
+            <layout manager="pack">
+              <property name="pady">5 15</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="label8">
+            <property name="font">{Arial} 14 {bold}</property>
+            <property name="text" translatable="yes">Filament Mass to Length</property>
+            <layout manager="pack" />
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="label9">
+            <property name="text" translatable="yes">Dillon Simeone (Driver), Rusty Jennings (Navigator)</property>
+            <layout manager="pack" />
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="label10">
+            <property name="justify">center</property>
+            <property name="text" translatable="yes">Converts remaining 1.75 mm PLA spool weight (grams) into printable meters and feet.</property>
+            <property name="wraplength">380</property>
+            <layout manager="pack">
+              <property name="pady">2 15</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="label21">
+            <property name="font">{Arial} 14 {bold}</property>
+            <property name="text" translatable="yes">Planetary Age</property>
+            <layout manager="pack" />
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="label22">
+            <property name="text" translatable="yes">Rusty Jennings (Driver), Dillon Simeone (Navigator)</property>
+            <layout manager="pack" />
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="label23">
+            <property name="justify">center</property>
+            <property name="text" translatable="yes">Calculates your age in Venus and Mars orbital years for mandatory pre-print cosmic calibration.</property>
+            <property name="wraplength">380</property>
+            <layout manager="pack">
+              <property name="pady">2 5</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

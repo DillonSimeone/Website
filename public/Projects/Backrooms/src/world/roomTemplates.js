@@ -1,5 +1,8 @@
 import * as THREE from 'three';
 import { Floor, SubFloor, Wall, Pillar, Ceiling, SubCeiling, WaterBlock, Fixture } from './subfloor.js';
+import { getSharedBoxGeometry } from './sharedAssets.js';
+
+const _rtDummy = new THREE.Object3D();
 
 /**
  * RoomTemplates: Procedural architectural generators producing surreal, anomalous
@@ -59,92 +62,102 @@ export class RoomTemplates {
     const W = chunk.gridWidth;
     const wallMat = biome.getWallMaterial();
 
-    // Doorway dimensions (centered on each wall edge)
-    const doorWidth = 2;   // In grid cells
-    const doorHeight = Math.min(roomH, 2.5); // Max doorway height
-    const doorStart = Math.floor((W - doorWidth) / 2); // Grid cell where door starts
+    const doorWidth = 2;
+    const doorHeight = Math.min(roomH, 2.5);
+    const doorStart = Math.floor((W - doorWidth) / 2);
     const doorEnd = doorStart + doorWidth;
-
-    // Wall thickness
     const thick = 0.25;
 
-    // North wall (z = origin.z)
-    this._buildWallEdge(chunk, origin, biome, wallMat, roomH,
-      'north', connectivity.north, V, W, thick, doorStart, doorEnd, doorHeight);
+    // Batch N/S full walls, E/W full walls, N/S transoms, E/W transoms into up to 4 InstancedMeshes
+    const nsFullGeo = getSharedBoxGeometry(V, roomH, thick);
+    const ewFullGeo = getSharedBoxGeometry(thick, roomH, V);
+    const hasTransom = roomH > doorHeight + 0.3;
+    const transomH = hasTransom ? roomH - doorHeight : 0;
+    const nsTransGeo = hasTransom ? getSharedBoxGeometry(V, transomH, thick) : null;
+    const ewTransGeo = hasTransom ? getSharedBoxGeometry(thick, transomH, V) : null;
 
-    // South wall (z = origin.z + W*V)
-    this._buildWallEdge(chunk, origin, biome, wallMat, roomH,
-      'south', connectivity.south, V, W, thick, doorStart, doorEnd, doorHeight);
+    const nsFullList = [];
+    const ewFullList = [];
+    const nsTransList = [];
+    const ewTransList = [];
 
-    // West wall (x = origin.x)
-    this._buildWallEdge(chunk, origin, biome, wallMat, roomH,
-      'west', connectivity.west, V, W, thick, doorStart, doorEnd, doorHeight);
-
-    // East wall (x = origin.x + W*V)
-    this._buildWallEdge(chunk, origin, biome, wallMat, roomH,
-      'east', connectivity.east, V, W, thick, doorStart, doorEnd, doorHeight);
-  }
-
-  _buildWallEdge(chunk, origin, biome, wallMat, roomH, direction, hasOpening, V, W, thick, doorStart, doorEnd, doorHeight) {
-    // For each cell along this wall, place a wall segment unless it's in the door zone.
-    // Walls span from floor to ceiling for the full roomH.
-    const isNS = (direction === 'north' || direction === 'south');
-    const cellCount = W;
-
-    for (let i = 0; i < cellCount; i++) {
-      const isInDoorway = hasOpening && (i >= doorStart && i < doorEnd);
-
-      let wx, wz;
-      if (direction === 'north') {
-        wx = origin.x + (i * V) + (V / 2);
-        wz = origin.z;
-      } else if (direction === 'south') {
-        wx = origin.x + (i * V) + (V / 2);
-        wz = origin.z + (W * V);
-      } else if (direction === 'west') {
-        wx = origin.x;
-        wz = origin.z + (i * V) + (V / 2);
-      } else { // east
-        wx = origin.x + (W * V);
-        wz = origin.z + (i * V) + (V / 2);
-      }
-
-      if (isInDoorway) {
-        // Place wall only ABOVE the doorway (transom/lintel)
-        if (roomH > doorHeight + 0.3) {
-          const transomH = roomH - doorHeight;
-          const transomGeo = isNS
-            ? new THREE.BoxGeometry(V, transomH, thick)
-            : new THREE.BoxGeometry(thick, transomH, V);
-          const transomMesh = new THREE.Mesh(transomGeo, wallMat);
-          transomMesh.position.set(wx, origin.y + doorHeight + (transomH / 2), wz);
-          const transomObj = new Wall(transomMesh, {
-            title: 'Doorway Transom Wall',
-            hp: 28,
-            drops: biome.getDropTable('wall')
-          });
-          transomMesh.userData.bbox = new THREE.Box3().setFromObject(transomMesh);
-          chunk.group.add(transomMesh);
-          chunk.objects.push(transomObj);
-          chunk.collidables.push(transomMesh);
+    const collectEdge = (direction, hasOpening) => {
+      const isNS = (direction === 'north' || direction === 'south');
+      for (let i = 0; i < W; i++) {
+        const isInDoorway = hasOpening && (i >= doorStart && i < doorEnd);
+        let wx, wz;
+        if (direction === 'north') {
+          wx = origin.x + (i * V) + (V / 2);
+          wz = origin.z;
+        } else if (direction === 'south') {
+          wx = origin.x + (i * V) + (V / 2);
+          wz = origin.z + (W * V);
+        } else if (direction === 'west') {
+          wx = origin.x;
+          wz = origin.z + (i * V) + (V / 2);
+        } else {
+          wx = origin.x + (W * V);
+          wz = origin.z + (i * V) + (V / 2);
         }
-      } else {
-        // Full solid wall segment
-        const wallGeo = isNS
-          ? new THREE.BoxGeometry(V, roomH, thick)
-          : new THREE.BoxGeometry(thick, roomH, V);
-        const wallMesh = new THREE.Mesh(wallGeo, wallMat);
-        wallMesh.position.set(wx, origin.y + (roomH / 2), wz);
-        const wallObj = new Wall(wallMesh, {
-          title: 'Drywall Partition',
+
+        if (isInDoorway) {
+          if (hasTransom) {
+            const pos = new THREE.Vector3(wx, origin.y + doorHeight + (transomH / 2), wz);
+            (isNS ? nsTransList : ewTransList).push(pos);
+          }
+        } else {
+          const pos = new THREE.Vector3(wx, origin.y + (roomH / 2), wz);
+          (isNS ? nsFullList : ewFullList).push(pos);
+        }
+      }
+    };
+
+    // Single-owner perimeter walls: each chunk owns ONLY its North (z-) and West (x-) boundaries.
+    // South and East boundaries are owned by the adjacent (cz+1) and (cx+1) chunks,
+    // eliminating 100% of overlapping duplicate walls, Z-fighting, and blocked passages.
+    collectEdge('north', connectivity.north);
+    collectEdge('west', connectivity.west);
+
+    const buildWallBatch = (positions, geo, halfX, halfY, halfZ, title) => {
+      if (positions.length === 0) return;
+      const inst = new THREE.InstancedMesh(geo, wallMat, positions.length);
+      for (let i = 0; i < positions.length; i++) {
+        const p = positions[i];
+        _rtDummy.position.copy(p);
+        _rtDummy.scale.set(1, 1, 1);
+        _rtDummy.updateMatrix();
+        inst.setMatrixAt(i, _rtDummy.matrix);
+
+        const bbox = new THREE.Box3(
+          new THREE.Vector3(p.x - halfX, p.y - halfY, p.z - halfZ),
+          new THREE.Vector3(p.x + halfX, p.y + halfY, p.z + halfZ)
+        );
+        const wallObj = new Wall(null, {
+          instancedMesh: inst,
+          instanceId: i,
+          position: p,
+          bbox,
+          title,
           hp: 28,
           drops: biome.getDropTable('wall')
         });
-        wallMesh.userData.bbox = new THREE.Box3().setFromObject(wallMesh);
-        chunk.group.add(wallMesh);
         chunk.objects.push(wallObj);
-        chunk.collidables.push(wallMesh);
+        chunk.collidables.push({
+          position: wallObj.position,
+          userData: { bbox },
+          worldObject: wallObj
+        });
       }
+      inst.instanceMatrix.needsUpdate = true;
+      inst.computeBoundingSphere();
+      chunk.group.add(inst);
+    };
+
+    buildWallBatch(nsFullList, nsFullGeo, V * 0.5, roomH * 0.5, thick * 0.5, 'Drywall Partition');
+    buildWallBatch(ewFullList, ewFullGeo, thick * 0.5, roomH * 0.5, V * 0.5, 'Drywall Partition');
+    if (hasTransom) {
+      buildWallBatch(nsTransList, nsTransGeo, V * 0.5, transomH * 0.5, thick * 0.5, 'Doorway Transom Wall');
+      buildWallBatch(ewTransList, ewTransGeo, thick * 0.5, transomH * 0.5, V * 0.5, 'Doorway Transom Wall');
     }
   }
 
@@ -156,6 +169,7 @@ export class RoomTemplates {
   generateEnvelope(chunk, origin, biome, roomH, options = {}) {
     const V = chunk.voxelSize;
     const W = chunk.gridWidth;
+    const maxCells = W * W;
 
     const floorMat = biome.getFloorMaterial();
     const subFloorMat = biome.getSubFloorMaterial();
@@ -163,15 +177,22 @@ export class RoomTemplates {
     const fixMat = biome.getFixtureMaterial();
     const lightConfig = biome.getLightingStyle();
 
-    const floorGeo = new THREE.BoxGeometry(V, 0.1, V);
-    const subFloorGeo = new THREE.BoxGeometry(V, 0.14, V);
-    const ceilGeo = new THREE.BoxGeometry(V, 0.08, V);
+    const floorGeo = getSharedBoxGeometry(V, 0.1, V);
+    const subFloorGeo = getSharedBoxGeometry(V, 0.14, V);
+    const ceilGeo = getSharedBoxGeometry(V, 0.08, V);
 
-    // Optional: skip certain floor tiles (for holes, gaps, etc.)
-    const skipFloor = options.skipFloor || null; // Set<"gx,gz">
+    const floorInst = new THREE.InstancedMesh(floorGeo, floorMat, maxCells);
+    const subFloorInst = new THREE.InstancedMesh(subFloorGeo, subFloorMat, maxCells);
+    const ceilInst = new THREE.InstancedMesh(ceilGeo, ceilMat, maxCells);
+    const fixInst = new THREE.InstancedMesh(ceilGeo, fixMat, 16);
+
+    let fIdx = 0;
+    let sfIdx = 0;
+    let cIdx = 0;
+    let fixIdx = 0;
+
+    const skipFloor = options.skipFloor || null;
     const skipCeiling = options.skipCeiling || null;
-
-    // Fixture frequency: how often lights appear in the ceiling grid
     const fixtureFreq = options.fixtureFreq || 3;
 
     for (let gx = 0; gx < W; gx++) {
@@ -182,59 +203,97 @@ export class RoomTemplates {
 
         // Floor
         if (!skipFloor || !skipFloor.has(cellKey)) {
-          const fMesh = new THREE.Mesh(floorGeo, floorMat);
-          fMesh.position.set(px, origin.y, pz);
-          const fObj = new Floor(fMesh, {
+          _rtDummy.position.set(px, origin.y, pz);
+          _rtDummy.scale.set(1, 1, 1);
+          _rtDummy.updateMatrix();
+          floorInst.setMatrixAt(fIdx, _rtDummy.matrix);
+          const fObj = new Floor(null, {
+            instancedMesh: floorInst,
+            instanceId: fIdx,
+            position: new THREE.Vector3(px, origin.y, pz),
             title: `${biome.name} Floor`,
             drops: biome.getDropTable('floor')
           });
-          chunk.group.add(fMesh);
           chunk.objects.push(fObj);
+          fIdx++;
 
           // Subfloor
-          const sfMesh = new THREE.Mesh(subFloorGeo, subFloorMat);
-          sfMesh.position.set(px, origin.y - 0.12, pz);
-          const sfObj = new SubFloor(sfMesh, {
+          _rtDummy.position.set(px, origin.y - 0.12, pz);
+          _rtDummy.updateMatrix();
+          subFloorInst.setMatrixAt(sfIdx, _rtDummy.matrix);
+          const sfObj = new SubFloor(null, {
+            instancedMesh: subFloorInst,
+            instanceId: sfIdx,
+            position: new THREE.Vector3(px, origin.y - 0.12, pz),
             title: `${biome.name} Sub-Floor`,
             drops: biome.getDropTable('subfloor')
           });
-          chunk.group.add(sfMesh);
           chunk.objects.push(sfObj);
+          sfIdx++;
         }
 
         // Ceiling
         if (!skipCeiling || !skipCeiling.has(cellKey)) {
           const isFixture = (gx % fixtureFreq === 1 && gz % fixtureFreq === 1);
-          if (isFixture) {
-            const fixMesh = new THREE.Mesh(ceilGeo, fixMat);
-            fixMesh.position.set(px, origin.y + roomH, pz);
+          if (isFixture && fixIdx < 16) {
+            _rtDummy.position.set(px, origin.y + roomH, pz);
+            _rtDummy.scale.set(1, 1, 1);
+            _rtDummy.updateMatrix();
+            fixInst.setMatrixAt(fixIdx, _rtDummy.matrix);
 
-            const pLight = new THREE.PointLight(
-              lightConfig.color, lightConfig.intensity,
-              lightConfig.distance, lightConfig.decay
-            );
-            pLight.position.set(px, origin.y + roomH - 0.25, pz);
-            chunk.group.add(pLight);
-
-            const fixObj = new Fixture(fixMesh, pLight, {
+            const fixObj = new Fixture(null, lightConfig, {
+              instancedMesh: fixInst,
+              instanceId: fixIdx,
+              position: new THREE.Vector3(px, origin.y + roomH, pz),
+              lightPos: new THREE.Vector3(px, origin.y + roomH - 0.25, pz),
               title: `${biome.name} Luminaire`,
               drops: biome.getDropTable('fixture')
             });
-            chunk.group.add(fixMesh);
             chunk.objects.push(fixObj);
             chunk.lights.push(fixObj);
+            fixIdx++;
           } else {
-            const cMesh = new THREE.Mesh(ceilGeo, ceilMat);
-            cMesh.position.set(px, origin.y + roomH, pz);
-            const cObj = new Ceiling(cMesh, {
+            _rtDummy.position.set(px, origin.y + roomH, pz);
+            _rtDummy.scale.set(1, 1, 1);
+            _rtDummy.updateMatrix();
+            ceilInst.setMatrixAt(cIdx, _rtDummy.matrix);
+            const cObj = new Ceiling(null, {
+              instancedMesh: ceilInst,
+              instanceId: cIdx,
+              position: new THREE.Vector3(px, origin.y + roomH, pz),
               title: `${biome.name} Ceiling`,
               drops: biome.getDropTable('ceiling')
             });
-            chunk.group.add(cMesh);
             chunk.objects.push(cObj);
+            cIdx++;
           }
         }
       }
+    }
+
+    if (fIdx > 0) {
+      floorInst.count = fIdx;
+      floorInst.instanceMatrix.needsUpdate = true;
+      floorInst.computeBoundingSphere();
+      chunk.group.add(floorInst);
+    }
+    if (sfIdx > 0) {
+      subFloorInst.count = sfIdx;
+      subFloorInst.instanceMatrix.needsUpdate = true;
+      subFloorInst.computeBoundingSphere();
+      chunk.group.add(subFloorInst);
+    }
+    if (cIdx > 0) {
+      ceilInst.count = cIdx;
+      ceilInst.instanceMatrix.needsUpdate = true;
+      ceilInst.computeBoundingSphere();
+      chunk.group.add(ceilInst);
+    }
+    if (fixIdx > 0) {
+      fixInst.count = fixIdx;
+      fixInst.instanceMatrix.needsUpdate = true;
+      fixInst.computeBoundingSphere();
+      chunk.group.add(fixInst);
     }
   }
 
@@ -516,24 +575,36 @@ export class RoomTemplates {
     chunk.collidables.push(flushWallMesh);
 
     // Door Frame embedded in the flush wall with raw insulation behind it
-    const frameGeo = new THREE.BoxGeometry(1.1, 2.1, 0.08);
+    const frameGeo = getSharedBoxGeometry(1.1, 2.1, 0.08);
     const frameMesh = new THREE.Mesh(frameGeo, this.doorFrameMat);
     frameMesh.position.set(
       startX + (stairWidth / 2),
       origin.y + (stepsCount * stepRise) + 1.05,
       termZ - 0.1
     );
+    const frameObj = new Wall(frameMesh, {
+      title: 'Stairwell Door Frame',
+      hp: 20,
+      drops: { wood: 3 }
+    });
     chunk.group.add(frameMesh);
+    chunk.objects.push(frameObj);
 
     // Insulation block behind door frame
-    const insGeo = new THREE.BoxGeometry(0.9, 1.9, 0.15);
+    const insGeo = getSharedBoxGeometry(0.9, 1.9, 0.15);
     const insMesh = new THREE.Mesh(insGeo, this.insulationMat);
     insMesh.position.set(
       startX + (stairWidth / 2),
       origin.y + (stepsCount * stepRise) + 1.05,
       termZ + 0.15
     );
+    const insObj = new Wall(insMesh, {
+      title: 'Fiberglass Insulation Core',
+      hp: 16,
+      drops: { fiber: 4 }
+    });
     chunk.group.add(insMesh);
+    chunk.objects.push(insObj);
 
     // Dead-end exit sign
     const { group: exitG, prop: exitP } = propSpawner.spawnExitSign(

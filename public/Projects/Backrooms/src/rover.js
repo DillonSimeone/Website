@@ -28,6 +28,10 @@ export class Rover {
     this.speed = 2.6; // Movement speed in m/s
     this.harvestRate = 9.0; // Damage per second
 
+    this._scratchVec = new THREE.Vector3();
+    this._scratchTargetPos = new THREE.Vector3();
+    this._scratchTipPos = new THREE.Vector3();
+
     this.mesh = this.buildMesh();
     this.mesh.position.copy(this.position);
     this.scene.add(this.mesh);
@@ -59,7 +63,7 @@ export class Rover {
     const opticMat = new THREE.MeshStandardMaterial({
       color: 0x00ffff,
       emissive: 0x00ffff,
-      emissiveIntensity: 1.2
+      emissiveIntensity: 1.6
     });
 
     this.beaconMat = new THREE.MeshStandardMaterial({
@@ -108,16 +112,11 @@ export class Rover {
     const domeMesh = new THREE.Mesh(domeGeo, chromeMat);
     this.turret.add(domeMesh);
 
-    // Sensor Eye Optic Lens
+    // Sensor Eye Optic Lens (emissive bloom, no extra PointLight to avoid shader recompile)
     const opticGeo = new THREE.SphereGeometry(0.045, 8, 8);
     const opticMesh = new THREE.Mesh(opticGeo, opticMat);
     opticMesh.position.set(0, 0.06, 0.11);
     this.turret.add(opticMesh);
-
-    // Sensor Spot/Point Light
-    this.eyeLight = new THREE.PointLight(0x00ffff, 0.9, 5.0, 1.4);
-    this.eyeLight.position.set(0, 0.08, 0.16);
-    this.turret.add(this.eyeLight);
 
     // Antenna & Blinking Beacon
     const antGeo = new THREE.CylinderGeometry(0.008, 0.008, 0.22, 4);
@@ -150,7 +149,7 @@ export class Rover {
     return group;
   }
 
-  update(dt, player, particleEmitter) {
+  update(dt, player, particleEmitter, debrisSystem) {
     if (!this.mesh) return;
 
     // Blink beacon light
@@ -166,7 +165,7 @@ export class Rover {
         this.updateNavigate(dt);
         break;
       case 'MINING':
-        this.updateMining(dt, particleEmitter);
+        this.updateMining(dt, particleEmitter, debrisSystem);
         break;
       case 'RETURN':
         this.updateReturn(dt, particleEmitter);
@@ -191,30 +190,48 @@ export class Rover {
     if (this.searchTimer < 0.6) return;
     this.searchTimer = 0;
 
-    const destructibles = this.worldManager.getDestructibleMeshes();
-    let bestDist = 14.0;
+    const destructibles = this.worldManager.getNearbyDestructibles(this.mesh.position, 1, 0);
+    let bestDistSq = 196.0; // 14.0^2
     let bestMesh = null;
     let bestObj = null;
+    const myPos = this.mesh.position;
 
     for (let i = 0; i < destructibles.length; i++) {
       const mesh = destructibles[i];
       if (!mesh) continue;
+
+      if (mesh.isInstancedMesh && mesh.userData?.instances) {
+        const instArr = mesh.userData.instances;
+        for (let j = 0; j < instArr.length; j++) {
+          const obj = instArr[j];
+          if (!obj || obj.destroyed || obj.hp <= 0) continue;
+          if (obj.type === 'floor' || obj.type === 'subfloor' || obj.type === 'ceiling' || obj.type === 'subceiling') continue;
+          if (Math.abs(obj.position.y - myPos.y) >= 3.5) continue;
+          const dSq = myPos.distanceToSquared(obj.position);
+          if (dSq < bestDistSq) {
+            bestDistSq = dSq;
+            bestMesh = mesh;
+            bestObj = obj;
+          }
+        }
+        continue;
+      }
+
       const root = mesh.userData?.rootMesh || mesh;
       const obj = mesh.userData?.worldObject || root.userData?.worldObject || mesh.userData;
 
-      if (!obj || obj.hp <= 0) continue;
-      // Skip scaffolding or barricades placed by player
-      if (mesh.userData?.isScaffolding || root.userData?.isScaffolding) continue;
+      if (!obj || obj.hp <= 0 || obj.destroyed) continue;
+      if (mesh.userData?.isScaffolding || root.userData?.isScaffolding || mesh.userData?.isJumpPad) continue;
 
-      const d = this.mesh.position.distanceTo(root.position);
-      if (d < bestDist && Math.abs(root.position.y - this.mesh.position.y) < 3.5) {
-        bestDist = d;
+      const dSq = myPos.distanceToSquared(root.position);
+      if (dSq < bestDistSq && Math.abs(root.position.y - myPos.y) < 3.5) {
+        bestDistSq = dSq;
         bestMesh = root;
         bestObj = obj;
       }
     }
 
-    if (bestMesh) {
+    if (bestObj) {
       this.currentTarget = bestMesh;
       this.currentTargetObj = bestObj;
       this.state = 'NAVIGATE';
@@ -224,18 +241,33 @@ export class Rover {
     }
   }
 
+  _getTargetPosition() {
+    if (this.currentTargetObj && this.currentTargetObj.position) {
+      return this.currentTargetObj.position;
+    }
+    return this.currentTarget ? this.currentTarget.position : this.mesh.position;
+  }
+
+  _isTargetValid() {
+    if (!this.currentTargetObj) return false;
+    if (this.currentTargetObj.destroyed || this.currentTargetObj.hp <= 0) return false;
+    if (this.currentTarget && !this.currentTarget.parent) return false;
+    return true;
+  }
+
   updateNavigate(dt) {
-    if (!this.currentTarget || !this.currentTarget.parent || (this.currentTargetObj && this.currentTargetObj.hp <= 0)) {
+    if (!this._isTargetValid()) {
       this.currentTarget = null;
+      this.currentTargetObj = null;
       this.state = 'SEARCH';
       return;
     }
 
-    const targetPos = this.currentTarget.position.clone();
-    targetPos.y = this.mesh.position.y;
+    const rawTarget = this._getTargetPosition();
+    this._scratchTargetPos.set(rawTarget.x, this.mesh.position.y, rawTarget.z);
 
-    const toTarget = new THREE.Vector3().subVectors(targetPos, this.mesh.position);
-    const dist = toTarget.length();
+    this._scratchVec.subVectors(this._scratchTargetPos, this.mesh.position);
+    const dist = this._scratchVec.length();
 
     if (dist <= 1.4) {
       this.state = 'MINING';
@@ -243,115 +275,111 @@ export class Rover {
       return;
     }
 
-    // Steer towards target
-    toTarget.normalize();
-    const moveDist = this.speed * dt;
-    this.mesh.position.addScaledVector(toTarget, moveDist);
+    this._scratchVec.normalize();
+    const moveDist = this.speed * (this.player.roverSpeedBonus || 1.0) * dt;
+    this.mesh.position.addScaledVector(this._scratchVec, moveDist);
+    this.mesh.lookAt(this._scratchTargetPos);
 
-    // Orient rover towards movement
-    this.mesh.lookAt(targetPos);
-
-    // Roll wheels
-    for (const w of this.wheels) {
-      w.rotation.x += dt * 8.0;
+    for (let i = 0; i < this.wheels.length; i++) {
+      this.wheels[i].rotation.x += dt * 8.0;
     }
 
-    // Safety timeout against getting trapped behind solid walls
     this.stuckTimer += dt;
     if (this.stuckTimer > 7.0) {
       this.currentTarget = null;
+      this.currentTargetObj = null;
       this.state = 'SEARCH';
       this.stuckTimer = 0;
     }
   }
 
-  updateMining(dt, particleEmitter) {
-    if (!this.currentTarget || !this.currentTarget.parent || (this.currentTargetObj && this.currentTargetObj.hp <= 0)) {
+  updateMining(dt, particleEmitter, debrisSystem) {
+    if (!this._isTargetValid()) {
       this.currentTarget = null;
+      this.currentTargetObj = null;
       this.state = Object.keys(this.cargo).length > 0 ? 'RETURN' : 'SEARCH';
       return;
     }
 
-    // Look directly at target
-    const targetPos = this.currentTarget.position.clone();
-    targetPos.y = this.mesh.position.y;
-    this.mesh.lookAt(targetPos);
+    const rawTarget = this._getTargetPosition();
+    this._scratchTargetPos.set(rawTarget.x, this.mesh.position.y, rawTarget.z);
+    this.mesh.lookAt(this._scratchTargetPos);
 
-    // Spin drill bit rapidly!
     if (this.drillBit) {
       this.drillBit.rotation.z += dt * 32.0;
     }
 
-    // Apply mining damage
-    const dmg = this.harvestRate * dt;
+    const dmg = this.harvestRate * (this.player.roverHarvestBonus || 1.0) * dt;
     let isDepleted = false;
 
     if (this.currentTargetObj && this.currentTargetObj.damage) {
       isDepleted = this.currentTargetObj.damage(dmg);
-    } else {
+    } else if (this.currentTarget) {
       this.currentTarget.userData.hp = (this.currentTarget.userData.hp || 20) - dmg;
       isDepleted = (this.currentTarget.userData.hp <= 0);
     }
 
-    // Drill spark particles
     this.miningTimer += dt;
     if (particleEmitter && Math.random() < 0.45) {
-      const tipPos = new THREE.Vector3();
-      this.drillBit.getWorldPosition(tipPos);
-      particleEmitter(tipPos, 2, 0x00f0ff);
+      this.drillBit.getWorldPosition(this._scratchTipPos);
+      particleEmitter(this._scratchTipPos, 2, 0x00f0ff);
+    }
+    if (debrisSystem && Math.random() < 0.12) {
+      this.drillBit.getWorldPosition(this._scratchTipPos);
+      debrisSystem.spawnShatter(this._scratchTipPos, this.currentTargetObj.type || 'wall', 1);
     }
 
-    // Subtle audio tick
     if (Math.random() < 0.12 && this.audio) {
       this.audio.playHitSound('metal');
     }
 
-    // Node completed!
     if (isDepleted) {
       const drops = (this.currentTargetObj.getDrops ? this.currentTargetObj.getDrops() : this.currentTargetObj.drops) || {};
       for (const [k, v] of Object.entries(drops)) {
         this.cargo[k] = (this.cargo[k] || 0) + (v || 1);
       }
 
-      // Sparkle burst
       if (particleEmitter) {
-        particleEmitter(this.currentTarget.position, 16, 0xffd700);
+        particleEmitter(rawTarget, 16, 0xffd700);
+      }
+      if (debrisSystem) {
+        debrisSystem.spawnShatter(rawTarget, this.currentTargetObj.type || 'wall', 16);
       }
 
-      // Remove mined object from world cleanly
-      this.worldManager.removeObject(this.currentTarget);
+      const objToRemove = this.currentTargetObj.instancedMesh ? this.currentTargetObj : this.currentTarget;
+      this.worldManager.removeObject(objToRemove);
+      if (this.currentTargetObj.destroy) {
+        this.currentTargetObj.destroy(this.scene);
+      }
+
       this.currentTarget = null;
       this.currentTargetObj = null;
 
-      // Happy beep & head swivel
       if (this.audio) this.audio.playHitSound('ballast');
       this.state = 'RETURN';
     }
   }
 
   updateReturn(dt, particleEmitter) {
-    const playerPos = this.player.camera.position.clone();
-    playerPos.y = this.mesh.position.y;
+    const pCam = this.player.camera.position;
+    this._scratchTargetPos.set(pCam.x, this.mesh.position.y, pCam.z);
 
-    const toPlayer = new THREE.Vector3().subVectors(playerPos, this.mesh.position);
-    const dist = toPlayer.length();
+    this._scratchVec.subVectors(this._scratchTargetPos, this.mesh.position);
+    const dist = this._scratchVec.length();
 
     if (dist <= 2.2) {
-      // Delivered resources!
       this.depositCargo(particleEmitter);
       this.state = 'SEARCH';
       return;
     }
 
-    // Steer towards player
-    toPlayer.normalize();
-    const moveDist = this.speed * dt;
-    this.mesh.position.addScaledVector(toPlayer, moveDist);
-    this.mesh.lookAt(playerPos);
+    this._scratchVec.normalize();
+    const moveDist = this.speed * (this.player.roverSpeedBonus || 1.0) * dt;
+    this.mesh.position.addScaledVector(this._scratchVec, moveDist);
+    this.mesh.lookAt(this._scratchTargetPos);
 
-    // Roll wheels
-    for (const w of this.wheels) {
-      w.rotation.x += dt * 8.0;
+    for (let i = 0; i < this.wheels.length; i++) {
+      this.wheels[i].rotation.x += dt * 8.0;
     }
   }
 
@@ -441,9 +469,9 @@ export class RoverManager {
     return rover;
   }
 
-  update(dt, player, particleEmitter) {
+  update(dt, player, particleEmitter, debrisSystem) {
     for (let i = 0; i < this.rovers.length; i++) {
-      this.rovers[i].update(dt, player, particleEmitter);
+      this.rovers[i].update(dt, player, particleEmitter, debrisSystem);
     }
   }
 

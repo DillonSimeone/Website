@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BiomeBase } from './biomeBase.js';
+import { BiomeBase, createPBRNormalMap, createPBRRoughnessMap, enhanceColorTexture } from './biomeBase.js';
 
 function makePoolTileTexture() {
   const canvas = document.createElement('canvas');
@@ -86,24 +86,35 @@ export class Level37PoolroomsBiome extends BiomeBase {
     this.fogDensity = 0.038;
     this.humFrequency = 120; // Soft resonant water chime
 
-    this.tileTex = makePoolTileTexture();
-    this.waterTex = makeWaterTileTexture();
+    this.tileTex = enhanceColorTexture(makePoolTileTexture());
+    this.waterTex = enhanceColorTexture(makeWaterTileTexture());
+
+    const tileNormal = createPBRNormalMap({ size: 128, tileStep: 16, groutWidth: 2, grain: 0.08, repeat: 4 });
+    const tileRough = createPBRRoughnessMap({ size: 128, base: 45, variance: 25, repeat: 4 });
+    const waterNormal = createPBRNormalMap({ size: 128, tileStep: 0, grain: 0.35, repeat: 3 });
 
     this.wallMat = new THREE.MeshStandardMaterial({
       map: this.tileTex,
-      roughness: 0.15,
-      metalness: 0.25
+      normalMap: tileNormal,
+      normalScale: new THREE.Vector2(0.55, 0.55),
+      roughnessMap: tileRough,
+      roughness: 0.2,
+      metalness: 0.2
     });
 
     this.floorMat = new THREE.MeshStandardMaterial({
       map: this.waterTex,
-      roughness: 0.1,
-      metalness: 0.4
+      normalMap: waterNormal,
+      normalScale: new THREE.Vector2(0.35, 0.35),
+      roughness: 0.08,
+      metalness: 0.35
     });
 
     this.ceilMat = new THREE.MeshStandardMaterial({
       map: this.tileTex,
-      roughness: 0.2,
+      normalMap: tileNormal,
+      normalScale: new THREE.Vector2(0.45, 0.45),
+      roughness: 0.18,
       metalness: 0.2
     });
 
@@ -112,7 +123,7 @@ export class Level37PoolroomsBiome extends BiomeBase {
       roughness: 0.1,
       metalness: 0.3,
       emissive: 0x90e6ff,
-      emissiveIntensity: 0.85
+      emissiveIntensity: 1.2
     });
 
     this.subFloorMat = new THREE.MeshStandardMaterial({

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BiomeBase } from './biomeBase.js';
+import { BiomeBase, createPBRNormalMap, createPBRRoughnessMap, enhanceColorTexture } from './biomeBase.js';
 
 // Texture generators
 function makeWallpaperTexture() {
@@ -154,35 +154,49 @@ export class Level0MonoYellowBiome extends BiomeBase {
     this.fogDensity = 0.042;
     this.humFrequency = 60;
 
-    this.wallpaperTex = makeWallpaperTexture();
-    this.carpetTex = makeCarpetTexture();
-    this.ceilingTex = makeCeilingTexture();
-    this.trofferTex = makeTrofferTexture();
+    this.wallpaperTex = enhanceColorTexture(makeWallpaperTexture());
+    this.carpetTex = enhanceColorTexture(makeCarpetTexture());
+    this.ceilingTex = enhanceColorTexture(makeCeilingTexture());
+    this.trofferTex = enhanceColorTexture(makeTrofferTexture());
+
+    const wallNormal = createPBRNormalMap({ size: 128, tileStep: 32, groutWidth: 1, grain: 0.2, repeat: 2 });
+    const wallRough = createPBRRoughnessMap({ size: 128, base: 205, variance: 35, repeat: 2 });
+    const carpetNormal = createPBRNormalMap({ size: 128, tileStep: 0, grain: 0.55, repeat: 3 });
+    const carpetRough = createPBRRoughnessMap({ size: 128, base: 225, variance: 40, repeat: 3 });
+    const ceilNormal = createPBRNormalMap({ size: 128, tileStep: 64, groutWidth: 2, grain: 0.3, repeat: 1 });
 
     this.wallMat = new THREE.MeshStandardMaterial({
       map: this.wallpaperTex,
+      normalMap: wallNormal,
+      normalScale: new THREE.Vector2(0.45, 0.45),
+      roughnessMap: wallRough,
       roughness: 0.85,
       metalness: 0.05
     });
 
     this.floorMat = new THREE.MeshStandardMaterial({
       map: this.carpetTex,
-      roughness: 0.95,
+      normalMap: carpetNormal,
+      normalScale: new THREE.Vector2(0.7, 0.7),
+      roughnessMap: carpetRough,
+      roughness: 0.92,
       metalness: 0.0
     });
 
     this.ceilMat = new THREE.MeshStandardMaterial({
       map: this.ceilingTex,
+      normalMap: ceilNormal,
+      normalScale: new THREE.Vector2(0.4, 0.4),
       roughness: 0.8,
       metalness: 0.1
     });
 
     this.fixtureMat = new THREE.MeshStandardMaterial({
       map: this.trofferTex,
-      roughness: 0.3,
+      roughness: 0.2,
       metalness: 0.5,
-      emissive: 0xffffff,
-      emissiveIntensity: 0.95
+      emissive: 0xfff8e0,
+      emissiveIntensity: 1.25
     });
 
     this.subFloorMat = new THREE.MeshStandardMaterial({
