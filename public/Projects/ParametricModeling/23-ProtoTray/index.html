@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>23 - ProtoTray | Modular 3D-Printable Prototyping Tray</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.skypack.dev/three@0.136.0",
+            "three/": "https://cdn.skypack.dev/three@0.136.0/"
+        }
+    }
+    </script>
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-left">
+            <a href="../" class="nav-back">← LAB</a>
+            <div class="brand">
+                <h1>PROTOTRAY</h1>
+                <span class="badge">MANIFOLD WASM</span>
+            </div>
+            <div class="tray-stats" id="tray-stats">
+                <span>BINS: <strong id="stat-count">0</strong></span>
+                <span>FOOTPRINT: <strong id="stat-dims">0 × 0 × 0 mm</strong></span>
+            </div>
+        </div>
+        <div class="topbar-actions">
+            <button class="btn btn-toggle active" id="btn-toggle-sound" title="Toggle Tactile UI Sounds">🔊 Sound: ON</button>
+            <button class="btn btn-toggle active" id="btn-toggle-ghosts" title="Show/Hide 3D Module Ghost Previews">👻 Ghosts: ON</button>
+            <button class="btn btn-toggle" id="btn-toggle-lid" title="Preview Contour Slide-Over Lid">🧢 Lid: OFF</button>
+            <button class="btn btn-secondary" id="btn-load-json" title="Load Layout JSON">📂 Load</button>
+            <button class="btn btn-secondary" id="btn-save-json" title="Save Layout JSON">💾 Save</button>
+            <button class="btn btn-danger" id="btn-clear-tray" title="Clear All Bins">🗑 Clear</button>
+            <button class="btn btn-secondary" id="btn-export-lid" title="Export Slide-Over Lid STL">🧢 Export Lid</button>
+            <button class="btn btn-secondary" id="btn-export-diffusers" title="Export <=2mm Slide-In LED Diffuser Strips STL">✨ Diffusers</button>
+            <button class="btn btn-primary" id="btn-export-stl" title="Export Single Watertight Tray STL">⬇ Export STL</button>
+            <input type="file" id="file-load-json" accept=".json" hidden>
+        </div>
+    </header>
+
+    <div class="workspace">
+        <!-- Left Parts Library & Global Settings -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <div class="section-header">
+                    <h2>PARTS LIBRARY</h2>
+                    <span class="hint">Click to add</span>
+                </div>
+                <input type="text" id="part-search" class="search-input" placeholder="Filter modules (e.g. ESP32, LM2596, PD)...">
+                <div class="parts-list" id="parts-list"></div>
+            </div>
+
+            <div class="sidebar-section settings-section">
+                <div class="section-header">
+                    <h2>GLOBAL TRAY SETTINGS</h2>
+                </div>
+                <div class="slider-group">
+                    <div class="slider-row">
+                        <label>Wall Thickness <span id="val-wall">1.6 mm</span></label>
+                        <input type="range" id="param-wall" min="1.0" max="4.0" step="0.2" value="1.6">
+                    </div>
+                    <div class="slider-row">
+                        <label>Base Thickness <span id="val-base">1.6 mm</span></label>
+                        <input type="range" id="param-base" min="0.8" max="4.0" step="0.2" value="1.6">
+                    </div>
+                    <div class="slider-row">
+                        <label>Default Wall Height <span id="val-height">6.0 mm</span></label>
+                        <input type="range" id="param-height" min="3.0" max="25.0" step="0.5" value="6.0">
+                    </div>
+                    <div class="slider-row">
+                        <label>Fit Clearance <span id="val-tol">0.3 mm</span></label>
+                        <input type="range" id="param-tol" min="0.0" max="1.0" step="0.05" value="0.3">
+                    </div>
+                    <div class="slider-row">
+                        <label>Lid Skirt Drop <span id="val-lid-skirt">6.0 mm</span></label>
+                        <input type="range" id="param-lid-skirt" min="3.0" max="15.0" step="0.5" value="6.0">
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center 3D Viewport -->
+        <main class="viewport-wrap" id="viewport-wrap">
+            <div id="canvas-container"></div>
+            <div class="hover-tooltip hidden" id="hover-tooltip"></div>
+
+            <div class="empty-state" id="empty-state">
+                <div class="empty-card">
+                    <h3>Click a module on the left to start</h3>
+                    <p>Bins automatically snap flush together with shared walls and port/wire cutouts.</p>
+                </div>
+            </div>
+
+            <div class="controls-hud">
+                <span><strong>Click</strong> Select</span>
+                <span><strong>Space</strong> Rotate 90°</span>
+                <span><strong>Drag</strong> Reposition</span>
+                <span><strong>Right-Click</strong> Bin Options</span>
+                <span><strong>Del</strong> Remove</span>
+            </div>
+
+            <!-- Selected Bin Floating Inspector (opened via Right-Click -> Custom Settings) -->
+            <div class="bin-inspector hidden" id="bin-inspector">
+                <div class="inspector-header">
+                    <span id="insp-title">Bin Settings</span>
+                    <button class="close-btn" id="btn-close-inspector">✕</button>
+                </div>
+                <div class="inspector-body">
+                    <div class="insp-grid">
+                        <label>Inner Width (mm)
+                            <input type="number" id="insp-w" step="0.5" min="5" max="200">
+                        </label>
+                        <label>Inner Length (mm)
+                            <input type="number" id="insp-d" step="0.5" min="5" max="200">
+                        </label>
+                        <label>Wall Height (mm)
+                            <input type="number" id="insp-h" step="0.5" min="2" max="50">
+                        </label>
+                        <label>Clearance (mm)
+                            <input type="number" id="insp-tol" step="0.05" min="0" max="2">
+                        </label>
+                    </div>
+                    <div class="insp-cutouts">
+                        <span class="insp-sublabel">Active Wall Cutouts (Local N / S / E / W)</span>
+                        <div class="cutout-toggles" id="insp-cutouts">
+                            <label><input type="checkbox" data-side="N"> Front (N)</label>
+                            <label><input type="checkbox" data-side="S"> Back (S)</label>
+                            <label><input type="checkbox" data-side="E"> Right (E)</label>
+                            <label><input type="checkbox" data-side="W"> Left (W)</label>
+                        </div>
+                    </div>
+                    <label class="insp-check" id="insp-cradle-row">
+                        <input type="checkbox" id="insp-cradle"> Upright Motor Cradle Walls (with shaft holes)
+                    </label>
+                    <label class="insp-check" id="insp-strain-row">
+                        <input type="checkbox" id="insp-strain"> Attach USB-C S-Curve Strain Relief Tail
+                    </label>
+                    <div class="insp-grid hidden" id="insp-fan-row">
+                        <label>Fan Orientation
+                            <select id="insp-fan-orient">
+                                <option value="horizontal">Horizontal (Diamond)</option>
+                                <option value="vertical">Vertical (Diamond Block)</option>
+                            </select>
+                        </label>
+                        <label>Side Screw Size
+                            <select id="insp-fan-screw">
+                                <option value="M3">M3 (3.2mm)</option>
+                                <option value="M2">M2 (2.2mm)</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="insp-actions">
+                        <button class="btn btn-secondary btn-sm" id="btn-insp-reset">Reset to Preset</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Right-Click Context Menu -->
+    <div class="context-menu hidden" id="context-menu">
+        <div class="ctx-title" id="ctx-bin-name">Module Bin</div>
+        <button class="ctx-item" data-action="rotate">↻ Rotate 90° <span class="kbd">Space</span></button>
+        <button class="ctx-item" data-action="duplicate">⧉ Duplicate Bin</button>
+        <button class="ctx-item" data-action="settings">⚙ Unique Bin Settings…</button>
+        <div class="ctx-sep"></div>
+        <button class="ctx-item danger" data-action="delete">✕ Delete Bin <span class="kbd">Del</span></button>
+    </div>
+
+    <div class="toast hidden" id="toast"></div>
+
+    <script type="module" src="./src/ui.js"></script>
+</body>
+</html>
