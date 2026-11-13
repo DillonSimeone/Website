@@ -366,7 +366,7 @@ function buildSingleBinManifold(bin) {
     const sideWall = wall + (preset.isLedStrip ? 1.0 : 0);
     const base = state.global.baseThickness;
     const innerW = bin.w + 2 * bin.tolerance;
-    const tail = bin.strainRelief ? 26.0 : 0;
+    const tail = bin.strainRelief ? 50.0 : 0;
     const innerD = bin.d + 2 * bin.tolerance + tail;
     const ow = innerW + 2 * sideWall;
     const od = innerD + 2 * wall;
@@ -416,14 +416,14 @@ function buildSingleBinManifold(bin) {
         acc.delete(); centerCut.delete(); acc = next;
     }
 
-    // 4. USB-C S-Curve Strain Relief (carved S-channel behind USB-C bay)
+    // 4. USB-C S-Curve Strain Relief (carved S-channel behind 32mm USB-C bay)
     if (preset.isStrainReliefOnly) {
-        const blockLen = 16.0;
+        const blockLen = 18.0;
         const sBlock = buildCarvedSCurveBlock(innerW, -innerD / 2 + blockLen / 2, blockLen, bin.wallHeight, base);
         next = acc.add(sBlock);
         acc.delete(); sBlock.delete(); acc = next;
     } else if (bin.strainRelief) {
-        const blockLen = 15.0;
+        const blockLen = 18.0;
         const sBlock = buildCarvedSCurveBlock(innerW, innerD / 2 - blockLen / 2, blockLen, bin.wallHeight, base);
         next = acc.add(sBlock);
         acc.delete(); sBlock.delete(); acc = next;
@@ -625,7 +625,7 @@ export async function rebuildTrayGeometry() {
         const preset = getPartPreset(bin.partId);
         const sideWall = state.global.wallThickness + (preset.isLedStrip ? 1.0 : 0);
         const innerW = bin.w + 2 * bin.tolerance;
-        const tail = bin.strainRelief ? 26.0 : 0;
+        const tail = bin.strainRelief ? 50.0 : 0;
         const innerD = bin.d + 2 * bin.tolerance + tail;
         const ow = innerW + 2 * sideWall;
         const od = innerD + 2 * state.global.wallThickness;
@@ -667,6 +667,7 @@ export async function rebuildTrayGeometry() {
                     opacity: 0.42,
                     roughness: 0.3
                 }));
+                ghostMesh.position.y = bin.strainRelief ? -25.0 : 0;
                 ghostMesh.position.z = state.global.baseThickness + (isVertFan ? state.global.wallThickness * 2.25 : 0) - minZ;
                 ghostMesh.visible = state.showGhosts;
                 group.add(ghostMesh);

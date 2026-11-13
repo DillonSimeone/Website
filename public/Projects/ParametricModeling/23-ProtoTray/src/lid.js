@@ -38,7 +38,7 @@ export function buildTrayLidManifold(M, forExport = false) {
 
     for (const bin of lidBins) {
         const innerW = bin.w + 2 * bin.tolerance;
-        const tail = bin.strainRelief ? 26.0 : 0;
+        const tail = bin.strainRelief ? 50.0 : 0;
         const innerD = bin.d + 2 * bin.tolerance + tail;
         const ow = innerW + 2 * wall;
         const od = innerD + 2 * wall;
@@ -61,7 +61,7 @@ export function buildTrayLidManifold(M, forExport = false) {
     // Subtract full height of excluded bins (motors & LED strips) so lid never covers them
     for (const bin of excludedBins) {
         const innerW = bin.w + 2 * bin.tolerance;
-        const tail = bin.strainRelief ? 26.0 : 0;
+        const tail = bin.strainRelief ? 50.0 : 0;
         const innerD = bin.d + 2 * bin.tolerance + tail;
         const ow = innerW + 2 * wall;
         const od = innerD + 2 * wall;
@@ -71,6 +71,37 @@ export function buildTrayLidManifold(M, forExport = false) {
                 .rotate([0, 0, bin.rot])
                 .translate([bin.x, bin.y, 0])
         );
+    }
+
+    // Subtract skirt cutouts wherever a covered bin has an active wall opening (USB-C, wires, terminals)
+    for (const bin of lidBins) {
+        const preset = getPartPreset(bin.partId);
+        const innerW = bin.w + 2 * bin.tolerance;
+        const tail = bin.strainRelief ? 50.0 : 0;
+        const innerD = bin.d + 2 * bin.tolerance + tail;
+        const ow = innerW + 2 * wall;
+        const od = innerD + 2 * wall;
+        const skirtThick = clearance + lidWall + 2.0;
+        const notchH = skirtHeight + 1.0;
+        const notchZ = zBottom + (skirtHeight - 1.0) / 2;
+
+        for (const side of ['N', 'S', 'E', 'W']) {
+            if (!bin.activeCutouts?.[side]) continue;
+            const spec = preset.cutouts?.[side] || { width: 10 };
+            const maxSpan = (side === 'N' || side === 'S') ? innerW : innerD;
+            const cutW = (spec.width >= maxSpan ? maxSpan : Math.min(spec.width, maxSpan - 0.5)) + clearance * 2;
+            const xOff = spec.xOffset ?? 0;
+            const yOff = spec.yOffset ?? 0;
+
+            let notch;
+            if (side === 'N') notch = makeBox(M, cutW, skirtThick, notchH, true).translate([xOff, od / 2 + clearance + lidWall / 2, notchZ]);
+            else if (side === 'S') notch = makeBox(M, cutW, skirtThick, notchH, true).translate([xOff, -od / 2 - clearance - lidWall / 2, notchZ]);
+            else if (side === 'E') notch = makeBox(M, skirtThick, cutW, notchH, true).translate([ow / 2 + clearance + lidWall / 2, yOff, notchZ]);
+            else notch = makeBox(M, skirtThick, cutW, notchH, true).translate([-ow / 2 - clearance - lidWall / 2, yOff, notchZ]);
+
+            inners.push(notch.rotate([0, 0, bin.rot]).translate([bin.x, bin.y, 0]));
+            notch.delete();
+        }
     }
 
     let outerAcc = outers[0];

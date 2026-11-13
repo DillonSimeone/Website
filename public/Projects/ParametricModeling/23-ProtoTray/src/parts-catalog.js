@@ -319,17 +319,17 @@ export const PARTS_CATALOG = [
         folder: ['Cable Management'],
         color: '#f97316',
         w: 15.0,
-        d: 38.0,
+        d: 50.0,
         wallHeight: 8.5,
         isStrainReliefOnly: true,
-        summary: 'Open front USB-C bay + carved S-curve cable channel',
+        summary: '50mm open front USB-C bay + carved S-curve cable channel',
         cutouts: {
             N: { width: 99.0, zOffset: 0.0 },
             S: { width: 5.0, zOffset: 1.0 }
         },
         buildGhost: (M) => {
-            const head = makeBox(M, 11.0, 18.0, 6.8, true).translate([0, 9.0, 3.4]);
-            const neck = makeBox(M, 7.5, 5.0, 5.5, true).translate([0, -2.5, 2.75]);
+            const head = makeBox(M, 11.0, 20.0, 6.8, true).translate([0, 14.0, 3.4]);
+            const neck = makeBox(M, 7.5, 8.0, 5.5, true).translate([0, 0.0, 2.75]);
             const res = head.add(neck);
             head.delete(); neck.delete();
             return res;
