@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP32-C3 PAJ7620 8x8 Matrix Gesture Visualizer</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --accent-glow: rgba(88, 166, 255, 0.25);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      padding: 30px 20px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 30px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    h1 span.badge {
+      font-size: 13px;
+      background: #238636;
+      color: #fff;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-size: 14px;
+    }
+
+    /* Master Interactive Simulator */
+    .hero-simulator {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 35px;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 25px;
+      align-items: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+
+    @media (max-width: 768px) {
+      .hero-simulator {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .matrix-display-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .matrix-frame {
+      background: #05070a;
+      padding: 12px;
+      border-radius: 16px;
+      border: 2px solid #21262d;
+      box-shadow: inset 0 0 15px rgba(0,0,0,0.8), 0 0 20px var(--accent-glow);
+    }
+
+    canvas.matrix-canvas {
+      display: block;
+      border-radius: 8px;
+      background: #000;
+    }
+
+    .controls-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .controls-panel h3 {
+      font-size: 18px;
+      color: #fff;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+    }
+
+    button.gesture-btn {
+      background: #21262d;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+    }
+
+    button.gesture-btn:hover {
+      background: #30363d;
+      border-color: var(--accent);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    button.gesture-btn:active {
+      transform: translateY(1px);
+    }
+
+    .status-readout {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #7ee787;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+    }
+
+    .speed-slider-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .speed-slider-group input {
+      flex: 1;
+    }
+
+    /* Gesture Table */
+    .table-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    table.gesture-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    th {
+      background: #1c2128;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .gesture-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-up     { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #38bdf8; }
+    .badge-down   { background: rgba(234, 179, 8, 0.2); color: #eab308; border: 1px solid #eab308; }
+    .badge-left   { background: rgba(236, 72, 153, 0.2); color: #ec4899; border: 1px solid #ec4899; }
+    .badge-right  { background: rgba(132, 204, 22, 0.2); color: #84cc16; border: 1px solid #84cc16; }
+    .badge-cw     { background: rgba(249, 115, 22, 0.2); color: #f97316; border: 1px solid #f97316; }
+    .badge-ccw    { background: rgba(6, 182, 212, 0.2); color: #06b6d4; border: 1px solid #06b6d4; }
+    .badge-wave   { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid #c084fc; }
+
+    .matrix-thumb {
+      background: #000;
+      border-radius: 6px;
+      border: 1px solid #30363d;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>
+        ESP32-C3 Gesture Controller
+        <span class="badge">PAJ7620 + WS2812B</span>
+      </h1>
+      <p class="subtitle">
+        Visual Reference & Interactive Simulator for 8x8 LED Matrix Gesture Feedback Animations
+      </p>
+    </header>
+
+    <!-- Master Interactive Simulator -->
+    <section class="hero-simulator">
+      <div class="matrix-display-box">
+        <div class="matrix-frame">
+          <canvas id="masterCanvas" class="matrix-canvas" width="220" height="220"></canvas>
+        </div>
+        <div style="font-size: 12px; color: var(--text-muted);">Simulated 8x8 WS2812B Matrix</div>
+      </div>
+
+      <div class="controls-panel">
+        <div>
+          <h3>Interactive Test Console</h3>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+            Click any button below to trigger the exact firmware animation sequence:
+            background dims to <strong>1% over 0.5s</strong> while the <strong>100% bright symbol</strong> plays,
+            then restores to normal over the remaining 0.5s!
+          </p>
+        </div>
+
+        <div class="button-grid">
+          <button class="gesture-btn" onclick="triggerGesture('UP')">⬆️ Swipe UP</button>
+          <button class="gesture-btn" onclick="triggerGesture('DOWN')">⬇️ Swipe DOWN</button>
+          <button class="gesture-btn" onclick="triggerGesture('LEFT')">⬅️ Swipe LEFT</button>
+          <button class="gesture-btn" onclick="triggerGesture('RIGHT')">➡️ Swipe RIGHT</button>
+          <button class="gesture-btn" onclick="triggerGesture('CW')">🔄 Clockwise</button>
+          <button class="gesture-btn" onclick="triggerGesture('CCW')">🔄 Counter-CW</button>
+          <button class="gesture-btn" onclick="triggerGesture('WAVE')">👋 Wave</button>
+        </div>
+
+        <div class="speed-slider-group">
+          <span>Feedback Duration:</span>
+          <input type="range" id="speedSlider" min="500" max="2000" step="100" value="1000" oninput="updateSpeed(this.value)">
+          <span id="speedVal" style="font-weight: 600; color: #fff;">1000 ms</span>
+        </div>
+
+        <div class="status-readout" id="statusLog">
+          Ready. Swipe your hand or click a button above.
+        </div>
+      </div>
+    </section>
+
+    <!-- Reference Table -->
+    <section class="table-section">
+      <table class="gesture-table">
+        <thead>
+          <tr>
+            <th style="width: 110px;">Preview</th>
+            <th>Gesture</th>
+            <th>Symbol Animation</th>
+            <th>Action Controlled</th>
+            <th>Color Scheme</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <canvas id="thumbUp" class="matrix-thumb" width="80" height="80"></canvas>
+            </td>
+            <td><span class="gesture-badge badge-up">SWIPE UP</span></td>
+            <td><strong>Ascending Chevron Arrow</strong><br><span style="font-size: 12px; color: var(--text-muted);">Smoothly scrolls upwards</span></td>
+            <td>Cycles Next Pattern (Plasma, Radial, Comet, etc.)</td>
+            <td style="color: #38bdf8; font-weight: 600;">Electric Cyan</td>
+          </tr>
+          <tr>
+            <td>
+              <canvas id="thumbDown" class="matrix-thumb" width="80" height="80"></canvas>
+            </td>
+            <td><span class="gesture-badge badge-down">SWIPE DOWN</span></td>
+            <td><strong>Descending Chevron Arrow</strong><br><span style="font-size: 12px; color: var(--text-muted);">Smoothly scrolls downwards</span></td>
+            <td>Cycles Previous Pattern</td>
+            <td style="color: #eab308; font-weight: 600;">Warm Gold</td>
+          </tr>
+          <tr>
+            <td>
+              <canvas id="thumbLeft" class="matrix-thumb" width="80" height="80"></canvas>
+            </td>
+            <td><span class="gesture-badge badge-left">SWIPE LEFT</span></td>
+            <td><strong>Leftward Chevron Arrow</strong><br><span style="font-size: 12px; color: var(--text-muted);">Smoothly scrolls to the left</span></td>
+            <td>Cycles Previous Color Palette</td>
+            <td style="color: #ec4899; font-weight: 600;">Neon Magenta</td>
+          </tr>
+          <tr>
+            <td>
+              <canvas id="thumbRight" class="matrix-thumb" width="80" height="80"></canvas>
+            </td>
+            <td><span class="gesture-badge badge-right">SWIPE RIGHT</span></td>
+            <td><strong>Rightward Chevron Arrow</strong><br><span style="font-size: 12px; color: var(--text-muted);">Smoothly scrolls to the right</span></td>
+            <td>Cycles Next Color Palette</td>
+            <td style="color: #84cc16; font-weight: 600;">Green-Yellow</td>
+          </tr>
+          <tr>
+            <td>
+              <canvas id="thumbCW" class="matrix-thumb" width="80" height="80"></canvas>
+            </td>
+            <td><span class="gesture-badge badge-cw">CLOCKWISE</span></td>
+            <td><strong>Spinning Curved Radial Arrow</strong><br><span style="font-size: 12px; color: var(--text-muted);">Circular arc spinning clockwise with glowing arrowhead</span></td>
+            <td>Increases Brightness (+35)</td>
+            <td style="color: #f97316; font-weight: 600;">Amber Sun</td>
+          </tr>
+          <tr>
+            <td>
+              <canvas id="thumbCCW" class="matrix-thumb" width="80" height="80"></canvas>
+            </td>
+            <td><span class="gesture-badge badge-ccw">COUNTER-CW</span></td>
+            <td><strong>Spinning Curved Radial Arrow</strong><br><span style="font-size: 12px; color: var(--text-muted);">Circular arc spinning counter-clockwise with glowing arrowhead</span></td>
+            <td>Decreases Brightness (-35)</td>
+            <td style="color: #06b6d4; font-weight: 600;">Azure Ice</td>
+          </tr>
+          <tr>
+            <td>
+              <canvas id="thumbWave" class="matrix-thumb" width="80" height="80"></canvas>
+            </td>
+            <td><span class="gesture-badge badge-wave">WAVE</span></td>
+            <td><strong>Dynamic Sine Wave</strong><br><span style="font-size: 12px; color: var(--text-muted);">Energy wave cresting across columns</span></td>
+            <td>Toggle Power ON / OFF (Instant Fade)</td>
+            <td style="color: #c084fc; font-weight: 600;">White / Violet</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 8x8 LED SIMULATOR CORE
+    // =========================================================================
+    let feedbackDuration = 1000;
+    let activeGesture = null;
+    let animStartTime = 0;
+    let currentPaletteIdx = 0;
+    let currentPatternIdx = 0;
+
+    const patternNames = ["Rainbow Wave", "Plasma Matrix", "Radial Pulse", "Diagonal Comet", "Matrix Rain", "Fire Glow"];
+    const paletteNames = ["Rainbow", "Ocean Blue", "Lava Fire", "Emerald Forest", "Cyberpunk Neon", "Sunset Glow"];
+
+    function updateSpeed(val) {
+      feedbackDuration = parseInt(val);
+      document.getElementById('speedVal').textContent = val + ' ms';
+    }
+
+    function triggerGesture(type) {
+      activeGesture = type;
+      animStartTime = performance.now();
+      const log = document.getElementById('statusLog');
+
+      switch (type) {
+        case 'UP':
+          currentPatternIdx = (currentPatternIdx + 1) % patternNames.length;
+          log.innerHTML = `[GESTURE] <strong>UP</strong> &rarr; Pattern: ${patternNames[currentPatternIdx]}`;
+          break;
+        case 'DOWN':
+          currentPatternIdx = (currentPatternIdx - 1 + patternNames.length) % patternNames.length;
+          log.innerHTML = `[GESTURE] <strong>DOWN</strong> &rarr; Pattern: ${patternNames[currentPatternIdx]}`;
+          break;
+        case 'LEFT':
+          currentPaletteIdx = (currentPaletteIdx - 1 + paletteNames.length) % paletteNames.length;
+          log.innerHTML = `[GESTURE] <strong>LEFT</strong> &rarr; Palette: ${paletteNames[currentPaletteIdx]}`;
+          break;
+        case 'RIGHT':
+          currentPaletteIdx = (currentPaletteIdx + 1) % paletteNames.length;
+          log.innerHTML = `[GESTURE] <strong>RIGHT</strong> &rarr; Palette: ${paletteNames[currentPaletteIdx]}`;
+          break;
+        case 'CW':
+          log.innerHTML = `[GESTURE] <strong>CLOCKWISE</strong> &rarr; Brightness Increased (+35)`;
+          break;
+        case 'CCW':
+          log.innerHTML = `[GESTURE] <strong>COUNTER-CW</strong> &rarr; Brightness Decreased (-35)`;
+          break;
+        case 'WAVE':
+          log.innerHTML = `[GESTURE] <strong>WAVE</strong> &rarr; Power Toggled`;
+          break;
+      }
+    }
+
+    // Drawing helper for 8x8 LED Matrix with realistic rounded LEDs & glow
+    function renderMatrix(ctx, width, height, getPixelColor) {
+      ctx.fillStyle = '#05070a';
+      ctx.fillRect(0, 0, width, height);
+
+      const cellW = width / 8;
+      const cellH = height / 8;
+      const radius = cellW * 0.38;
+
+      for (let y = 0; y < 8; y++) {
+        for (let x = 0; x < 8; x++) {
+          const cx = (x + 0.5) * cellW;
+          const cy = (y + 0.5) * cellH;
+
+          // LED unlit bezel
+          ctx.beginPath();
+          ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+          ctx.fillStyle = '#11151c';
+          ctx.fill();
+
+          // Get color [r, g, b]
+          const rgb = getPixelColor(x, y);
+          if (rgb && (rgb[0] > 0 || rgb[1] > 0 || rgb[2] > 0)) {
+            // LED Glow
+            const radGlow = radius * 1.6;
+            const grad = ctx.createRadialGradient(cx, cy, radius * 0.4, cx, cy, radGlow);
+            grad.addColorStop(0, `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.9)`);
+            grad.addColorStop(0.5, `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.4)`);
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, radGlow, 0, Math.PI * 2);
+            ctx.fillStyle = grad;
+            ctx.fill();
+
+            // Core LED dot
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius * 0.75, 0, Math.PI * 2);
+            ctx.fillStyle = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+            ctx.fill();
+          }
+        }
+      }
+    }
+
+    // =========================================================================
+    // SOLID 8x8 GESTURE BITMAPS (Exact 1-to-1 parity with C++ firmware)
+    // =========================================================================
+    const BITMAPS = {
+      UP: [
+        0b00011000,
+        0b00111100,
+        0b01111110,
+        0b11011011,
+        0b00011000,
+        0b00011000,
+        0b00011000,
+        0b00000000
+      ],
+      DOWN: [
+        0b00000000,
+        0b00011000,
+        0b00011000,
+        0b00011000,
+        0b11011011,
+        0b01111110,
+        0b00111100,
+        0b00011000
+      ],
+      LEFT: [
+        0b00000000,
+        0b00010000,
+        0b00110000,
+        0b01111111,
+        0b01111111,
+        0b00110000,
+        0b00010000,
+        0b00000000
+      ],
+      RIGHT: [
+        0b00000000,
+        0b00001000,
+        0b00001100,
+        0b11111110,
+        0b11111110,
+        0b00001100,
+        0b00001000,
+        0b00000000
+      ],
+      CW: [
+        0b00111100,
+        0b01000010,
+        0b10000001,
+        0b10000111,
+        0b10000010,
+        0b01000100,
+        0b00111000,
+        0b00000000
+      ],
+      CCW: [
+        0b00111100,
+        0b01000010,
+        0b10000001,
+        0b11100001,
+        0b01000001,
+        0b00100010,
+        0b00011100,
+        0b00000000
+      ],
+      WAVE: [
+        0b00000000,
+        0b01100011,
+        0b10010100,
+        0b00001000,
+        0b00010000,
+        0b00101001,
+        0b11000110,
+        0b00000000
+      ]
+    };
+
+    const SYMBOL_COLORS = {
+      UP:    [56, 189, 248],   // Electric Cyan
+      DOWN:  [234, 179, 8],    // Warm Gold
+      LEFT:  [236, 72, 153],   // Neon Magenta
+      RIGHT: [132, 204, 22],   // Lime Green
+      CW:    [249, 115, 22],   // Orange Amber
+      CCW:   [6, 182, 212],    // Azure Cyan
+      WAVE:  [255, 255, 255]   // Pure White
+    };
+
+    function getGesturePixel(type, x, y) {
+      const bitmap = BITMAPS[type];
+      if (!bitmap) return null;
+      const row = bitmap[y];
+      const isLit = (row & (0x80 >> x)) !== 0;
+      return isLit ? SYMBOL_COLORS[type] : null;
+    }
+
+    // Ambient background pattern generator
+    function getAmbientPixel(x, y, t) {
+      const p = (x * 20 + y * 20 + t * 0.05) % 255;
+      // Colorful plasma/wave
+      const r = Math.floor(128 + 127 * Math.sin(p * 0.05));
+      const g = Math.floor(128 + 127 * Math.sin(p * 0.05 + 2));
+      const b = Math.floor(128 + 127 * Math.sin(p * 0.05 + 4));
+      return [r, g, b];
+    }
+
+    // =========================================================================
+    // MAIN LOOP
+    // =========================================================================
+    const masterCtx = document.getElementById('masterCanvas').getContext('2d');
+    const thumbUpCtx = document.getElementById('thumbUp').getContext('2d');
+    const thumbDownCtx = document.getElementById('thumbDown').getContext('2d');
+    const thumbLeftCtx = document.getElementById('thumbLeft').getContext('2d');
+    const thumbRightCtx = document.getElementById('thumbRight').getContext('2d');
+    const thumbCWCtx = document.getElementById('thumbCW').getContext('2d');
+    const thumbCCWCtx = document.getElementById('thumbCCW').getContext('2d');
+    const thumbWaveCtx = document.getElementById('thumbWave').getContext('2d');
+
+    function animate(time) {
+      // 1. Render Master Interactive Canvas
+      let progress = 0;
+      let isFeedback = false;
+      let bgDim = 1.0;
+
+      if (activeGesture && (time - animStartTime < feedbackDuration)) {
+        isFeedback = true;
+        progress = (time - animStartTime) / feedbackDuration;
+
+        // Instant drop to 1% for maximum symbol readability, then restore in last 30% of time
+        if (progress > 0.70) {
+          bgDim = 0.01 + ((progress - 0.70) / 0.30) * 0.99;
+        } else {
+          bgDim = 0.01; // 1% brightness
+        }
+      } else {
+        activeGesture = null;
+      }
+
+      renderMatrix(masterCtx, 220, 220, (x, y) => {
+        // Ambient background color dimmed
+        const amb = getAmbientPixel(x, y, time);
+        let r = Math.floor(amb[0] * bgDim);
+        let g = Math.floor(amb[1] * bgDim);
+        let b = Math.floor(amb[2] * bgDim);
+
+        // If gesture feedback active, overlay symbol at 100%
+        if (isFeedback) {
+          const sym = getGesturePixel(activeGesture, x, y);
+          if (sym) {
+            let symAlpha = 1.0;
+            if (progress > 0.85) symAlpha = (1.0 - progress) / 0.15;
+            r = Math.floor(sym[0] * symAlpha + r * (1 - symAlpha));
+            g = Math.floor(sym[1] * symAlpha + g * (1 - symAlpha));
+            b = Math.floor(sym[2] * symAlpha + b * (1 - symAlpha));
+          }
+        }
+        return [r, g, b];
+      });
+
+      // 2. Render Static Table Thumbnails (Crystal clear centered static symbols)
+      renderMatrix(thumbUpCtx, 80, 80, (x, y) => getGesturePixel('UP', x, y));
+      renderMatrix(thumbDownCtx, 80, 80, (x, y) => getGesturePixel('DOWN', x, y));
+      renderMatrix(thumbLeftCtx, 80, 80, (x, y) => getGesturePixel('LEFT', x, y));
+      renderMatrix(thumbRightCtx, 80, 80, (x, y) => getGesturePixel('RIGHT', x, y));
+      renderMatrix(thumbCWCtx, 80, 80, (x, y) => getGesturePixel('CW', x, y));
+      renderMatrix(thumbCCWCtx, 80, 80, (x, y) => getGesturePixel('CCW', x, y));
+      renderMatrix(thumbWaveCtx, 80, 80, (x, y) => getGesturePixel('WAVE', x, y));
+
+      requestAnimationFrame(animate);
+    }
+
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

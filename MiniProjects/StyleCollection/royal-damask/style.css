@@ -1,0 +1,185 @@
+:root {
+  --velvet-dark: #05160e;
+  --velvet-green: #0a2f21;
+  --gold-accent: #dfb15b;
+  --gold-light: #fdf3d3;
+  --border-dim: rgba(223, 177, 91, 0.4);
+  
+  --font-royal: 'Cinzel', serif;
+  --font-serif: 'Lora', serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--velvet-dark);
+  background-image: 
+    radial-gradient(circle, var(--velvet-green) 0%, var(--velvet-dark) 100%),
+    linear-gradient(rgba(223, 177, 91, 0.01) 1px, transparent 1px);
+  background-size: 100% 100%, 30px 30px;
+  color: var(--gold-light);
+  font-family: var(--font-serif);
+  line-height: 1.7;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.damask-container {
+  width: 90%;
+  max-width: 1000px;
+  margin: 40px auto;
+  padding: 45px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+  position: relative;
+  box-sizing: border-box;
+  background-color: rgba(5, 22, 14, 0.95);
+  transition: all 0.3s ease;
+}
+
+/* Border styles toggled dynamically */
+.border-style-baroque {
+  border: 2px solid var(--gold-accent);
+  outline: 6px double var(--gold-accent);
+  outline-offset: -15px;
+}
+
+.border-style-gilded {
+  border: 5px solid var(--gold-accent);
+  outline: 1px solid var(--gold-accent);
+  outline-offset: 8px;
+}
+
+.border-style-minimal {
+  border: 1px solid var(--border-dim);
+}
+
+.damask-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.nav-back {
+  display: inline-block;
+  color: var(--gold-accent);
+  text-decoration: none;
+  font-family: var(--font-royal);
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  border-bottom: 1px solid transparent;
+  margin-bottom: 20px;
+}
+
+.nav-back:hover {
+  border-bottom-color: var(--gold-accent);
+}
+
+.crown-icon {
+  font-size: 2.2rem;
+  color: var(--gold-accent);
+  margin-bottom: 10px;
+  text-shadow: 0 0 10px rgba(223, 177, 91, 0.4);
+}
+
+.damask-title {
+  font-family: var(--font-royal);
+  font-size: clamp(2.3rem, 5vw, 3.8rem);
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: var(--gold-accent);
+  margin: 0;
+}
+
+.damask-subtitle {
+  font-family: var(--font-royal);
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  color: var(--gold-accent);
+  margin-top: 10px;
+}
+
+.damask-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 35px;
+}
+
+/* Damask cards */
+.damask-card {
+  border: 1px solid var(--border-dim);
+  background: rgba(10, 47, 33, 0.3);
+  padding: 30px;
+  text-align: center;
+}
+
+.damask-card h2 {
+  font-family: var(--font-royal);
+  color: var(--gold-accent);
+  font-size: 1.25rem;
+  letter-spacing: 2px;
+  margin-top: 0;
+}
+
+.damask-card p {
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+/* Button groups */
+.btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.damask-btn {
+  background: transparent;
+  border: 1px solid var(--gold-accent);
+  color: var(--gold-accent);
+  font-family: var(--font-royal);
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.damask-btn.active, .damask-btn:hover {
+  background: var(--gold-accent);
+  color: var(--velvet-dark);
+  font-weight: bold;
+}
+
+/* Quote card */
+.quote-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.quote-card blockquote {
+  font-style: italic;
+  font-size: 1.25rem;
+  margin: 0 0 15px 0;
+  line-height: 1.5;
+}
+
+.quote-card cite {
+  font-family: var(--font-royal);
+  font-size: 0.8rem;
+  color: var(--gold-accent);
+  font-style: normal;
+  letter-spacing: 1px;
+}
+
+@media (max-width: 600px) {
+  .damask-container {
+    padding: 20px;
+  }
+  .border-style-baroque {
+    outline-offset: -8px;
+  }
+}

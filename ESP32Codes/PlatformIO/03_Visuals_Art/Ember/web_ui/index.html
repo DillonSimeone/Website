@@ -1,0 +1,1642 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ember-Audio</title>
+<style>
+:root {
+    --bg: #0b0d12;
+    --panel: #141821;
+    --panel-2: #1a1f2b;
+    --border: #232938;
+    --text: #e6e9f2;
+    --muted: #8893a8;
+    --accent: #7c9cff;
+    --accent-2: #ff6d9c;
+    --ok: #46d39a;
+    --err: #ff6b6b;
+    --warn: #ffce4a;
+    --mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body {
+    margin: 0; padding: 0;
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.45 -apple-system, "Segoe UI", system-ui, sans-serif;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+.container {
+    max-width: 680px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 14px 16px 40px;
+    box-sizing: border-box;
+}
+@media (max-width: 800px) {
+    .container {
+        padding: 10px 12px 30px;
+    }
+}
+
+/* — Header — */
+header {
+    grid-area: header;
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    min-height: 52px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    gap: 16px;
+}
+.logo {
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 0.3px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+.crumb { color: var(--muted); font-size: 13px; }
+.crumb b { color: var(--text); font-weight: 500; }
+.spacer { flex: 1; }
+.status {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--muted);
+}
+.dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--err);
+    box-shadow: 0 0 8px currentColor;
+    transition: background .2s;
+}
+.dot.ok { background: var(--ok); }
+.fps { font-family: var(--mono); }
+
+/* — Main — */
+main {
+    grid-area: main;
+    display: flex; flex-direction: column;
+    min-height: 0;
+}
+.editor-wrap {
+    position: relative;
+    flex: 1;
+    margin: 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--panel);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.25) inset;
+}
+.editor-wrap .gutter {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 44px;
+    border-right: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    text-align: right;
+    padding: 12px 8px 12px 0;
+    line-height: 1.55;
+    user-select: none;
+    overflow: hidden;
+    pointer-events: none;
+}
+.editor-wrap .layer {
+    position: absolute; left: 44px; top: 0; right: 0; bottom: 0;
+    margin: 0;
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.55;
+    white-space: pre;
+    overflow: auto;
+    border: 0;
+    color: var(--text);
+    background: transparent;
+    tab-size: 4;
+    -moz-tab-size: 4;
+}
+.editor-wrap .hl {
+    pointer-events: none;
+    color: transparent;
+}
+.editor-wrap .hl .kw  { color: #c792ea; }
+.editor-wrap .hl .fn  { color: #82aaff; }
+.editor-wrap .hl .num { color: #f78c6c; }
+.editor-wrap .hl .var { color: #ffcb6b; }
+.editor-wrap .hl .cmt { color: #5c6370; font-style: italic; }
+.editor-wrap .hl .op  { color: #89ddff; }
+.editor-wrap textarea {
+    color: transparent;
+    caret-color: var(--text);
+    background: transparent;
+    resize: none;
+    outline: none;
+}
+.editor-wrap textarea::selection { background: rgba(124,156,255,0.3); }
+
+/* — LED preview — */
+.preview {
+    margin: 0 0 12px 0;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--panel);
+}
+.preview .label {
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.preview canvas {
+    width: 100%;
+    height: 40px;
+    image-rendering: pixelated;
+    background: #000;
+    border-radius: 4px;
+    display: block;
+}
+
+/* — Bathroom Audio Trigger Threshold Panel (DeafDoorbell Style) — */
+.gate-panel {
+    margin: 0 0 16px 0;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--panel);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+}
+.gate-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.gate-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.gate-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    text-transform: none;
+    letter-spacing: 0;
+}
+.gate-badge.active {
+    background: rgba(70, 211, 154, 0.16);
+    border-color: var(--ok);
+    color: var(--ok);
+}
+.gate-metrics {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 12px;
+}
+.gate-bar-track {
+    position: relative;
+    height: 14px;
+    background: #0f131b;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    overflow: hidden;
+}
+.gate-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #00e5ff 0%, #a855f7 65%, #ff007f 100%);
+    transition: width 0.08s linear;
+    border-radius: 7px;
+}
+.gate-marker-x {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 3px;
+    left: 8.3%;
+    background: #eab308;
+    box-shadow: 0 0 8px #eab308;
+    z-index: 2;
+}
+.gate-marker-y {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 2px;
+    left: 7.0%;
+    background: rgba(234, 179, 8, 0.45);
+    z-index: 1;
+}
+.gate-toggles {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--muted);
+}
+.gate-toggles label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.toolbar {
+    margin: 0 14px 10px;
+    display: flex; gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.btn {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all .15s;
+    font-family: inherit;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-color: transparent;
+    color: white;
+    font-weight: 500;
+}
+.btn.primary:hover { filter: brightness(1.1); }
+.btn.danger:hover { border-color: var(--err); color: var(--err); }
+input[type=text], input[type=number], input[type=password] {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font: inherit;
+    font-size: 13px;
+}
+input[type=text]:focus, input[type=number]:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+.err {
+    color: var(--err);
+    font-family: var(--mono);
+    font-size: 12px;
+    margin: 0 14px 8px;
+    min-height: 16px;
+    line-height: 1.4;
+}
+.err.ok { color: var(--ok); }
+
+/* — Side — */
+aside {
+    grid-area: side;
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    display: flex; flex-direction: column;
+}
+.section {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+}
+.section h3 {
+    margin: 0 0 10px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--muted);
+    font-weight: 600;
+}
+.tabbar {
+    display: flex; gap: 4px;
+    padding: 8px 12px 0;
+    border-bottom: 1px solid var(--border);
+}
+.tab {
+    background: none; border: none; color: var(--muted);
+    padding: 8px 10px;
+    font: inherit; font-size: 12px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+}
+.tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+.cards {
+    display: grid;
+    gap: 8px;
+}
+.card {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all .15s;
+    display: flex; flex-direction: column; gap: 6px;
+}
+.card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.card .name { font-weight: 500; font-size: 13px; }
+.card .strip {
+    height: 6px; border-radius: 3px;
+    background: linear-gradient(90deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+}
+.card .tags {
+    display: flex; gap: 4px; flex-wrap: wrap;
+}
+.card .tag {
+    font-size: 10px;
+    background: var(--bg);
+    color: var(--muted);
+    padding: 1px 6px;
+    border-radius: 10px;
+}
+.row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px;
+}
+.row label {
+    flex: 1; color: var(--muted); font-size: 12px;
+}
+.row input[type=range] {
+    flex: 1;
+    accent-color: var(--accent);
+}
+.row .val {
+    font-family: var(--mono);
+    font-size: 12px;
+    min-width: 40px;
+    text-align: right;
+    color: var(--text);
+}
+.saved {
+    display: flex; gap: 6px;
+    flex-wrap: wrap;
+}
+.chip {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+}
+.chip:hover { border-color: var(--accent); }
+.chip .x {
+    color: var(--muted); cursor: pointer;
+    width: 14px; height: 14px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+}
+.chip .x:hover { background: var(--err); color: white; }
+
+.hint { color: var(--muted); font-size: 11px; line-height: 1.5; }
+code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app">
+    <header>
+        <div class="logo">EMBER-AUDIO</div>
+        <div class="crumb">Pattern: <b id="patternName">Breathing Aurora</b></div>
+        <div class="spacer"></div>
+        <div class="status">
+            <span class="dot" id="dot"></span>
+            <span id="connText">connecting…</span>
+            <span class="fps" id="fps"></span>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="tabbar" style="margin-bottom:16px">
+            <button class="tab active" data-tab="lib">Ambient</button>
+            <button class="tab" data-tab="set">Settings</button>
+            <button class="tab" data-tab="advanced">Advanced</button>
+        </div>
+
+        <div class="section" id="tab-lib">
+            <div class="preview">
+                <div class="label">
+                    <span>Live preview · <span id="prevCount">100</span> pixels</span>
+                    <span style="font-family:var(--mono);color:var(--accent)">Envelope: <span id="envPct">0%</span></span>
+                </div>
+                <canvas id="prev" width="300" height="32"></canvas>
+            </div>
+
+            <!-- DeafDoorbell-style Audio Sensitivity & Gate Panel -->
+            <div class="gate-panel">
+                <div class="gate-header">
+                    <div class="gate-title">
+                        <span>Audio Sensitivity Gate</span>
+                        <span class="gate-badge" id="gateStateBadge">Faded Out (0%)</span>
+                    </div>
+                    <div class="gate-metrics">
+                        <span id="liveMicVal" style="color:#00e5ff;font-weight:600">Mic: 0 MAD</span>
+                        <span id="threshVal" style="color:var(--text);font-weight:600">X: 2500 MAD</span>
+                        <span id="threshYVal" style="color:var(--muted);font-size:11px">(Y: 2125)</span>
+                    </div>
+                </div>
+                <div class="gate-bar-track">
+                    <div class="gate-bar-fill" id="liveMicBar"></div>
+                    <div class="gate-marker-y" id="liveThreshMarkerY" title="Fade-out threshold Y (85% of X)"></div>
+                    <div class="gate-marker-x" id="liveThreshMarkerX" title="Fade-in threshold X"></div>
+                </div>
+                <input type="range" id="threshRange" min="200" max="30000" step="100" value="2500" style="width:100%;accent-color:#eab308;cursor:pointer">
+                <div class="gate-toggles">
+                    <label title="When enabled, lights smoothly fade in over 2s above X and fade out over 2s below Y">
+                        <input type="checkbox" id="gateEnableChk" checked>
+                        <span>Audio Gate Fade (2.0s S-Curve)</span>
+                    </label>
+                    <div style="display:flex;align-items:center;gap:8px;font-size:13px;flex-wrap:wrap">
+                        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;margin:0" title="Automatically cycle through calming ambient patterns">
+                            <input type="checkbox" id="autoCycleChk" checked>
+                            <span>Auto Cycle</span>
+                        </label>
+                        <div style="display:inline-flex;align-items:center;gap:4px">
+                            <input type="number" id="cycleSec" min="5" max="600" value="30" style="width:52px;padding:3px 6px;text-align:center;background:var(--panel-2);border:1px solid var(--border);color:#00e5ff;border-radius:4px;font-family:var(--mono);font-size:13px;font-weight:600">
+                            <span style="color:var(--muted);font-size:12px">sec</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top:16px">Calming Ambient Patterns</h3>
+            <div class="cards" id="libCards"></div>
+        </div>
+
+        <div class="section" id="tab-set" style="display:none">
+            <h3>Strip</h3>
+            <div class="row">
+                <label>Brightness</label>
+                <input type="range" id="bright" min="0" max="255" value="128">
+                <span class="val" id="brightVal">128</span>
+            </div>
+            <div class="row">
+                <label>Data pin</label>
+                <select id="pin" style="background:var(--panel-2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 10px;font:inherit;font-size:13px">
+                    <option value="0">GPIO 0</option>
+                    <option value="1">GPIO 1</option>
+                    <option value="2">GPIO 2</option>
+                    <option value="3">GPIO 3</option>
+                    <option value="4">GPIO 4</option>
+                    <option value="5" selected>GPIO 5</option>
+                    <option value="6">GPIO 6</option>
+                    <option value="7">GPIO 7</option>
+                    <option value="8">GPIO 8 (strap)</option>
+                    <option value="9">GPIO 9 (strap)</option>
+                    <option value="10">GPIO 10</option>
+                </select>
+                <button class="btn" id="pinApply">Apply</button>
+            </div>
+            <div class="row">
+                <label>Pixel count</label>
+                <input type="number" id="count" min="1" max="600" value="100" style="width:80px">
+                <button class="btn" id="countApply">Apply</button>
+            </div>
+            <p class="hint">Changing the data pin or pixel count reboots the device — FastLED's pin is compiled in, so a clean rebuild of its controller list is required.</p>
+
+            <h3 style="margin-top:16px">Audio &amp; Microphone</h3>
+            <div class="row">
+                <label>Mic source</label>
+                <select id="micSrc" style="background:var(--panel-2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 10px;font:inherit;font-size:13px">
+                    <option value="0">Off</option>
+                    <option value="1">INMP441 (I2S MEMS)</option>
+                    <option value="2" selected>MAX4466 (analog)</option>
+                </select>
+                <button class="btn" id="micSrcApply">Apply</button>
+            </div>
+            <div id="i2sPins" style="display:none">
+                <div class="row">
+                    <label>BCLK (SCK)</label>
+                    <input type="number" id="micBCLK" min="0" max="10" style="width:80px">
+                </div>
+                <div class="row">
+                    <label>WS (LRCK)</label>
+                    <input type="number" id="micWS" min="0" max="10" style="width:80px">
+                </div>
+                <div class="row">
+                    <label>DATA (SD)</label>
+                    <input type="number" id="micData" min="0" max="10" style="width:80px">
+                </div>
+            </div>
+            <div id="adcPins">
+                <div class="row">
+                    <label>ADC OUT pin</label>
+                    <select id="micADC" style="background:var(--panel-2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 10px;font:inherit;font-size:13px">
+                        <option value="0">GPIO 0 (ADC1_0)</option>
+                        <option value="1">GPIO 1 (ADC1_1)</option>
+                        <option value="2">GPIO 2 (ADC1_2)</option>
+                        <option value="3" selected>GPIO 3 (ADC1_3)</option>
+                        <option value="4">GPIO 4 (ADC1_4)</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <label>Soft GND pin</label>
+                    <select id="micGnd" style="background:var(--panel-2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 10px;font:inherit;font-size:13px">
+                        <option value="-1">None (Hardware GND)</option>
+                        <option value="0">GPIO 0</option>
+                        <option value="1">GPIO 1</option>
+                        <option value="2">GPIO 2</option>
+                        <option value="3">GPIO 3</option>
+                        <option value="4" selected>GPIO 4 (Driven LOW)</option>
+                        <option value="6">GPIO 6</option>
+                        <option value="7">GPIO 7</option>
+                        <option value="10">GPIO 10</option>
+                    </select>
+                </div>
+                <p class="hint">MAX4466 OUT connects to GPIO 3 (ADC1_3) and GND to GPIO 4 (Soft Ground driven LOW).</p>
+            </div>
+            <div id="micPinsApplyWrap" style="margin-top:8px">
+                <button class="btn" id="micPinsApply">Apply pins &amp; reboot</button>
+            </div>
+            <div class="row" id="micGainRow" style="margin-top:10px">
+                <label>Mic Gain</label>
+                <input type="range" id="micGain" min="10" max="500" value="150">
+                <span class="val" id="micGainVal">1.50×</span>
+            </div>
+            <div class="row" id="micSmoothRow">
+                <label>FFT Smoothing</label>
+                <input type="range" id="micSmooth" min="0" max="95" value="60">
+                <span class="val" id="micSmoothVal">0.60</span>
+            </div>
+            <div id="audioViz" style="margin-top:10px">
+                <div style="display:flex;align-items:flex-end;gap:3px;height:60px;background:var(--bg);border-radius:6px;padding:6px">
+                    <div class="bar" style="flex:1;background:linear-gradient(to top, #ff5050, #ff8c50);height:0%;border-radius:2px;transition:height 80ms"></div>
+                    <div class="bar" style="flex:1;background:linear-gradient(to top, #ff8c50, #ffce4a);height:0%;border-radius:2px;transition:height 80ms"></div>
+                    <div class="bar" style="flex:1;background:linear-gradient(to top, #ffce4a, #d3ff5e);height:0%;border-radius:2px;transition:height 80ms"></div>
+                    <div class="bar" style="flex:1;background:linear-gradient(to top, #d3ff5e, #5eff8e);height:0%;border-radius:2px;transition:height 80ms"></div>
+                    <div class="bar" style="flex:1;background:linear-gradient(to top, #5eff8e, #5eecff);height:0%;border-radius:2px;transition:height 80ms"></div>
+                    <div class="bar" style="flex:1;background:linear-gradient(to top, #5eecff, #5e9cff);height:0%;border-radius:2px;transition:height 80ms"></div>
+                    <div class="bar" style="flex:1;background:linear-gradient(to top, #5e9cff, #b15eff);height:0%;border-radius:2px;transition:height 80ms"></div>
+                    <div class="bar" style="flex:1;background:linear-gradient(to top, #b15eff, #ff5ee0);height:0%;border-radius:2px;transition:height 80ms"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--muted)">
+                    <span>62Hz</span><span>VU <span id="vuVal">0.00</span></span><span>8kHz</span>
+                </div>
+            </div>
+
+            <h3 style="margin-top:16px">Access Point</h3>
+            <p class="hint" style="margin-bottom:12px;line-height:1.6">
+                Network: <strong style="color:var(--text)">Ember-Audio</strong><br>
+                Password: <strong style="color:var(--text)">ember123</strong><br>
+                Portal URL: <a href="http://192.168.4.1" style="color:var(--accent);text-decoration:underline">http://192.168.4.1</a>
+            </p>
+
+            <h3 style="margin-top:16px">System &amp; OTA Update</h3>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <a class="btn primary" href="/update">OTA Firmware Update (/update)</a>
+                <button class="btn danger" id="reboot">Reboot Device</button>
+            </div>
+        </div>
+
+        <div class="section" id="tab-advanced" style="display:none">
+            <div class="subtabbar" style="display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">
+                <button class="subtab active" data-sub="editor" style="padding:6px 12px;background:var(--panel-2);border:1px solid var(--border);border-radius:6px;color:var(--text);font:inherit;font-size:12px;cursor:pointer;white-space:nowrap">Code Editor</button>
+                <button class="subtab" data-sub="saved" style="padding:6px 12px;background:transparent;border:1px solid transparent;border-radius:6px;color:var(--muted);font:inherit;font-size:12px;cursor:pointer;white-space:nowrap">Saved</button>
+                <button class="subtab" data-sub="help" style="padding:6px 12px;background:transparent;border:1px solid transparent;border-radius:6px;color:var(--muted);font:inherit;font-size:12px;cursor:pointer;white-space:nowrap">Help &amp; Syntax</button>
+            </div>
+
+            <div class="subcontent" id="sub-editor">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                    <h3 style="margin:0">Pattern Code Editor</h3>
+                    <div class="err ok" id="err" style="margin:0">ready</div>
+                </div>
+                <div class="editor-wrap" id="editorWrap" style="height:260px;margin:0 0 10px 0;">
+                    <div class="gutter" id="gutter">1</div>
+                    <pre class="layer hl" id="hl"></pre>
+                    <textarea class="layer" id="ta" spellcheck="false" autocomplete="off"
+                              autocorrect="off" autocapitalize="off"></textarea>
+                </div>
+                <div class="toolbar" style="margin:0 0 8px 0;display:flex;gap:8px;">
+                    <input type="text" id="saveName" placeholder="Pattern name" style="flex:1;min-width:140px">
+                    <button class="btn primary" id="saveBtn">Save</button>
+                    <button class="btn" id="newBtn">New</button>
+                </div>
+            </div>
+
+            <div class="subcontent" id="sub-saved" style="display:none">
+                <h3>Saved on Device</h3>
+                <div class="saved" id="savedChips"></div>
+                <p class="hint" style="margin-top:12px">Patterns are stored in <code>/patterns/</code> on LittleFS. Save with the toolbar at the bottom of the editor.</p>
+            </div>
+
+            <div class="subcontent" id="sub-help" style="display:none">
+                <div style="background: rgba(124, 156, 255, 0.08); border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 16px;" id="ember-credits">
+                    <span style="font-weight: 600; font-size: 13px; display: block; margin-bottom: 4px; color: var(--accent);">Ember Project</span>
+                    <span class="hint">Created by <a href="https://dillonsimeone.com" target="_blank" style="color: var(--accent-2); text-decoration: none; font-weight: 500;" id="credit-link">Dillon Simeone</a>.</span>
+                    <span class="hint" style="display: block; margin-top: 4px;">Licensed under <a href="/LICENSE" target="_blank" style="color: var(--muted); text-decoration: underline;">MIT License</a>.</span>
+                </div>
+                <h3>Language Reference</h3>
+                <p class="hint">Ember patterns run once per pixel per frame. Set the output with <code>hsv(h,s,v)</code> or <code>rgb(r,g,b)</code> at the end.</p>
+                <h3 style="margin-top:14px">Built-in variables</h3>
+                <p class="hint">
+                    <code>i</code> / <code>index</code> — pixel index<br>
+                    <code>n</code> / <code>pixelCount</code> — strip length<br>
+                    <code>t</code> / <code>time</code> — seconds since boot<br>
+                    <code>gate</code> / <code>fade</code> — 2s audio gate envelope (0→1)<br>
+                    <code>PI</code>, <code>TAU</code>
+                </p>
+                <h3 style="margin-top:14px">Conditionals</h3>
+                <p class="hint">
+                    <code>if (cond) stmt;</code> — run stmt when cond is non-zero<br>
+                    <code>if (cond) a; else b;</code> — optional else branch<br>
+                    <code>a ? b : c</code> — ternary expression
+                </p>
+                <h3 style="margin-top:14px">Functions</h3>
+                <p class="hint">
+                    <code>time(s)</code> — sawtooth 0→1 every <i>s</i> seconds<br>
+                    <code>wave(v)</code> — 0→1 sine of <i>v</i> cycles<br>
+                    <code>triangle(v)</code> — 0→1→0 triangle<br>
+                    <code>square(v, duty)</code> — square wave, duty defaults to 0.5<br>
+                    <code>perlin1D(x)</code>, <code>perlin2D(x,y)</code> — organic noise<br>
+                    <code>hash(x)</code> — stable per-pixel random<br>
+                    <code>sin cos abs sqrt pow floor ceil round frac</code><br>
+                    <code>min max clamp mix step smoothstep</code>
+                </p>
+                <h3 style="margin-top:14px">Audio &amp; Gate</h3>
+                <p class="hint">
+                    <code>gate()</code> / <code>fade()</code> — 2s S-curve fade envelope 0→1<br>
+                    <code>mad()</code> — normalized MAD level 0→1<br>
+                    <code>vu()</code> — overall level 0→1<br>
+                    <code>peak()</code> — slow-decay peak<br>
+                    <code>pitch()</code> — dominant frequency, 0=low … 1=high<br>
+                    <code>beat()</code> — 1 on attack, decays fast<br>
+                    <code>band(n)</code> — band n (0..7), low→high<br>
+                    <code>bass()</code>, <code>mid()</code>, <code>treble()</code> — band shortcuts<br>
+                    <code>motion()</code> / <code>motion</code> — ESP-NOW motion intensity 0→1
+                </p>
+            </div>
+        </div>
+
+        <div style="padding: 16px; border-top: 1px solid var(--border); text-align: center; margin-top: 24px; font-size: 11px; color: var(--muted);" id="sidebar-footer-credit">
+            Ember &copy; 2026 <a href="https://dillonsimeone.com" target="_blank" style="color: var(--accent); text-decoration: none;" id="footer-link">Dillon Simeone</a>
+        </div>
+    </div>
+</div>
+
+<script>
+// ─── Tab switching ──────────────────────────────────────────────────────────
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    ["lib","set","advanced"].forEach(id => {
+        const el = document.getElementById("tab-" + id);
+        if (el) el.style.display = (id === t.dataset.tab) ? "" : "none";
+    });
+}));
+
+document.querySelectorAll(".subtab").forEach(s => s.addEventListener("click", () => {
+    document.querySelectorAll(".subtab").forEach(x => {
+        x.classList.remove("active");
+        x.style.background = "transparent";
+        x.style.borderColor = "transparent";
+        x.style.color = "var(--muted)";
+    });
+    s.classList.add("active");
+    s.style.background = "var(--panel-2)";
+    s.style.borderColor = "var(--border)";
+    s.style.color = "var(--text)";
+    ["editor","saved","help"].forEach(id => {
+        const el = document.getElementById("sub-" + id);
+        if (el) el.style.display = (id === s.dataset.sub) ? "" : "none";
+    });
+    if (s.dataset.sub === "editor") syncHL();
+}));
+
+// ─── Syntax highlighter ─────────────────────────────────────────────────────
+const KW   = ["if","else","return"];
+const FNS  = ["sin","cos","tan","abs","sqrt","pow","floor","ceil","round","frac",
+              "min","max","clamp","mix","lerp","step","smoothstep",
+              "wave","triangle","square","time","perlin1D","perlin1d",
+              "perlin2D","perlin2d","noise","noise2","random","hash","hsv","rgb",
+              "vu","peak","pitch","beat","band","bass","mid","treble","motion","gate","fade","mad"];
+const KWS  = new Set(KW), FNS_S = new Set(FNS);
+
+function highlight(src) {
+    let out = "";
+    let i = 0;
+    while (i < src.length) {
+        const c = src[i];
+        if (c === "/" && src[i+1] === "/") {
+            let j = i; while (j < src.length && src[j] !== "\n") j++;
+            out += '<span class="cmt">' + esc(src.slice(i, j)) + "</span>";
+            i = j; continue;
+        }
+        if (c === "/" && src[i+1] === "*") {
+            let j = i + 2;
+            while (j + 1 < src.length && !(src[j] === "*" && src[j+1] === "/")) j++;
+            j = Math.min(j + 2, src.length);
+            out += '<span class="cmt">' + esc(src.slice(i, j)) + "</span>";
+            i = j; continue;
+        }
+        if (/[0-9]/.test(c) || (c === "." && /[0-9]/.test(src[i+1]))) {
+            let j = i; while (j < src.length && /[0-9.]/.test(src[j])) j++;
+            out += '<span class="num">' + esc(src.slice(i, j)) + "</span>";
+            i = j; continue;
+        }
+        if (/[A-Za-z_]/.test(c)) {
+            let j = i; while (j < src.length && /[A-Za-z0-9_]/.test(src[j])) j++;
+            const word = src.slice(i, j);
+            let cls;
+            if (KWS.has(word)) cls = "kw";
+            else if (FNS_S.has(word)) cls = "fn";
+            else cls = "var";
+            out += `<span class="${cls}">${esc(word)}</span>`;
+            i = j; continue;
+        }
+        if ("+-*/%<>=?:!".indexOf(c) >= 0) {
+            out += '<span class="op">' + esc(c) + "</span>";
+            i++; continue;
+        }
+        out += esc(c);
+        i++;
+    }
+    return out + "\n";
+}
+function esc(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// ─── Editor wiring ──────────────────────────────────────────────────────────
+const ta     = document.getElementById("ta");
+const hl     = document.getElementById("hl");
+const gutter = document.getElementById("gutter");
+
+function syncHL() {
+    const v = ta.value;
+    hl.innerHTML = highlight(v);
+    const lines = v.split("\n").length;
+    let g = ""; for (let i = 1; i <= lines; i++) g += i + "\n";
+    gutter.textContent = g;
+    hl.scrollTop  = ta.scrollTop;
+    hl.scrollLeft = ta.scrollLeft;
+}
+ta.addEventListener("input", () => { syncHL(); scheduleCompile(); });
+ta.addEventListener("scroll", () => { hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft; });
+ta.addEventListener("keydown", (e) => {
+    if (e.key === "Tab") {
+        e.preventDefault();
+        const s = ta.selectionStart, en = ta.selectionEnd;
+        ta.value = ta.value.slice(0, s) + "    " + ta.value.slice(en);
+        ta.selectionStart = ta.selectionEnd = s + 4;
+        syncHL(); scheduleCompile();
+    } else if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        document.getElementById("saveBtn").click();
+    }
+});
+
+// ─── JS-side VM (matches firmware/src/main.cpp semantics) ───────────────────
+function tokenize(src) {
+    const tks = [];
+    let i = 0;
+    while (i < src.length) {
+        const c = src[i];
+        if (" \t\r\n".indexOf(c) >= 0) { i++; continue; }
+        if (c === "/" && src[i+1] === "/") { while (i < src.length && src[i] !== "\n") i++; continue; }
+        if (c === "/" && src[i+1] === "*") {
+            i += 2;
+            while (i+1 < src.length && !(src[i] === "*" && src[i+1] === "/")) i++;
+            i = Math.min(i+2, src.length); continue;
+        }
+        if (/[0-9]/.test(c) || (c === "." && /[0-9]/.test(src[i+1]||""))) {
+            let j = i; while (j < src.length && /[0-9.]/.test(src[j])) j++;
+            tks.push({t:"num", v:parseFloat(src.slice(i,j))}); i = j; continue;
+        }
+        if (/[A-Za-z_]/.test(c)) {
+            let j = i; while (j < src.length && /[A-Za-z0-9_]/.test(src[j])) j++;
+            tks.push({t:"id", v:src.slice(i,j)}); i = j; continue;
+        }
+        const two = src.slice(i, i+2);
+        if (two === "<=" || two === ">=" || two === "==" || two === "!=") { tks.push({t:two}); i += 2; continue; }
+        if ("+-*/%<>=?:(),;{}".indexOf(c) >= 0) { tks.push({t:c}); i++; continue; }
+        i++;
+    }
+    tks.push({t:"eof"});
+    return tks;
+}
+
+class Parser {
+    constructor(tks) { this.tks = tks; this.p = 0; }
+    peek(o = 0) { return this.tks[this.p + o]; }
+    eat() { return this.tks[this.p++]; }
+    parseProgram() {
+        const stmts = [];
+        while (this.peek().t !== "eof") {
+            while (this.peek().t === ";") this.eat();
+            if (this.peek().t === "eof") break;
+            stmts.push(this.parseStmt());
+            while (this.peek().t === ";") this.eat();
+        }
+        return {kind:"prog", stmts};
+    }
+    parseStmt() {
+        if (this.peek().t === "id" && this.peek().v === "if" && this.peek(1).t === "(") {
+            this.eat(); this.eat();
+            const cond = this.parseTern();
+            if (this.peek().t !== ")") throw new Error("expected ')'");
+            this.eat();
+            const thenStmt = this.parseStmt();
+            let elseStmt = null;
+            if (this.peek().t === "id" && this.peek().v === "else") {
+                this.eat();
+                elseStmt = this.parseStmt();
+            }
+            return {kind:"if", cond, thenStmt, elseStmt};
+        }
+        if (this.peek().t === "id" && this.peek(1).t === "=") {
+            const name = this.eat().v; this.eat();
+            const val = this.parseTern();
+            return {kind:"asn", name, val};
+        }
+        return {kind:"exp", e:this.parseTern()};
+    }
+    parseTern() {
+        const c = this.parseCmp();
+        if (this.peek().t === "?") {
+            this.eat();
+            const a = this.parseTern();
+            if (this.peek().t !== ":") throw new Error("expected ':'");
+            this.eat();
+            const b = this.parseTern();
+            return {kind:"tern", c, a, b};
+        }
+        return c;
+    }
+    parseCmp() {
+        let l = this.parseAdd();
+        while (["<",">","<=",">=","==","!="].includes(this.peek().t)) {
+            const op = this.eat().t;
+            const r = this.parseAdd();
+            l = {kind:"bin", op, l, r};
+        }
+        return l;
+    }
+    parseAdd() {
+        let l = this.parseMul();
+        while (this.peek().t === "+" || this.peek().t === "-") {
+            const op = this.eat().t;
+            const r = this.parseMul();
+            l = {kind:"bin", op, l, r};
+        }
+        return l;
+    }
+    parseMul() {
+        let l = this.parseUn();
+        while ("*/%".indexOf(this.peek().t) >= 0) {
+            const op = this.eat().t;
+            const r = this.parseUn();
+            l = {kind:"bin", op, l, r};
+        }
+        return l;
+    }
+    parseUn() {
+        if (this.peek().t === "-") { this.eat(); return {kind:"neg", e:this.parseUn()}; }
+        if (this.peek().t === "+") { this.eat(); return this.parseUn(); }
+        return this.parsePri();
+    }
+    parsePri() {
+        const t = this.peek();
+        if (t.t === "num") { this.eat(); return {kind:"num", v:t.v}; }
+        if (t.t === "(") {
+            this.eat();
+            const e = this.parseTern();
+            if (this.peek().t !== ")") throw new Error("expected ')'");
+            this.eat();
+            return e;
+        }
+        if (t.t === "id") {
+            this.eat();
+            if (this.peek().t === "(") {
+                this.eat();
+                const args = [];
+                if (this.peek().t !== ")") {
+                    args.push(this.parseTern());
+                    while (this.peek().t === ",") { this.eat(); args.push(this.parseTern()); }
+                }
+                if (this.peek().t !== ")") throw new Error("expected ')'");
+                this.eat();
+                return {kind:"call", name:t.v, args};
+            }
+            return {kind:"var", name:t.v};
+        }
+        throw new Error("unexpected " + t.t);
+    }
+}
+
+// ── Cheap Perlin in JS ──
+const PRM = (() => {
+    const p = new Uint8Array(512);
+    for (let i = 0; i < 256; i++) p[i] = i;
+    let seed = 2654435769;
+    for (let i = 255; i > 0; i--) {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        const j = seed % (i + 1);
+        [p[i], p[j]] = [p[j], p[i]];
+    }
+    for (let i = 0; i < 256; i++) p[i + 256] = p[i];
+    return p;
+})();
+const fade = t => t*t*t*(t*(t*6 - 15) + 10);
+const lerp = (a,b,t) => a + (b-a)*t;
+const grad1 = (h, x) => (h & 1) ? -x : x;
+const grad2 = (h, x, y) => {
+    const u = (h & 1) ? x : -x;
+    const v = (h & 2) ? y : -y;
+    return u + v;
+};
+function pnoise1(x) {
+    const X = Math.floor(x) & 255;
+    x -= Math.floor(x);
+    const u = fade(x);
+    const a = PRM[X], b = PRM[X + 1];
+    return (lerp(grad1(a, x), grad1(b, x - 1), u) + 1) * 0.5;
+}
+function pnoise2(x, y) {
+    const X = Math.floor(x) & 255, Y = Math.floor(y) & 255;
+    x -= Math.floor(x); y -= Math.floor(y);
+    const u = fade(x), v = fade(y);
+    const A = PRM[X] + Y, B = PRM[X + 1] + Y;
+    const r = lerp(
+        lerp(grad2(PRM[A], x, y),       grad2(PRM[B], x - 1, y), u),
+        lerp(grad2(PRM[A + 1], x, y - 1), grad2(PRM[B + 1], x - 1, y - 1), u),
+        v);
+    return (r + 1) * 0.5;
+}
+function ihash(x) {
+    let u = (Math.floor(x * 1000)) | 0;
+    u ^= u >>> 16; u = Math.imul(u, 0x7feb352d);
+    u ^= u >>> 15; u = Math.imul(u, 0x846ca68b);
+    u ^= u >>> 16;
+    return (u & 0xFFFFFF) / 0x1000000;
+}
+
+const FNS_IMPL = {
+    sin:   a => Math.sin(a[0]),
+    cos:   a => Math.cos(a[0]),
+    tan:   a => Math.tan(a[0]),
+    abs:   a => Math.abs(a[0]),
+    sqrt:  a => Math.sqrt(Math.abs(a[0])),
+    pow:   a => Math.pow(a[0], a[1]),
+    floor: a => Math.floor(a[0]),
+    ceil:  a => Math.ceil(a[0]),
+    round: a => Math.round(a[0]),
+    frac:  a => a[0] - Math.floor(a[0]),
+    min:   a => Math.min(a[0], a[1]),
+    max:   a => Math.max(a[0], a[1]),
+    clamp: a => Math.max(a[1], Math.min(a[2], a[0])),
+    mix:   a => a[0] + (a[1] - a[0]) * a[2],
+    lerp:  a => a[0] + (a[1] - a[0]) * a[2],
+    step:  a => a[1] < a[0] ? 0 : 1,
+    smoothstep: a => { let t = (a[2] - a[0]) / (a[1] - a[0]); t = Math.max(0, Math.min(1, t)); return t*t*(3-2*t); },
+    wave:     a => (Math.sin(a[0] * 2 * Math.PI) + 1) * 0.5,
+    triangle: a => { const f = a[0] - Math.floor(a[0]); return f < 0.5 ? f*2 : 2 - f*2; },
+    square:   a => { const f = a[0] - Math.floor(a[0]); return f < (a[1] !== undefined ? a[1] : 0.5) ? 1 : 0; },
+    time:     a => a[0] > 0 ? (RUN_T / a[0]) - Math.floor(RUN_T / a[0]) : 0,
+    perlin1D: a => pnoise1(a[0]),
+    perlin1d: a => pnoise1(a[0]),
+    perlin2D: a => pnoise2(a[0], a[1]),
+    perlin2d: a => pnoise2(a[0], a[1]),
+    noise:    a => pnoise1(a[0]),
+    noise2:   a => pnoise2(a[0], a[1]),
+    random:   () => Math.random(),
+    hash:     a => ihash(a[0]),
+    vu:     () => LIVE_SENSORS.vu,
+    peak:   () => LIVE_SENSORS.peak,
+    pitch:  () => LIVE_SENSORS.pitch,
+    beat:   () => LIVE_SENSORS.beat,
+    band:   a => {
+        let n = Math.max(0, Math.min(7, Math.floor(a[0])));
+        return LIVE_SENSORS.bands[n] || 0;
+    },
+    bass:   () => (LIVE_SENSORS.bands[0] + LIVE_SENSORS.bands[1]) * 0.5,
+    mid:    () => (LIVE_SENSORS.bands[3] + LIVE_SENSORS.bands[4]) * 0.5,
+    treble: () => (LIVE_SENSORS.bands[6] + LIVE_SENSORS.bands[7]) * 0.5,
+    motion: () => LIVE_SENSORS.motion,
+    gate:   () => LIVE_SENSORS.gate,
+    fade:   () => LIVE_SENSORS.gate,
+    mad:    () => LIVE_SENSORS.mad / 30000.0,
+};
+let RUN_T = 0;
+const LIVE_SENSORS = { vu: 0, peak: 0, pitch: 0, beat: 0, bands: [0,0,0,0,0,0,0,0], motion: 0.0, gate: 1.0, mad: 0 };
+
+class Evaluator {
+    constructor(ast) { this.ast = ast; this.reset(); }
+    reset() {
+        this.vars = {PI: Math.PI, TAU: Math.PI * 2};
+        this.out = {useRGB: false, h: 0, s: 1, v: 1, r: 0, g: 0, b: 0};
+    }
+    run(i, n, t) {
+        this.reset();
+        this.vars.i = i; this.vars.index = i;
+        this.vars.n = n; this.vars.pixelCount = n;
+        this.vars.t = t; this.vars.time = t;
+        this.vars.motion = LIVE_SENSORS.motion;
+        this.vars.gate = LIVE_SENSORS.gate;
+        this.vars.fade = LIVE_SENSORS.gate;
+        RUN_T = t;
+        for (const s of this.ast.stmts) this.evalStmt(s);
+        return this.out;
+    }
+    evalStmt(s) {
+        if (s.kind === "if") {
+            if (this.evalExpr(s.cond) !== 0) this.evalStmt(s.thenStmt);
+            else if (s.elseStmt) this.evalStmt(s.elseStmt);
+            return;
+        }
+        if (s.kind === "asn") this.vars[s.name] = this.evalExpr(s.val);
+        else this.evalExpr(s.e);
+    }
+    evalExpr(e) {
+        switch (e.kind) {
+            case "num": return e.v;
+            case "var": return this.vars[e.name] ?? 0;
+            case "neg": return -this.evalExpr(e.e);
+            case "bin": {
+                const l = this.evalExpr(e.l), r = this.evalExpr(e.r);
+                switch (e.op) {
+                    case "+": return l + r;
+                    case "-": return l - r;
+                    case "*": return l * r;
+                    case "/": return r !== 0 ? l / r : 0;
+                    case "%": return r !== 0 ? l - Math.floor(l/r)*r : 0;
+                    case "<": return l < r ? 1 : 0;
+                    case ">": return l > r ? 1 : 0;
+                    case "<=": return l <= r ? 1 : 0;
+                    case ">=": return l >= r ? 1 : 0;
+                    case "==": return Math.abs(l - r) < 1e-5 ? 1 : 0;
+                    case "!=": return Math.abs(l - r) >= 1e-5 ? 1 : 0;
+                }
+                return 0;
+            }
+            case "tern": return this.evalExpr(e.c) !== 0 ? this.evalExpr(e.a) : this.evalExpr(e.b);
+            case "call": {
+                const a = e.args.map(x => this.evalExpr(x));
+                if (e.name === "hsv") { this.out.useRGB = false; this.out.h = a[0]; this.out.s = a[1]; this.out.v = a[2]; return 0; }
+                if (e.name === "rgb") { this.out.useRGB = true;  this.out.r = a[0]; this.out.g = a[1]; this.out.b = a[2]; return 0; }
+                const fn = FNS_IMPL[e.name];
+                if (!fn) throw new Error("unknown function: " + e.name);
+                return fn(a);
+            }
+        }
+        return 0;
+    }
+}
+
+function hsv2rgb(h, s, v) {
+    h = ((h % 1) + 1) % 1;
+    s = Math.max(0, Math.min(1, s));
+    v = Math.max(0, Math.min(1, v));
+    const i = Math.floor(h * 6);
+    const f = h * 6 - i;
+    const p = v * (1 - s);
+    const q = v * (1 - f * s);
+    const t = v * (1 - (1 - f) * s);
+    let r, g, b;
+    switch (i % 6) {
+        case 0: r=v; g=t; b=p; break;
+        case 1: r=q; g=v; b=p; break;
+        case 2: r=p; g=v; b=t; break;
+        case 3: r=p; g=q; b=v; break;
+        case 4: r=t; g=p; b=v; break;
+        case 5: r=v; g=p; b=q; break;
+    }
+    return [Math.round(r*255), Math.round(g*255), Math.round(b*255)];
+}
+
+// ─── Preview loop ───────────────────────────────────────────────────────────
+const prev   = document.getElementById("prev");
+const pctx   = prev.getContext("2d");
+let   evalr  = null;
+let   compileError = "";
+let   pixelCount = 500;
+
+function recompileLocal() {
+    const src = ta.value;
+    try {
+        const ast = new Parser(tokenize(src)).parseProgram();
+        evalr = new Evaluator(ast);
+        showError("", true);
+    } catch (e) {
+        compileError = e.message;
+        showError("local: " + e.message, false);
+        evalr = null;
+    }
+}
+
+function showError(msg, ok) {
+    const el = document.getElementById("err");
+    if (!msg) {
+        el.textContent = "ready";
+        el.classList.add("ok");
+    } else {
+        el.textContent = msg;
+        el.classList.toggle("ok", !!ok);
+    }
+}
+
+function tick(ts) {
+    if (window._emberIntCheck === false) {
+        prev.width = pixelCount;
+        pctx.fillStyle = "#ff6b6b";
+        pctx.fillRect(0, 0, pixelCount, 1);
+        showError("System Integrity Warning: Creator credit tampered.", false);
+        requestAnimationFrame(tick);
+        return;
+    }
+    const t = ts * 0.001;
+    if (evalr) {
+        const n = Math.min(pixelCount, 300); // Cap preview canvas width for smooth browser rendering
+        if (prev.width !== n) prev.width = n;
+        if (prev.height !== 1) prev.height = 1;
+        const img = pctx.createImageData(n, 1);
+        const env = document.getElementById("gateEnableChk").checked ? LIVE_SENSORS.gate : 1.0;
+        for (let i = 0; i < n; i++) {
+            let r, g, b;
+            try {
+                const o = evalr.run(i, n, t);
+                if (o.useRGB) {
+                    r = Math.max(0, Math.min(255, Math.round(o.r * env * 255)));
+                    g = Math.max(0, Math.min(255, Math.round(o.g * env * 255)));
+                    b = Math.max(0, Math.min(255, Math.round(o.b * env * 255)));
+                } else {
+                    [r, g, b] = hsv2rgb(o.h, o.s, o.v * env);
+                }
+            } catch { r = g = b = 0; }
+            img.data[i*4]     = r;
+            img.data[i*4 + 1] = g;
+            img.data[i*4 + 2] = b;
+            img.data[i*4 + 3] = 255;
+        }
+        pctx.putImageData(img, 0, 0);
+    }
+    requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+// ─── Audio Gate UI helpers ──────────────────────────────────────────────────
+const threshRange     = document.getElementById("threshRange");
+const threshVal       = document.getElementById("threshVal");
+const threshYVal      = document.getElementById("threshYVal");
+const liveThreshMarkX = document.getElementById("liveThreshMarkerX");
+const liveThreshMarkY = document.getElementById("liveThreshMarkerY");
+const gateEnableChk   = document.getElementById("gateEnableChk");
+const autoCycleChk    = document.getElementById("autoCycleChk");
+const cycleSecInput   = document.getElementById("cycleSec");
+
+function updateThresholdMarkerUI(val) {
+    const x = Math.max(200, Math.min(30000, +val || 2500));
+    const y = Math.round(x * 0.85);
+    threshVal.textContent  = `X: ${x} MAD`;
+    threshYVal.textContent = `(Y: ${y})`;
+    liveThreshMarkX.style.left = Math.min(99.2, (x / 30000) * 100).toFixed(1) + "%";
+    liveThreshMarkY.style.left = Math.min(99.2, (y / 30000) * 100).toFixed(1) + "%";
+}
+
+let gateSendTimer = 0;
+function sendGateSettings() {
+    clearTimeout(gateSendTimer);
+    gateSendTimer = setTimeout(() => {
+        if (ws && ws.readyState === 1) {
+            const sec = cycleSecInput ? Math.max(5, Math.min(600, parseInt(cycleSecInput.value) || 30)) : 30;
+            ws.send(JSON.stringify({
+                action: "gateSet",
+                enabled: gateEnableChk.checked,
+                thresh: +threshRange.value,
+                autoCycle: autoCycleChk.checked,
+                cycleSec: sec
+            }));
+        }
+    }, 80);
+}
+
+threshRange.addEventListener("input", () => {
+    updateThresholdMarkerUI(threshRange.value);
+    sendGateSettings();
+});
+gateEnableChk.addEventListener("change", sendGateSettings);
+autoCycleChk.addEventListener("change", sendGateSettings);
+if (cycleSecInput) {
+    cycleSecInput.addEventListener("change", sendGateSettings);
+    cycleSecInput.addEventListener("input", sendGateSettings);
+}
+updateThresholdMarkerUI(2500);
+
+// ─── WebSocket — talks to firmware ──────────────────────────────────────────
+let ws;
+let compileTimer = 0;
+function scheduleCompile() {
+    recompileLocal();
+    clearTimeout(compileTimer);
+    compileTimer = setTimeout(() => {
+        if (compileError) return;
+        if (ws && ws.readyState === 1 && ws.bufferedAmount === 0) {
+            ws.send(JSON.stringify({action: "live", code: ta.value}));
+        }
+    }, 300);
+}
+
+function connect() {
+    const proto = location.protocol === "https:" ? "wss:" : "ws:";
+    const host  = location.host || "192.168.4.1";
+    ws = new WebSocket(`${proto}//${host}/ws`);
+    ws.addEventListener("open",  () => setConn(true));
+    ws.addEventListener("close", () => { setConn(false); setTimeout(connect, 1500); });
+    ws.addEventListener("error", () => ws.close());
+    ws.addEventListener("message", ev => {
+        let m; try { m = JSON.parse(ev.data); } catch { return; }
+        if (m.type === "status") {
+            document.getElementById("fps").textContent = (m.fps || 0).toFixed(0) + " fps";
+            document.getElementById("patternName").textContent = m.name || "Untitled";
+            pixelCount = m.count || 100;
+            document.getElementById("prevCount").textContent = pixelCount;
+            document.getElementById("count").value = pixelCount;
+            document.getElementById("bright").value = m.bright;
+            document.getElementById("brightVal").textContent = m.bright;
+            if (m.pin !== undefined) document.getElementById("pin").value = m.pin;
+            if (m.micSrc !== undefined) {
+                document.getElementById("micSrc").value = m.micSrc;
+                applyMicSrcVisibility(+m.micSrc);
+            }
+            if (m.micBCLK !== undefined) document.getElementById("micBCLK").value = m.micBCLK;
+            if (m.micWS   !== undefined) document.getElementById("micWS").value   = m.micWS;
+            if (m.micData !== undefined) document.getElementById("micData").value = m.micData;
+            if (m.micADC  !== undefined) document.getElementById("micADC").value  = m.micADC;
+            if (m.micGnd  !== undefined) document.getElementById("micGnd").value  = m.micGnd;
+            if (m.micGain !== undefined) {
+                document.getElementById("micGain").value = Math.round(m.micGain * 100);
+                document.getElementById("micGainVal").textContent = (+m.micGain).toFixed(2) + "×";
+            }
+            if (m.micSmooth !== undefined) {
+                document.getElementById("micSmooth").value = Math.round(m.micSmooth * 100);
+                document.getElementById("micSmoothVal").textContent = (+m.micSmooth).toFixed(2);
+            }
+            if (m.gateEn !== undefined) gateEnableChk.checked = !!m.gateEn;
+            if (m.gateThresh !== undefined) {
+                threshRange.value = m.gateThresh;
+                updateThresholdMarkerUI(m.gateThresh);
+            }
+            if (m.autoCycle !== undefined) autoCycleChk.checked = !!m.autoCycle;
+            if (m.cycleSec !== undefined && cycleSecInput) cycleSecInput.value = m.cycleSec;
+            if (m.mad !== undefined || m.gate !== undefined) {
+                updateSensorViz(m);
+            }
+            if (m.error) showError("device: " + m.error, false);
+        }
+        else if (m.type === "compile") {
+            if (m.success) showError("compiled ✓", true);
+            else showError("device: " + (m.error || "compile failed"), false);
+        }
+        else if (m.type === "loaded") {
+            ta.value = m.code || "";
+            document.getElementById("patternName").textContent = m.name;
+            document.getElementById("saveName").value = m.name;
+            syncHL();
+            recompileLocal();
+        }
+        else if (m.type === "patterns") {
+            renderSaved(m.list || []);
+        }
+        else if (m.type === "reboot") {
+            showError("device rebooting…", true);
+        }
+        else if (m.type === "audio" || m.type === "sensors") {
+            updateSensorViz(m);
+        }
+    });
+}
+function setConn(on) {
+    document.getElementById("dot").classList.toggle("ok", on);
+    document.getElementById("connText").textContent = on ? "connected" : "offline";
+}
+connect();
+
+// ─── Pattern library ────────────────────────────────────────────────────────
+async function loadLibrary() {
+    try {
+        const r = await fetch("/demo.json");
+        if (!r.ok) throw new Error();
+        renderLib(await r.json());
+    } catch {
+        renderLib(FALLBACK_LIB);
+    }
+}
+function renderLib(patterns) {
+    const root = document.getElementById("libCards");
+    root.innerHTML = "";
+    patterns.forEach(p => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+            <div class="name">${esc(p.name)}</div>
+            <canvas width="60" height="6" style="width:100%;height:6px;border-radius:3px"></canvas>
+            <div class="tags">${(p.tags||[]).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>`;
+        renderCardPreview(card.querySelector("canvas"), p.code);
+        card.addEventListener("click", () => {
+            ta.value = p.code;
+            document.getElementById("saveName").value = p.name;
+            document.getElementById("patternName").textContent = p.name;
+            // Selecting a pattern manually locks onto it (turns off auto-cycle)
+            if (autoCycleChk.checked) {
+                autoCycleChk.checked = false;
+                sendGateSettings();
+            }
+            syncHL();
+            scheduleCompile();
+        });
+        root.appendChild(card);
+    });
+}
+function renderCardPreview(canvas, code) {
+    try {
+        const ast = new Parser(tokenize(code)).parseProgram();
+        const ev = new Evaluator(ast);
+        const ctx = canvas.getContext("2d");
+        const n = canvas.width;
+        const img = ctx.createImageData(n, 1);
+        for (let i = 0; i < n; i++) {
+            const o = ev.run(i, n, 0.7);
+            let r, g, b;
+            if (o.useRGB) { r = Math.round(o.r*255); g = Math.round(o.g*255); b = Math.round(o.b*255); }
+            else          { [r,g,b] = hsv2rgb(o.h, o.s, o.v); }
+            img.data[i*4]   = Math.max(0, Math.min(255, r));
+            img.data[i*4+1] = Math.max(0, Math.min(255, g));
+            img.data[i*4+2] = Math.max(0, Math.min(255, b));
+            img.data[i*4+3] = 255;
+        }
+        ctx.putImageData(img, 0, 0);
+    } catch {}
+}
+loadLibrary();
+
+// ─── Saved chips ────────────────────────────────────────────────────────────
+function renderSaved(list) {
+    const root = document.getElementById("savedChips");
+    root.innerHTML = "";
+    if (list.length === 0) {
+        root.innerHTML = '<span class="hint">No saved patterns yet.</span>';
+        return;
+    }
+    list.forEach(name => {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.innerHTML = `<span>${esc(name)}</span><span class="x" title="Delete">×</span>`;
+        chip.firstChild.addEventListener("click", () => {
+            if (autoCycleChk.checked) {
+                autoCycleChk.checked = false;
+                sendGateSettings();
+            }
+            ws.send(JSON.stringify({action:"load", name}));
+        });
+        chip.lastChild.addEventListener("click", e => {
+            e.stopPropagation();
+            if (!confirm(`Delete "${name}"?`)) return;
+            ws.send(JSON.stringify({action:"delete", name}));
+        });
+        root.appendChild(chip);
+    });
+}
+fetch("/api/patterns").then(r => r.json()).then(renderSaved).catch(() => renderSaved([]));
+
+// ─── Toolbar wiring ─────────────────────────────────────────────────────────
+document.getElementById("saveBtn").addEventListener("click", () => {
+    const name = document.getElementById("saveName").value.trim() || "Untitled";
+    ws.send(JSON.stringify({action:"save", name, code: ta.value}));
+});
+document.getElementById("newBtn").addEventListener("click", () => {
+    ta.value = "// new pattern\nh = i/n;\nhsv(h, 1, 1);\n";
+    document.getElementById("saveName").value = "";
+    syncHL();
+    scheduleCompile();
+});
+const bright = document.getElementById("bright");
+bright.addEventListener("input", () => {
+    document.getElementById("brightVal").textContent = bright.value;
+});
+bright.addEventListener("change", () => {
+    ws.send(JSON.stringify({action:"brightness", value: +bright.value}));
+});
+document.getElementById("countApply").addEventListener("click", () => {
+    const n = +document.getElementById("count").value;
+    if (!confirm(`Apply pixel count = ${n}? Device will reboot.`)) return;
+    ws.send(JSON.stringify({action:"count", value: n}));
+});
+document.getElementById("pinApply").addEventListener("click", () => {
+    const p = +document.getElementById("pin").value;
+    if (!confirm(`Apply data pin = GPIO ${p}? Device will reboot.`)) return;
+    ws.send(JSON.stringify({action:"pin", value: p}));
+});
+
+// ─── Audio settings wiring ──────────────────────────────────────────────────
+function applyMicSrcVisibility(src) {
+    document.getElementById("i2sPins").style.display          = src === 1 ? "" : "none";
+    document.getElementById("adcPins").style.display          = src === 2 ? "" : "none";
+    document.getElementById("micPinsApplyWrap").style.display = src === 0 ? "none" : "";
+    document.getElementById("micGainRow").style.display       = src === 0 ? "none" : "flex";
+    document.getElementById("micSmoothRow").style.display     = src === 0 ? "none" : "flex";
+    document.getElementById("audioViz").style.display         = src === 0 ? "none" : "";
+}
+document.getElementById("micSrc").addEventListener("change", e => {
+    applyMicSrcVisibility(+e.target.value);
+});
+document.getElementById("micSrcApply").addEventListener("click", () => {
+    const v = +document.getElementById("micSrc").value;
+    if (!confirm(`Apply mic source = ${["off","INMP441","MAX4466"][v]}? Device will reboot.`)) return;
+    ws.send(JSON.stringify({action:"micSrc", value: v}));
+});
+document.getElementById("micPinsApply").addEventListener("click", () => {
+    const src = +document.getElementById("micSrc").value;
+    const payload = {action:"micPins"};
+    if (src === 1) {
+        payload.bclk = +document.getElementById("micBCLK").value;
+        payload.ws   = +document.getElementById("micWS").value;
+        payload.data = +document.getElementById("micData").value;
+    } else if (src === 2) {
+        payload.adc  = +document.getElementById("micADC").value;
+        payload.gnd  = +document.getElementById("micGnd").value;
+        const ledPin = +document.getElementById("pin").value;
+        if (payload.adc === ledPin || payload.gnd === ledPin) {
+            if (!confirm(`Selected mic pin collides with LED data pin (GPIO ${ledPin}). Continue anyway?`)) return;
+        }
+    }
+    if (!confirm("Apply pins? Device will reboot.")) return;
+    ws.send(JSON.stringify(payload));
+});
+const micGainSlider = document.getElementById("micGain");
+micGainSlider.addEventListener("input", () => {
+    document.getElementById("micGainVal").textContent = (micGainSlider.value/100).toFixed(2) + "×";
+});
+micGainSlider.addEventListener("change", () => {
+    ws.send(JSON.stringify({action:"micGain", value: micGainSlider.value/100}));
+});
+const micSmoothSlider = document.getElementById("micSmooth");
+micSmoothSlider.addEventListener("input", () => {
+    document.getElementById("micSmoothVal").textContent = (micSmoothSlider.value/100).toFixed(2);
+});
+micSmoothSlider.addEventListener("change", () => {
+    ws.send(JSON.stringify({action:"micSmooth", value: micSmoothSlider.value/100}));
+});
+
+let lastSensorRx = Date.now();
+function updateSensorViz(m) {
+    lastSensorRx = Date.now();
+    if (m.fps !== undefined) {
+        document.getElementById("fps").textContent = (m.fps || 0).toFixed(0) + " fps";
+    }
+    if (m.gate !== undefined) {
+        LIVE_SENSORS.gate = m.gate;
+        const pct = Math.round(m.gate * 100);
+        const envEl = document.getElementById("envPct");
+        if (envEl) envEl.textContent = pct + "%";
+        const badge = document.getElementById("gateStateBadge");
+        if (badge) {
+            if (!gateEnableChk.checked) {
+                badge.textContent = "Always On (100%)";
+                badge.classList.add("active");
+            } else if (m.gateActive) {
+                badge.textContent = pct >= 99 ? "Active (100%)" : `Fading In (${pct}%)`;
+                badge.classList.add("active");
+            } else {
+                badge.textContent = pct <= 1 ? "Faded Out (0%)" : `Fading Out (${pct}%)`;
+                badge.classList.remove("active");
+            }
+        }
+    }
+    if (m.mad !== undefined) {
+        LIVE_SENSORS.mad = m.mad || 0;
+        const madRound = Math.round(LIVE_SENSORS.mad);
+        const micValEl = document.getElementById("liveMicVal");
+        if (micValEl) micValEl.textContent = `Mic: ${madRound} MAD`;
+        const barPct = Math.min(100, (LIVE_SENSORS.mad / 30000) * 100);
+        const barEl = document.getElementById("liveMicBar");
+        if (barEl) barEl.style.width = barPct.toFixed(1) + "%";
+    }
+    if (m.vu !== undefined) {
+        LIVE_SENSORS.vu    = m.vu    || 0;
+        LIVE_SENSORS.peak  = m.peak  || 0;
+        LIVE_SENSORS.pitch = m.pitch || 0;
+        LIVE_SENSORS.beat  = m.beat  || 0;
+        if (m.bands) {
+            for (let i = 0; i < 8; i++) {
+                let b = m.bands[i] || 0;
+                LIVE_SENSORS.bands[i] = b > 1.0 ? (b / 100.0) : b;
+            }
+        }
+
+        const bars = document.querySelectorAll("#audioViz .bar");
+        if (m.bands && bars.length === m.bands.length) {
+            for (let i = 0; i < bars.length; i++) {
+                bars[i].style.height = Math.round(Math.max(2, LIVE_SENSORS.bands[i] * 100)) + "%";
+            }
+        }
+        document.getElementById("vuVal").textContent = (m.vu || 0).toFixed(2);
+    }
+}
+
+// Client watchdog: keep live mic/envelope streaming in real-time if background pushes idle or drop
+setInterval(() => {
+    if (ws && ws.readyState === 1 && Date.now() - lastSensorRx >= 400) {
+        ws.send(JSON.stringify({action: "poll"}));
+    }
+}, 250);
+document.getElementById("reboot").addEventListener("click", () => {
+    if (!confirm("Reboot the device?")) return;
+    fetch("/api/reboot", {method:"POST"});
+});
+
+// ─── Initial pattern ────────────────────────────────────────────────────────
+ta.value = "// Smooth shifting rainbow across strip.\nh = i/n + time(8);\nhsv(h, 1, 1);\n";
+syncHL();
+recompileLocal();
+
+// ─── Fallback library (mirrors DEMO_PATTERNS.json) ──────────────────────────
+const FALLBACK_LIB = [
+    {name:"Shifting Rainbow",tags:["rainbow","smooth"],code:"// Smooth shifting rainbow across strip.\nh = i/n + time(8);\nhsv(h, 1, 1);"},
+    {name:"Breathing Aurora",tags:["calm","perlin"],code:"// Slow organic colour wash, breathes in brightness.\nh = perlin1D(i*0.05 + t*0.1)*0.4 + 0.5;\nb = wave(time(6));\nhsv(h, 1, b*0.9 + 0.1);"},
+    {name:"Ocean Swell",   tags:["ocean","perlin"], code:"x = i/n;\nswell = perlin2D(x*2, t*0.4);\nh = 0.5 + swell*0.1;\ns = 1 - swell*0.3;\nv = wave(x + t*0.1);\nhsv(h, s, v);"},
+    {name:"Lava Lamp",     tags:["warm"],    code:"x = i/n;\nblob = perlin2D(x*2.5, t*0.5);\nblob = smoothstep(0.45, 0.6, blob);\nh = mix(0.02, 0.12, blob);\nhsv(h, 1, blob*0.9 + 0.1);"},
+    {name:"Perlin Painter",tags:["perlin","calm"], code:"// Slow drifting hue painted by 2D noise.\nh = perlin2D(i*0.04, t*0.15);\ns = 0.6 + perlin1D(i*0.1 + 100)*0.4;\nhsv(h, s, 1);"},
+    {name:"Galaxy",        tags:["calm","perlin"], code:"// Deep blues and purples with bright stars.\nstar = pow(wave(t*0.7 + hash(i)*9), 8);\ndust = perlin2D(i*0.1, t*0.2)*0.3;\nh = 0.72 + dust*0.1;\nv = star + dust*0.4;\nhsv(h, 1 - star*0.3, v);"},
+    {name:"Rainbow Drift", tags:["classic"], code:"h = i/n + time(8);\nhsv(h, 1, 1);"},
+    {name:"Plasma Field",  tags:["plasma"],  code:"x=i/n;p=perlin2D(x*4+t*0.3,t*0.2);hsv(p+time(20),1,1);"},
+    {name:"Comet Trail",   tags:["motion"],  code:"head=time(4)*n;d=abs(i-head);d=min(d,abs(i-head-n));v=clamp(1-d/8,0,1);hsv(0.6,0.4,v*v);"},
+    {name:"Heartbeat",     tags:["pulse"],   code:"p=frac(time(1.2));b=pow(wave(p*2),8)+pow(wave(p*2+0.3),8)*0.7;hsv(0,1,clamp(b,0,1));"},
+    {name:"Fire Breath",   tags:["flame"],   code:"noiseVal = perlin2D(i/n * 3, t * 1.5);\nv = pow(noiseVal, 2.5) * 0.8 + 0.2;\nh = 0.02 + noiseVal * 0.06;\nhsv(h, 0.95, v);"}
+];
+// ─── Integrity Check ────────────────────────────────────────────────────────
+(function() {
+    window._emberIntCheck = true;
+    const n1 = [68,105,108,108,111,110,32,83,105,109,101,111,110,101].map(c=>String.fromCharCode(c)).join("");
+    const u1 = [104,116,116,112,115,58,47,47,100,105,108,108,111,110,115,105,109,101,111,110,101,46,99,111,109].map(c=>String.fromCharCode(c)).join("");
+    
+    function verify() {
+        const el1 = document.getElementById("credit-link");
+        const el2 = document.getElementById("footer-link");
+        if (!el1 || !el2) return false;
+        
+        if (el1.getAttribute("href") !== u1 || el2.getAttribute("href") !== u1) return false;
+        if (!el1.textContent.includes(n1) || !el2.textContent.includes(n1)) return false;
+        
+        for (const el of [el1, el2]) {
+            const style = window.getComputedStyle(el);
+            if (style.display === "none" || style.visibility === "hidden" || parseFloat(style.opacity) < 0.1) return false;
+            
+            const p1 = el.parentElement;
+            if (p1) {
+                const pStyle = window.getComputedStyle(p1);
+                if (pStyle.display === "none" || pStyle.visibility === "hidden" || parseFloat(pStyle.opacity) < 0.1) return false;
+            }
+        }
+        return true;
+    }
+    
+    setInterval(() => {
+        if (!verify()) {
+            window._emberIntCheck = false;
+            evalr = null;
+        }
+    }, 1500);
+})();
+</script>
+</body>
+</html>

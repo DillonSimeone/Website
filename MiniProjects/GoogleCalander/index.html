@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Calendar Events (Glassmorphism Archive)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url(./620bd6d655f2044afa28bff4_glassmorphism-p-1080.webp);
+            background-size: cover;
+            background-attachment: fixed;
+            color: black;
+            margin: 0;
+            padding: 20px 0 60px;
+        }
+
+        .archive-banner {
+            max-width: 960px;
+            margin: 20px auto 30px;
+            padding: 28px 34px;
+            background: rgba(255, 255, 255, 0.28);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            color: #111827;
+            line-height: 1.65;
+            box-sizing: border-box;
+        }
+
+        .archive-banner h1 {
+            margin: 0 0 10px 0;
+            font-size: 2rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .archive-banner .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            background: #ef4444;
+            color: #ffffff;
+            border-radius: 6px;
+            margin-bottom: 14px;
+        }
+
+        .archive-banner p {
+            margin: 8px 0;
+            font-size: 0.95rem;
+        }
+
+        .calendar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 90%;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .event-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 25%;
+            min-width: 260px;
+            margin: 40px 14px;
+            border-radius: 16px;
+            padding-bottom: 20px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.22);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .event-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+        }
+
+        .event-date {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            border-top-right-radius: 14px;
+            border-top-left-radius: 14px;
+            width: 100%;
+            margin: 0 0 12px 0;
+            margin-top: -30px;
+            padding: 10px 0;
+            color: #0f172a;
+        }
+
+        .event-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0 14px;
+            color: #0f172a;
+        }
+
+        .event-details {
+            margin: 12px 14px 0;
+            text-align: left;
+            width: 85%;
+        }
+
+        .event-details summary {
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            color: #1e293b;
+        }
+
+        .event-details p {
+            margin: 8px 0 0;
+            font-size: 0.85rem;
+            line-height: 1.45;
+            color: #334155;
+        }
+
+        .event-location {
+            text-align: center;
+            font-size: 0.8rem;
+            width: 80%;
+            margin: 10px 0;
+            color: #475569;
+            font-style: italic;
+        }
+
+        .event-link {
+            display: block;
+            text-align: center;
+            width: 55%;
+            border-radius: 20px;
+            text-decoration: none;
+            padding: 9px 12px;
+            color: #0f172a;
+            font-weight: 800;
+            font-size: 0.85rem;
+            margin-top: 8px;
+            transition: opacity 0.2s ease;
+        }
+
+        .event-link:hover {
+            opacity: 0.85;
+        }
+
+        .blue .event-date,
+        .blue .event-link {
+            background-color: rgb(150, 180, 255);
+        }
+
+        .green .event-date,
+        .green .event-link {
+            background-color: rgb(165, 245, 175);
+        }
+
+        .purple .event-date,
+        .purple .event-link {
+            background-color: rgb(240, 175, 255);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="archive-banner">
+        <span class="badge">Archive &amp; Architectural Postmortem</span>
+        <h1>Glassmorphism Google Calendar Widget</h1>
+        <p>
+            <strong>How It Was Engineered:</strong> A zero-framework, client-side event feed widget designed to integrate public Google Calendar feeds directly into modern frosted-glass web layouts. It directly queries the <code>Google Calendar REST API v3</code>, parses iCalendar (RFC 5545) recurrence strings via <code>rrule.js</code>, evaluates future recurrences within a 31-day sliding window, sorts all events chronologically, and renders responsive cards with expandable detail drawers and dynamic pastel theme palettes.
+        </p>
+        <p>
+            <strong>Current Status:</strong> The original community calendar (Woodstock Cafe) and production API key have expired. The client script below automatically detects when the live API fails or returns no items, gracefully falling back to embedded sample data so visitors can interact with the glassmorphism layout, recurrence expansion, and detail drawers as originally conceived.
+        </p>
+    </div>
+
+    <div class="calendar" id="calendar"></div>
+    <script src="./rrules.js"></script>
+
+    <script>
+        const apiKey = 'AIzaSyC4TJudtEnaR4RILiwAjMFOdpgg6UeJvos'; // Restricted legacy key
+        const calendarId = '114c605c4a403e08817034e51cb607ffc972723336e77143e8878c52da2a5bf4@group.calendar.google.com';
+        const apiUrl = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?key=${apiKey}`;
+
+        const fallbackEvents = [
+            {
+                summary: "Community Ambient Synth & Modular Meetup",
+                description: "Monthly hands-on jam session featuring Eurorack modular synthesizers, tactile haptic pads, and generative ambient visual projections.",
+                location: "Woodstock Cafe & Lab, Portland, OR",
+                htmlLink: "https://calendar.google.com",
+                start: { date: new Date(Date.now() + 86400000 * 2).toISOString().slice(0, 10) },
+                end: { date: new Date(Date.now() + 86400000 * 2).toISOString().slice(0, 10) }
+            },
+            {
+                summary: "Deaf & HOH Hardware Accessibility Circle",
+                description: "Weekly recurring meetup dedicated to vibrotactile feedback research, sub-bass transducers, and open-source visual alert design.",
+                location: "CymaSpace Sound & Visuals Studio",
+                htmlLink: "https://calendar.google.com",
+                start: { date: new Date(Date.now() + 86400000 * 5).toISOString().slice(0, 10) },
+                end: { date: new Date(Date.now() + 86400000 * 5).toISOString().slice(0, 10) },
+                recurrence: ["RRULE:FREQ=WEEKLY;COUNT=3"]
+            },
+            {
+                summary: "Laser Cutting & Algorithmic Geometry Workshop",
+                description: "Introductory workshop on converting algorithmic SVG exports and parametric 3D cross-sections into laser-cut acrylic and wood art.",
+                location: "Innovation Maker Space",
+                htmlLink: "https://calendar.google.com",
+                start: { date: new Date(Date.now() + 86400000 * 9).toISOString().slice(0, 10) },
+                end: { date: new Date(Date.now() + 86400000 * 9).toISOString().slice(0, 10) }
+            },
+            {
+                summary: "ESP32 Sensor Fusion & Haptic Lab",
+                description: "Hands-on session flashing custom microcontrollers, tuning AO3400A MOSFET gates, and testing ESP-NOW wireless baton latency.",
+                location: "Hardware Artisan Lab",
+                htmlLink: "https://calendar.google.com",
+                start: { date: new Date(Date.now() + 86400000 * 14).toISOString().slice(0, 10) },
+                end: { date: new Date(Date.now() + 86400000 * 14).toISOString().slice(0, 10) }
+            }
+        ];
+
+        async function fetchEvents() {
+            let events = [];
+            try {
+                const response = await fetch(apiUrl);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.items && data.items.length > 0) {
+                        events = data.items;
+                    }
+                }
+            } catch (error) {
+                console.warn('Live Google Calendar API unavailable, rendering archival demonstration data:', error);
+            }
+
+            if (!events || events.length === 0) {
+                events = fallbackEvents;
+            }
+
+            renderEvents(events);
+        }
+
+        function renderEvents(events) {
+            const calendarDiv = document.getElementById('calendar');
+            calendarDiv.innerHTML = '';
+            const currentDate = new Date();
+            const endDateLimit = new Date();
+            endDateLimit.setDate(currentDate.getDate() + 31);
+
+            let allEvents = [];
+
+            events.forEach(event => {
+                const startDate = new Date(event.start.date || event.start.dateTime || Date.now());
+                const recurrence = event.recurrence || [];
+
+                const createEventCard = (eventDate) => {
+                    const card = document.createElement('div');
+                    card.className = `event-card ${getRandomColor()}`;
+
+                    const eventDateElement = document.createElement('p');
+                    eventDateElement.textContent = `${eventDate.toDateString()}`;
+                    eventDateElement.className = `event-date`;
+                    card.appendChild(eventDateElement);
+
+                    const eventTitle = document.createElement('h3');
+                    eventTitle.textContent = event.summary;
+                    eventTitle.className = `event-title`;
+                    card.appendChild(eventTitle);
+
+                    const eventDetails = document.createElement('details');
+                    const summary = document.createElement('summary');
+                    summary.textContent = 'More Details';
+                    eventDetails.className = `event-details`;
+                    eventDetails.appendChild(summary);
+
+                    const detailsContent = document.createElement('p');
+                    detailsContent.textContent = stripHtmlTags(event.description) || 'No additional details available.';
+                    eventDetails.appendChild(detailsContent);
+                    card.appendChild(eventDetails);
+
+                    if (event.location) {
+                        const eventLocation = document.createElement('p');
+                        eventLocation.textContent = `${event.location}`;
+                        eventLocation.className = `event-location`;
+                        card.appendChild(eventLocation);
+                    }
+
+                    const eventLink = document.createElement('a');
+                    eventLink.href = event.htmlLink || 'https://calendar.google.com';
+                    eventLink.textContent = 'View event';
+                    eventLink.target = '_blank';
+                    eventLink.rel = 'noopener noreferrer';
+                    eventLink.className = `event-link`;
+                    card.appendChild(eventLink);
+
+                    calendarDiv.appendChild(card);
+                };
+
+                if (startDate >= currentDate && startDate <= endDateLimit) {
+                    allEvents.push({
+                        date: startDate,
+                        createCard: () => createEventCard(startDate)
+                    });
+                }
+
+                if (recurrence.length > 0 && typeof RRule !== 'undefined') {
+                    recurrence.forEach(ruleString => {
+                        try {
+                            const rule = RRule.fromString(ruleString);
+                            const ruleDates = rule.between(currentDate, endDateLimit);
+                            ruleDates.forEach(date => {
+                                if (date >= currentDate) {
+                                    allEvents.push({
+                                        date: date,
+                                        createCard: () => createEventCard(date)
+                                    });
+                                }
+                            });
+                        } catch (e) {
+                            console.warn('Failed parsing recurrence rule:', ruleString, e);
+                        }
+                    });
+                }
+            });
+
+            allEvents.sort((a, b) => a.date - b.date);
+            allEvents.forEach(item => item.createCard());
+        }
+
+        function stripHtmlTags(str) {
+            let div = document.createElement('div');
+            div.innerHTML = str;
+            return div.textContent || div.innerText || '';
+        }
+
+        function getRandomColor() {
+            const colors = ['blue', 'green', 'purple'];
+            const randomIndex = Math.floor(Math.random() * colors.length);
+            return colors[randomIndex];
+        }
+
+        fetchEvents();
+    </script>
+</body>
+
+</html>

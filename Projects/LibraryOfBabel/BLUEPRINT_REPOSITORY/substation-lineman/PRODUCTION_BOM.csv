@@ -1,0 +1,45 @@
+ref,qty,description,mfr,mfr_pn,lcsc_pn,unit_cost_usd,ext_cost_usd,notes
+U1,1,MCU ESP32-S3-WROOM-1 N16R8,Espressif,ESP32-S3-WROOM-1-N16R8,C2913201,4.20,4.20,verify-before-order; Wi-Fi/BLE disabled in firmware
+U2,1,Op-amp dual JFET LMC662CMX 14 fA Ib,TI,LMC662CMX/NOPB,C?????,1.85,1.85,verify-before-order; E-field front-end buffer
+U3,1,Instrumentation amp INA826AIDGKR,TI,INA826AIDGKR,C?????,5.40,5.40,verify-before-order; diff pair to ADC
+U4,1,PGA MCP6S91-E/SN 1x-32x,Microchip,MCP6S91-E/SN,C?????,1.95,1.95,verify-before-order
+U5,1,24-bit delta-sigma ADC MCP3564R,Microchip,MCP3564RT-E/NC,C?????,4.60,4.60,verify-before-order; 60 Hz bin
+U6,3,Haptic driver DRV2605LDGSR,TI,DRV2605LDGSR,C140415,2.10,6.30,verify-before-order; LRA closed-loop
+U7,1,Analog mux 6-ch TS5A23159DGSR,TI,TS5A23159DGSR,C?????,0.95,0.95,verify-before-order; LRA mux
+U8,1,IMU 9-DoF BNO085,Bosch/CEVA,BNO085,C?????,12.40,12.40,verify-before-order
+U9,1,Camera Arducam Mega 5MP SPI,Arducam,B0401,N/A,29.00,29.00,verify-before-order; vendor direct
+U10,1,VHF transceiver module SA868-V 1W 134-174 MHz,NiceRF,SA868-V,C?????,18.50,18.50,verify-before-order; FCC Part 90 use under utility license
+U11,1,RF PA front-end CMX901Q3,CML Micro,CMX901Q3,C?????,3.95,3.95,verify-before-order
+U12,1,SAW filter VHF band-pass 155 MHz,Murata,SAFFB155MFA0F00R,C?????,1.85,1.85,verify-before-order
+U13,1,USB-UART CP2102N-A02-GQFN24R,Silabs,CP2102N-A02-GQFN24R,C144625,2.30,2.30,verify-before-order; OTA dock only
+U14,1,Fuel gauge MAX17048G+T10,ADI/Maxim,MAX17048G+T10,C?????,2.10,2.10,verify-before-order
+U15,1,Boost TPS61023DRLR 5V,TI,TPS61023DRLR,C?????,1.20,1.20,verify-before-order
+U16,1,Buck TPS62840DLCR 3.3V,TI,TPS62840DLCR,C?????,1.45,1.45,verify-before-order
+U17,1,Charger BQ25895RTWR,TI,BQ25895RTWR,C?????,2.65,2.65,verify-before-order; magnetic dock
+U18,1,OLED 0.96in SSD1306 128x64 I2C,generic,SSD1306,C?????,3.40,3.40,verify-before-order; status only
+U19,1,Humidity/temp SHT41-AD1B,Sensirion,SHT41-AD1B,C?????,3.10,3.10,verify-before-order; calibration coef
+U20,1,Hall switch DRV5032 (charge plug detect),TI,DRV5032FDDBZR,C?????,0.65,0.65,verify-before-order
+U21,1,Watchdog TPS3823-33DBVR,TI,TPS3823-33DBVR,C?????,0.85,0.85,verify-before-order
+U22,1,ESD array USBLC6-2SC6,STMicro,USBLC6-2SC6,C7242,0.35,0.35,verify-before-order
+L1,6,LRA haptic actuator 10x3mm 175 Hz,Vybronics,VLV101040A,C?????,3.40,20.40,verify-before-order
+B1,1,LiPo pouch 3.7V 2000mAh UL1642,generic,LP-503562,N/A,7.50,7.50,verify-before-order; two pouches per kit (hot-swap)
+F1,1,FSR402 0.5in dead-man,Interlink,FSR402,C?????,7.00,7.00,verify-before-order
+A1,1,VHF helical antenna 152-174 MHz lambda/4 SMA,Linx,ANT-DB1-RAF-SMA,C?????,4.90,4.90,verify-before-order; PTFE-encapsulated
+SHIELD,1,Copper mesh Faraday liner 0.1mm,generic,CU-MESH-100,N/A,3.50,3.50,verify-before-order; bonded internal GND only
+PCB,1,4-layer FR4 1.6mm controlled-Z cuff PCB ENIG,JLC,4L-FR4,N/A,12.00,12.00,verify-before-order; conformal parylene-C 5um
+SIL,1,Silicone over-mold shell Shore A 40,generic,LSR-A40,N/A,9.00,9.00,verify-before-order
+NOMEX,1,Nomex IIIA liner sleeve 8in,DuPont,NMX-IIIA-8,N/A,11.00,11.00,verify-before-order
+STRAP,2,Hook-loop quick-release strap FR-rated,generic,FR-HL-1in,N/A,2.20,4.40,verify-before-order
+CONN1,1,USB-C jack mid-mount IP67,generic,USB-C-IP67,C?????,1.80,1.80,verify-before-order
+DOCK,1,Magnetic charge dock pogo 4-pin,generic,MAG-4PIN,N/A,6.50,6.50,verify-before-order
+PASSIVES,1,R/C/L 0402-0805 BOM bag,generic,PASS-KIT,N/A,4.50,4.50,verify-before-order
+DGL_MCU,1,Ground dongle MCU STM32F072 or RP2040,STMicro,STM32F072CBT6,C?????,3.20,3.20,verify-before-order
+DGL_SA868,1,Ground dongle SA868-V,NiceRF,SA868-V,C?????,18.50,18.50,verify-before-order
+DGL_USB,1,Ground dongle USB-C CP2102N,Silabs,CP2102N-A02-GQFN24R,C?????,2.30,2.30,verify-before-order
+DGL_ANT,1,Ground dongle whip lambda/4 SMA,Linx,ANT-DB1-WRT-SMA,C?????,3.80,3.80,verify-before-order
+DGL_BAT,1,Ground dongle backup LiPo 500 mAh,generic,LP-402030,N/A,3.20,3.20,verify-before-order
+DGL_ENC,1,Ground dongle rugged enclosure IP67,Hammond,1551WBK,C?????,5.40,5.40,verify-before-order
+ASM,1,Assembly + test labor per cuff (loaded),internal,ASM-CUFF,N/A,38.00,38.00,verify-before-order; 0.75 h @ $50/h burdened
+CAL,1,Per-unit E-field calibration log at training yard,internal,CAL-UNIT,N/A,22.00,22.00,verify-before-order
+WIT,1,Dielectric witness test allocation per unit (amortized),lab,F496-WIT,N/A,18.00,18.00,verify-before-order; lab fees amortized
+,,,,,,TOTAL_BOM,309.92,verify-before-order

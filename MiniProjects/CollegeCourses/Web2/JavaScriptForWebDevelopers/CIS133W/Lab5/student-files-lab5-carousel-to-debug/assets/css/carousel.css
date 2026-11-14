@@ -1,0 +1,19 @@
+.carousel {
+    width: 880px; /* Or any width you prefer */
+    overflow: hidden; /* This is the magic! Hides items outside the container */
+    border: 2px solid #ccc;
+    margin: 20px auto;
+}
+
+.carouselTrack {
+    display: flex; /* Lays out children (the items) in a row */
+    transition: transform 0.5s ease; /* This animates the slide! */
+}
+
+.carouselItem {
+    flex: 0 0 200px; /* Each item is 200px wide and won't shrink/grow */
+    gap: 0;
+    padding: 10px;
+    text-align: center;
+    box-sizing: border-box; /* Ensures padding is included in the width */
+}

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireless Kinetic Light Baton | ESP-NOW &amp; Motion Tracking</title>
+    <meta name="description"
+        content="A motion-reactive light baton built on ESP32-C3 with onboard LED strip, MPU6050/MPU6500 tracking, haptic feedback, and ESP-NOW broadcasts to Ember-powered follower strips.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="header-container">
+            <span class="badge">ESP32-C3 &amp; ESP-NOW</span>
+            <h1>Wireless Kinetic Light Baton</h1>
+            <p class="subtitle">Swing it, and the lights follow. The baton tracks your motion, drives its own LED strip, and beams that energy over ESP-NOW so any powered follower in range can join in. Fast enough that it feels instant.</p>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <!-- Interactive Simulator Section -->
+        <section class="simulator-card retro-panel">
+            <h2 class="section-title">Live ESP-NOW &amp; Delta Math Simulator</h2>
+            <p class="card-desc">Shake or swipe your mouse/touch quickly inside the <strong>Kinetic Charge Pad</strong>
+                to build up energy. You'll see the charge state (0.0 to 1.0) broadcast from the baton and picked up by the follower in real time. Both sides smooth the motion with delta time interpolation instead of snapping around.</p>
+
+            <!-- Full-width Kinetic Charge Pad above both nodes -->
+            <div id="charge-pad" class="charge-pad" style="margin-bottom: 20px;">
+                <span>SWIPE RAPIDLY HERE TO CHARGE</span>
+            </div>
+
+            <div class="sim-grid">
+                <!-- Handle / Sender -->
+                <div class="sim-node handle-node retro-subpanel">
+                    <h3>Handle (Sender)</h3>
+                    <div class="energy-display">
+                        <svg class="progress-ring" viewBox="0 0 120 120" width="120" height="120">
+                            <circle class="progress-ring-circle-bg" stroke="rgba(255,255,255,0.05)" stroke-width="8"
+                                fill="transparent" r="50" cx="60" cy="60" />
+                            <circle class="progress-ring-circle" id="handle-ring" stroke="currentColor" stroke-width="8"
+                                fill="transparent" r="50" cx="60" cy="60" stroke-dasharray="314.16"
+                                stroke-dashoffset="314.16" />
+                        </svg>
+                        <div class="energy-text"><span id="energy-val">0</span>%</div>
+                    </div>
+
+                    <div class="status-indicator">
+                        <span class="status-label">Haptic Motor:</span>
+                        <span id="motor-status" class="status-value motor-off">OFF</span>
+                    </div>
+                </div>
+
+                <!-- Signal Bridge -->
+                <div class="sim-bridge">
+                    <div class="esp-now-signals">
+                        <div class="wave wave-1"></div>
+                        <div class="wave wave-2"></div>
+                        <div class="wave wave-3"></div>
+                    </div>
+                    <div class="protocol-badge">ESP-NOW (30ms rate)</div>
+                </div>
+
+                <!-- Follower / Receiver -->
+                <div class="sim-node follower-node retro-subpanel">
+                    <h3>Follower (Receiver)</h3>
+                    <div class="follower-strip-container">
+                        <div id="led-strip" class="led-strip">
+                            <!-- 24 virtual pixels generated via JS -->
+                        </div>
+                    </div>
+                    <div class="status-indicator-list">
+                        <div class="status-indicator">
+                            <span class="status-label">Target Charge:</span>
+                            <span id="follower-target-val" class="status-value font-mono">0.00</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-label">Current Charge:</span>
+                            <span id="follower-current-val" class="status-value font-mono">0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Technical Specification Layout -->
+        <div class="info-grid">
+
+            <!-- Left Info Block: Description & Math -->
+            <div class="info-column">
+                <section class="retro-panel text-block">
+                    <h2>Project Overview</h2>
+                    <p>The Wireless Kinetic Light Baton is the brains and the showpiece. It reads your swing from an onboard IMU, drives haptic feedback and a WS2812B strip built into the handle, and constantly broadcasts a compact motion packet over ESP-NOW. Power up a separate follower ESP32 somewhere else in the room, wire it to another LED strip, and it listens to the same motion data without any pairing hassle.</p>
+
+                    <h3>Why ESP-NOW?</h3>
+                    <p>ESP-NOW is a connectionless protocol from Espressif that skips all the usual Wi-Fi handshake nonsense. The baton fires off a 4-byte energy update every 30 milliseconds on the open broadcast channel, and it arrives in under <strong>1.5 milliseconds</strong>. Fast enough that you'd never notice any delay. Down the road, MAC-address handshakes could let <em>baton 1</em> talk to <em>follower 1</em> specifically instead of every follower in range, but for now it's one open channel and it just works.</p>
+                </section>
+
+                <section class="retro-panel text-block">
+                    <h2>The Delta Math Easing</h2>
+                    <p>When you swing fast, the baton might jump from 0.0 to 0.7 in one shot. If the LEDs just snapped to that directly, it'd look choppy. Both the baton and every follower use the same <strong>dt-based exponential easing function</strong> to slide toward the target smoothly:</p>
+                    <div class="code-math">
+                        <code>currentCharge += (targetCharge - currentCharge) * easingFactor * dt;</code>
+                    </div>
+                    <p>This keeps things looking fluid even if a packet drops or timing gets a little wobbly. There's a snap window of <code>&lt; 0.001</code> to stop it from jittering forever once it's basically there.</p>
+                </section>
+
+                <section class="retro-panel text-block">
+                    <h2>Parametric CAD Configurator</h2>
+                    <p>There's a fully parametric 3D CAD configurator built for this project so you can dial in a baton that fits your actual hardware. It runs in the browser using a WASM-compiled geometry kernel, so boolean operations on the model happen instantly.</p>
+                    <h3>Configurable Part Parameters</h3>
+                    <p>You can tweak pretty much everything about the physical design:</p>
+                    <ul class="retro-list">
+                        <li><strong>Central Rod:</strong> Outer diameter and wall thickness.</li>
+                        <li><strong>Housing / Sled:</strong> Length and wall thickness to fit your battery cells,
+                            ESP32-C3, haptic motor driver, switch, and IMU.</li>
+                        <li><strong>Ridges &amp; Rings:</strong> Decorative profiles, flange heights, and how snug the end caps sit.</li>
+                        <li><strong>Fasteners:</strong> M3 hole diameters and thread depth.</li>
+                        <li><strong>Handle Profile:</strong> Length and where the lanyard hole goes.</li>
+                    </ul>
+                    <p>The configurator also supports exploded assembly views, blueprint wireframe mode, and instant STL export when you're ready to slice.</p>
+                    <div style="margin-top: 25px; text-align: center;">
+                        <a href="../index.html" class="geo-link" style="font-size: 1.1rem; font-weight: bold;">[ OPEN
+                            PARAMETRIC 3D CONFIGURATOR ]</a>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Info Block: Hardware & Pinouts -->
+            <div class="info-column">
+                <section class="retro-panel table-panel">
+                    <h2>Hardware Pinout Configuration</h2>
+                    <p class="subtitle">Wired up on ESP32-C3-DevKitM-1 dev boards.</p>
+
+                    <h3>1. Handle Device (Sender)</h3>
+                    <div class="table-responsive">
+                        <table class="pinout-table">
+                            <thead>
+                                <tr>
+                                    <th>Function</th>
+                                    <th>GPIO</th>
+                                    <th>MPU6050</th>
+                                    <th>MPU6500</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="pin-badge pin-sda">I2C SDA</span></td>
+                                    <td><code>2</code></td>
+                                    <td><code>SDA</code></td>
+                                    <td><code>SDA/SDI</code></td>
+                                    <td>I2C data line (same wiring for both sensors)</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="pin-badge pin-scl">I2C SCL</span></td>
+                                    <td><code>3</code></td>
+                                    <td><code>SCL</code></td>
+                                    <td><code>SCL/SCLK</code></td>
+                                    <td>I2C clock line (same wiring for both sensors)</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="pin-badge pin-gnd">Soft GND</span></td>
+                                    <td><code>4</code></td>
+                                    <td><code>GND</code></td>
+                                    <td><code>GND</code></td>
+                                    <td>Pulled LOW in setup to act as a soft ground for the sensor</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="pin-badge pin-int">INT Pin</span></td>
+                                    <td><code>5</code></td>
+                                    <td><code>INT</code></td>
+                                    <td><code>INT</code></td>
+                                    <td>Motion interrupt; kicks the device awake from deep sleep</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="pin-badge pin-led">FastLED</span></td>
+                                    <td><code>6</code></td>
+                                    <td><code>n/a</code></td>
+                                    <td><code>n/a</code></td>
+                                    <td>Signal line for the local WS2812B strip</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="pin-badge pin-motor">Motor PWM</span></td>
+                                    <td><code>7</code></td>
+                                    <td><code>n/a</code></td>
+                                    <td><code>n/a</code></td>
+                                    <td>PWM output to the haptic motor driver</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="pin-badge pin-vcc">Sensor Power</span></td>
+                                    <td><code>3.3V</code></td>
+                                    <td><code>VCC</code></td>
+                                    <td><code>VDD/VCC</code></td>
+                                    <td>3.3V rail; both IMUs run on this</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="pin-badge pin-vcc">Extra Pins</span></td>
+                                    <td><code>NC</code></td>
+                                    <td><code>AD0, XDA, XCL, FSYNC</code></td>
+                                    <td><code>NCS, SDO, FSYNC</code></td>
+                                    <td>Leave these floating; not needed in I2C mode</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3 class="table-spacing">2. Follower Device (Receiver, <a href="https://dillonsimeone.com/Projects/Ember/index.html">Ember</a>)</h3>
+                    <div class="table-responsive">
+                        <table class="pinout-table">
+                            <thead>
+                                <tr>
+                                    <th>Function</th>
+                                    <th>GPIO</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="pin-badge pin-led">FastLED</span></td>
+                                    <td><code>6</code></td>
+                                    <td>Data out to the WS2812B strip (74 LEDs)</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="pin-badge pin-vcc">Power</span></td>
+                                    <td><code>5V</code></td>
+                                    <td>External 5V; LEDs pull a lot of current</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="pin-badge pin-gnd">GND</span></td>
+                                    <td><code>GND</code></td>
+                                    <td>Common ground</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="retro-panel text-block">
+                    <h2>ESP32 Firmware Architecture</h2>
+                    <p>Two separate firmware stacks on ESP32-C3 boards: custom C++ on the baton, and <a href="https://dillonsimeone.com/Projects/Ember/index.html">Ember</a> on the followers. The baton does motion sensing, local LEDs, and broadcasting in one place; followers are drop-in listeners you can scatter around a space on their own strips.</p>
+
+                    <h3>1. Reactive Handle (Sender)</h3>
+                    <p>The baton polls the IMU over I2C to figure out how hard and fast you're swinging. It uses a soft-ground trick on Pin 4 to avoid running an extra wire, and the combined motion data drives both the onboard WS2812B strip on Pin 6 and the haptic motor on Pin 7 through three different buzz modes:</p>
+                    <ul class="retro-list">
+                        <li><strong>Low Energy (&lt; 0.3):</strong> Slow, gentle <em>Heartbeat</em> pulse.</li>
+                        <li><strong>Medium Energy (&lt; 0.7):</strong> Faster rhythmic <em>Gallop</em> pattern.</li>
+                        <li><strong>High Energy (&gt;= 0.7):</strong> Full-on <em>Shimmer/Buzz</em>.</li>
+                    </ul>
+                    <p>At the same time, it broadcasts the energy level over ESP-NOW every 30ms on the open channel, and eases its own local strip with the same delta-time interpolation so the handle lights stay fluid too.</p>
+
+                    <h3>2. Reactive Follower (Receiver)</h3>
+                    <p>Followers run <a href="https://dillonsimeone.com/Projects/Ember/index.html">Ember</a>, a stack-based bytecode VM built for expressive addressable LED installs. Power one up, wire a WS2812B strip to Pin 6, and it listens on the open ESP-NOW broadcast channel for the baton's motion packets. Color, brightness, and how many pixels are lit all shift with the energy level, and the same delta math easing smooths out jitter so the animation stays clean even if a packet goes missing. Later on, paired MAC addresses could narrow that to one baton and one follower instead of every device in range.</p>
+
+                    <div style="margin-top: 25px; text-align: center;">
+                        <a href="https://github.com/DillonSimeone/Website/tree/main/public/ESP32Codes/PlatformIO/03_Visuals_Art/LightBaton"
+                            class="geo-link" style="font-size: 1.1rem; font-weight: bold;">[ BROWSE FIRMWARE SOURCE CODE
+                            ]</a>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Vanilla HTML, CSS, and JS. No frameworks, no nonsense.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

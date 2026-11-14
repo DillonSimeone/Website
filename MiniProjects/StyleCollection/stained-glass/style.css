@@ -1,0 +1,156 @@
+:root {
+  --bg-dark: #08060a;
+  --iron-frame: #111116;
+  
+  --font-serif: 'Cinzel', serif;
+  --font-body: 'Playfair Display', serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-dark);
+  color: #fff;
+  font-family: var(--font-body);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Background Cast Light Effect */
+.light-cast {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background-color: rgba(255, 183, 0, 0.15); /* Starts as gold cast */
+  filter: blur(90px);
+  z-index: 1;
+  pointer-events: none;
+  transition: background-color 0.6s ease;
+}
+
+.cathedral-container {
+  width: 90%;
+  max-width: 950px;
+  position: relative;
+  z-index: 2;
+  padding: 40px 0;
+}
+
+.cathedral-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.nav-back {
+  color: #8a8992;
+  text-decoration: none;
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+  border: 1px solid #333;
+  padding: 5px 12px;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.nav-back:hover {
+  color: #fff;
+  border-color: #fff;
+}
+
+.cathedral-title {
+  font-family: var(--font-serif);
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 900;
+  margin: 20px 0 0 0;
+  letter-spacing: 4px;
+  text-shadow: 0 0 10px rgba(255,255,255,0.1);
+}
+
+.cathedral-tagline {
+  font-family: var(--font-serif);
+  font-size: 0.8rem;
+  letter-spacing: 3px;
+  color: #9f8fb3;
+  margin-top: 10px;
+}
+
+/* Gothic Window Arch layout */
+.cathedral-window {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  background: var(--iron-frame);
+  border: 8px solid var(--iron-frame);
+  border-radius: 180px 180px 10px 10px / 100px 100px 10px 10px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.7), 0 0 30px rgba(148, 0, 211, 0.1);
+  overflow: hidden;
+  padding: 15px;
+}
+
+/* Glass Pane items */
+.pane {
+  padding: 40px 30px;
+  border: 6px solid var(--iron-frame);
+  border-radius: 60px 60px 10px 10px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: transform 0.3s, background-color 0.4s, box-shadow 0.4s;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.pane-content h2 {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  margin-top: 0;
+  letter-spacing: 2px;
+}
+
+.pane-content p {
+  font-size: 1.05rem;
+  line-height: 1.75;
+  font-style: italic;
+}
+
+/* Pane color modes */
+.pane-violet {
+  border-color: rgba(148, 0, 211, 0.4);
+}
+.pane-violet:hover, .pane-violet.active {
+  background-color: rgba(148, 0, 211, 0.18);
+  box-shadow: 0 0 25px rgba(148, 0, 211, 0.35), inset 0 0 15px rgba(148, 0, 211, 0.2);
+}
+.pane-violet h2 { color: #d896ff; text-shadow: 0 0 8px rgba(216,150,255,0.4); }
+
+.pane-gold {
+  border-color: rgba(255, 183, 0, 0.4);
+}
+.pane-gold:hover, .pane-gold.active {
+  background-color: rgba(255, 183, 0, 0.18);
+  box-shadow: 0 0 25px rgba(255, 183, 0, 0.35), inset 0 0 15px rgba(255, 183, 0, 0.2);
+}
+.pane-gold h2 { color: #ffdb70; text-shadow: 0 0 8px rgba(255,219,112,0.4); }
+
+.pane-cyan {
+  border-color: rgba(0, 206, 209, 0.4);
+}
+.pane-cyan:hover, .pane-cyan.active {
+  background-color: rgba(0, 206, 209, 0.18);
+  box-shadow: 0 0 25px rgba(0, 206, 209, 0.35), inset 0 0 15px rgba(0, 206, 209, 0.2);
+}
+.pane-cyan h2 { color: #8cffff; text-shadow: 0 0 8px rgba(140,255,255,0.4); }
+
+.pane:hover {
+  transform: scale(1.02);
+}

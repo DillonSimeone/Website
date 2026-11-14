@@ -1,0 +1,133 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>JavaScript Website Tester</title>
+</head>
+<style>
+    body{
+        display: flex;
+        justify-content: center;
+        background-color: black;
+        font-size: 2em;
+        color: white;
+    }
+    div{
+      font-family:monospace; 
+        white-space:pre;
+    }
+    
+    span span{
+        display: inline-block;
+    }
+    
+    .left1{
+        animation: spinLeft 1s infinite;
+    }
+    
+    .left2{
+        animation: spinLeft 2s infinite;
+    }
+    
+    .left3{
+        animation: spinLeft 3s infinite;
+    }
+    
+    .right1{
+        animation: spinRight 1s infinite;
+    }
+    
+    .right2{
+        animation: spinRight 2s infinite;
+    }
+    
+    .right3{
+        animation: spinRight 3s infinite;
+    }
+    
+    @keyframes spinLeft{
+        from{
+            transform: rotate(0deg);
+        }
+        to{
+            transform: rotate(-360deg);
+        }
+    }
+        
+        
+        
+    @keyframes spinRight{
+        from{
+            transform: rotate(0deg);
+            color: red;
+        }
+        to{
+            transform: rotate(360deg);
+            color: blue;
+        }
+    }
+</style>
+<body>
+    <p class="myP">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolore magni consequuntur tempore, facilis maiores magnam voluptatibus vel illo tempora rerum quia nesciunt fuga provident deleniti quibusdam exercitationem repellendus molestias laboriosam. Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aliquid reiciendis incidunt debitis ratione et distinctio sed labore accusantium vitae. Nisi nulla doloremque culpa unde ratione commodi mollitia omnis distinctio veniam.</p>
+<script>
+    
+    function rightLeft(){
+        let selector = Math.ceil(Math.random() * 6);
+        let selected = "";
+        switch(selector){
+            case 1:
+                selected = "left1";
+                break;
+            case 2:
+                selected = "left2";
+                break;
+            case 3:
+                selected = "left3";
+                break;
+            case 4:
+                selected = "right1";
+                break;
+            case 5:
+                selected = "right2";
+                break;
+            case 6:
+                selected = "right3";
+        }
+        console.log(selected);
+        return selected;
+    }
+    
+    let myP = document.getElementsByClassName("myP")[0];
+
+    let breakByLength = function (str,length) {
+      let newString = "";
+      for(let i = 0; i < str.length; i += length){
+        let string = str.substring (i, (i + length));
+        newString += "<div>" + string + "</div>";
+      }
+      return newString;
+    };
+
+    myP.innerHTML = breakByLength(myP.innerHTML,30);
+
+    let divs = document.getElementsByTagName("div");
+    for(i = 0; i < divs.length; i++){
+      let string = "";
+      for(j = 0; j < divs[i].innerHTML.length; j++){
+        string += '<span class="' + rightLeft() + '">' + divs[i].innerHTML.charAt(j) + '</span>';
+      }
+      letterings = "<span>" + string + "</span>";
+      divs[i].innerHTML = letterings;
+    };
+
+    function randomColor(){
+      return Math.floor((Math.random() * 255));
+    };
+
+    let spans = document.getElementsByTagName("span");
+    for(let i = 0; i < spans.length; i++)
+      spans[i].style.color = "rgb(" + randomColor() + "," + randomColor() + "," + randomColor() + ")";
+    
+</script>
+</body>
+</html>

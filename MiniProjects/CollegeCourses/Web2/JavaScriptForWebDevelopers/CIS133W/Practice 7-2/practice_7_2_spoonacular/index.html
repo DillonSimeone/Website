@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Spoonacular Recipe Finder</title>
+	<link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+	<header>
+		<h1>Spoonacular Recipe Finder</h1>
+	</header>
+	<main>
+		<form id="recipe-form">
+			<label>Enter up to 3 ingredients you have:</label>
+			<input type="text" id="ingredient1" placeholder="e.g., rice">
+			<input type="text" id="ingredient2" placeholder="e.g., salt">
+			<input type="text" id="ingredient3" placeholder="e.g., sugar">
+			<br><br>
+			<!-- Options for modularity -->
+			<label for="recipe-count">Number of recipes to display:</label>
+			<input type="number" id="recipe-count" value="3" min="1" max="10">
+			<br><br>
+			<label>
+				<input type="checkbox" id="random-recipes">
+				Randomize recipes
+			</label>
+			<br><br>
+			<button type="submit">Search</button>
+		</form>
+
+		<section id="results-grid"></section>
+	</main>
+	<script src="recipes.js"></script>
+</body>
+
+</html>

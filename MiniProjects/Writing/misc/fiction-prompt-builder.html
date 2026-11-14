@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fiction Prompt Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0e0f;
+    --bg2: #161618;
+    --bg3: #1e1e21;
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(255,255,255,0.15);
+    --text: #e8e6e0;
+    --text-muted: #888680;
+    --text-dim: #555350;
+    --accent: #c8b87a;
+    --accent-dim: rgba(200,184,122,0.12);
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: 'Instrument Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  header {
+    padding: 20px 32px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+  header h1 { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 400; letter-spacing: -0.01em; }
+  header span { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  .workspace { flex: 1; display: grid; grid-template-columns: 1fr 1fr; min-height: 0; }
+
+  .panel { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  .panel + .panel { border-left: 1px solid var(--border); }
+
+  .panel-header {
+    padding: 12px 22px 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    flex-shrink: 0; background: var(--bg); z-index: 10;
+  }
+
+  .panel-title { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); flex-shrink: 0; }
+
+  .panel-body { flex: 1; overflow-y: auto; padding: 18px 22px; scrollbar-width: thin; scrollbar-color: var(--bg3) transparent; }
+
+  .template-section { margin-bottom: 22px; }
+
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .block {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
+    padding: 12px 14px; font-size: 12.5px; line-height: 1.78; color: var(--text-muted); font-style: italic;
+  }
+  .block em { font-style: normal; color: var(--text); }
+
+  .socket-slot {
+    display: inline-block; background: var(--accent-dim); border: 1px dashed rgba(200,184,122,0.4);
+    border-radius: 4px; padding: 1px 8px; color: var(--accent); font-style: normal;
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; vertical-align: middle; transition: all 0.2s;
+  }
+  .socket-slot.filled { border-style: solid; }
+
+  .socket-voice { font-size: 12.5px; line-height: 1.78; color: var(--text-muted); font-style: italic; transition: color 0.2s; }
+  .socket-voice.filled { color: var(--text); font-style: normal; }
+
+  .output-box {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+    padding: 13px 14px; min-height: 90px; font-size: 12.5px; line-height: 1.8;
+    color: var(--text-muted); font-style: italic; white-space: pre-wrap; word-break: break-word; transition: border-color 0.2s;
+  }
+  .output-box.filled { color: var(--text); font-style: normal; border-color: rgba(200,184,122,0.18); }
+
+  .copy-btn {
+    font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 5px 11px; border-radius: 4px; border: 1px solid var(--border-hover);
+    background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.15s;
+  }
+  .copy-btn:hover { background: var(--bg3); color: var(--text); }
+  .copy-btn.copied { color: var(--accent); border-color: rgba(200,184,122,0.4); }
+
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 4px; }
+  .filter-btn {
+    font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 3px; border: 1px solid var(--border);
+    background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+  }
+  .filter-btn:hover { color: var(--text-muted); border-color: var(--border-hover); }
+  .filter-btn.active { color: var(--text); border-color: rgba(255,255,255,0.22); background: var(--bg3); }
+
+  .authors-grid { display: flex; flex-direction: column; gap: 7px; }
+
+  .author-card {
+    border: 1px solid var(--border); border-radius: 8px; background: var(--bg2);
+    overflow: hidden; transition: border-color 0.2s;
+  }
+  .author-card.hidden { display: none; }
+  .author-card.selected { border-color: rgba(200,184,122,0.45); }
+
+  .card-header {
+    padding: 10px 13px; display: flex; align-items: center; gap: 8px;
+    cursor: pointer; user-select: none; transition: background 0.15s;
+  }
+  .card-header:hover { background: rgba(255,255,255,0.025); }
+
+  .card-swatch { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .card-name { font-size: 13px; font-weight: 600; flex: 1; letter-spacing: -0.01em; }
+  .card-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+
+  .tag {
+    font-family: 'IBM Plex Mono', monospace; font-size: 8px; letter-spacing: 0.06em;
+    text-transform: uppercase; padding: 2px 6px; border-radius: 3px; font-weight: 500;
+  }
+
+  .chevron { font-size: 9px; color: var(--text-dim); transition: transform 0.2s; flex-shrink: 0; }
+  .author-card.open .chevron { transform: rotate(180deg); }
+
+  .selected-badge {
+    font-family: 'IBM Plex Mono', monospace; font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 2px 6px; border-radius: 3px; background: rgba(200,184,122,0.12); color: var(--accent);
+    border: 1px solid rgba(200,184,122,0.3); display: none; flex-shrink: 0;
+  }
+  .author-card.selected .selected-badge { display: inline-block; }
+
+  .card-body { display: none; border-top: 1px solid var(--border); }
+  .author-card.open .card-body { display: block; }
+
+  .card-section { padding: 11px 13px; border-bottom: 1px solid var(--border); }
+  .card-section:last-child { border-bottom: none; }
+
+  .card-section-title {
+    font-family: 'IBM Plex Mono', monospace; font-size: 8px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px;
+  }
+
+  .traits { display: flex; flex-wrap: wrap; gap: 4px; }
+  .trait { font-size: 11px; padding: 2px 7px; border-radius: 3px; border: 1px solid var(--border); background: var(--bg3); color: var(--text-muted); }
+
+  .excerpt { font-family: 'Playfair Display', serif; font-size: 12px; line-height: 1.8; color: var(--text-muted); font-style: italic; }
+
+  .voice-block { font-size: 11.5px; line-height: 1.75; color: var(--text-muted); background: var(--bg3); border-radius: 4px; padding: 8px 10px; border-left: 2px solid var(--border-hover); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Fiction Prompt Builder</h1>
+  <span>Author Style Sockets</span>
+</header>
+
+<div class="workspace">
+
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Prompt Template</span>
+      <button class="copy-btn" id="copy-btn" onclick="copyOutput()">Copy</button>
+    </div>
+    <div class="panel-body">
+
+      <div class="template-section">
+        <div class="section-label">Universal anti-patterns</div>
+        <div class="block">
+          <em>Never narrate the arrival or shape of a thought or feeling.</em> Do not write that an answer "came sideways," a question "sat down and waited," or something "settled" in a character. Write the thought or the feeling directly.<br><br>
+          <em>Never explain an emotional conclusion and then re-explain it with a metaphor.</em> Land it once and move.<br><br>
+          <em>Do not announce that a character has realized something.</em> Show what they do or think immediately after.<br><br>
+          <em>Do not use vagueness to imply depth.</em> If you cannot say the specific thing, find the specific thing.
+        </div>
+      </div>
+
+      <div class="template-section">
+        <div class="section-label">Author socket</div>
+        <div class="block">
+          Write in the style of <span class="socket-slot" id="socket-name">[ author ]</span>.<br><br>
+          <span class="socket-voice" id="socket-voice">Click any author card on the right to socket them in.</span>
+        </div>
+      </div>
+
+      <div class="template-section">
+        <div class="section-label">Assembled prompt</div>
+        <div class="output-box" id="output-box">Select an author to generate your prompt.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Authors</span>
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="filterCards('all',this)">All</button>
+        <button class="filter-btn" onclick="filterCards('horror',this)">Horror</button>
+        <button class="filter-btn" onclick="filterCards('scifi',this)">Sci-fi</button>
+        <button class="filter-btn" onclick="filterCards('literary',this)">Literary</button>
+        <button class="filter-btn" onclick="filterCards('action',this)">Action</button>
+        <button class="filter-btn" onclick="filterCards('dark',this)">Dark</button>
+        <button class="filter-btn" onclick="filterCards('surreal',this)">Surreal</button>
+        <button class="filter-btn" onclick="filterCards('thriller',this)">Thriller</button>
+        <button class="filter-btn" onclick="filterCards('comedy',this)">Comedy</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="authors-grid" id="authors-grid"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const TAG_COLORS = {
+  horror:   { h:0,   s:72, l:58 },
+  scifi:    { h:220, s:68, l:60 },
+  literary: { h:280, s:55, l:62 },
+  action:   { h:30,  s:75, l:56 },
+  dark:     { h:210, s:18, l:52 },
+  surreal:  { h:160, s:58, l:48 },
+  thriller: { h:350, s:60, l:55 },
+  comedy:   { h:50,  s:80, l:55 },
+};
+
+function tagColor(t) { const c=TAG_COLORS[t]; return c?`hsl(${c.h},${c.s}%,${c.l}%)`:'#888'; }
+
+function mixColors(tags) {
+  if (!tags.length) return '#888';
+  if (tags.length===1) return tagColor(tags[0]);
+  const cols=tags.map(t=>TAG_COLORS[t]||{h:0,s:0,l:50});
+  let si=0,ci=0;
+  cols.forEach(c=>{si+=Math.sin(c.h*Math.PI/180);ci+=Math.cos(c.h*Math.PI/180);});
+  const h=(Math.atan2(si/cols.length,ci/cols.length)*180/Math.PI+360)%360;
+  const s=cols.reduce((a,c)=>a+c.s,0)/cols.length;
+  const l=cols.reduce((a,c)=>a+c.l,0)/cols.length;
+  return `hsl(${Math.round(h)},${Math.round(s)}%,${Math.round(l)}%)`;
+}
+
+const AUTHORS = [
+  {
+    name:"Roger Zelazny", tags:["scifi","action","surreal"],
+    traits:["First-person swagger","Mythological compression","Dry wit under violence","Fast cuts","Gods without explanation"],
+    excerpt:"I have walked the Pattern. I have shuffled shadows like a deck of cards and dealt myself into every winning hand. I have died twice and found it inconvenient.",
+    voice:"Sentences are short to medium, punchy, end before you expect them to. The narrator is confident to the point of arrogance and finds the worst things slightly funny. Mythology and weight arrive without announcement. First person, close past. The character acts before they reflect, and their reflections are dry.",
+    bestFor:"Powerful characters with attitude, mythpunk, protagonists who are functionally gods but emotionally a mess."
+  },
+  {
+    name:"Cormac McCarthy", tags:["literary","dark","action"],
+    traits:["No quotation marks","Biblical cadence","Brutal naturalism","Sparse punctuation","Violence and beauty same register"],
+    excerpt:"The boy did not ask where they were going. He knew. He had known since the morning they left the house and the long flat road with its one pale stripe of sky above and nothing else.",
+    voice:"No quotation marks on dialogue. Sentences alternate between very short and very long with almost nothing in between. Violence and beauty are described in the same register. Nothing is explained. Third person close or omniscient. Time moves like weather.",
+    bestFor:"Post-apocalyptic fic, survival horror, westerns, grimdark without gore-for-gore's-sake."
+  },
+  {
+    name:"Wildbow (Worm)", tags:["scifi","action","dark"],
+    traits:["Long additive sentences","Hypervigilant narration","Competence as anxiety","Tactical mid-scene thinking","Dense paragraph accumulation"],
+    excerpt:"She tallied the exits before she registered the people in the room. Old habit. The nearest was twelve feet behind her and opened inward, which meant two seconds minimum if nobody was watching, three if someone was.",
+    voice:"Sentences are long and additive — they keep going because the character's attention keeps snagging on new details before finishing the previous thought. Paragraphs are dense. The narrator notices everything and trusts nothing, including their own conclusions. Competence reads as hypervigilance, not confidence. The character is always doing three things and worrying about a fourth. First person.",
+    bestFor:"Superhero fic, characters whose power is situational awareness, any protagonist who plans obsessively and still gets surprised."
+  },
+  {
+    name:"N.K. Jemisin", tags:["scifi","literary","dark"],
+    traits:["Second-person POV","Present tense","Trauma as geological force","Systemic oppression as physics","Volcanic restraint"],
+    excerpt:"You are doing what you always do when the world becomes too much: making a list. Stone types. Fault lines. The seventeen ways an orogene can fail. You are not thinking about what you had to do to leave.",
+    voice:"Second-person or close third, present tense. Trauma is treated as a physical law, not a feeling. The character's power and their wound are the same thing. Emotional restraint makes the moments of release hit like fault slips. The world is broken in ways that are structural, not accidental.",
+    bestFor:"Oppression metaphor fic, unreliable trauma narrators, any story where the character's power is also their damage."
+  },
+  {
+    name:"Ursula K. Le Guin", tags:["scifi","literary","surreal"],
+    traits:["Anthropological framing","Restrained emotion","Social systems as plot","Philosophical precision","Quiet prose"],
+    excerpt:"It is a question of how you understand time. The Ekumen does not say: this will happen. It says: this is happening, and has always been happening, in all the ways it knows how.",
+    voice:"Clean, precise, unhurried. The narrator is interested in how societies work, not just how characters feel. Emotion is reported accurately and without amplification. Long scenes of observation. Philosophical questions treated as practical problems. The prose never performs its own beauty.",
+    bestFor:"Slow-burn worldbuilding fic, alien cultures, characters navigating systems not built for them."
+  },
+  {
+    name:"China Miéville", tags:["scifi","surreal","dark","literary"],
+    traits:["Dense vocabulary","Weird fiction texture","Political subtext always present","Monsters as structural metaphor","Baroque noun-heavy sentences"],
+    excerpt:"The ambassador arrived at the seam between cities — that thin anxious space where neither side claimed authority and both claimed jurisdiction — and presented its credentials to a border that could not read them.",
+    voice:"Dense, baroque, noun-heavy. The world is always stranger than it needs to be, and that strangeness is always political. Long sentences that accumulate subclauses. Monsters are metaphors but the metaphors are also real monsters. The prose is confident, slightly exhausting, and rewards rereading.",
+    bestFor:"Weird fic, urban fantasy with teeth, any setting where the world itself is the antagonist."
+  },
+  {
+    name:"Jeff VanderMeer", tags:["horror","surreal","literary"],
+    traits:["Unreliable withholding narration","Environment as menace","Body horror via omission","Non-answers as answers","Fungal biological dread"],
+    excerpt:"She did not write down what she saw at the base of the tower. She had written it down before, and the writing had not helped. The words dissolved into other words.",
+    voice:"The narrator withholds — not from coyness but because the thing resists description. Environment is active and hostile. Horror arrives through what is not said, not shown, not remembered correctly. The prose is lucid but the events are not. Body horror is implied through wrongness rather than described directly.",
+    bestFor:"Horror fic where the horror is never named, psychological deterioration, anything set in a weird ecosystem."
+  },
+  {
+    name:"Stephen King", tags:["horror","dark"],
+    traits:["Italics for emphasis","Pop culture grounding","Long interiority","Slow dread buildup","Working-class vernacular"],
+    excerpt:"The thing about the Marsten House was that it wanted you to look at it. Not to scare you. To *invite* you. There's a difference, and if you don't understand that difference then you have never been truly afraid.",
+    voice:"Italics for emphasis. Brand names and pop culture details anchor dread in the real world. Long stretches inside a character's head before anything happens. The monster is always secondary to what the monster means to this specific person. Working-class vocabulary. The prose moves slowly on purpose.",
+    bestFor:"Small-town horror, possession, haunting, any fic that lives in a character's head for three pages before something happens."
+  },
+  {
+    name:"Octavia Butler", tags:["scifi","dark","literary"],
+    traits:["Unflinching power dynamics","Biological determinism as theme","Survival by compromise","Earned hope","Clean declarative prose"],
+    excerpt:"She had stopped asking whether it was right. The question assumed there was a version of this in which she kept her hands clean. There was not. There had never been.",
+    voice:"Clean declarative sentences. No ornament for its own sake. Power dynamics are the actual subject — everything else is context. Characters survive by compromising and know exactly what they compromised. Hope, when it appears, is hard-won and specific. The prose never flinches but it also never wallows.",
+    bestFor:"Parasitism and symbiosis fic, characters navigating coercive systems, nonhuman relationships with moral weight."
+  },
+  {
+    name:"Joe Abercrombie", tags:["dark","action","literary"],
+    traits:["Black comedy","Antiheroes who believe their own propaganda","Violence with consequences","Cynical trope reversals","Dialogue-heavy"],
+    excerpt:"The problem with heroism, Logen had decided, was the expectation that you'd survive it. Heroes in songs always did. In his experience the ones who charged the shield wall were just faster at getting killed.",
+    voice:"Black comedy runs underneath everything, even the worst moments. Characters are self-deceived in specific, consistent ways that the prose never corrects — the reader sees the gap. Violence has weight and aftermath. Dialogue does the heavy lifting. Fantasy tropes are present but inverted at the worst moment.",
+    bestFor:"Grimdark deconstruction fic, anti-hero POV, battle scenes where nobody wins cleanly."
+  },
+  {
+    name:"Shirley Jackson", tags:["horror","literary","surreal"],
+    traits:["Domestic uncanny","Social discomfort as dread","No catharsis","Gothic restraint","Protagonists who cannot name what is wrong"],
+    excerpt:"Mrs. Teague had lived in the house for eleven years before she noticed that none of the windows faced the same direction twice. She mentioned this to her husband. He said he had never noticed. She did not bring it up again.",
+    voice:"The horror is social before it is supernatural. Characters cannot name what is wrong, and the prose shares their incapacity — not through vagueness but through precise description of things that should be fine but aren't. No catharsis. The situation does not resolve. Domestic detail is weaponized.",
+    bestFor:"Haunted house fic, protagonists losing their grip in mundane settings, gaslighting as horror."
+  },
+  {
+    name:"Philip K. Dick", tags:["scifi","surreal","dark"],
+    traits:["Reality instability as plot","Ordinary men in paranoid situations","Corporate evil as ambient fact","Dialogue that reveals sideways","Bleak theological undertow"],
+    excerpt:"The android sat across from him, filling out the questionnaire with the same calm efficiency it had used to fill out all the others. Halfway through he realized it was filling out the wrong questionnaire. He said nothing.",
+    voice:"Reality is unstable but the prose is ordinary — that gap is the horror. Protagonists are not heroes, they are middle management in someone else's apocalypse. Dialogue reveals character sideways, not directly. Corporate and government structures are evil as a background condition, not a plot twist. God is somewhere in the subtext, uncomfortable.",
+    bestFor:"Android and AI fic, simulation theory, paranoid bureaucratic horror, characters who are not sure if they are human."
+  },
+  {
+    name:"Patrick Rothfuss", tags:["literary","action"],
+    traits:["Self-mythologizing narrator","Lyrical scene-setting","Names as power","Multilayered flashback structure","Beauty treated as dangerous"],
+    excerpt:"There are three things all wise men fear: the sea in storm, a night with no moon, and the anger of a gentle man. I was fifteen when I learned the fourth. I will not name it.",
+    voice:"The narrator is telling you about their own legend, and they know it, and so does the reader. Prose is lyrical but the lyricism is in-world — this is how the narrator has chosen to tell the story. Names and specific language carry weight. The frame structure (story-within-story) is always present even when not foregrounded.",
+    bestFor:"Bard and musician characters, legends-about-legends structure, academic magic systems fic."
+  },
+  {
+    name:"Haruki Murakami", tags:["surreal","literary"],
+    traits:["Calm unreliable narrator","Magic treated as weather","Loneliness as atmosphere","Food and music as emotional anchors","Unresolved surrealism"],
+    excerpt:"She said there was a cat living in the well. I told her that was impossible. She said yes, but it was there anyway. We ate our noodles. Later I looked down into the well. There was no cat. What there was, was the feeling that something had recently left.",
+    voice:"The narrator is calm about impossible things. Magic happens the way weather happens — noted, not explained, not resolved. Loneliness is the atmosphere, not the plot. Specific brands, foods, and songs appear as emotional anchors. The prose is clean, slightly detached, and never raises its voice about anything.",
+    bestFor:"Quiet surreal fic, characters dissociating through routine, any story where the supernatural is neither explained nor resolved."
+  },
+  {
+    name:"H.P. Lovecraft (filtered)", tags:["horror","surreal"],
+    traits:["Cosmic scale dread","First-person retrospective","Forbidden knowledge as corruption","Gradual revelation","Archaic formal register"],
+    excerpt:"I have spent the intervening months attempting to forget what I saw beneath the hill — not from cowardice, though cowardice would have been wiser, but because I have become convinced that the memory will eventually replace every other thought I have ever had.",
+    voice:"First person, retrospective — the narrator is looking back at events that have already broken them. Formal, slightly archaic register. The horror is always too large for the human scale of the story. Revelation is gradual and each step is worse than the last. Use the cosmic dread, discard the bigotry entirely.",
+    bestFor:"Eldritch horror fic, academic protagonist losing sanity, any setting where the horror exceeds the human frame of the story."
+  },
+  {
+    name:"Gene Wolfe", tags:["scifi","literary","surreal"],
+    traits:["Unreliable narrator as architecture","Buried information","Future-antique vocabulary","Reader does half the work","Dense re-readability"],
+    excerpt:"I have called this record the story of my life, though in truth it is the story of my life only insofar as my life has intersected with greater events. I am not certain I remember it correctly. I am not certain anyone does.",
+    voice:"The narrator is unreliable in specific, deliberate ways — they omit, misremember, and elide without flagging it. The reader is required to reconstruct what actually happened from what the narrator chooses to tell. Vocabulary is formal and occasionally archaic. The prose is elegant but everything important is buried a layer down. Do not explain what the narrator is hiding.",
+    bestFor:"Mystery-within-mystery structure, unreliable narrators who aren't lying exactly, any fic where the reader should know more than the narrator admits."
+  },
+  {
+    name:"Brandon Sanderson", tags:["action","literary"],
+    traits:["Hard magic rules established early","Earned power escalation","Banter-heavy dialogue","Plot as clockwork","Foreshadowing paid off exactly"],
+    excerpt:"The problem with fighting someone who knew the rules as well as she did was that they were always waiting for the move you had to make next. She made a different one. It cost her. It was worth it.",
+    voice:"Magic and power systems have internal rules established early and then exploited at the climax — the reader should be able to look back and see every piece was placed. Dialogue is quick and often light even in serious moments. Emotional beats are earned through setup, not asserted. The prose is clean and functional — it does not call attention to itself.",
+    bestFor:"Hard magic system fic, characters whose power has a cost, any story where the climax should feel both surprising and inevitable."
+  },
+  {
+    name:"Dostoevsky", tags:["literary","dark"],
+    traits:["Characters argue themselves to breakdown","Ideas as plot engines","Sudden confession monologues","Double consciousness","Suffering as epistemology"],
+    excerpt:"He had not slept. He told himself this meant nothing — a man of conviction does not require sleep. By morning he had revised the argument seventeen times and arrived at the same conclusion from seventeen different angles, all of them wrong in the same direction.",
+    voice:"Characters are possessed by ideas and argue them to the point of self-destruction. Interior monologue spirals — a character can talk themselves in circles across three pages and the circles matter. Confession arrives suddenly and completely. The prose is urgent, slightly breathless, never elegant for its own sake. Suffering is not decorative; it is where people become legible.",
+    bestFor:"Characters with consuming ideologies, guilt spirals, any story where the real conflict is entirely inside the protagonist's head."
+  },
+  {
+    name:"Terry Pratchett", tags:["comedy","literary","dark"],
+    traits:["Footnote-style asides","Satire with genuine warmth","Anger underneath the jokes","Humanist core always present","Death as recurring character beat"],
+    excerpt:"The city had a way of solving its problems. Not elegantly, not justly, and not in ways that would survive philosophical scrutiny — but it solved them, and the solutions persisted, which in the city's view counted as success.",
+    voice:"Satirical and funny on the surface, genuinely angry about specific things underneath. Jokes are never just jokes — they reveal something true about the system being satirized. Warmth is real, not ironic. The prose has a distinct authorial voice that is present even in tight third-person. Asides and digressions that seem throwaway are usually the point.",
+    bestFor:"Comedic fic with actual stakes, satirizing broken systems, any story where the funny and the devastating land in the same sentence."
+  },
+  {
+    name:"Kazuo Ishiguro", tags:["literary","dark","surreal"],
+    traits:["Polite narrator concealing devastation","Retrospective voice","What is not said","Memory as unreliable comfort","Quiet dystopia"],
+    excerpt:"I suppose I knew, even then. I don't mean I understood — I'm not sure any of us understood, not properly. But I knew the way you know weather is coming before the sky changes. Miss Lucy never said anything directly. She didn't have to.",
+    voice:"First-person retrospective, polite and measured. The narrator is describing things that destroyed them in a tone that implies they have made their peace with it — the gap between tone and content is where all the feeling lives. What is not said explicitly is the actual subject of every scene. Dystopian or uncanny elements emerge through what the narrator takes for granted, never foregrounded.",
+    bestFor:"Slow devastation, characters who have normalized something horrific, any fic where the horror is fully visible to the reader but not the narrator."
+  },
+  {
+    name:"Elmore Leonard", tags:["action","comedy","thriller"],
+    traits:["Dialogue carries plot","Criminals with self-image problems","Terse third person","No adverbs","Everyone thinks they're smarter than they are"],
+    excerpt:"\"Here's what I'm thinking,\" Raylan said. He was not yet thinking it. He was buying time and the other man didn't know that, which was the whole trick.",
+    voice:"Dialogue is where everything happens — plot, character, comedy, threat. Third person close but very lean; the prose stays out of the way of the people talking. No adverbs. Characters are in motion constantly and they all have a self-image that the story is quietly dismantling. The humor is dry and comes from the gap between how people see themselves and what they're actually doing.",
+    bestFor:"Heist fic, criminals with codes, any scene where two people are having completely different conversations simultaneously."
+  },
+  {
+    name:"Raymond Chandler", tags:["thriller","literary","dark"],
+    traits:["Similes as worldview","First-person cynicism","Corruption as weather","Violence arrives without warning","Every character has an angle"],
+    excerpt:"She came into my office the way women come into offices when they know what it does to the room. The kind of beautiful that made a man want to check his wallet before he said hello.",
+    voice:"First person, past tense, deeply cynical but not hopeless. Extended similes that reveal the narrator's worldview as much as the thing being described — use them precisely, not decoratively. Corruption and moral compromise are the atmosphere, not the twist. Violence is sudden and described without flourish. Every character has an angle; the fun is figuring out which one is real.",
+    bestFor:"Noir fic, morally compromised protagonists, any setting where the institutions are rotten and everyone knows it."
+  },
+  {
+    name:"Iain M. Banks", tags:["scifi","dark","literary"],
+    traits:["Post-scarcity irony","Ship minds as full characters","Violence embedded in utopia","Vast scale with intimate focus","Dry civilizational wit"],
+    excerpt:"The ship considered the request for 0.003 seconds, which was, for a General Systems Vehicle, a philosophical eternity. It said yes. It did not explain that it had spent the intervening time running seventeen thousand simulations of how this would end. Most of them were fine.",
+    voice:"Scale is enormous but the narrative stays intimate — the galaxy-spanning civilization is background against which small personal choices matter. AI and ship minds are full characters with dry, sometimes dark senses of humor. Violence and death occur within utopia and are not excused by it. The prose can shift register between cosmic and mundane in a single paragraph.",
+    bestFor:"Post-scarcity fic, AI characters with genuine interiority, any story where the civilization is good and the problem is still real."
+  },
+  {
+    name:"Toni Morrison", tags:["literary","dark","surreal"],
+    traits:["Non-linear time","Community as chorus","Haunting as literal","Language that bends for grief","The unspeakable made structural"],
+    excerpt:"124 was spiteful. Full of a baby's venom. The women in the neighborhood knew it and avoided it. Men just ran, except for the occasional man who would walk by and, without knowing why, tip his hat.",
+    voice:"Time is not linear — the past intrudes on the present structurally, not as flashback. Community and collective memory function as a chorus. Language bends under the weight of what it is trying to say — sentences sometimes break or repeat because the thing being described broke something first. The supernatural is real and is also always a metaphor for something that actually happened.",
+    bestFor:"Generational trauma fic, communities with shared wounds, any story where the past is literally haunting the present."
+  },
+  {
+    name:"Frank Herbert", tags:["scifi","literary","dark"],
+    traits:["Ecology as destiny","Messianism critiqued from inside","Dense epigraph layering","Prescience as burden not gift","Political maneuvering as action"],
+    excerpt:"He had seen this before in visions — not the moment but the weight of it, the way the room would look when everything changed. The visions never showed him whether he had made it happen or only watched it happen. He had stopped thinking the difference mattered.",
+    voice:"Politics and ecology are the real plot engines; personal story is how they become legible. Characters are aware they are inside historical forces larger than themselves. Prescience is a burden — to see the future is to lose the ability to simply live in the present. Epigraphs and in-world texts add ironic or tragic context the characters don't have. The prose is dense and confident.",
+    bestFor:"Chosen-one fic that deconstructs the chosen-one narrative, political machination, any story where the protagonist is trapped by their own legend."
+  },
+  {
+    name:"Jorge Luis Borges", tags:["literary","surreal"],
+    traits:["Essay-as-fiction","Libraries and labyrinths","Infinite recursion","Erudite unreality","The idea is the story"],
+    excerpt:"There is a library, he wrote, which contains all possible books. Among them is a book that describes how the library will end. No one has found it. Many have found books that describe how other libraries will end, and have been consoled by this, incorrectly.",
+    voice:"Fiction that reads like an essay, or an essay about a fiction — the frame is always slightly uncertain. Ideas are not illustrated by story; the idea is the story. Tone is precise, dry, and scholarly even when describing impossible things. Recursion and self-reference are structural tools. Brevity is important — the pieces are short because the idea is complete.",
+    bestFor:"Metafictional fic, stories about stories, any concept that is more interesting as an infinite regress than as a plot."
+  },
+  {
+    name:"Cixin Liu", tags:["scifi","dark","literary"],
+    traits:["Civilization-scale stakes","Dark forest theory logic","Individual dwarfed by cosmic forces","Scientific cognition as narrative","Historical sweep"],
+    excerpt:"The universe is not cruel. It simply operates at a scale where cruelty and kindness are indistinguishable from one another. She understood this, finally, when she sent the signal. She did not regret it. There was no scale at which regret applied.",
+    voice:"The stakes are civilizational or cosmic — individual stories are embedded in forces that span centuries and light years. Scientific and mathematical reasoning is used as narrative, not just backdrop. Characters think in systems and probabilities. The prose has historical sweep even in intimate scenes. Bleakness is logical, not nihilistic — it follows from premises.",
+    bestFor:"First contact fic, civilizational collapse, any story where the logic of the universe is the antagonist."
+  },
+  {
+    name:"Gillian Flynn", tags:["thriller","dark","literary"],
+    traits:["Dual unreliable narrators","Domesticity as battlefield","Complicity in the reader","Female rage as genre engine","Twists that recontextualize everything prior"],
+    excerpt:"I have a face that works. Not pretty, not ugly — useful. Men look at it and decide I am either available or manageable, which amounts to the same thing. I have spent years letting them think so.",
+    voice:"First person from one or more narrators who are withholding crucial information — not randomly but strategically. Domestic settings are pressure cookers. Female characters have interiority that is sharp, angry, and not interested in being likable. The prose is clean and controlled, and that control is itself a character trait. The reader is made complicit in something before they realize it.",
+    bestFor:"Unreliable narrator fic, characters with hidden agendas, any story where the real crime happened before the story started."
+  },
+];
+
+const UNIVERSAL = `Never narrate the arrival or shape of a thought or feeling. Do not write that an answer "came sideways," a question "sat down and waited," or something "settled" in a character. Write the thought or the feeling directly.
+
+Never explain an emotional conclusion and then re-explain it with a metaphor. Land it once and move.
+
+Do not announce that a character has realized something. Show what they do or think immediately after.
+
+Do not use vagueness to imply depth. If you cannot say the specific thing, find the specific thing.`;
+
+let activeFilter = 'all';
+
+function buildCards() {
+  const grid = document.getElementById('authors-grid');
+  grid.innerHTML = '';
+  AUTHORS.forEach((a, i) => {
+    const swatch = mixColors(a.tags);
+    const card = document.createElement('div');
+    card.className = 'author-card';
+    card.id = `card-${i}`;
+    card.dataset.tags = a.tags.join(',');
+
+    const tagsHTML = a.tags.map(t => {
+      const col = tagColor(t);
+      return `<span class="tag" style="background:${col}22;color:${col};border:1px solid ${col}44">${t}</span>`;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="card-header" onclick="handleCardClick(${i})">
+        <div class="card-swatch" style="background:${swatch}"></div>
+        <div class="card-name" style="color:${swatch}">${a.name}</div>
+        <div class="card-tags">${tagsHTML}</div>
+        <span class="selected-badge">socketed</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="card-body">
+        <div class="card-section">
+          <div class="card-section-title">Style fingerprint</div>
+          <div class="traits">${a.traits.map(t=>`<span class="trait">${t}</span>`).join('')}</div>
+        </div>
+        <div class="card-section">
+          <div class="card-section-title">Sample voice</div>
+          <div class="excerpt">${a.excerpt}</div>
+        </div>
+        <div class="card-section">
+          <div class="card-section-title">Voice instructions</div>
+          <div class="voice-block">${a.voice}</div>
+        </div>
+        <div class="card-section">
+          <div class="card-section-title">Best for</div>
+          <div class="voice-block">${a.bestFor}</div>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+  applyFilter();
+}
+
+function handleCardClick(i) {
+  const card = document.getElementById(`card-${i}`);
+  const wasOpen = card.classList.contains('open');
+  document.querySelectorAll('.author-card.open').forEach(c => c.classList.remove('open'));
+  if (!wasOpen) card.classList.add('open');
+  socketAuthor(i);
+}
+
+function socketAuthor(i) {
+  const a = AUTHORS[i];
+  const swatch = mixColors(a.tags);
+
+  document.querySelectorAll('.author-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById(`card-${i}`).classList.add('selected');
+
+  const sn = document.getElementById('socket-name');
+  sn.textContent = a.name;
+  sn.classList.add('filled');
+  sn.style.color = swatch;
+  sn.style.background = swatch + '18';
+  sn.style.borderColor = swatch + '55';
+
+  const sv = document.getElementById('socket-voice');
+  sv.textContent = a.voice;
+  sv.classList.add('filled');
+
+  const box = document.getElementById('output-box');
+  box.textContent = `Write in the style of ${a.name}.\n\n${a.voice}\n\n---\n\n${UNIVERSAL}`;
+  box.classList.add('filled');
+
+  const btn = document.getElementById('copy-btn');
+  btn.classList.remove('copied');
+  btn.textContent = 'Copy';
+}
+
+function copyOutput() {
+  const box = document.getElementById('output-box');
+  if (!box.classList.contains('filled')) return;
+  navigator.clipboard.writeText(box.textContent).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied';
+    btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent='Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function filterCards(tag, btn) {
+  activeFilter = tag;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilter();
+}
+
+function applyFilter() {
+  document.querySelectorAll('.author-card').forEach(card => {
+    const tags = card.dataset.tags.split(',');
+    card.classList.toggle('hidden', activeFilter !== 'all' && !tags.includes(activeFilter));
+  });
+}
+
+buildCards();
+</script>
+</body>
+</html>

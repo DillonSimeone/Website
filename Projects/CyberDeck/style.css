@@ -1,0 +1,512 @@
+:root {
+    --mouseX: 0;
+    --mouseY: 0;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    overflow: hidden;
+    background-color: #050505;
+    color: #fff;
+    font-family: 'Courier New', Courier, monospace;
+    cursor: crosshair;
+}
+
+canvas {
+    display: block;
+}
+
+/* ── Canvas mount ── */
+#canvas-mount {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+}
+
+/* ── UI Overlay ── */
+.ui-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: none;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: padding 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ui-overlay.content-active {
+    padding: 1rem;
+}
+
+.ui-overlay > * {
+    pointer-events: auto;
+}
+
+/* ── Header ── */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    transform: translate(calc(var(--mouseX) * 20px), calc(var(--mouseY) * 15px));
+}
+
+.header-left {
+    border-left: 4px solid #33ff33;
+    padding-left: 1rem;
+    position: relative;
+}
+
+.header-left h1 {
+    font-size: clamp(1.2rem, 5vw, 1.8rem);
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    line-height: 1;
+    text-shadow: 0 0 10px rgba(51, 255, 51, 0.5);
+}
+
+.status-badge {
+    margin-top: 0.5rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    font-weight: bold;
+    color: #33ff33;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.blink {
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.telemetry {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    background: rgba(0, 20, 0, 0.85);
+    padding: 0.8rem 1.2rem;
+    border: 1px solid rgba(51, 255, 51, 0.3);
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    position: relative;
+    transition: all 0.5s ease;
+    width: 340px; /* Fixed width to prevent jitter */
+    justify-content: space-between;
+}
+
+.content-active .telemetry {
+    opacity: 0.2;
+    pointer-events: none;
+    transform: translateY(20px);
+}
+
+.telemetry::before {
+    content: '';
+    position: absolute;
+    top: -5px; left: -5px; width: 10px; height: 10px;
+    background: #33ff33; clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+.tel-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.tel-item label {
+    font-size: 0.55rem;
+    color: #33ff33;
+    opacity: 0.6;
+    margin-bottom: 0.2rem;
+}
+
+.tel-item span {
+    font-size: 1.1rem; 
+    font-weight: bold;
+    font-family: 'Courier New', Courier, monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    display: inline-block;
+    min-width: 60px;
+}
+
+/* ── Menu Buttons ── */
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: clamp(12rem, 30vw, 18rem);
+    pointer-events: auto;
+    transition: all 0.5s ease;
+}
+
+.content-active .menu {
+    opacity: 0.2;
+    transform: translateX(-20px);
+}
+
+.menu-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: none;
+    border: none;
+    color: #fff;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: left;
+    padding: 0;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.menu-btn:hover {
+    transform: translateX(0.5rem);
+}
+
+.menu-btn .number {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    font-size: 0.75rem;
+    font-weight: bold;
+    flex-shrink: 0;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.menu-btn:hover .number {
+    background: #fff;
+    color: #000;
+}
+
+.menu-btn .label {
+    font-size: clamp(0.8rem, 2.5vw, 1.1rem);
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+.menu-btn:hover .label {
+    opacity: 1;
+}
+
+.menu-btn.active .number {
+    background: #33ff33;
+    color: #000;
+    border-color: #33ff33;
+    box-shadow: 0 0 12px rgba(51, 255, 51, 0.6), 0 0 30px rgba(51, 255, 51, 0.2);
+    animation: navPulse 2s ease-in-out infinite;
+}
+
+.menu-btn.active .label {
+    opacity: 1;
+    color: #33ff33;
+    text-shadow: 0 0 8px rgba(51, 255, 51, 0.4);
+}
+
+@keyframes navPulse {
+    0%, 100% { box-shadow: 0 0 12px rgba(51, 255, 51, 0.6), 0 0 30px rgba(51, 255, 51, 0.2); }
+    50% { box-shadow: 0 0 18px rgba(51, 255, 51, 0.9), 0 0 40px rgba(51, 255, 51, 0.4); }
+}
+
+/* ── Side Panel ── */
+.side-panel {
+    position: fixed;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10rem;
+    background: rgba(0, 15, 0, 0.9);
+    border: 2px solid #33ff33;
+    padding: 1px;
+    pointer-events: auto;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+}
+
+.panel-header {
+    background: #33ff33;
+    color: #000;
+    font-size: 0.6rem;
+    font-weight: 900;
+    padding: 0.3rem 0.5rem;
+    text-align: center;
+    letter-spacing: 0.1em;
+}
+
+.source-grid {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem;
+    gap: 0.25rem;
+}
+
+.source-btn {
+    background: rgba(51, 255, 51, 0.05);
+    border: 1px solid rgba(51, 255, 51, 0.2);
+    color: #33ff33;
+    font-family: inherit;
+    font-size: 0.75rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+}
+
+.source-btn:hover {
+    background: rgba(51, 255, 51, 0.15);
+}
+
+.source-btn.active {
+    background: #33ff33;
+    color: #000;
+    font-weight: 900;
+}
+
+.panel-footer {
+    font-size: 0.5rem;
+    text-align: center;
+    padding: 0.3rem;
+    opacity: 0.5;
+    border-top: 1px solid rgba(51, 255, 51, 0.2);
+}
+
+/* ── GRID Toggle (AC/DC) ── */
+.source-row {
+    display: flex;
+    gap: 0.25rem;
+    width: 100%;
+}
+
+.toggle-container.compact {
+    width: 5rem;
+    height: 1.7rem; /* Matches button height better */
+    background: #000;
+    border: 1px solid rgba(51, 255, 51, 0.4);
+    position: relative;
+    display: flex;
+    border-radius: 2px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.toggle-btn {
+    flex: 1;
+    z-index: 2;
+    background: none;
+    border: none;
+    color: #33ff33;
+    font-family: inherit;
+    font-size: 0.6rem;
+    font-weight: 900;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.toggle-btn.active {
+    color: #000;
+}
+
+.toggle-slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+    background: #33ff33;
+    z-index: 1;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggle-container[data-active="ac"] .toggle-slider {
+    transform: translateX(100%);
+}
+
+/* ── DEVMODE ── */
+.dev-container {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    pointer-events: auto;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+#dev-toggle {
+    background: rgba(51, 255, 51, 0.1);
+    border: 1px solid #33ff33;
+    color: #33ff33;
+    padding: 0.5rem 1rem;
+    font-family: inherit;
+    font-size: 0.7rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+}
+
+#dev-menu {
+    margin-bottom: 1rem;
+    background: rgba(0, 0, 0, 0.85);
+    border: 1px solid rgba(51, 255, 51, 0.3);
+    padding: 1rem;
+    width: 250px;
+    backdrop-filter: blur(10px);
+}
+
+#dev-menu.hidden {
+    display: none;
+}
+
+#dev-menu h3 {
+    font-size: 0.75rem;
+    margin-bottom: 1rem;
+    color: #33ff33;
+    opacity: 0.8;
+}
+
+.dev-control {
+    margin-bottom: 1rem;
+}
+
+.dev-control label {
+    display: block;
+    font-size: 0.6rem;
+    margin-bottom: 0.25rem;
+    opacity: 0.6;
+}
+
+.dev-control input[type="range"] {
+    width: 100%;
+    accent-color: #33ff33;
+}
+
+/* ── Mobile Optimization ── */
+@media (max-width: 768px) {
+    .ui-overlay {
+        padding: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    .header-left {
+        border: none;
+        padding: 0;
+        text-align: center;
+    }
+
+    .telemetry {
+        position: static;
+        width: 320px;
+        margin-top: 1rem;
+        padding: 0.5rem 1rem;
+        gap: 0.5rem;
+        background: rgba(0, 10, 0, 0.9);
+    }
+
+    .tel-item label {
+        font-size: 0.5rem;
+    }
+
+    .tel-item span {
+        font-size: 0.8rem;
+        min-width: 40px;
+    }
+
+    .side-panel {
+        position: fixed;
+        left: 50%;
+        bottom: 1.5rem;
+        top: auto;
+        right: auto;
+        transform: translateX(-50%);
+        width: 90vw;
+        max-width: 400px;
+        flex-direction: row;
+        display: flex;
+        padding: 0;
+        border: 1px solid rgba(51, 255, 51, 0.3);
+    }
+
+    .panel-header {
+        writing-mode: vertical-lr;
+        transform: rotate(180deg);
+        padding: 0.3rem;
+        font-size: 0.5rem;
+        background: rgba(51, 255, 51, 0.1);
+    }
+
+    .source-grid {
+        flex-direction: row;
+        width: 100%;
+        padding: 0.3rem;
+        gap: 0.3rem;
+    }
+
+    .source-btn {
+        padding: 0.5rem 0.2rem;
+        font-size: 0.55rem;
+        flex: 1;
+        text-align: center;
+    }
+
+    .source-row.grid-row {
+        flex: 1.5;
+    }
+
+    .panel-footer {
+        display: none;
+    }
+
+    .menu {
+        position: fixed;
+        left: 0.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: auto;
+        gap: 0.5rem;
+    }
+
+    .menu-btn .label {
+        display: none;
+    }
+
+    .menu-btn .number {
+        width: 2.2rem;
+        height: 2.2rem;
+        font-size: 0.9rem;
+    }
+
+    .bottom-nav {
+        bottom: 6rem; /* Push up above power source */
+    }
+}

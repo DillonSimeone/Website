@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OCF Check-in Teleprompter | The Haptic Petting Zoo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090b10;
+      --card-bg: rgba(18, 22, 34, 0.88);
+      --card-border: rgba(99, 102, 241, 0.22);
+      --accent: #6366f1;
+      --accent-glow: rgba(99, 102, 241, 0.45);
+      --cyan: #06b6d4;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(ellipse at 15% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 60%),
+        radial-gradient(ellipse at 85% 100%, rgba(6, 182, 212, 0.12) 0%, transparent 60%);
+      color: var(--text-main);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.5;
+      padding: 24px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Top Sticky Status Bar */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(13, 16, 27, 0.92);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px 28px;
+      margin-bottom: 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .brand-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #fff 30%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-sub {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-top: 2px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .badge-primary {
+      background: rgba(99, 102, 241, 0.2);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+    }
+
+    .badge-green {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    .badge-amber {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+
+    /* Grid Layout */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 1280px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+      margin-bottom: 24px;
+      transition: border-color 0.2s ease;
+    }
+
+    .card:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      padding-bottom: 12px;
+    }
+
+    .q-number {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--cyan);
+      background: rgba(6, 182, 212, 0.12);
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-right: 10px;
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+    }
+
+    /* Key Quotes / Anchors */
+    .key-quote {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(6, 182, 212, 0.1));
+      border-left: 4px solid var(--accent);
+      padding: 14px 18px;
+      border-radius: 0 12px 12px 0;
+      margin-bottom: 18px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #e0e7ff;
+    }
+
+    .key-quote em {
+      color: var(--cyan);
+      font-style: normal;
+      font-weight: 700;
+    }
+
+    /* Talking Point List */
+    ul.talk-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    ul.talk-list li {
+      position: relative;
+      padding-left: 28px;
+      font-size: 1rem;
+      color: #cbd5e1;
+    }
+
+    ul.talk-list li::before {
+      content: "✦";
+      position: absolute;
+      left: 6px;
+      top: 1px;
+      color: var(--accent);
+      font-size: 0.9rem;
+    }
+
+    ul.talk-list li strong {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .highlight-pill {
+      background: rgba(6, 182, 212, 0.15);
+      color: #67e8f9;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.9em;
+      font-weight: 600;
+    }
+
+    /* Caution / Pro-Tip Callouts */
+    .do-dont-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .box-do {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 0.92rem;
+    }
+
+    .box-do h4 {
+      color: #34d399;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .box-dont {
+      background: rgba(244, 63, 94, 0.08);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 0.92rem;
+    }
+
+    .box-dont h4 {
+      color: #fb7185;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Timeline Badges */
+    .timeline-item {
+      display: flex;
+      gap: 16px;
+      padding-bottom: 18px;
+      position: relative;
+    }
+
+    .timeline-item:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 17px;
+      top: 28px;
+      bottom: 0;
+      width: 2px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .timeline-dot {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #1e293b;
+      border: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      color: #fff;
+    }
+
+    .timeline-dot.active {
+      background: var(--accent);
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+
+    .timeline-content h4 {
+      font-size: 1rem;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .timeline-content p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* Checkbox interactive list */
+    .check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .check-item input[type="checkbox"] {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 2px solid var(--accent);
+      border-radius: 6px;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 3px;
+      display: grid;
+      place-content: center;
+      transition: all 0.2s;
+    }
+
+    .check-item input[type="checkbox"]:checked {
+      background: var(--accent);
+    }
+
+    .check-item input[type="checkbox"]:checked::before {
+      content: "✔";
+      font-size: 12px;
+      color: white;
+      font-weight: bold;
+    }
+
+    .check-item span {
+      font-size: 0.95rem;
+      color: #e2e8f0;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .glow-card {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glow-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--cyan));
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sticky Top Header -->
+  <header>
+    <div>
+      <div class="brand-title">THE HAPTIC PETTING ZOO</div>
+      <div class="brand-sub">
+        <span>OCF Creative Heights Check-In</span>
+        <span>•</span>
+        <span>Contact: <strong>Chey (OCF)</strong></span>
+        <span>•</span>
+        <span class="badge badge-green">Milestone 1 Cleared ($20k)</span>
+        <span class="badge badge-primary">Total Award: $96,000</span>
+      </div>
+    </div>
+    <div style="display:flex; gap:12px; align-items:center;">
+      <span class="badge badge-amber">HUD / Teleprompter Mode</span>
+      <button onclick="window.print()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:6px 14px; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.8rem;">Print / Save PDF</button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="dashboard-grid">
+
+    <!-- LEFT COLUMN: The 5 Core OCF Questions -->
+    <div class="col-main">
+
+      <!-- Q1: How is the project going so far? -->
+      <div class="card glow-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="q-number">Q1</span>
+            How is the project going so far? Has anything shifted?
+          </div>
+          <span class="badge badge-green">Foundation & Prototyping</span>
+        </div>
+
+        <div class="key-quote">
+          "The first check cleared through Control+H. We're assembling the <em>benchtop proof-of-concept prototype</em> for mid-November so people can physically interact with it before joining the team."
+        </div>
+
+        <ul class="talk-list">
+          <li>
+            <strong>The Paradigm Shift:</strong> Each time people hear about haptics, they default to <em>"assistive speech-to-text wearables"</em> for hearing convenience. <strong>No! Haptics is an expressive fine-art medium</strong> like oil painting or synth sound design. Having a physical demo destroys that misconception immediately.
+          </li>
+          <li>
+            <strong>Pacing Strategy (The Shift):</strong> When this grant came through, it blew up my original year in the best way possible! I deliberately set <strong>Q4 2026 as low-burn prototyping</strong> while wrapping up my dual AS/BS degree requirements. 
+          </li>
+          <li>
+            <strong>Full Throttle in 2027:</strong> Heavy fabrication, bulk actuator purchases, and contractor stipends begin in <strong>January 2027 (Milestone 2)</strong> when I have the 100% bandwidth this project deserves.
+          </li>
+          <li>
+            <strong>Active Momentum Drop:</strong> Tomorrow I'm staging a forest performance for a Deaf DJ with wireless sound-reactive lights <em>and haptics</em>—proving the sensory translation pipelines in real-time before full zoo builds.
+          </li>
+        </ul>
+
+        <div class="do-dont-grid">
+          <div class="box-do">
+            <h4>✓ Golden Framing</h4>
+            "Strategic phased pacing: low-burn benchtop prototyping in Q4 2026, full multi-maker fabrication ramp in Q1 2027."
+          </div>
+          <div class="box-dont">
+            <h4>✗ Avoid Saying</h4>
+            "College is taking all my bandwidth / my plan for the year was ruined / building a rough and dirty prototype."
+          </div>
+        </div>
+      </div>
+
+      <!-- Q2: What do you want to get out of this journey? -->
+      <div class="card glow-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="q-number">Q2</span>
+            What do you want to get out of this journey or experience?
+          </div>
+          <span class="badge badge-primary">Leadership & Growth</span>
+        </div>
+
+        <div class="key-quote">
+          "As a Deaf engineer who has worked in isolation or with Deaf teams, this is my first time <em>leading a multidisciplinary team across language barriers</em>—sprinting after a rolling ball instead of pushing it uphill alone."
+        </div>
+
+        <ul class="talk-list">
+          <li>
+            <strong>Inclusive Technical Leadership:</strong> Using modern tech (live speech-to-text, video relay, shared CAD schematics) to eliminate friction and direct skilled hearing specialists (soft-goods, machinists, textile designers).
+          </li>
+          <li>
+            <strong>Advanced Fabrication Access:</strong> Partnering with Control+H gives us industrial-grade tooling (like precision fiber laser cutting) to turn scrap & structural metals into rugged interactive enclosures and tactile skins.
+          </li>
+          <li>
+            <strong>Legitimizing Tactile Arts:</strong> Showing that touch is not just 'phone buzzes'—it encompasses thermal sensations (Peltier coolers), kinetic displacement, air pressure, and resonant acoustic tactile feedback.
+          </li>
+        </ul>
+
+        <div class="do-dont-grid">
+          <div class="box-do">
+            <h4>✓ Golden Framing</h4>
+            "Partnering with Control+H gives us direct access to precision tooling (like fiber laser cutting) for custom metallic tactile skins."
+          </div>
+          <div class="box-dont">
+            <h4>✗ Avoid Saying</h4>
+            "This grant allows me to buy a fiber laser cutter to give away to Control+H." (Keep focus on tooling for the artwork!)
+          </div>
+        </div>
+      </div>
+
+      <!-- Q3: Rough timeline from here? -->
+      <div class="card glow-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="q-number">Q3</span>
+            What is the rough timeline from here? (Check-in targets)
+          </div>
+          <span class="badge badge-amber">Key Milestones</span>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot active">1</div>
+          <div class="timeline-content">
+            <h4>Mid-November 2026: Benchtop Interactive Prototype</h4>
+            <p>Functional testbed ready at Control+H. In-person demonstrations to recruit mechanical & textile fabricators.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot">2</div>
+          <div class="timeline-content">
+            <h4>January 2027: Milestone 2 & Full Fabrication Launch</h4>
+            <p>Disburse fabricator stipends ($18k line), place bulk orders for actuators/PCBs, begin enclosure machining. <strong>(Ideal next formal OCF check-in!)</strong></p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot">3</div>
+          <div class="timeline-content">
+            <h4>July 2027: OSU Grand Kinetic Challenge Debut!</h4>
+            <p>Deploy the first two completed Haptic Zoo enclosures at Oregon State University’s major summer event. <em>"Haptics is kinetic art at microscopic distance and speed!"</em></p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot">4</div>
+          <div class="timeline-content">
+            <h4>Fall 2027 – 2028: Premiere & 2-Year Regional Oregon Tour</h4>
+            <p>Milestone 6 final build accounting; launches to Portland Community College and regional venues across Oregon.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Q4 & Q5 Combined: Support & Questions for OCF -->
+      <div class="card glow-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="q-number">Q4 & 5</span>
+            Support Needed & Questions for OCF
+          </div>
+          <span class="badge badge-primary">Partnership</span>
+        </div>
+
+        <div class="key-quote">
+          "I have Portland and Corvallis locked down. Where OCF can be huge is <em>opening doors to rural, coastal, and eastern Oregon host venues</em> for our 2-year tour!"
+        </div>
+
+        <ul class="talk-list">
+          <li>
+            <strong>Statewide Venue Matchmaking:</strong> Does OCF know regional arts councils, public libraries, science hubs (like OMSI affiliates), or disability advocacy spaces across Oregon that would love to host a hands-on tactile exhibition?
+          </li>
+          <li>
+            <strong>Storytelling & Media Assets:</strong> What formats of photo/video documentation or maker profiles are most helpful for OCF’s communications and board updates as we hit our early 2027 milestones?
+          </li>
+          <li>
+            <strong>Inviting OCF to Experience it:</strong> 
+            <span class="highlight-pill">Jan 2027</span> Private tactile demo at Control+H in Portland.  
+            <span class="highlight-pill">July 2027</span> Come party with us in Corvallis at OSU's Grand Kinetic Challenge!
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN: Fast Drops, Soundbites, & Interactive Checklist -->
+    <div class="col-side">
+
+      <!-- Cool Details & Soundbites Card -->
+      <div class="card" style="background: rgba(30, 27, 75, 0.45); border-color: rgba(129, 140, 248, 0.35);">
+        <div class="card-header">
+          <div class="card-title" style="color: #c7d2fe;">✨ Must-Drop "Cool Details"</div>
+        </div>
+        
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div style="background: rgba(255,255,255,0.04); padding:12px; border-radius:10px; border-left:3px solid var(--cyan);">
+            <strong style="color:var(--cyan); display:block; font-size:0.9rem; margin-bottom:2px;">🌲 FOREST DEAF DJ SHOW (Tomorrow!)</strong>
+            <p style="font-size:0.88rem; color:#cbd5e1;">Setting up a massive sound-reactive lighting and <em>tactile bass installation</em> in the forest. Proves our sensory-translation pipelines live in the wild.</p>
+          </div>
+
+          <div style="background: rgba(255,255,255,0.04); padding:12px; border-radius:10px; border-left:3px solid var(--accent);">
+            <strong style="color:#a5b4fc; display:block; font-size:0.9rem; margin-bottom:2px;">🏎️ OSU GRAND KINETIC CHALLENGE (July 2027)</strong>
+            <p style="font-size:0.88rem; color:#cbd5e1;">"Haptics is kinetic art at microscopic distances and lightning speeds!" Aiming to debut 2 zoo units at OSU with old professors and the kinetic community.</p>
+          </div>
+
+          <div style="background: rgba(255,255,255,0.04); padding:12px; border-radius:10px; border-left:3px solid var(--emerald);">
+            <strong style="color:#6ee7b7; display:block; font-size:0.9rem; margin-bottom:2px;">🏡 NEIGHBORHOOD COLLABORATION</strong>
+            <p style="font-size:0.88rem; color:#cbd5e1;">Discovered the President of Control+H (Jonathan Hannis) lives practically down the street! Carpooling together to the makerspace cements our tight partnership.</p>
+          </div>
+
+          <div style="background: rgba(255,255,255,0.04); padding:12px; border-radius:10px; border-left:3px solid var(--amber);">
+            <strong style="color:#fcd34d; display:block; font-size:0.9rem; margin-bottom:2px;">🎓 PCC & OSU ACADEMIC ALLIES</strong>
+            <p style="font-size:0.88rem; color:#cbd5e1;">PCC professors are already buzzing about hosting a petting zoo exhibit on campus next year after co-lecturing sonic interface design with them.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Interactive Checklist -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📝 Meeting Flow Checklist</div>
+          <span style="font-size:0.75rem; color:var(--text-dim); font-family:'JetBrains Mono'">Click to toggle</span>
+        </div>
+
+        <label class="check-item">
+          <input type="checkbox">
+          <span>Thank Chey & OCF for the generous $96k increase</span>
+        </label>
+
+        <label class="check-item">
+          <input type="checkbox">
+          <span>Mention Milestone 1 cleared smoothly with Control+H</span>
+        </label>
+
+        <label class="check-item">
+          <input type="checkbox">
+          <span>Explain "Haptics as Fine Art" vs "Utility Speech Device"</span>
+        </label>
+
+        <label class="check-item">
+          <input type="checkbox">
+          <span>Highlight Mid-Nov Benchtop Prototype goal</span>
+        </label>
+
+        <label class="check-item">
+          <input type="checkbox">
+          <span>Share the Deaf DJ forest event (lights + haptics!)</span>
+        </label>
+
+        <label class="check-item">
+          <input type="checkbox">
+          <span>Frame Q4 2026 pacing with college graduation</span>
+        </label>
+
+        <label class="check-item">
+          <input type="checkbox">
+          <span>Highlight Deaf leadership of hearing engineering team</span>
+        </label>
+
+        <label class="check-item">
+          <input type="checkbox">
+          <span>Mention OSU Grand Kinetic Challenge target (July 2027)</span>
+        </label>
+
+        <label class="check-item">
+          <input type="checkbox">
+          <span>Ask OCF for statewide host venue recommendations</span>
+        </label>
+
+        <label class="check-item">
+          <input type="checkbox">
+          <span>Invite Chey / OCF to in-person demo (Jan at Control+H or July at OSU!)</span>
+        </label>
+      </div>
+
+      <!-- Financial Quick Reference -->
+      <div class="card" style="background: rgba(15, 23, 42, 0.9);">
+        <div class="card-header">
+          <div class="card-title" style="font-size:1rem;">💰 Exhibit B Budget Snapshot</div>
+          <span class="badge badge-primary">$91,200 Direct</span>
+        </div>
+        <div style="font-family:'JetBrains Mono', monospace; font-size:0.8rem; color:#cbd5e1; display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:4px;">
+            <span>Lead Artist Fee (Dillon)</span>
+            <span style="color:#fff;">$20,000</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:4px;">
+            <span>Fabricator Stipends (Team)</span>
+            <span style="color:#fff;">$18,000</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:4px;">
+            <span>Actuators & Supplies</span>
+            <span style="color:#fff;">$16,500</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:4px;">
+            <span>Transit Cases (Pelican/Nanuk)</span>
+            <span style="color:#fff;">$6,500</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:4px;">
+            <span>Tour Logistics, Transit & Ins.</span>
+            <span style="color:#fff;">$7,700</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:4px;">
+            <span>Contingency Reserve</span>
+            <span style="color:#fff;">$3,000</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; color:var(--emerald); font-weight:700; padding-top:4px;">
+            <span>Disbursement M1 Cleared</span>
+            <span>$20,000</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

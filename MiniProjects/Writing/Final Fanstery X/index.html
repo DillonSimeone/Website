@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Fanstery X: The White-Iron Fiend</title>
+    <meta name="description" content="An interactive chronicle of Tidus's engineering apotheosis across Spira. Powered by dream-stuff physics, harvested machina, and reverse-engineered summoner architectures.">
+    
+    <!-- Google Fonts: Technical monospace (Space Mono), clean reader (Inter), titles (Cinzel & Outfit) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;600;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Atmospheric Overlay Layers -->
+    <div class="scanlines" aria-hidden="true"></div>
+    <div class="glow-radial" aria-hidden="true"></div>
+    <div class="pyrefly-particles-layer" aria-hidden="true"></div>
+
+    <div class="app-container">
+        
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="eyebrow font-mono">
+                    <span class="glyph-icon">◈</span> YEVON INQUISITION TELEMETRY // CALAMITY LOG
+                </div>
+                <h1 class="main-title">Final Fanstery X: <span class="accent-text">The White-Iron Fiend</span></h1>
+            </div>
+            <div class="header-right">
+                <div class="system-status font-mono">
+                    <span class="status-indicator active" id="status-dot"></span>
+                    <span class="status-text" id="status-title">TELEMETRY LINK: ACTIVE</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="workspace">
+            
+            <!-- Left Panel: Diagnostics & Visualizer -->
+            <section class="panel-left">
+                <div class="visualizer-card glass-panel">
+                    <div class="panel-header font-mono">
+                        <span class="panel-title" id="canvas-title">CRANIAL ARCHITECTURE // TELEMETRY</span>
+                        <div class="panel-header-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Canvas wrapper -->
+                    <div class="canvas-wrapper">
+                        <canvas id="canvas-telemetry" width="480" height="380" aria-label="Biomechanical Telemetry Visualization"></canvas>
+                        <div class="canvas-overlay-data font-mono">
+                            <span class="co-item text-xs" id="co-phase">PHASE: 0.00°</span>
+                            <span class="co-item text-xs" id="co-flux">FLUX: 1.44e12 p/m³</span>
+                        </div>
+                    </div>
+                    
+                    <!-- HUD Telemetry readouts -->
+                    <div class="hud-stats font-mono">
+                        <div class="hud-stat-item">
+                            <span class="hud-label">CLOCK FREQ</span>
+                            <span class="hud-value text-accent-cyan" id="hud-clock">1.2 kHz</span>
+                        </div>
+                        <div class="hud-stat-item">
+                            <span class="hud-label">REJECTION RATE</span>
+                            <span class="hud-value text-accent-gold" id="hud-rejection">0.00%</span>
+                        </div>
+                        <div class="hud-stat-item">
+                            <span class="hud-label">CALAMITY CODE</span>
+                            <span class="hud-value text-accent-red" id="hud-calamity">ANOMALY-00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Secondary Diagnostics Card -->
+                <div class="metrics-card glass-panel font-mono">
+                    <div class="panel-header">
+                        <span class="text-dim text-xs">CHASSIS & SUBSTRATE DIAGNOSTICS</span>
+                    </div>
+                    <div class="metrics-grid">
+                        <div class="metric-box">
+                            <span class="metric-label">SUBSTRATE</span>
+                            <span class="metric-status text-ok" id="metric-substrate">DREAM-STUFF</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">SEPSIS SHOCK</span>
+                            <span class="metric-status text-ok" id="metric-sepsis">IMMUNE</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">BANDWIDTH</span>
+                            <span class="metric-status text-accent-cyan" id="metric-bandwidth">LOCAL TAP</span>
+                        </div>
+                    </div>
+                    <div class="log-ticker text-xs text-dim mt-3" id="log-ticker">
+                        > Induction tap established behind mastoid bone. Arithmetic bleeding off successfully.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Story Reader -->
+            <section class="panel-right glass-panel">
+                
+                <!-- Tab Navigation (Chapters 0 to 5) -->
+                <nav class="tab-navigation font-mono" role="tablist" aria-label="Story Chapters">
+                    <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="reader-content" data-chapter="0" id="tab-0">
+                        <span class="tab-num">00</span>
+                        <span class="tab-name">The Solder & Sieve</span>
+                    </button>
+                    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="reader-content" data-chapter="1" id="tab-1">
+                        <span class="tab-num">01</span>
+                        <span class="tab-name">The Lost Aeon</span>
+                    </button>
+                    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="reader-content" data-chapter="2" id="tab-2">
+                        <span class="tab-num">02</span>
+                        <span class="tab-name">Harvest of Seymour</span>
+                    </button>
+                    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="reader-content" data-chapter="3" id="tab-3">
+                        <span class="tab-num">03</span>
+                        <span class="tab-name">Thunder Plains Crucible</span>
+                    </button>
+                    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="reader-content" data-chapter="4" id="tab-4">
+                        <span class="tab-num">04</span>
+                        <span class="tab-name">Wall of the Fayth</span>
+                    </button>
+                    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="reader-content" data-chapter="5" id="tab-5">
+                        <span class="tab-num">05</span>
+                        <span class="tab-name">Disassembly of Sin</span>
+                    </button>
+                </nav>
+
+                <!-- Chapter Content Viewport -->
+                <div class="reader-viewport" id="reader-viewport">
+                    <article class="reader-content" id="reader-content" tabindex="0">
+                        <div class="loader-skeleton">
+                            <div class="spinner"></div>
+                            <span class="font-mono text-dim text-sm mt-3">Accessing Spiran Inquisitorial Records...</span>
+                        </div>
+                    </article>
+                </div>
+
+                <!-- Reader Controls -->
+                <div class="reader-footer">
+                    <div class="reader-controls font-mono">
+                        <button id="btn-focus" class="ctrl-btn" title="Focus Mode (Maximize reading area)">
+                            <span class="icon">👁</span> <span class="lbl">Focus Mode</span>
+                        </button>
+                        <div class="text-resizer">
+                            <button id="btn-dec-font" class="ctrl-btn" title="Decrease font size">A-</button>
+                            <span class="font-size-indicator text-xs text-dim" id="font-size-label">100%</span>
+                            <button id="btn-inc-font" class="ctrl-btn" title="Increase font size">A+</button>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer font-mono text-xs text-dim">
+            <div class="footer-left">
+                <span>Subject: Tidus [Former Hydro-Technician // Zanarkand Basin]</span>
+                <span class="footer-sep">|</span>
+                <span id="footer-loc">Loc: Baaj Submerged Temple Ruins</span>
+            </div>
+            <div class="footer-right">
+                <span>Threat Horizon: UNBOUND</span>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Marked.js for markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- App Scripts -->
+    <script type="module" src="main.js"></script>
+</body>
+</html>

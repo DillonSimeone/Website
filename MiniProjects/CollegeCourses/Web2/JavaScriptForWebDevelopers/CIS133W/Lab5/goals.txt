@@ -1,0 +1,85 @@
+Lab 5 Assignment Instructions: Debugging the Carousel
+Overview
+
+In Lab 4, you created a dynamic, interactive gallery or carousel to display your items. In this lab, you’ll practice debugging by finding and fixing errors that were intentionally added to these Lab 5 student files which is a completed, but broken version of Lab 4 (do not use your own Lab 4 files for this assignment). You should have completed Practice 7-1 and Lab 4 prior to starting this lab.
+Learning Outcomes
+
+On completion of this lab, you should be able to:
+
+    Identify and fix syntax errors that prevent code from running.
+    Diagnose runtime errors using browser console messages (e.g., ReferenceError, TypeError).
+    Detect logic errors by observing incorrect output or behavior.
+    Correct type errors caused by applying methods or properties to the wrong data type.
+    Document debugging work with clear comments that explain the error, the problem, and the solution.
+    Create and follow a test plan to verify fixes with valid and invalid cases.
+
+Files Provided
+
+    A completed copy of all Lab 4 using Japanese anime content that includes intentional errors in the following files:
+        carousel.js
+        gallery.js
+        search.js
+
+Click to download student-files-lab5-debugging.zip
+
+Do not modify your myAnime.js, HTML, or CSS files. Only fix errors in the three JavaScript files listed above.
+Task and Requirements
+
+You will debug the carousel.js, gallery.js, and search.js files provided to you.
+Environment Setup
+
+    Download the student-files-lab5-debugging.zip to the CIS133W root folder in VS Code.
+    Unzip it to create a student-files-lab5-carousel-to-debug folder.
+
+Step 1: Debug the code
+
+Each of the three JavaScript files contains one or more errors. The errors include:
+
+    2 syntax errors – code that won’t load at all until fixed
+    2 runtime errors – the page loads, but clicking a button or running a feature causes a crash
+    1 logic error – the page runs without crashing, but doesn’t behave correctly
+    1 type error – a method is called on the wrong kind of object
+
+Note: While we describe these generally as “runtime errors” in the instructions, in the console you will actually see more specific errors such as ReferenceError or TypeError.
+
+Use your browser’s developer tools (F12) to locate and diagnose the problems. Fix the errors one by one until the app works correctly again.
+Step 2: Comment your fixes
+
+Above each fix in the JavaScript files, add a multi-line comment that explains:
+
+    Type of error (syntax, runtime, logic, type)
+    Problem (what was wrong)
+    Solution (what you did to fix it)
+
+Example comment format:
+
+/* 
+Type of error: Syntax error
+Problem: Forgot to close the parentheses on the function call
+Solution: Added missing closing parenthesis to fix the syntax
+*/
+myWhatever();
+
+Step 3: Write a test plan
+
+Create a text file named test_plan.txt. In this file:
+
+    List each error you fixed.
+    Describe how you tested the program to confirm that the error was resolved.
+    Include both valid and invalid test cases where appropriate.
+
+Deliverables
+
+You'll submit the following files:
+
+    carousel.js (fixed with comments)
+    gallery.js (fixed with comments)
+    search.js (fixed with comments)
+    test_plan.txt
+
+Note: Do NOT submit the entire Lab 4 carousel you were provided in the Lab 5 student files. It is not necessary since you did not edit any of the other files.
+Rubric
+
+    Errors Corrected (60%): All 6 errors were found and corrected in the code.
+    Accurate Comments (20%): The comments should be as the example provided above, above the line of code where the error occurred, and accurate in describing the error and how it was fixed.
+    Test Plan (20%):  A reasonable test plan was created that describes the bug you found, the fix you applied, and the test case(s) you ran to confirm the problem was solved.

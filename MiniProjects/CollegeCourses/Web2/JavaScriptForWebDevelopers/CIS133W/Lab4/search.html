@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cultivar Search - Shrek's Onion Engineering Hub</title>
+  <link rel="stylesheet" href="assets/css/search.css">
+</head>
+<body>
+  <div class="search-page-wrapper">
+    <header>
+      <h1>Cultivar Search</h1>
+      <p class="subtitle"><a href="index.html">&larr; Back to Gallery</a></p>
+    </header>
+
+    <main>
+      <div class="search-controls">
+        <input type="text" id="searchTerm" placeholder="Search by name or description...">
+        <button type="button" id="searchBtn">Search</button>
+        <button type="button" id="clearBtn">Clear</button>
+      </div>
+
+      <div id="searchResults" class="results-container"></div>
+    </main>
+
+    <footer>
+      <p>CIS 133W - Lab 4 &bull; Developed by Dillon Simeone &bull; Shrek Swamp Engineering &copy; 2026</p>
+    </footer>
+  </div>
+
+  <!-- Shared Modular Modal Pop-up (No Full-Page Reloads) -->
+  <div id="itemModal" class="modal-backdrop" aria-hidden="true" role="dialog">
+    <div class="modal-dialog">
+      <button type="button" id="modalCloseBtn" class="modal-close-btn" aria-label="Close modal">&times;</button>
+      <div class="modal-body">
+        <iframe id="modalFrame" src="" title="Cultivar details viewer"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/javascript/onions.js"></script>
+  <script src="assets/javascript/search.js"></script>
+  <script src="assets/javascript/modal.js"></script>
+</body>
+</html>

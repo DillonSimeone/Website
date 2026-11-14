@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeLu: GestoLumina Wearable Haptic Interface | Dillon Simeone</title>
+    <meta name="description" content="Technical documentation and interactive simulator for the GeLu (GestoLumina) audio-reactive haptic bracer featuring 16kHz I2S FFT, addressable WS2812 LEDs, and bi-directional motor control.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #030712;
+            --bg-card: rgba(17, 24, 39, 0.75);
+            --bg-card-hover: rgba(31, 41, 55, 0.85);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-focus: rgba(139, 92, 246, 0.5);
+            --accent-purple: #8b5cf6;
+            --accent-violet: #a78bfa;
+            --accent-cyan: #06b6d4;
+            --accent-amber: #f59e0b;
+            --accent-emerald: #10b981;
+            --accent-pink: #ec4899;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-primary);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(ellipse at 20% 0%, rgba(139, 92, 246, 0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(6, 182, 212, 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(236, 72, 153, 0.08) 0%, transparent 60%);
+            background-attachment: fixed;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px 80px 24px;
+        }
+
+        /* Top Navigation Bar */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 16px 24px;
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            margin-bottom: 48px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--accent-violet);
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-store {
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid var(--accent-purple);
+            color: #d8b4fe;
+        }
+
+        .btn-store:hover {
+            background: var(--accent-purple);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-paper {
+            background: rgba(6, 182, 212, 0.15);
+            border: 1px solid var(--accent-cyan);
+            color: #67e8f9;
+        }
+
+        .btn-paper:hover {
+            background: var(--accent-cyan);
+            color: #000;
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+            transform: translateY(-1px);
+        }
+
+        /* Hero Header */
+        .hero {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 6px 14px;
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--accent-violet);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 9999px;
+            margin-bottom: 20px;
+        }
+
+        .hero-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 900;
+            letter-spacing: -1px;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #ffffff 30%, #a78bfa 70%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1.05rem, 2vw, 1.35rem);
+            color: var(--text-secondary);
+            max-width: 840px;
+            margin: 0 auto 32px auto;
+            font-weight: 400;
+        }
+
+        .meta-pills {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .meta-tag {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-glass);
+            border-radius: 6px;
+            color: #cbd5e1;
+        }
+
+        /* Section Layouts */
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.85rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 12px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-desc {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            max-width: 800px;
+            margin-bottom: 32px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 48px;
+            transition: border-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+
+        /* Simulator Container */
+        .simulator-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+        }
+
+        @media (max-width: 900px) {
+            .simulator-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .sim-panel {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
+            padding: 20px;
+        }
+
+        .sim-panel-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            color: var(--accent-violet);
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Spectrum Canvas */
+        #fftCanvas {
+            width: 100%;
+            height: 140px;
+            background: #020617;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: block;
+        }
+
+        /* Virtual Hardware Renders */
+        .hardware-vis-box {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 16px;
+        }
+
+        .led-strip-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .led-strip-title {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .led-strip {
+            display: flex;
+            justify-content: space-between;
+            background: #0b0f19;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-glass);
+            gap: 12px;
+        }
+
+        .led-pixel {
+            flex: 1;
+            aspect-ratio: 1;
+            max-width: 48px;
+            border-radius: 8px;
+            background: #1e293b;
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.8);
+            transition: background 0.08s ease, box-shadow 0.08s ease;
+        }
+
+        .noodle-led {
+            height: 14px;
+            width: 100%;
+            border-radius: 7px;
+            background: #1e293b;
+            transition: background 0.08s ease, box-shadow 0.08s ease;
+        }
+
+        /* Motor Gauge */
+        .motor-gauge-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            background: #0b0f19;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border-glass);
+            text-align: center;
+        }
+
+        .gauge-metric-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #fff;
+            margin-top: 4px;
+        }
+
+        .gauge-metric-lbl {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        /* Controls in Simulator */
+        .control-group {
+            margin-bottom: 14px;
+        }
+
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 6px;
+        }
+
+        .control-label span {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-violet);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #1e293b;
+            border-radius: 3px;
+            outline: none;
+            accent-color: var(--accent-purple);
+        }
+
+        select {
+            width: 100%;
+            background: #1e293b;
+            border: 1px solid var(--border-glass);
+            color: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .preset-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .btn-preset {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-glass);
+            color: #cbd5e1;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-preset:hover, .btn-preset.active {
+            background: var(--accent-purple);
+            color: #fff;
+            border-color: var(--accent-purple);
+        }
+
+        .btn-audio-toggle {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            color: #fff;
+            font-weight: 800;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 8px;
+        }
+
+        .btn-audio-toggle:hover {
+            box-shadow: 0 0 25px rgba(139, 92, 246, 0.5);
+            transform: translateY(-1px);
+        }
+
+        /* Journey Grid */
+        .journey-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin-top: 24px;
+        }
+
+        .journey-card {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .journey-card img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            display: block;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .journey-content {
+            padding: 16px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .journey-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--accent-violet);
+            margin-bottom: 6px;
+        }
+
+        .journey-text {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Pinout Table */
+        .table-responsive {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(139, 92, 246, 0.15);
+            color: #d8b4fe;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-glass);
+            font-family: 'Orbitron', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-glass);
+            color: #cbd5e1;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .code-inline {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: #38bdf8;
+        }
+
+        /* Two-Column Showcase */
+        .showcase-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            align-items: center;
+        }
+
+        @media (max-width: 850px) {
+            .showcase-cols {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .video-wrapper {
+            aspect-ratio: 9/16;
+            max-width: 320px;
+            margin: 0 auto;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            background: #000;
+        }
+
+        /* Paper Banner */
+        .paper-banner {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(139, 92, 246, 0.15));
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 18px;
+            padding: 32px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+
+        .paper-info h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.35rem;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .paper-info p {
+            color: #cbd5e1;
+            font-size: 0.95rem;
+            max-width: 680px;
+        }
+
+        /* CTA Footer */
+        .cta-footer {
+            text-align: center;
+            padding: 48px 24px;
+            background: radial-gradient(circle at center, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+            border-top: 1px solid var(--border-glass);
+        }
+
+        .cta-footer h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+
+        .cta-footer p {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Top Nav -->
+        <nav class="top-nav">
+            <a href="/" class="nav-link">&larr; Back to Main Portfolio</a>
+            <div class="nav-actions">
+                <a href="/Projects/Papers/GestoLumina-Universal-Music-Design.pdf" class="btn-pill btn-paper" download>
+                    Download Paper (PDF)
+                </a>
+                <a href="/#shop" class="btn-pill btn-store">
+                    Commission GeLu ($95) &rarr;
+                </a>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <header class="hero">
+            <div class="hero-badge">Research Grade Haptic Wearable</div>
+            <h1 class="hero-title">GELU (GESTOLUMINA)</h1>
+            <p class="hero-subtitle">
+                A high-fidelity sensory expansion wearable engineered for Deaf & Hard-of-Hearing musical agency. Combines on-silicon 16kHz I2S FFT audio analysis, vibration-matched RGB illumination, and directional bi-directional H-bridge haptics.
+            </p>
+            <div class="meta-pills">
+                <span class="meta-tag">ESP32-C3</span>
+                <span class="meta-tag">INMP441 I2S Digital Mic</span>
+                <span class="meta-tag">WS2812 FastLED (Pin 1)</span>
+                <span class="meta-tag">H-Bridge Dual PWM (Pins 9 &amp; 7)</span>
+                <span class="meta-tag">Captive Portal AP: DillonSimeoneGeLu</span>
+                <span class="meta-tag">NIME 2024 Published</span>
+            </div>
+        </header>
+
+        <!-- Video & Real-World Context -->
+        <section class="card">
+            <div class="showcase-cols">
+                <div>
+                    <h2 class="section-title">Vibration-Matched Illumination</h2>
+                    <p class="section-desc" style="margin-bottom: 18px;">
+                        One of the hardest challenges in haptic engineering is demonstrating physical tactile vibrations on video. If you record a bracer vibrating against someone's wrist, the camera sees virtually nothing.
+                    </p>
+                    <p style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 16px;">
+                        To solve this, I designed GeLu's addressable RGB lighting engine to synchronize precisely with the incoming frequency harmonics and motor attack envelope. When heavy sub-bass hits, the LEDs pulse in deep hues matching the tactile surge. When higher acoustic transients arrive, the LEDs flash in rapid harmony.
+                    </p>
+                    <p style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 24px;">
+                        This design breakthrough allowed both Deaf performers and sighted audiences to share the same intuitive sensory experience, directly catalyzing my first peer-reviewed academic publication at <strong>NIME 2024</strong>.
+                    </p>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <a href="https://github.com/DillonSimeone/Gestolumina" target="_blank" rel="noopener noreferrer" class="btn-pill btn-store">
+                            Legacy GitHub (Gestolumina)
+                        </a>
+                        <a href="/Projects/Papers/GestoLumina-Universal-Music-Design.pdf" target="_blank" rel="noopener noreferrer" class="btn-pill btn-paper" download>
+                            Read NIME 2024 Paper
+                        </a>
+                    </div>
+                </div>
+                <div>
+                    <div class="video-wrapper">
+                        <iframe width="100%" height="100%" src="https://www.youtube.com/embed/qEluiRf-8W4" title="GeLu Bracer Vibration-Matched Illumination Demo" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="display: block; width: 100%; height: 100%; border: none;"></iframe>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- GeLu Simulator -->
+        <section class="card">
+            <h2 class="section-title">GeLu Simulator</h2>
+            <p class="section-desc">
+                Test the GeLu DSP engine directly in your browser. This simulator replicates the exact 16kHz FFT frequency splitting, transient detection, dual-mode FastLED pixel illumination, and bi-directional motor gating running inside Dillon's ESP32 firmware (<span class="code-inline">ESP32HapticControl_INMP441</span>).
+            </p>
+
+            <button id="toggleAudioBtn" class="btn-audio-toggle">START GELU SIMULATOR</button>
+
+            <div class="simulator-grid" style="margin-top: 24px;">
+                <!-- Left: Hardware Virtual Output -->
+                <div class="sim-panel">
+                    <div class="sim-panel-title">
+                        <span>Hardware Virtual Telemetry</span>
+                        <span id="telemetryStatus" style="color: var(--accent-amber); font-size: 0.75rem;">STANDBY</span>
+                    </div>
+
+                    <!-- Spectrum Display -->
+                    <div style="margin-bottom: 16px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">
+                            <span>FFT Spectrum (256-pt)</span>
+                            <span id="peakFreqDisplay">Peak: 0 Hz</span>
+                        </div>
+                        <canvas id="fftCanvas" width="500" height="140"></canvas>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #475569; margin-top: 4px;">
+                            <span>Bass (&lt;250Hz)</span>
+                            <span>Mids (250-2000Hz)</span>
+                            <span>Treble (&gt;2000Hz)</span>
+                        </div>
+                    </div>
+
+                    <!-- Hardware Visualizers -->
+                    <div class="hardware-vis-box">
+                        <!-- 5-LED WS2812 Strip -->
+                        <div class="led-strip-container">
+                            <div class="led-strip-title">5-Pixel WS2812 Addressable Strip (Pin 1)</div>
+                            <div class="led-strip">
+                                <div class="led-pixel" id="pixel0"></div>
+                                <div class="led-pixel" id="pixel1"></div>
+                                <div class="led-pixel" id="pixel2"></div>
+                                <div class="led-pixel" id="pixel3"></div>
+                                <div class="led-pixel" id="pixel4"></div>
+                            </div>
+                        </div>
+
+                        <!-- Flexible Noodle LED -->
+                        <div class="led-strip-container">
+                            <div class="led-strip-title">Flexible Noodle LED (PWM Pin 8)</div>
+                            <div class="noodle-led" id="noodleLed"></div>
+                        </div>
+
+                        <!-- Motor Output Status -->
+                        <div class="motor-gauge-box">
+                            <div>
+                                <div class="gauge-metric-lbl">PWM Duty</div>
+                                <div class="gauge-metric-val" id="motorDutyVal">0</div>
+                            </div>
+                            <div>
+                                <div class="gauge-metric-lbl">H-Bridge State</div>
+                                <div class="gauge-metric-val" id="motorStateVal" style="color: var(--accent-emerald);">OFF</div>
+                            </div>
+                            <div>
+                                <div class="gauge-metric-lbl">Kick Boost</div>
+                                <div class="gauge-metric-val" id="transientVal" style="color: var(--accent-pink);">IDLE</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Firmware Tuning Parameters -->
+                <div class="sim-panel">
+                    <div class="sim-panel-title">
+                        <span>Firmware Calibration Controls</span>
+                        <span style="font-size: 0.75rem; color: #38bdf8;">Preferences API</span>
+                    </div>
+
+                    <!-- Presets -->
+                    <div style="margin-bottom: 18px;">
+                        <div class="control-label">Acoustic Signal Preset</div>
+                        <div class="preset-buttons">
+                            <button class="btn-preset active" id="micInputBtn" data-preset="mic">Live Mic Input (Default)</button>
+                            <button class="btn-preset" data-preset="bass">Bass Kick (80 Hz)</button>
+                            <button class="btn-preset" data-preset="mid">Mid Lead (440 Hz)</button>
+                            <button class="btn-preset" data-preset="treble">Hi-Hat Shimmer (3.2 kHz)</button>
+                            <button class="btn-preset" data-preset="sweep">Full Sweep</button>
+                        </div>
+                    </div>
+
+                    <!-- Sliders matching main.cpp -->
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Mic Input Gain (<span class="code-inline">micGain</span>)</span>
+                            <span id="gainVal">1.0x</span>
+                        </div>
+                        <input type="range" id="gainSlider" min="0.2" max="3.0" step="0.1" value="1.0">
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Motor Intensity Gate (<span class="code-inline">motorLevelGate</span>)</span>
+                            <span id="gateVal">650</span>
+                        </div>
+                        <input type="range" id="gateSlider" min="100" max="1000" step="25" value="650">
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Motor Power Curve (<span class="code-inline">motorCurve</span>)</span>
+                            <span id="curveVal">1.0</span>
+                        </div>
+                        <input type="range" id="curveSlider" min="0.5" max="2.0" step="0.1" value="1.0">
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>LED Mode (<span class="code-inline">useBandSplitter</span>)</span>
+                        </div>
+                        <select id="ledModeSelect">
+                            <option value="peak">Peak Frequency Mode (Dominant Hue)</option>
+                            <option value="splitter" selected>Band Splitter Mode (Bass/Mid/Treble Segments)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Bass Haptic Behavior (<span class="code-inline">bassMode</span>)</span>
+                        </div>
+                        <select id="bassModeSelect">
+                            <option value="1" selected>Forward Direction (Pin 9)</option>
+                            <option value="2">Reverse Direction (Pin 7)</option>
+                            <option value="3">Alternating Direction (H-Bridge Cycling)</option>
+                            <option value="0">Muted (Off)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Firmware & Architecture Deep Dive -->
+        <section class="card">
+            <h2 class="section-title">Firmware Architecture: ESP32HapticControl_INMP441</h2>
+            <p class="section-desc">
+                Located in <span class="code-inline">public/ESP32Codes/PlatformIO/02_Audio_Haptics/ESP32HapticControl_INMP441</span>, this firmware is written in C++ for PlatformIO and represents the production evolution of Dillon's wearable haptic systems.
+            </p>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Subsystem</th>
+                            <th>Hardware Pin</th>
+                            <th>Firmware Implementation</th>
+                            <th>Operational Role</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>I2S Audio Input</strong></td>
+                            <td><span class="code-inline">SCK: 20, WS: 10, SD: 21</span></td>
+                            <td>ESP32 I2S DMA Driver (<span class="code-inline">I2S_NUM_0</span>)</td>
+                            <td>Continuous 16,000 Hz, 32-bit DMA audio capture from INMP441 omnidirectional MEMS mic.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>FFT DSP Engine</strong></td>
+                            <td>On-Silicon Core</td>
+                            <td><span class="code-inline">arduinoFFT&lt;double&gt;</span> (256 Samples)</td>
+                            <td>Decomposes audio frames into Bass (&lt;250Hz), Mids (250–2000Hz), and Treble (&gt;2000Hz) band energy.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Addressable LEDs</strong></td>
+                            <td><span class="code-inline">GPIO 1</span></td>
+                            <td>FastLED WS2812 Controller (5 Pixels)</td>
+                            <td>Visualizes frequencies with asymmetric attack/release filtering to match tactile haptics.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Flexible Noodle LED</strong></td>
+                            <td><span class="code-inline">GPIO 8</span></td>
+                            <td>ESP32 Hardware LEDC PWM (5 kHz)</td>
+                            <td>Provides continuous ambient luminance proportional to overall audio magnitude.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Bi-Directional H-Bridge</strong></td>
+                            <td><span class="code-inline">FWD: 9, REV: 7</span></td>
+                            <td>Dual-Channel Complementary PWM</td>
+                            <td>Enables Forward, Reverse, and Alternating polarity vibration for distinct tactile sensations.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Captive Portal AP</strong></td>
+                            <td>Internal Wi-Fi Radio</td>
+                            <td><span class="code-inline">WebServer + DNSServer</span></td>
+                            <td>Hosts Wi-Fi network <span class="code-inline">DillonSimeoneGeLu</span> with captive redirect for live smartphone parameter tuning.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="margin-top: 24px;">
+                <h3 style="font-family: 'Orbitron', sans-serif; font-size: 1.15rem; color: #fff; margin-bottom: 8px;">Transient Kick Detection Logic</h3>
+                <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6;">
+                    The firmware compares the instantaneous audio band energy against a smoothed exponential moving average. When a sharp attack occurs (such as a snare strike or bass drop where <span class="code-inline">energy / smoothEnergy &gt; transientThreshold</span>), the system injects an immediate <span class="code-inline">transientBoostDuty</span> burst for 150ms before returning to normal power-curve tracking. This prevents haptic lag and gives percussive beats crisp physical punch.
+                </p>
+            </div>
+        </section>
+
+        <!-- Hardware Evolutionary Journey -->
+        <section class="card">
+            <h2 class="section-title">The Evolution of GeLu</h2>
+            <p class="section-desc">
+                From conceptual research at CymaSpace under Universal Music Design to independent production, custom PCBs, and wearable field deployments.
+            </p>
+
+            <div class="journey-grid">
+                <div class="journey-card">
+                    <img src="/Projects/Haxel/images/GELU1.png" alt="GELU Prototype 1">
+                    <div class="journey-content">
+                        <div class="journey-title">GELU 1: Felt Sound Research</div>
+                        <p class="journey-text">
+                            Initial wearable exploration pairing wireless ESP32-S3 microcontrollers with embedded TensorFlow Lite gesture machine learning models and preliminary vibrotactile nodes.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="journey-card">
+                    <img src="/Projects/Haxel/images/Gelu2.jpg" alt="GELU Prototype 2">
+                    <div class="journey-content">
+                        <div class="journey-title">GELU 2: Rapid Prototyping</div>
+                        <p class="journey-text">
+                            Iterative custom PCBs, integrated thumbpad capacitive triggers, tactile motor drivers, and Bambu Lab ergonomic wrist enclosures for live musical performances.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="journey-card">
+                    <img src="/Projects/Haxel/images/GeLu3.jpg" alt="GELU Prototype 3">
+                    <div class="journey-content">
+                        <div class="journey-title">GELU 3: Research Grade</div>
+                        <p class="journey-text">
+                            Commercial-ready refinement featuring the 16kHz I2S INMP441 FFT engine, vibration-matched RGB illumination, and standalone captive portal configuration.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="journey-card">
+                    <img src="/Images/HapticBracerDemoBunnie.webp" alt="Andrew Bunnie Huang wearing GeLu Prototype 3">
+                    <div class="journey-content">
+                        <div class="journey-title">Tested by Andrew "bunnie" Huang</div>
+                        <p class="journey-text">
+                            Hardware hacker Andrew "bunnie" Huang testing the GeLu Prototype 3 at Teardown Portland. Engineers praised its ability to deliver seamless ambient awareness of acoustic spaces.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Academic Paper Banner -->
+        <section class="paper-banner">
+            <div class="paper-info">
+                <h3>Peer-Reviewed Academic Pedigree: NIME 2024</h3>
+                <p>
+                    <em>"GestoLumina: Gesture-Interpreted Light, Sound, and Haptics: Towards a Framework for Universal Music Design"</em><br>
+                    Authors: Nate Hergert, Dillon Simeone, Doga Cavdir, Duncan MacConnell, Shawn Trail, Myles de Bastion.<br>
+                    Published in <strong>Proceedings of the International Conference on New Interfaces for Musical Expression (NIME 2024)</strong>, Aalborg University Press.
+                </p>
+            </div>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <a href="/Projects/Papers/GestoLumina-Universal-Music-Design.pdf" class="btn-pill btn-paper" download>
+                    Download Full PDF (7.4 MB)
+                </a>
+                <a href="https://nime.org/proc/nime2024_15/" target="_blank" rel="noopener noreferrer" class="btn-pill btn-store">
+                    View on NIME.org &rarr;
+                </a>
+            </div>
+        </section>
+
+        <!-- CTA Hardware Commission -->
+        <footer class="cta-footer">
+            <h2>Commission a Custom GeLu Build</h2>
+            <p>
+                Interested in utilizing GeLu for universal music performance, accessibility research, or stage production? Each research-grade bracer is handcrafted, calibrated, and tuned to your exact wrist specifications.
+            </p>
+            <a href="/#shop" class="btn-pill btn-store" style="font-size: 1rem; padding: 12px 28px;">
+                Commission GeLu in Hardware Store ($95.00) &rarr;
+            </a>
+        </footer>
+    </div>
+
+    <!-- Web Audio Simulator Script -->
+    <script>
+        (function() {
+            let audioCtx = null;
+            let analyser = null;
+            let osc = null;
+            let gainNode = null;
+            let micStream = null;
+            let isRunning = false;
+            let currentPreset = 'mic';
+            let animId = null;
+
+            // DOM elements
+            const toggleBtn = document.getElementById('toggleAudioBtn');
+            const telemetryStatus = document.getElementById('telemetryStatus');
+            const canvas = document.getElementById('fftCanvas');
+            const ctx = canvas.getContext('2d');
+            const peakFreqDisplay = document.getElementById('peakFreqDisplay');
+
+            // Virtual LEDs & Gauges
+            const pixels = [
+                document.getElementById('pixel0'),
+                document.getElementById('pixel1'),
+                document.getElementById('pixel2'),
+                document.getElementById('pixel3'),
+                document.getElementById('pixel4')
+            ];
+            const noodleLed = document.getElementById('noodleLed');
+            const motorDutyVal = document.getElementById('motorDutyVal');
+            const motorStateVal = document.getElementById('motorStateVal');
+            const transientVal = document.getElementById('transientVal');
+
+            // Sliders & Controls
+            const gainSlider = document.getElementById('gainSlider');
+            const gainVal = document.getElementById('gainVal');
+            const gateSlider = document.getElementById('gateSlider');
+            const gateVal = document.getElementById('gateVal');
+            const curveSlider = document.getElementById('curveSlider');
+            const curveVal = document.getElementById('curveVal');
+            const ledModeSelect = document.getElementById('ledModeSelect');
+            const bassModeSelect = document.getElementById('bassModeSelect');
+            const presetBtns = document.querySelectorAll('.btn-preset');
+
+            gainSlider.addEventListener('input', () => gainVal.textContent = parseFloat(gainSlider.value).toFixed(1) + 'x');
+            gateSlider.addEventListener('input', () => gateVal.textContent = gateSlider.value);
+            curveSlider.addEventListener('input', () => curveVal.textContent = parseFloat(curveSlider.value).toFixed(1));
+
+            // Setup Preset Buttons
+            presetBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    presetBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const preset = btn.dataset.preset;
+                    currentPreset = preset;
+                    if (isRunning) applyPreset(preset);
+                });
+            });
+
+            function applyPreset(preset) {
+                if (!audioCtx) return;
+
+                if (preset === 'mic') {
+                    startMicInput();
+                    return;
+                }
+
+                if (micStream) {
+                    micStream.getTracks().forEach(t => t.stop());
+                    micStream = null;
+                }
+
+                setupSynthChain();
+
+                if (preset === 'bass') {
+                    osc.frequency.setValueAtTime(80, audioCtx.currentTime);
+                    osc.type = 'sine';
+                } else if (preset === 'mid') {
+                    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                    osc.type = 'triangle';
+                } else if (preset === 'treble') {
+                    osc.frequency.setValueAtTime(3200, audioCtx.currentTime);
+                    osc.type = 'sawtooth';
+                } else if (preset === 'sweep') {
+                    osc.type = 'sawtooth';
+                    modulateSweep();
+                }
+            }
+
+            function modulateSweep() {
+                if (!isRunning || currentPreset !== 'sweep' || !osc) return;
+                const now = audioCtx.currentTime;
+                osc.frequency.cancelScheduledValues(now);
+                osc.frequency.setValueAtTime(60, now);
+                osc.frequency.exponentialRampToValueAtTime(4000, now + 3);
+                setTimeout(modulateSweep, 3100);
+            }
+
+            function setupSynthChain() {
+                if (osc) {
+                    try { osc.stop(); osc.disconnect(); } catch(e){}
+                }
+                osc = audioCtx.createOscillator();
+                if (!gainNode) {
+                    gainNode = audioCtx.createGain();
+                    gainNode.gain.value = 0.25;
+                }
+                osc.connect(gainNode);
+                gainNode.connect(analyser);
+                // Also connect to destination for subtle monitor sound if user wants
+                gainNode.connect(audioCtx.destination);
+                osc.start();
+            }
+
+            async function startMicInput() {
+                try {
+                    if (osc) {
+                        try { osc.stop(); osc.disconnect(); } catch(e){}
+                        osc = null;
+                    }
+                    if (micStream) micStream.getTracks().forEach(t => t.stop());
+
+                    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    const micSource = audioCtx.createMediaStreamSource(micStream);
+                    micSource.connect(analyser);
+                } catch (err) {
+                    console.warn('Microphone access unavailable or denied. Falling back to synthetic Bass Kick.', err);
+                    const bassBtn = document.querySelector('[data-preset="bass"]');
+                    if (bassBtn) bassBtn.click();
+                }
+            }
+
+            // Audio Toggle
+            toggleBtn.addEventListener('click', async () => {
+                if (!isRunning) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    audioCtx = new AudioContext({ sampleRate: 16000 });
+                    analyser = audioCtx.createAnalyser();
+                    analyser.fftSize = 256;
+                    analyser.smoothingTimeConstant = 0.3;
+
+                    applyPreset(currentPreset);
+
+                    isRunning = true;
+                    toggleBtn.textContent = 'STOP GELU SIMULATOR';
+                    toggleBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+                    telemetryStatus.textContent = 'LIVE 16kHz FFT';
+                    telemetryStatus.style.color = '#10b981';
+
+                    renderLoop();
+                } else {
+                    isRunning = false;
+                    if (osc) {
+                        try { osc.stop(); osc.disconnect(); } catch(e){}
+                        osc = null;
+                    }
+                    if (micStream) {
+                        micStream.getTracks().forEach(t => t.stop());
+                        micStream = null;
+                    }
+                    if (audioCtx) {
+                        await audioCtx.close();
+                        audioCtx = null;
+                    }
+                    if (animId) cancelAnimationFrame(animId);
+
+                    toggleBtn.textContent = 'START GELU SIMULATOR';
+                    toggleBtn.style.background = 'linear-gradient(135deg, #8b5cf6, #6366f1)';
+                    telemetryStatus.textContent = 'STANDBY';
+                    telemetryStatus.style.color = 'var(--accent-amber)';
+
+                    // Reset visualizers
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    pixels.forEach(p => { p.style.background = '#1e293b'; p.style.boxShadow = 'none'; });
+                    noodleLed.style.background = '#1e293b';
+                    noodleLed.style.boxShadow = 'none';
+                    motorDutyVal.textContent = '0';
+                    motorStateVal.textContent = 'OFF';
+                    transientVal.textContent = 'IDLE';
+                }
+            });
+
+            // Smooth state trackers
+            let smoothEnergy = 0;
+            let prevEnergy = 0;
+            let altCounter = 0;
+
+            function renderLoop() {
+                if (!isRunning || !analyser) return;
+
+                const bufferLength = analyser.frequencyBinCount; // 128 bins for 256 fftSize
+                const dataArray = new Uint8Array(bufferLength);
+                analyser.getByteFrequencyData(dataArray);
+
+                const gain = parseFloat(gainSlider.value);
+                const gate = parseFloat(gateSlider.value);
+                const curve = parseFloat(curveSlider.value);
+                const ledMode = ledModeSelect.value;
+                const bassMode = parseInt(bassModeSelect.value);
+
+                // Analyze frequency bands
+                // Sample rate is 16000Hz, nyquist is 8000Hz, 128 bins => ~62.5 Hz per bin
+                const binHz = 8000 / bufferLength;
+                let bassEnergy = 0, midEnergy = 0, trebleEnergy = 0;
+                let peakBin = 0, maxVal = 0, totalEnergy = 0;
+
+                for (let i = 0; i < bufferLength; i++) {
+                    const freq = i * binHz;
+                    const val = Math.min(255, dataArray[i] * gain);
+                    totalEnergy += val;
+
+                    if (val > maxVal) {
+                        maxVal = val;
+                        peakBin = i;
+                    }
+
+                    if (freq < 250) {
+                        bassEnergy += val;
+                    } else if (freq <= 2000) {
+                        midEnergy += val;
+                    } else {
+                        trebleEnergy += val;
+                    }
+                }
+
+                const peakFreq = Math.round(peakBin * binHz);
+                peakFreqDisplay.textContent = `Peak: ${peakFreq} Hz`;
+
+                // Render Canvas Spectrum
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const barWidth = (canvas.width / bufferLength) * 0.9;
+                let x = 0;
+
+                for (let i = 0; i < bufferLength; i++) {
+                    const freq = i * binHz;
+                    const barHeight = (dataArray[i] / 255) * canvas.height;
+
+                    if (freq < 250) {
+                        ctx.fillStyle = '#f59e0b'; // Amber (Bass)
+                    } else if (freq <= 2000) {
+                        ctx.fillStyle = '#8b5cf6'; // Violet (Mids)
+                    } else {
+                        ctx.fillStyle = '#06b6d4'; // Cyan (Treble)
+                    }
+
+                    ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                    x += (canvas.width / bufferLength);
+                }
+
+                // Transient Kick Detection
+                const avgEnergy = totalEnergy / bufferLength;
+                smoothEnergy = (smoothEnergy * 0.85) + (avgEnergy * 0.15);
+                const isTransient = (avgEnergy > 20 && avgEnergy > smoothEnergy * 1.8);
+                if (isTransient) {
+                    transientVal.textContent = 'BOOST!';
+                    transientVal.style.color = '#ec4899';
+                } else {
+                    transientVal.textContent = 'TRACK';
+                    transientVal.style.color = '#64748b';
+                }
+
+                // Motor Intensity & Gating calculation
+                let motorDuty = 0;
+                if (totalEnergy > (gate / 10)) {
+                    const normalized = Math.min(1.0, (totalEnergy - (gate / 10)) / 1500);
+                    const curved = Math.pow(normalized, curve);
+                    motorDuty = Math.round(curved * 255);
+                    if (isTransient) motorDuty = Math.min(255, motorDuty + 50);
+                }
+
+                motorDutyVal.textContent = motorDuty;
+
+                // Motor Direction State
+                if (motorDuty <= 0) {
+                    motorStateVal.textContent = 'OFF';
+                    motorStateVal.style.color = '#64748b';
+                } else {
+                    altCounter++;
+                    if (bassMode === 1) {
+                        motorStateVal.textContent = 'FWD';
+                        motorStateVal.style.color = '#10b981';
+                    } else if (bassMode === 2) {
+                        motorStateVal.textContent = 'REV';
+                        motorStateVal.style.color = '#f59e0b';
+                    } else if (bassMode === 3) {
+                        const isFwd = (altCounter % 16) < 8;
+                        motorStateVal.textContent = isFwd ? 'ALT [FWD]' : 'ALT [REV]';
+                        motorStateVal.style.color = '#38bdf8';
+                    } else {
+                        motorStateVal.textContent = 'MUTED';
+                        motorStateVal.style.color = '#64748b';
+                    }
+                }
+
+                // Noodle LED (Volume mapped)
+                const noodleBright = Math.min(1, avgEnergy / 60);
+                noodleLed.style.background = `rgba(6, 182, 212, ${noodleBright * 0.9})`;
+                noodleLed.style.boxShadow = `0 0 ${noodleBright * 20}px rgba(6, 182, 212, ${noodleBright * 0.8})`;
+
+                // WS2812 5-Pixel Strip
+                if (ledMode === 'peak') {
+                    // Dominant frequency to HSV
+                    const hue = Math.min(300, (peakFreq / 3000) * 300);
+                    const bright = Math.min(1, avgEnergy / 50);
+                    pixels.forEach(p => {
+                        p.style.background = `hsl(${hue}, 95%, ${bright * 50}%)`;
+                        p.style.boxShadow = `0 0 ${bright * 18}px hsl(${hue}, 95%, 50%)`;
+                    });
+                } else {
+                    // Splitter Mode: Pixel 0-1 Bass, Pixel 2 Mid, Pixel 3-4 Treble
+                    const bB = Math.min(1, (bassEnergy / 10) / 100);
+                    const mB = Math.min(1, (midEnergy / 20) / 100);
+                    const tB = Math.min(1, (trebleEnergy / 20) / 100);
+
+                    // Pixels 0 & 1: Bass (Warm Amber/Red)
+                    pixels[0].style.background = `rgba(245, 158, 11, ${bB})`;
+                    pixels[0].style.boxShadow = `0 0 ${bB * 16}px rgba(245, 158, 11, 0.8)`;
+                    pixels[1].style.background = `rgba(245, 158, 11, ${bB})`;
+                    pixels[1].style.boxShadow = `0 0 ${bB * 16}px rgba(245, 158, 11, 0.8)`;
+
+                    // Pixel 2: Mid (Electric Purple)
+                    pixels[2].style.background = `rgba(139, 92, 246, ${mB})`;
+                    pixels[2].style.boxShadow = `0 0 ${mB * 16}px rgba(139, 92, 246, 0.8)`;
+
+                    // Pixels 3 & 4: Treble (Cyan/Sky)
+                    pixels[3].style.background = `rgba(6, 182, 212, ${tB})`;
+                    pixels[3].style.boxShadow = `0 0 ${tB * 16}px rgba(6, 182, 212, 0.8)`;
+                    pixels[4].style.background = `rgba(6, 182, 212, ${tB})`;
+                    pixels[4].style.boxShadow = `0 0 ${tB * 16}px rgba(6, 182, 212, 0.8)`;
+                }
+
+                animId = requestAnimationFrame(renderLoop);
+            }
+        })();
+    </script>
+</body>
+</html>

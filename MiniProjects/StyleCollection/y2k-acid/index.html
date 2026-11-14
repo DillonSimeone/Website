@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Y2K Acid Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="acid-wrapper">
+    <div class="grid-backdrop" id="strobe-grid"></div>
+    
+    <div class="acid-container">
+      <header class="acid-header">
+        <a href="../index.html" class="nav-back">✦ GOBACK ✦</a>
+        <h1 class="acid-title">HYPER_ACID</h1>
+        <p class="acid-subtitle">✧ Y2K LIQUID CHROME CORE & STROBE SHOCKS ✧</p>
+      </header>
+
+      <main class="acid-grid">
+        <div class="acid-card card-cyan">
+          <div class="card-icon">✦</div>
+          <h2>AESTHETIC PROTOCOL</h2>
+          <p>Early 2000s cyber rave aesthetics. Thick outlines, stretched text, high-contrast toxic overlays, and liquid metallic flows.</p>
+        </div>
+
+        <div class="acid-card card-magenta">
+          <div class="card-icon">✦</div>
+          <h2>SYSTEM CONTROL</h2>
+          <p>Modify the visual refresh rate of the background rave grid below.</p>
+          <div class="control-row">
+            <button class="acid-btn" id="btn-slow">SLOW</button>
+            <button class="acid-btn active" id="btn-rave">RAVE</button>
+            <button class="acid-btn" id="btn-off">OFF</button>
+          </div>
+        </div>
+
+        <div class="acid-card card-lime">
+          <div class="card-icon">✧</div>
+          <h2>CHROME SHOCK</h2>
+          <p>Interactive metallic reflection panel. Move your cursor around to warp the metallic chrome reflection.</p>
+          <div class="chrome-panel" id="chrome-box">
+            <span class="chrome-label">CHROME_REFLECT_V1</span>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

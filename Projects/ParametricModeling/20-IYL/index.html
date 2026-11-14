@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>20 • IYL Pedestal & Electronics Sled Studio (Parametric CAD)</title>
+    <meta name="description" content="Precision support-free 3D printable pedestal and universal ESP32-C3 electronics sled for the I Love You (ILY) hand model with elliptical twist-lock retention.">
+
+    <!-- Browser Import Map for Three.js -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="title-wrap">
+            <span class="cad-badge">CAD-20</span>
+            <h1>IYL PEDESTAL & SLED STUDIO</h1>
+        </div>
+        <div class="status-badge" id="kernel-status-badge">
+            <div class="status-dot"></div>
+            <span>KERNEL: <span id="kernel-status">INITIALIZING...</span></span>
+        </div>
+    </header>
+
+    <main>
+        <div id="viewport-container"></div>
+
+        <aside class="sidebar">
+            <!-- Section 1: Presets -->
+            <div class="sidebar-section">
+                <div class="section-title">1. Pedestal Style Presets</div>
+                <div class="preset-grid">
+                    <button class="preset-btn active" data-preset="tapered_cylinder">Tapered Cylinder</button>
+                    <button class="preset-btn" data-preset="low_profile">Low-Profile Puck</button>
+                    <button class="preset-btn" data-preset="octagon">Chamfered Octagon</button>
+                    <button class="preset-btn" data-preset="tall_column">Tall Museum Plinth</button>
+                </div>
+            </div>
+
+            <!-- Section 2: View Controls -->
+            <div class="sidebar-section">
+                <div class="section-title">2. View & Assembly Modes</div>
+                <div class="view-mode-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <button class="view-mode-btn active" data-mode="assembly">Full Assembly</button>
+                    <button class="view-mode-btn" data-mode="base">Base Pedestal</button>
+                    <button class="view-mode-btn" data-mode="lid">Drop-In Lid</button>
+                    <button class="view-mode-btn" data-mode="sled">Sled Only</button>
+                </div>
+
+                <div class="toggle-row">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="toggle-xray">
+                        <span>X-Ray / Internal View</span>
+                    </label>
+                    <label class="toggle-label">
+                        <input type="checkbox" id="toggle-hand" checked>
+                        <span>Show Hand</span>
+                    </label>
+                </div>
+
+                <div class="slider-group" style="margin-top: 10px;">
+                    <div class="slider-header">
+                        <span>Exploded View Separation</span>
+                        <span class="slider-value" id="val-explodedOffset">0.0 mm</span>
+                    </div>
+                    <input type="range" id="explodedOffset" min="0" max="60" step="1" value="0">
+                </div>
+            </div>
+
+            <!-- Section 3: Parametric Sliders -->
+            <div class="sidebar-section">
+                <div class="section-title">3. Parametric Dimensions</div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span>Base Diameter</span>
+                        <span class="slider-value" id="val-baseDiameter">86.0 mm</span>
+                    </div>
+                    <input type="range" id="baseDiameter" min="65" max="115" step="1" value="86">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span>Top Diameter</span>
+                        <span class="slider-value" id="val-topDiameter">66.0 mm</span>
+                    </div>
+                    <input type="range" id="topDiameter" min="58" max="95" step="1" value="66">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span>Pedestal Height</span>
+                        <span class="slider-value" id="val-height">38.0 mm</span>
+                    </div>
+                    <input type="range" id="height" min="24" max="75" step="1" value="38">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span>Center Cable Bore Diameter</span>
+                        <span class="slider-value" id="val-cableHoleDia">18.0 mm</span>
+                    </div>
+                    <input type="range" id="cableHoleDia" min="14" max="24" step="1" value="18">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span>Sled Print Clearance</span>
+                        <span class="slider-value" id="val-printClearance">0.22 mm</span>
+                    </div>
+                    <input type="range" id="printClearance" min="0.10" max="0.40" step="0.02" value="0.22">
+                </div>
+            </div>
+
+            <!-- Section 4: Engineering Specifications -->
+            <div class="sidebar-section">
+                <div class="section-title">4. Engineering Features</div>
+                <div class="specs-box">
+                    <div class="spec-row">
+                        <span class="spec-name">Pedestal System:</span>
+                        <span class="spec-val">2-Piece Sliced Twist-Lock</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-name">Top Cap Retention:</span>
+                        <span class="spec-val">45° Twist-On Bayonet</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-name">Hand Retention:</span>
+                        <span class="spec-val">45° Elliptical Twist-Lock</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-name">Support Requirement:</span>
+                        <span class="spec-val highlight-green">0% (100% Support-Free)</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-name">Sled Architecture:</span>
+                        <span class="spec-val">Universal Snow-Sled Drawer</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-name">USB-C Cable Slot:</span>
+                        <span class="spec-val">45° Peaked Arch (Self-Supporting)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 5: Exports -->
+            <div class="sidebar-section">
+                <div class="section-title">5. STL Manufacturing Exports</div>
+                <div class="export-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <button class="export-btn primary" id="btn-export-base">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Base Pedestal STL
+                    </button>
+                    <button class="export-btn primary" id="btn-export-lid" style="border-color: #00d4ff;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Drop-In Lid STL
+                    </button>
+                    <button class="export-btn secondary" id="btn-export-sled">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Universal Sled STL
+                    </button>
+                    <button class="export-btn tertiary" id="btn-export-assembly">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Complete Assembly STL
+                    </button>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <!-- App Entry Point -->
+    <script type="module" src="./src/main.js"></script>
+</body>
+</html>

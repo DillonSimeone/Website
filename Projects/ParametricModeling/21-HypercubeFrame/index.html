@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>21 — WS2812B 8×8 LED Matrix Hypercube Frame v3.0 (Screw Cube &amp; Lego-Slot Cross Tiles)</title>
+    <meta name="description" content="Dual-mode zero-overhang 3D-printable CAD studio for 65x65mm WS2812B-64 (8x8 RGB LED) panels: Mode A Monocoque M2 Screw Cube with independent X/Y hole pitch, and Mode B Modular Open-Corner Cross-Frame Lego-Slot Tiles.">
+
+    <!-- Browser Import Map for Three.js -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="title-wrap">
+            <span class="cad-badge">CAD-21 v3.0</span>
+            <h1>WS2812B-64 HYPERCUBE STUDIO (SCREWS &amp; LEGO-SLOT CROSS TILES)</h1>
+        </div>
+        <div class="status-badge" id="kernel-status-badge">
+            <div class="status-dot"></div>
+            <span>KERNEL: <span id="kernel-status">INITIALIZING...</span></span>
+        </div>
+    </header>
+
+    <main>
+        <div id="viewport-container"></div>
+
+        <aside class="sidebar">
+            <!-- Section 0: Mode Toggle -->
+            <div class="sidebar-section">
+                <div class="section-title">0. Frame Architecture Mode</div>
+                <div class="mode-toggle-grid">
+                    <button class="mode-btn active" data-mount-mode="screws">🔩 M2 Screw Cube</button>
+                    <button class="mode-btn" data-mount-mode="slots">🧩 Lego-Slot Cross Tiles</button>
+                </div>
+            </div>
+
+            <!-- Section 1: View Presets -->
+            <div class="sidebar-section">
+                <div class="section-title">1. Viewport Preset</div>
+                <!-- Screws Mode Presets -->
+                <div class="preset-grid" data-mode="screws">
+                    <button class="preset-btn active" data-preset="cube_only">Cube Frame (Bed)</button>
+                    <button class="preset-btn" data-preset="assembly_flat">Bed + 6× Panels</button>
+                    <button class="preset-btn" data-preset="assembly_stand">Tilted on Stand</button>
+                    <button class="preset-btn" data-preset="stand_only">Corner Stand Only</button>
+                    <button class="preset-btn" data-preset="print_plate" style="grid-column: span 2; border-color: #00ff88; color: #00ff88;">⚡ Full Bambu A1 Print Plate (Cube + Stand)</button>
+                </div>
+                <!-- Slots Mode Presets -->
+                <div class="preset-grid" data-mode="slots" style="display: none;">
+                    <button class="preset-btn" data-preset="tile_cube">6-Tile Assembled Cube</button>
+                    <button class="preset-btn" data-preset="tile_single">Single Tile (Bed)</button>
+                    <button class="preset-btn" data-preset="tile_cluster">3-Cube Lego L-Cluster</button>
+                    <button class="preset-btn" data-preset="clip_test" style="border-color: #ff9d00; color: #ff9d00;">🧪 Clip Fit-Test Array</button>
+                    <button class="preset-btn" data-preset="tile_plate" style="grid-column: span 2; border-color: #00ff88; color: #00ff88;">⚡ 6-Tile + 16-Clip Bambu A1 Plate</button>
+                </div>
+            </div>
+
+            <!-- Section 2: Parametric Dimensions & Tolerances -->
+            <div class="sidebar-section">
+                <div class="section-title">2. Hardware &amp; Fit Parameters</div>
+
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>PCB Size (Nominal Width)</span>
+                        <span class="control-val"><span id="val-pcbSize">65.00</span> mm</span>
+                    </div>
+                    <input type="range" id="input-pcbSize" min="64.5" max="66.5" step="0.05" value="65.0">
+                </div>
+
+                <!-- Screws Mode Controls -->
+                <div data-mode="screws">
+                    <div class="control-row">
+                        <div class="control-label">
+                            <span>M2 Hole Pitch X (Horizontal)</span>
+                            <span class="control-val"><span id="val-holeSpacingX">48.75</span> mm</span>
+                        </div>
+                        <input type="range" id="input-holeSpacingX" min="47.0" max="51.0" step="0.05" value="48.75">
+                    </div>
+
+                    <div class="control-row">
+                        <div class="control-label">
+                            <span>M2 Hole Pitch Y (+1.0mm Vertical)</span>
+                            <span class="control-val"><span id="val-holeSpacingY">49.75</span> mm</span>
+                        </div>
+                        <input type="range" id="input-holeSpacingY" min="47.0" max="51.0" step="0.05" value="49.75">
+                    </div>
+
+                    <div class="control-row">
+                        <div class="control-label">
+                            <span>M2 Self-Tapping Pilot Dia</span>
+                            <span class="control-val"><span id="val-m2HoleDia">1.75</span> mm</span>
+                        </div>
+                        <input type="range" id="input-m2HoleDia" min="1.50" max="2.40" step="0.05" value="1.75">
+                    </div>
+
+                    <div class="control-row">
+                        <div class="control-label">
+                            <span>Structural Wall Thickness</span>
+                            <span class="control-val"><span id="val-wallThickness">5.00</span> mm</span>
+                        </div>
+                        <input type="range" id="input-wallThickness" min="4.0" max="6.5" step="0.1" value="5.0">
+                    </div>
+
+                    <div class="control-row">
+                        <div class="control-label">
+                            <span>45° Diamond Cutout Half-Span</span>
+                            <span class="control-val"><span id="val-diamondHalfSpan">26.50</span> mm</span>
+                        </div>
+                        <input type="range" id="input-diamondHalfSpan" min="23.0" max="28.0" step="0.25" value="26.5">
+                    </div>
+
+                    <div class="control-row">
+                        <div class="control-label">
+                            <span>Bottom Bed Center Hole Dia</span>
+                            <span class="control-val"><span id="val-bottomHoleDia">40.00</span> mm</span>
+                        </div>
+                        <input type="range" id="input-bottomHoleDia" min="20.0" max="46.0" step="1.0" value="40.0">
+                    </div>
+
+                    <div class="control-row">
+                        <div class="control-label">
+                            <span>Corner Vertex Wire Bore Dia</span>
+                            <span class="control-val"><span id="val-wireHoleDia">5.50</span> mm</span>
+                        </div>
+                        <input type="range" id="input-wireHoleDia" min="3.5" max="7.5" step="0.1" value="5.5">
+                    </div>
+                </div>
+
+                <!-- Slots Mode Controls -->
+                <div data-mode="slots" style="display: none;">
+                    <div class="control-row">
+                        <div class="control-label">
+                            <span>Tile Thickness</span>
+                            <span class="control-val"><span id="val-tileThickness">5.20</span> mm</span>
+                        </div>
+                        <input type="range" id="input-tileThickness" min="4.4" max="6.5" step="0.1" value="5.2">
+                    </div>
+
+                    <div class="control-row">
+                        <div class="control-label">
+                            <span>Center Cross ('+') Beam Width</span>
+                            <span class="control-val"><span id="val-crossBeamWidth">5.00</span> mm</span>
+                        </div>
+                        <input type="range" id="input-crossBeamWidth" min="3.5" max="8.0" step="0.25" value="5.0">
+                    </div>
+
+                    <div class="control-row">
+                        <div class="control-label">
+                            <span>Tile Pocket Clearance</span>
+                            <span class="control-val"><span id="val-slotClearance">0.06</span> mm</span>
+                        </div>
+                        <input type="range" id="input-slotClearance" min="0.02" max="0.25" step="0.01" value="0.06">
+                    </div>
+
+                    <div class="control-row">
+                        <div class="control-label">
+                            <span>Clip Width Offset (From Fit Test)</span>
+                            <span class="control-val"><span id="val-clipWidthOffset">-0.20</span> mm</span>
+                        </div>
+                        <input type="range" id="input-clipWidthOffset" min="-0.60" max="0.10" step="0.05" value="-0.20">
+                    </div>
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">
+                        <span>Exploded View / Slide-In Preview</span>
+                        <span class="control-val"><span id="val-explodedView">0.00</span></span>
+                    </div>
+                    <input type="range" id="input-explodedView" min="0.0" max="1.0" step="0.02" value="0.0">
+                </div>
+
+                <label class="checkbox-row">
+                    <input type="checkbox" id="check-showGhostPcbs" checked>
+                    <span>Show Ghost 8×8 WS2812B Panels</span>
+                </label>
+
+                <label class="checkbox-row" data-mode="screws">
+                    <input type="checkbox" id="check-enableCornerWireBore" checked>
+                    <span>Enable Bottom Wire Pass-Through</span>
+                </label>
+
+                <label class="checkbox-row">
+                    <input type="checkbox" id="check-wireframe">
+                    <span>Show Wireframe Mesh Topology</span>
+                </label>
+            </div>
+
+            <!-- Section 3: STL Downloads -->
+            <div class="sidebar-section">
+                <div class="section-title">3. Export Production STLs (v3.0)</div>
+                <div class="export-btn-group">
+                    <button class="btn-export all" data-export="all_plate">
+                        <span>⚡ Download Full Bambu A1 Plate (.STL)</span>
+                        <span>&darr;</span>
+                    </button>
+                    <button class="btn-export" data-export="cube_frame" data-mode="screws">
+                        <span>Hypercube Screw Frame v3 STL</span>
+                        <span>&darr;</span>
+                    </button>
+                    <button class="btn-export pink" data-export="corner_stand" data-mode="screws">
+                        <span>Corner Wire-Channel Stand STL</span>
+                        <span>&darr;</span>
+                    </button>
+                    <button class="btn-export" data-export="clip_test" data-mode="slots" style="display: none; border-color: #ff9d00; color: #ff9d00;">
+                        <span>🧪 Download 6-Size Clip Fit-Test Array STL</span>
+                        <span>&darr;</span>
+                    </button>
+                    <button class="btn-export" data-export="slot_tile" data-mode="slots" style="display: none;">
+                        <span>Single Rigid Cross-Ring Tile STL</span>
+                        <span>&darr;</span>
+                    </button>
+                    <button class="btn-export pink" data-export="clip_90" data-mode="slots" style="display: none;">
+                        <span>90° Corner Dovetail Clip STL</span>
+                        <span>&darr;</span>
+                    </button>
+                    <button class="btn-export pink" data-export="clip_180" data-mode="slots" style="display: none;">
+                        <span>180° Flat Dovetail Clip STL</span>
+                        <span>&darr;</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Section 4: Hardware Reference -->
+            <div class="sidebar-section spec-box">
+                <div class="section-title">4. WS2812B-64 &amp; Mode Notes</div>
+                <ul class="spec-list" data-mode="screws">
+                    <li><strong>Screw Pitch Fix:</strong> 48.75 mm (X) × 49.75 mm (Y) (+1.0 mm offset, tunable independently)</li>
+                    <li><strong>Zero Supports:</strong> Flat bed base + 50.9° pyramid vault + 45° teardrops</li>
+                </ul>
+                <ul class="spec-list" data-mode="slots" style="display: none;">
+                    <li><strong>Drop-In Groove:</strong> 3× 45° beveled rails + 1 open slide-in edge (0 supports)</li>
+                    <li><strong>Hermaphroditic Edges:</strong> All 4 edges interlock at 90° in/out or 180° flat</li>
+                    <li><strong>Open Corners + Cross:</strong> Exposes all 4 corner solder pads &amp; wires</li>
+                </ul>
+            </div>
+        </aside>
+    </main>
+
+    <script type="module" src="./src/main.js"></script>
+</body>
+</html>
