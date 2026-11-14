@@ -10,10 +10,7 @@
 
 ## 1. Human-in-the-Loop Testing (No Browser Subagents)
 * **DO NOT spawn browser subagents** to test pages, clicks, or visual layouts.
-* **Provide Numbered Test Steps**: When code is ready for verification, output a numbered step-by-step test plan for the user to try in their browser:
-  Actions to perform / URL or file to open
-  Expected outcome to observe
-* **Iterate on Feedback**: The user will reply with corresponding step-by-step observations, confirmation, or ideas for refinement.
+* **Iterate on Feedback**: The user will reply with observations and/or ideas for refinement.
 
 ---
 
@@ -39,67 +36,6 @@ The website is a modular SPA powered by **Vite** and **Handlebars**. Content is 
 ## 3. Maintenance Tools
 * **`ManageContent.bat`**: GUI server (`tools/content-manager/server.js`) on `http://localhost:3456` to reorder cards, edit titles, delete entries, and add new projects.
 * **`CreateEntry.bat`**: CLI generator for adding content cards to `src/content/`.
-
----
-
-## 3b. Labyrinth Editor (Isolated Work)
-* The Dimensional Labyrinth (`public/Projects/Labyrinth/`) has an isolated editor at `/Projects/Labyrinth/editor.html` on the dev server. It renders one style, shape, room, scene or critter from URL settings and live-reloads on save.
-* When the user pastes an editor link, read only the files its "Files for this view" panel lists. Workflow and file map: `public/Projects/Labyrinth/AGENTS.md` section 0.
-
----
-
-## 3c. Local Headless AI Video Generation (`Thresholds`)
-* **Engine Location**: `E:\AI\ImageGeneration\generate_video.py` using `E:\AI\ImageGeneration\venv\Scripts\python.exe`.
-* **Hardware Profile**: NVIDIA GeForce RTX 5060 Ti (16 GB VRAM).
-* **Strict Disk Rule**: **NEVER write or cache on `C:`**. All HuggingFace caches and models MUST reside on `E:\AI\ImageGeneration\hf_cache` (`HF_HOME` & `HF_HUB_CACHE` enforced).
-* **Current Status**:
-  - `Thresholds` website frontend is complete with 12 photographic plates, Web Audio ambient engine, and video layer with fade-to-black scene transitions (`public/MiniProjects/Thresholds/`).
-  - LTX-Video pipeline runs headlessly on the GPU via sequential CPU offload, but test outputs (`output_test_ltx.mp4`) are currently rendering nearly static (lack sufficient dynamic motion/animation from the conditioning frame).
-* **Next Session Tasks**:
-  1. Investigate and fix LTX-Video motion dynamics: adjust conditioning noise/denoise parameters (`decode_timestep`, `decode_noise_scale`), motion guidance scale, or explore Wan2.1 / SVD-XT integration in `E:\AI\ImageGeneration`.
-  2. Batch-generate videos for the 11 remaining passages (`generate_video.py --thresholds`) into `public/MiniProjects/Thresholds/assets/videos/`.
-* Reference documentation: `E:\AI\ImageGeneration\AGENTS.md`.
-
----
-
-## 3d. Parametric PCB Suite (`public/Projects/ParametricPCB/`)
-* **Project Directory**: `public/Projects/ParametricPCB/`
-* **Master Engineering Skill**: [`public/Projects/ParametricPCB/SKILL.md`](file:///f:/Github/Website/public/Projects/ParametricPCB/SKILL.md) (Covers tscircuit architecture, JLCPCB SMT manufacturing rules, BOM/CPL parity, SOT-23 rotation tables, flyback diode polarity rules, trace width clamping, and laser test-fit protocols).
-* **Subprojects**:
-  - `public/Projects/ParametricPCB/00-starterPCB/`: Turnkey Starter Template with 3D/2D visualizers, live trace & pad hover tooltips, real-time JLCPCB manufacturing DRC, Architecture/Pinout schematic panel, component callouts, decoupled silkscreen scaling, and instant exports powered by `shared/`.
-  - `public/Projects/ParametricPCB/01-V6Led/`: Parametric 6-LED strip configurator with mousebite panelization.
-  - `public/Projects/ParametricPCB/02-audioMotionReactiveLedHapticPCB/`: Turnkey Baton Carrier PCB with ESP32-C3 SuperMini, MPU6050/6500 IMU, INMP441/MAX4466 microphones, AO3400A/AO3401A power and haptic drivers, high-side LED isolation, dual-side silkscreen mirroring, vector QR code, M3 mounting holes, and 600 DPI laser test fits. Reference: [`public/Projects/ParametricPCB/02-audioMotionReactiveLedHapticPCB/AGENTS.md`](file:///f:/Github/Website/public/Projects/ParametricPCB/02-audioMotionReactiveLedHapticPCB/AGENTS.md).
-  - `public/Projects/ParametricPCB/03-compactAudioMotionSquarePCB/`: Compact Dense Square Reactive Controller PCB (38×38mm) with back-to-back 3D stacking (ESP32 on top, MPU on backside), 3× addressable LED outputs, dual haptic PWM drivers, dual microphones, LiPo charger with auto power-path, and standard 31×31mm M3 bolt pattern. Reference: [`public/Projects/ParametricPCB/03-compactAudioMotionSquarePCB/AGENTS.md`](file:///f:/Github/Website/public/Projects/ParametricPCB/03-compactAudioMotionSquarePCB/AGENTS.md).
-  - `public/Projects/ParametricPCB/04-smdAudioMotionBatonPCB/`: All-in-One Turnkey SMD Baton Controller PCB (22×110mm). Eliminates socketed dev boards with a directly soldered ESP32-C3-WROOM-02-N4 module, onboard LSM6DS3TR-C 6-axis IMU, WMM7037AT2 analog MEMS microphone, USB Type-C native CDC/JTAG flashing, ME6211 3.3V LDO, TP4054 LiPo charger with auto power-path, high-side LED power gate, and haptic PWM driver. 100% factory assembled by JLCPCB SMT in a single order. Reference: [`public/Projects/ParametricPCB/04-smdAudioMotionBatonPCB/AGENTS.md`](file:///f:/Github/Website/public/Projects/ParametricPCB/04-smdAudioMotionBatonPCB/AGENTS.md).
-* **Agent Guidelines**:
-  - Confine work strictly to `public/Projects/ParametricPCB/`.
-  - When editing circuits or exports, always maintain strict 1-to-1 BOM/CPL parity, verify diode/MOSFET orientations against `SKILL.md`, and execute `npm test` and `npm run check-supply`.
-
----
-
-## 3e. The Haptic Petting Zoo (`public/Projects/HapticPettingZoo/`)
-* **Project Directory**: `public/Projects/HapticPettingZoo/`
-* **Master Skill**: [`.agents/skills/haptic-petting-zoo/SKILL.md`](file:///f:/Github/Website/.agents/skills/haptic-petting-zoo/SKILL.md)
-* **Local Operations Guide**: [`public/Projects/HapticPettingZoo/AGENTS.md`](file:///f:/Github/Website/public/Projects/HapticPettingZoo/AGENTS.md)
-* **Subagent Roles**:
-  - `zoo-press`: Writes Dispatch newspaper editions, press releases, ASL transcripts, and festival outreach proposals (e.g. Corvallis Kaleidoscope / PRAx). Invariant: never use `ad` in IDs or classes to prevent adblock triggers.
-  - `zoo-planning`: Maintains `ledger/ledger-data.json`, tracks Exhibit B direct costs cap ($91,200), logs billable hours via value-based milestone progress (no public $/hr rates), manages sole proprietor cash-basis tax pacing, and monitors 11/11 bulk hardware orders.
-  - `zoo-prototype`: Develops ESP32-S3 lid camera spatial tracking with VL53L1X ToF failover, 5V coin vibration MOSFET PWM critter nodes, and prepares the Dec 12 CymaSpace prototype reveal.
-* **Strict Rules**:
-  - Confine work strictly to `public/Projects/HapticPettingZoo/`.
-  - Do NOT link `ledger/ledger.html` from the public Dispatch navigation; keep it as a standalone transparency portal.
-  - Maintain complete parity between `ledger.html` and `ledger-data.json`.
-
----
-
-## 3f. Novel & Ebook Publishing (`public/MiniProjects/Writing/Deaf/`)
-* **Project Directory**: `public/MiniProjects/Writing/Deaf/`
-* **Local Operations Guide**: [`public/MiniProjects/Writing/Deaf/AGENTS.md`](public/MiniProjects/Writing/Deaf/AGENTS.md)
-* **Invariants**:
-  - `build/` is the sole source of truth for ebook and PDF outputs; `tools/` is strictly for scripts and CLI utilities.
-  - Zero em dashes (`—`) across chapter prose.
-  - No developmental beat outlines under chapter headings in book builds or web reader headers.
-  - Preserve inner tag formatting and spacing during HTML-to-EPUB/PDF compilations.
 
 ---
 

@@ -3,7 +3,7 @@
 # Assignment:    Lab 8 - Calculator
 # Date:          11/10/2026
 # Description:   A main app with a Graphical User Interface (GUI) that includes
-#                an About screen and 2 discrete calculators apps.
+#                an About screen and 2 discrete calculator apps.
 # Inputs:        See individual calculator apps for specific inputs.
 # Outputs:       See individual calculator apps for specific outputs.
 # Sources:       Lab 8 Assignment Instructions
@@ -14,8 +14,8 @@ import tkinter as tk
 from tkinter import ttk
 
 from AboutApp import AboutApp
+from FilamentLengthToMassApp import FilamentLengthToMassApp
 from FilamentMassToLengthApp import FilamentMassToLengthApp
-from PlanetaryAgeApp import PlanetaryAgeApp
 
 # Main Window
 
@@ -46,17 +46,21 @@ class MainApp:
             text="Filament Mass to Length",
         )
 
-        # Add PlanetaryAgeApp calculator
-        planetary_age_app = PlanetaryAgeApp(self.__mainwindow)
-        self.__main_notebook.add(
-            planetary_age_app.get_top_frame(), text="Planetary Age"
+        # Add FilamentLengthToMassApp calculator
+        filament_length_to_mass_app = FilamentLengthToMassApp(
+            self.__mainwindow
         )
+        self.__main_notebook.add(
+            filament_length_to_mass_app.get_top_frame(),
+            text="Filament Length to Mass",
+        )
+
 
     def run(self):
         self.__mainwindow.mainloop()
 
 if __name__ == '__main__':
     root = tk.Tk()
-    root.title("Dillon & Rusty Calculators")
+    root.title("3D Printing Filament Calculators")
     app = MainApp(root)
     app.run()

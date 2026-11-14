@@ -1,9 +1,13 @@
-// UI management and 3D scene assembly for 21-HypercubeFrame (v2.0 Monocoque Zero-Overhang)
+// UI management and 3D scene assembly for 21-HypercubeFrame (v3.0 Dual-Mode)
 import * as THREE from 'three';
 import { context, params, updateParam } from './state.js';
 import {
     manifoldToThreeGeometry,
     buildHypercubeFrame,
+    buildModularSlotTile,
+    buildCornerClip90,
+    buildFlatClip180,
+    buildClipFitTestArray,
     buildCornerStand,
     buildGhostMatrixPcb
 } from './geometry.js';
@@ -45,6 +49,47 @@ function addSixGhostPanels(items, pcbGeom, matPcb, p, explodeDist, parentQuat, p
     });
 }
 
+// Helper: Place rigid OpenLOCK Cross-Ring tiles on the 6 faces of a 69mm cube
+function addModularCubeTiles(items, tileGeom, pcbGeom, matTile, matPcb, p, centerOffset, explode, skipFaces = []) {
+    const tileHalf = 34.5; // 69.0mm outer span
+    const faceDist = tileHalf + explode;
+
+    const faces = [
+        { name: '+Z', pos: [0, 0, faceDist], rot: [0, 0, 0] },
+        { name: '-Z', pos: [0, 0, -faceDist], rot: [Math.PI, 0, 0] },
+        { name: '+X', pos: [faceDist, 0, 0], rot: [0, Math.PI / 2, 0] },
+        { name: '-X', pos: [-faceDist, 0, 0], rot: [0, -Math.PI / 2, 0] },
+        { name: '+Y', pos: [0, faceDist, 0], rot: [-Math.PI / 2, 0, 0] },
+        { name: '-Y', pos: [0, -faceDist, 0], rot: [Math.PI / 2, 0, 0] },
+    ];
+
+    faces.forEach(f => {
+        if (skipFaces.includes(f.name)) return;
+        const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(...f.rot, 'XYZ'));
+        const pos = new THREE.Vector3(...f.pos).add(centerOffset);
+        items.push({
+            geometry: tileGeom.clone(),
+            material: matTile,
+            edgeColor: 0x002633,
+            position: pos,
+            quaternion: q
+        });
+
+        if (p.showGhostPcbs && pcbGeom) {
+            // PCB sits inside the front slot at Z_local = 2.6 + pcbThickness/2
+            const pcbLocal = new THREE.Vector3(0, 0, 2.6 + p.pcbThickness / 2 + explode * 0.4).applyQuaternion(q);
+            items.push({
+                geometry: pcbGeom.clone(),
+                material: matPcb,
+                edgeColor: 0x00ffaa,
+                edgeOpacity: 0.45,
+                position: pos.clone().add(pcbLocal),
+                quaternion: q
+            });
+        }
+    });
+}
+
 export function rebuildActiveGeometry() {
     const M = context.Manifold;
     if (!M) return;
@@ -58,6 +103,13 @@ export function rebuildActiveGeometry() {
     const matFrame = new THREE.MeshStandardMaterial({
         color: 0x00d8f0, // Neon Cyan PETG
         roughness: 0.35,
+        metalness: 0.08,
+        wireframe: params.wireframe
+    });
+
+    const matTileAlt = new THREE.MeshStandardMaterial({
+        color: 0xff2a7a, // Neon Coral Accent for adjacent Lego-cluster cubes
+        roughness: 0.38,
         metalness: 0.08,
         wireframe: params.wireframe
     });
@@ -80,7 +132,121 @@ export function rebuildActiveGeometry() {
 
     const preset = context.activePreset;
 
-    if (preset === 'cube_only') {
+    // -----------------------------------------------------------------
+    // MODE B ('slots'): Rigid Open-Corner Cross-Ring Tile + OpenLOCK Clips
+    // -----------------------------------------------------------------
+    if (preset === 'tile_single') {
+        const mTile = buildModularSlotTile(M, params);
+        items.push({
+            geometry: manifoldToThreeGeometry(mTile),
+            material: matFrame,
+            edgeColor: 0x002633,
+            position: new THREE.Vector3(0, 0, 0)
+        });
+        mTile.delete();
+
+        // Show 1x 90° Clip and 1x 180° Clip next to the tile on the bed
+        const mClip90 = buildCornerClip90(M, params);
+        items.push({
+            geometry: manifoldToThreeGeometry(mClip90),
+            material: matTileAlt,
+            edgeColor: 0x380018,
+            position: new THREE.Vector3(48, 12, 0)
+        });
+        mClip90.delete();
+
+        const mClip180 = buildFlatClip180(M, params);
+        items.push({
+            geometry: manifoldToThreeGeometry(mClip180),
+            material: matStand,
+            edgeColor: 0x1a0938,
+            position: new THREE.Vector3(48, -14, 0)
+        });
+        mClip180.delete();
+
+        if (params.showGhostPcbs) {
+            const mPcb = buildGhostMatrixPcb(M, params);
+            items.push({
+                geometry: manifoldToThreeGeometry(mPcb),
+                material: matGhostPcb,
+                edgeColor: 0x00ffaa,
+                edgeOpacity: 0.5,
+                position: new THREE.Vector3(0, explode * 1.4, 2.6 + params.pcbThickness / 2)
+            });
+            mPcb.delete();
+        }
+    } else if (preset === 'tile_cube') {
+        const mTile = buildModularSlotTile(M, params);
+        const tileGeom = manifoldToThreeGeometry(mTile);
+        mTile.delete();
+        let pcbGeom = null;
+        if (params.showGhostPcbs) {
+            const mPcb = buildGhostMatrixPcb(M, params);
+            pcbGeom = manifoldToThreeGeometry(mPcb);
+            mPcb.delete();
+        }
+        addModularCubeTiles(items, tileGeom, pcbGeom, matFrame, matGhostPcb, params, new THREE.Vector3(0, 0, 34.5), explode);
+    } else if (preset === 'tile_cluster') {
+        const mTile = buildModularSlotTile(M, params);
+        const tileGeom = manifoldToThreeGeometry(mTile);
+        mTile.delete();
+        let pcbGeom = null;
+        if (params.showGhostPcbs) {
+            const mPcb = buildGhostMatrixPcb(M, params);
+            pcbGeom = manifoldToThreeGeometry(mPcb);
+            mPcb.delete();
+        }
+        const pitch = 69.0; // 2 * 34.5mm cube center-to-center
+        addModularCubeTiles(items, tileGeom, pcbGeom, matFrame, matGhostPcb, params, new THREE.Vector3(0, 0, 34.5), explode, ['+X', '+Z']);
+        addModularCubeTiles(items, tileGeom, pcbGeom, matTileAlt, matGhostPcb, params, new THREE.Vector3(pitch, 0, 34.5), explode, ['-X']);
+        addModularCubeTiles(items, tileGeom, pcbGeom, matTileAlt, matGhostPcb, params, new THREE.Vector3(0, 0, 34.5 + pitch), explode, ['-Z']);
+    } else if (preset === 'clip_test') {
+        const mTest = buildClipFitTestArray(M, params);
+        items.push({
+            geometry: manifoldToThreeGeometry(mTest),
+            material: matTileAlt,
+            edgeColor: 0x380018,
+            position: new THREE.Vector3(0, 0, 0)
+        });
+        mTest.delete();
+    } else if (preset === 'tile_plate') {
+        const mTile = buildModularSlotTile(M, params);
+        const tileGeom = manifoldToThreeGeometry(mTile);
+        mTile.delete();
+        const step = 76.0;
+        for (let row = 0; row < 2; row++) {
+            for (let col = -1; col <= 1; col++) {
+                items.push({
+                    geometry: tileGeom.clone(),
+                    material: matFrame,
+                    edgeColor: 0x002633,
+                    position: new THREE.Vector3(col * step - 28, (row - 0.5) * step, 0)
+                });
+            }
+        }
+        const mClip90 = buildCornerClip90(M, params);
+        const clip90Geom = manifoldToThreeGeometry(mClip90);
+        mClip90.delete();
+        for (let i = 0; i < 12; i++) {
+            items.push({
+                geometry: clip90Geom.clone(),
+                material: matTileAlt,
+                edgeColor: 0x380018,
+                position: new THREE.Vector3(98 + (i % 2) * 22, -62 + Math.floor(i / 2) * 22, 0)
+            });
+        }
+        const mClip180 = buildFlatClip180(M, params);
+        const clip180Geom = manifoldToThreeGeometry(mClip180);
+        mClip180.delete();
+        for (let j = 0; j < 4; j++) {
+            items.push({
+                geometry: clip180Geom.clone(),
+                material: matStand,
+                edgeColor: 0x1a0938,
+                position: new THREE.Vector3(-96 + j * 24, -96, 0)
+            });
+        }
+    } else if (preset === 'cube_only') {
         const mCube = buildHypercubeFrame(M, params);
         items.push({
             geometry: manifoldToThreeGeometry(mCube),
@@ -180,7 +346,37 @@ export function rebuildActiveGeometry() {
     updateSceneMesh(items);
 }
 
+function syncModeUI() {
+    const isSlots = params.mountMode === 'slots';
+    document.querySelectorAll('[data-mode="screws"]').forEach(el => {
+        el.style.display = isSlots ? 'none' : '';
+    });
+    document.querySelectorAll('[data-mode="slots"]').forEach(el => {
+        el.style.display = isSlots ? '' : 'none';
+    });
+}
+
 export function initUI() {
+    // Mode Toggle Buttons
+    const modeBtns = document.querySelectorAll('.mode-btn');
+    modeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            modeBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const newMode = btn.dataset.mountMode;
+            updateParam('mountMode', newMode);
+            syncModeUI();
+
+            // Auto-select default preset for the selected mode
+            const defaultPreset = newMode === 'slots' ? 'tile_cube' : 'cube_only';
+            context.activePreset = defaultPreset;
+            document.querySelectorAll('.preset-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.preset === defaultPreset);
+            });
+            rebuildActiveGeometry();
+        });
+    });
+
     const presetBtns = document.querySelectorAll('.preset-btn');
     presetBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -207,9 +403,14 @@ export function initUI() {
     bindSlider('input-wallThickness', 'wallThickness', 'val-wallThickness');
     bindSlider('input-diamondHalfSpan', 'diamondHalfSpan', 'val-diamondHalfSpan');
     bindSlider('input-bottomHoleDia', 'bottomHoleDia', 'val-bottomHoleDia');
-    bindSlider('input-holeSpacing', 'holeSpacing', 'val-holeSpacing');
+    bindSlider('input-holeSpacingX', 'holeSpacingX', 'val-holeSpacingX');
+    bindSlider('input-holeSpacingY', 'holeSpacingY', 'val-holeSpacingY');
     bindSlider('input-m2HoleDia', 'm2HoleDia', 'val-m2HoleDia');
     bindSlider('input-wireHoleDia', 'wireHoleDia', 'val-wireHoleDia');
+    bindSlider('input-tileThickness', 'tileThickness', 'val-tileThickness');
+    bindSlider('input-crossBeamWidth', 'crossBeamWidth', 'val-crossBeamWidth');
+    bindSlider('input-slotClearance', 'slotClearance', 'val-slotClearance');
+    bindSlider('input-clipWidthOffset', 'clipWidthOffset', 'val-clipWidthOffset');
     bindSlider('input-explodedView', 'explodedView', 'val-explodedView');
 
     const bindCheckbox = (id, paramKey) => {
@@ -231,4 +432,6 @@ export function initUI() {
             triggerExport(btn.dataset.export);
         });
     });
+
+    syncModeUI();
 }

@@ -133,6 +133,38 @@ main {
     gap: 8px;
 }
 
+.mode-toggle-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.mode-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: var(--text-dim);
+    padding: 10px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    transition: 0.2s;
+    text-align: center;
+}
+
+.mode-btn:hover {
+    border-color: var(--cyan);
+    color: #fff;
+}
+
+.mode-btn.active {
+    border-color: #00ff88;
+    background: rgba(0, 255, 136, 0.18);
+    color: #00ff88;
+    box-shadow: 0 0 12px rgba(0, 255, 136, 0.28);
+}
+
 .preset-btn {
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.1);

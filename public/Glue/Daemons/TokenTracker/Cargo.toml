@@ -1,0 +1,42 @@
+[package]
+name = "llm_token_tracker"
+version = "2.0.0"
+edition = "2021"
+description = "Fast Rust rewrite of LLM Token Tracker for AntiGravity and Cursor"
+
+[[bin]]
+name = "LLMTokenTracker"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
+sha2 = "0.10"
+hex = "0.4"
+csv = "1.3"
+rayon = "1.10"
+regex = "1.11"
+dirs = "5.0"
+
+[dependencies.windows-sys]
+version = "0.59"
+features = [
+    "Win32_Foundation",
+    "Win32_System_Threading",
+    "Win32_System_Console",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_UI_Shell",
+    "Win32_UI_Controls",
+    "Win32_UI_Controls_Dialogs",
+    "Win32_Graphics_Gdi",
+    "Win32_System_LibraryLoader",
+]
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = true

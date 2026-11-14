@@ -65,7 +65,9 @@ class FilamentMassToLengthApp:
             if not math.isfinite(mass) or mass < 0:
                 mb.showerror(
                     title="Invalid Input",
-                    message="Filament mass must be a non-negative, finite number."
+                    message=(
+                        "Filament mass must be a non-negative, finite number."
+                    )
                 )
                 return
 

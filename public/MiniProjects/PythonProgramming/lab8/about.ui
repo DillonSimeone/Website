@@ -15,7 +15,7 @@
     <child>
       <object class="ttk.Label" id="label6">
         <property name="font">{Arial} 16 {bold}</property>
-        <property name="text" translatable="yes">Dillon and Rusty Calculator Project</property>
+        <property name="text" translatable="yes">3D Printing Filament Calculators</property>
         <layout manager="grid">
           <property type="col" id="0" name="weight">1</property>
         </layout>
@@ -35,10 +35,10 @@
         <child>
           <object class="ttk.Label" id="label7">
             <property name="justify">center</property>
-            <property name="text" translatable="yes">Proper 3D printing requires both spool mass and interplanetary timing. Before starting any overnight print, makers must check their filament length and confirm their age on Venus and Mars to account for planetary gravity drift and bed-leveling alignment. Never slice blind: check your grams, check your planets, then hit print.</property>
+            <property name="text" translatable="yes">Useful tools for 3D printing enthusiasts who need to estimate filament consumption. Both calculators use the filament's diameter and material density to perform their calculations.</property>
             <property name="wraplength">400</property>
             <layout manager="pack">
-              <property name="pady">5 15</property>
+              <property name="pady">5 25</property>
             </layout>
           </object>
         </child>
@@ -51,6 +51,7 @@
         </child>
         <child>
           <object class="ttk.Label" id="label9">
+          <property name="font">{Arial} 11 {bold}</property>
             <property name="text" translatable="yes">Dillon Simeone (Driver), Rusty Jennings (Navigator)</property>
             <layout manager="pack" />
           </object>
@@ -68,12 +69,13 @@
         <child>
           <object class="ttk.Label" id="label21">
             <property name="font">{Arial} 14 {bold}</property>
-            <property name="text" translatable="yes">Planetary Age</property>
+            <property name="text" translatable="yes">Filament Length to Mass</property>
             <layout manager="pack" />
           </object>
         </child>
         <child>
           <object class="ttk.Label" id="label22">
+          <property name="font">{Arial} 11 {bold}</property>
             <property name="text" translatable="yes">Rusty Jennings (Driver), Dillon Simeone (Navigator)</property>
             <layout manager="pack" />
           </object>
@@ -81,7 +83,7 @@
         <child>
           <object class="ttk.Label" id="label23">
             <property name="justify">center</property>
-            <property name="text" translatable="yes">Calculates your age in Venus and Mars orbital years for mandatory pre-print cosmic calibration.</property>
+            <property name="text" translatable="yes">Converts printable meters of 1.75 mm PLA filament into required spool weight (grams and ounces).</property>
             <property name="wraplength">380</property>
             <layout manager="pack">
               <property name="pady">2 5</property>

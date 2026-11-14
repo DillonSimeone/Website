@@ -4,6 +4,8 @@
 * **Confine Reads & Edits**: Restrict all operations to `public/Projects/HapticPettingZoo/` and its immediate subdirectories.
 * **Master Skill Reference**: Consult `.agents/skills/haptic-petting-zoo/SKILL.md` for full financial schedules, tax rules, and hardware engineering specifications.
 * **No Speculative Exploration**: Do NOT crawl unrelated website folders unless specifically instructed.
+* **Standalone Ledger Portal**: Do NOT link `ledger/ledger.html` from the public Dispatch navigation; keep it as a standalone transparency portal.
+* **Ledger Parity**: Maintain complete parity between `ledger/ledger.html` and `ledger/ledger-data.json`.
 
 ---
 
