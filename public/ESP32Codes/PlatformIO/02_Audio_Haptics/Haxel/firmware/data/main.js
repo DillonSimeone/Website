@@ -1,4 +1,10 @@
 import { Parser, tokenize, Evaluator, highlight, updateAudioState, pnoise1 } from './compiler.js';
+import {
+    updateBinRangeLabels as updateBinRangeLabelsShared,
+    renderBinRows as renderBinRowsShared,
+    initSpectrumDividers as initSpectrumDividersShared,
+    evaluateAudioReactiveOutput
+} from './audio-reactive.js';
 import { addSerialLog, triggerI2CBlink, updateHardwarePins, initBootLogs, serialConsole } from './emulator.js';
 import { PATTERNS, loadCustomPatterns, initPhoneHaptics } from './haptics.js';
 
@@ -17,7 +23,7 @@ let frequencyShift = 150; // Hz
 let playbackSpeed = 1.0;
 let isPlaying = true;
 let smoothedAmp = 0;
-let startupFloor = 0.35; // default 35%
+let startupFloor = 0.15; // default 15%
 
 // Dynamic Audio Partitioning Bins Configuration
 const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -111,7 +117,7 @@ window.addEventListener("resize", () => {
 document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
     t.classList.add("active");
-    ["play", "lib", "studio", "audio", "fleet", "device"].forEach(id => {
+    ["play", "lib", "studio", "audio", "device"].forEach(id => {
         const el = document.getElementById("tab-" + id);
         if (el) el.style.display = (id === t.dataset.tab) ? "" : "none";
     });
@@ -121,10 +127,10 @@ document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () =>
     } else {
         stopMicrophone();
     }
-    if (t.dataset.tab === "fleet") refreshFleet();
     // Setup visible canvases
     setupSharpCanvas(prevCanvas);
     setupSharpCanvas(heroCanvas);
+    syncStateToESP32();
 }));
 
 // ─── EDITOR WIRING ──────────────────────────────────────────────────────────
@@ -849,6 +855,10 @@ document.getElementById("micSrc").addEventListener("change", (e) => {
 
 // ─── AUDIO REACTIVE BINS DRAG INTERACTIVES ──────────────────────────────────
 function updateBinRangeLabels() {
+    updateBinRangeLabelsShared(numBins, dividers);
+}
+
+function _unusedUpdateBinRangeLabelsLegacy() {
     const getFreqAtBand = (b) => {
         if (b === 0) return 0;
         if (b === 32) return 20000;
@@ -873,6 +883,18 @@ export function populateBinPatternSelects() {
 }
 
 function renderBinRows() {
+    renderBinRowsShared({
+        container: document.getElementById("bins-container"),
+        numBins,
+        dividers,
+        patterns: PATTERNS,
+        minFreq: parseFloat(document.getElementById("audioMinFreq")?.value || 40),
+        maxFreq: parseFloat(document.getElementById("audioMaxFreq")?.value || 16000),
+        onSync: () => syncStateToESP32()
+    });
+}
+
+function _unusedRenderBinRowsLegacy() {
     const container = document.getElementById("bins-container");
     if (!container) return;
     
@@ -1352,28 +1374,14 @@ function animate() {
     let activeAmp = 0;
     if (isPlaying) {
         if (isAudioTab) {
-            const gain = parseFloat(document.getElementById("audioGain").value);
-            let maxAmp = 0;
-            
-            for (let i = 0; i < numBins; i++) {
-                const startIdx = i === 0 ? 0 : dividers[i - 1];
-                const endIdx = i === numBins - 1 ? 32 : dividers[i];
-                const len = Math.max(1, endIdx - startIdx);
-                
-                const vol = mags.slice(startIdx, endIdx).reduce((a,b)=>a+b, 0) / len * (gain * 0.45);
-                
-                const selectEl = document.getElementById(`bin-${i}-pattern`);
-                const patternId = selectEl ? selectEl.value : "none";
-                
-                if (patternId !== "none") {
-                    const pat = PATTERNS.find(p => p.id === patternId);
-                    if (pat) {
-                        const out = vol * pat.func(timeSec);
-                        if (out > maxAmp) maxAmp = out;
-                    }
-                }
+            const gain = parseFloat(document.getElementById("audioGain")?.value || 4);
+            activeAmp = evaluateAudioReactiveOutput({ mags, timeSec, numBins, dividers, gain, patterns: PATTERNS });
+            const nowMs = Date.now();
+            if ((isRealESP32 || isBleMode) && mags && (!window._lastWifiAudioMs || nowMs - window._lastWifiAudioMs >= 66)) {
+                window._lastWifiAudioMs = nowMs;
+                const qMags = mags.map(v => Math.round(Math.min(1, Math.max(0, v)) * 255));
+                sendStateUpdate({ audioFrame: { mags: qMags, rms: +(gain / 4.0).toFixed(2) } });
             }
-            activeAmp = maxAmp;
         } else if (isStudioTab && customEvaluator) {
             activeAmp = customEvaluator.run(timeSec, frequencyShift, playbackSpeed, masterIntensity, startupFloor);
             const customName = customPatternNameInput.value.trim() || "Pattern Studio";
@@ -1911,59 +1919,13 @@ const sendStateUpdate = throttle(async (patch) => {
     }
 }, 100);
 
-async function sendConfigUpdate(configPatch) {
-    if (!isBleMode || !rxCharacteristic) {
-        throw new Error("Device settings have not finished loading");
-    }
-    return bleEnqueue(async () => {
-        if (configPatch?.apSsid) {
-            let name = configPatch.apSsid.trim();
-            if (!name.startsWith("Haxel")) name = "Haxel-" + name;
-            configPatch.apSsid = name;
-        }
-
-        const sections = [];
-        const identity = {};
-        if (configPatch.apSsid !== undefined) identity.apSsid = configPatch.apSsid;
-        if (configPatch.hostname !== undefined) identity.hostname = configPatch.hostname;
-        if (Object.keys(identity).length) sections.push({ section: "identity", data: identity });
-
-        if (configPatch.driver || configPatch.channelEnabled) {
-            const data = { ...(configPatch.driver || {}) };
-            if (configPatch.channelEnabled) data.channelEnabled = configPatch.channelEnabled;
-            sections.push({ section: "driver", data });
-        }
-        if (configPatch.audio) sections.push({ section: "audio", data: configPatch.audio });
-        if (configPatch.led) sections.push({ section: "led", data: configPatch.led });
-        if (configPatch.knobs?.length) sections.push({ section: "knobs", data: configPatch.knobs });
-        if (configPatch.oled) sections.push({ section: "oled", data: configPatch.oled });
-
-        if (!sections.length) return;
-
-        const legacyPayload = JSON.stringify({ type: "config", patch: configPatch });
-        if (sections.length === 1 && legacyPayload.length <= 200) {
-            await bleWriteJson({ type: "config", patch: configPatch });
-            addSerialLog(`[BLE] Sent config update (${legacyPayload.length} bytes)`);
-            return;
-        }
-
-        await bleWriteJson({ type: "config-start" });
-        await delay(30);
-        for (const s of sections) {
-            await bleWriteJson({ type: "config", section: s.section, data: s.data });
-            await delay(30);
-        }
-        await bleWriteJson({ type: "config-complete" });
-        addSerialLog(`[BLE] Sent config update (${sections.length} sections)`);
-    });
-}
-
 async function syncStateToESP32() {
     const patch = {
         on: isPlaying,
         intensity: masterIntensity / 255,
         speed: playbackSpeed,
         startupFloor: startupFloor,
+        audioReactive: document.getElementById("tab-audio")?.style.display !== "none",
         pattern: activePattern ? activePattern.id : "",
         numBins: numBins,
         dividers: dividers,
@@ -2020,7 +1982,11 @@ async function connectBLE() {
     
     try {
         bleDevice = await navigator.bluetooth.requestDevice({
-            filters: [{ namePrefix: 'Haxel' }],
+            filters: [
+                { services: [HAXEL_SERVICE_UUID] },
+                { namePrefix: 'Haxel' },
+                { namePrefix: 'haxel' }
+            ],
             optionalServices: [HAXEL_SERVICE_UUID]
         });
         
@@ -2320,23 +2286,13 @@ async function pushChannelEnabled() {
     const kind = drvKindMap[drvChip?.value] ?? 4;
     const rowCount = motorRowCount();
     const enabled = collapseChannelEnabledForSave(rowCount, kind);
-    const statePatch = { channels: enabled.map(on => ({ on: !!on })) };
-    const configPatch = { channelEnabled: enabled };
-    sendStateUpdate(statePatch);
+    sendStateUpdate({ channels: enabled.map(on => ({ on: !!on })) });
     addSerialLog(`[HAL] Motor outputs: ${enabled.map((on, i) => `Ch${i}=${on ? "ON" : "OFF"}`).join(", ")}`);
-    if (isBleMode) {
-        try {
-            await sendConfigUpdate(configPatch);
-        } catch (err) {
-            addSerialLog(`[BLE] channelEnabled save failed: ${err.message}`);
-        }
-        return;
-    }
     if (isRealESP32) {
         fetch('/json/config', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(configPatch)
+            body: JSON.stringify({ channelEnabled: enabled })
         }).catch(err => addSerialLog(`[CTRL] channelEnabled save failed: ${err.message}`));
     }
 }
@@ -2578,7 +2534,7 @@ renderKnobs();
 // Hardware Calibration Form Submission
 document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
     // Must match haxel::hal::DriverKind enum values.
-    const drvKindMapLocal = {
+    const drvKindMap = {
         "NONE": 0,
         "L298N": 1,
         "DRV8833": 2,
@@ -2587,7 +2543,7 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
         "MINI_HBRIDGE": 5
     };
     const drvChip = document.getElementById("drvChip").value;
-    const kind = drvKindMapLocal[drvChip] !== undefined ? drvKindMapLocal[drvChip] : 4;
+    const kind = drvKindMap[drvChip] !== undefined ? drvKindMap[drvChip] : 4;
     const pwmHz = parseInt(document.getElementById("pwmHz")?.value) || 20000;
 
     const sda = parseInt(document.getElementById("pinSDA").value);
@@ -2698,11 +2654,7 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
 
     addSerialLog(`[CTRL→ESP] Saving config: ${JSON.stringify(configPatch)}`);
 
-    if (isBleMode) {
-        sendConfigUpdate(configPatch)
-            .then(() => addSerialLog("[BLE] Configuration saved; device is rebooting with the new settings."))
-            .catch(err => addSerialLog(`[BLE] Config save failed: ${err.message}`));
-    } else if (isRealESP32) {
+    if (isRealESP32) {
         fetch('/json/config', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2736,167 +2688,4 @@ document.getElementById("saveHardwareBtn")?.addEventListener("click", () => {
         });
     }
 })();
-
-// ─── FLEET / COMMAND MODE (Master builds only) ───────────────────────────────
-let fleetEnabled = false;
-let fleetPollTimer = null;
-let lastFleetData = null;
-
-async function fleetPost(body) {
-    const r = await fetch("/json/fleet", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-    });
-    if (!r.ok) throw new Error("fleet HTTP " + r.status);
-    return r.json();
-}
-
-function drawMiniWave(canvas, history) {
-    if (!canvas || !history || !history.length) return;
-    const ctx = canvas.getContext("2d");
-    const dpr = window.devicePixelRatio || 1;
-    const w = canvas.clientWidth || 160;
-    const h = canvas.clientHeight || 36;
-    canvas.width = Math.round(w * dpr);
-    canvas.height = Math.round(h * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = "#f4ebd0";
-    ctx.fillRect(0, 0, w, h);
-    ctx.strokeStyle = "#111";
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    for (let i = 0; i < history.length; i++) {
-        const x = (i / (history.length - 1)) * w;
-        const y = h - 2 - history[i] * (h - 4);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-}
-
-function renderFleetCards(data) {
-    const root = document.getElementById("fleetCards");
-    const summary = document.getElementById("fleetSummary");
-    if (!root) return;
-    const nodes = data.nodes || [];
-    const connected = data.connected || 0;
-    if (summary) {
-        const names = nodes.filter(n => n.online).map(n => n.name || n.mac).join(", ");
-        summary.textContent = `${connected} connected` + (names ? ` — ${names}` : "");
-    }
-    root.innerHTML = "";
-    nodes.forEach(n => {
-        const card = document.createElement("div");
-        card.className = "fleet-card";
-        card.style.cssText = "border:2px solid #111;padding:10px;background:#fff;";
-        const status = n.online ? (n.claimed ? "CLAIMED" : "ONLINE") : "OFFLINE";
-        const statusColor = n.online ? (n.claimed ? "#002f6c" : "#e23b24") : "#666";
-        card.innerHTML = `
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-                <strong style="font-family:var(--font-display);font-size:12px;text-transform:uppercase;">${n.name || "Haxel"}</strong>
-                <span style="font-family:var(--font-display);font-size:9px;background:${statusColor};color:#fff;padding:2px 6px;">${status}</span>
-            </div>
-            <div style="font-family:var(--mono);font-size:10px;color:#555;margin:4px 0;">${n.mac}</div>
-            <div style="font-size:11px;">${n.pattern || "—"} · ${Math.round((n.intensity || 0) * 100)}% · duty ${(n.duty || 0).toFixed(2)}</div>
-            <canvas class="fleet-wave" height="36" style="width:100%;height:36px;margin-top:6px;border:1px solid #111;"></canvas>
-            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
-                <button class="btn" data-act="claim" style="padding:4px 8px;font-size:10px;">Claim</button>
-                <button class="btn" data-act="release" style="padding:4px 8px;font-size:10px;">Release</button>
-                <button class="btn" data-act="sync" style="padding:4px 8px;font-size:10px;">Push Config</button>
-            </div>`;
-        const canvas = card.querySelector(".fleet-wave");
-        drawMiniWave(canvas, n.waveHistory || []);
-        card.querySelectorAll("button[data-act]").forEach(btn => {
-            btn.addEventListener("click", async () => {
-                const act = btn.dataset.act;
-                try {
-                    if (act === "claim") await fleetPost({ action: "claim", mac: n.mac });
-                    else if (act === "release") await fleetPost({ action: "release", mac: n.mac });
-                    else if (act === "sync") await fleetPost({ action: "pushConfig", mac: n.mac });
-                    await refreshFleet();
-                } catch (e) {
-                    addSerialLog("[FLEET] " + e.message);
-                }
-            });
-        });
-        root.appendChild(card);
-    });
-}
-
-async function refreshFleet() {
-    if (!fleetEnabled) return;
-    try {
-        const r = await fetch("/json/fleet");
-        if (!r.ok) return;
-        lastFleetData = await r.json();
-        renderFleetCards(lastFleetData);
-        const sel = document.getElementById("fleetPatternSelect");
-        if (sel && sel.options.length === 0) {
-            PATTERNS.forEach(p => {
-                const opt = document.createElement("option");
-                opt.value = p.id;
-                opt.textContent = p.name;
-                sel.appendChild(opt);
-            });
-        }
-        if (sel && lastFleetData.fleetPattern) sel.value = lastFleetData.fleetPattern;
-        const fi = document.getElementById("fleetIntensity");
-        const fv = document.getElementById("fleetIntensityVal");
-        if (fi && typeof lastFleetData.fleetIntensity === "number") {
-            fi.value = Math.round(lastFleetData.fleetIntensity * 255);
-            if (fv) fv.textContent = Math.round(lastFleetData.fleetIntensity * 100) + "%";
-        }
-    } catch (_) { /* not a master */ }
-}
-
-async function initFleetUi() {
-    try {
-        const r = await fetch("/json/fleet");
-        if (!r.ok) return;
-        fleetEnabled = true;
-        const btn = document.getElementById("fleetTabBtn");
-        if (btn) btn.style.display = "";
-        lastFleetData = await r.json();
-        renderFleetCards(lastFleetData);
-
-        const fi = document.getElementById("fleetIntensity");
-        const fv = document.getElementById("fleetIntensityVal");
-        if (fi) {
-            fi.addEventListener("input", () => {
-                if (fv) fv.textContent = Math.round((fi.value / 255) * 100) + "%";
-            });
-        }
-        const claimAll = document.getElementById("fleetClaimAllBtn");
-        const releaseAll = document.getElementById("fleetReleaseAllBtn");
-        const estop = document.getElementById("fleetEstopBtn");
-        const apply = document.getElementById("fleetApplyBtn");
-        const play = document.getElementById("fleetPlayBtn");
-        const stop = document.getElementById("fleetStopBtn");
-        if (claimAll) claimAll.onclick = async () => { await fleetPost({ action: "claim" }); refreshFleet(); };
-        if (releaseAll) releaseAll.onclick = async () => { await fleetPost({ action: "release" }); refreshFleet(); };
-        if (estop) estop.onclick = async () => { await fleetPost({ action: "estop" }); refreshFleet(); };
-        const sendFleetState = async (extra = {}) => {
-            const intensity = (document.getElementById("fleetIntensity")?.value || 150) / 255;
-            const pattern = document.getElementById("fleetPatternSelect")?.value || "Breath";
-            await fleetPost({
-                action: "state",
-                patch: { intensity, pattern, ...extra }
-            });
-            refreshFleet();
-        };
-        if (apply) apply.onclick = () => sendFleetState();
-        if (play) play.onclick = () => sendFleetState({ on: true, mute: false });
-        if (stop) stop.onclick = () => sendFleetState({ on: false, mute: true });
-
-        clearInterval(fleetPollTimer);
-        fleetPollTimer = setInterval(refreshFleet, 750);
-        addSerialLog("[FLEET] Command Mode Master portal ready");
-    } catch (_) {
-        fleetEnabled = false;
-    }
-}
-
-// Kick fleet UI after portal boot (master builds only).
-setTimeout(() => { if (typeof isRealESP32 !== "undefined" && isRealESP32) initFleetUi(); }, 1200);
 

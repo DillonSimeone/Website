@@ -51,6 +51,28 @@ bool LedController::begin(Config* config, Engine* engine) {
         case 17: FastLED.addLeds<WS2812B, 17, GRB>(crgbLeds, count_); break;
         case 19: FastLED.addLeds<WS2812B, 19, GRB>(crgbLeds, count_); break;
         case 20: FastLED.addLeds<WS2812B, 20, GRB>(crgbLeds, count_); break;
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+        case 1:  FastLED.addLeds<WS2812B, 1,  GRB>(crgbLeds, count_); break;
+        case 2:  FastLED.addLeds<WS2812B, 2,  GRB>(crgbLeds, count_); break;
+        case 4:  FastLED.addLeds<WS2812B, 4,  GRB>(crgbLeds, count_); break;
+        case 5:  FastLED.addLeds<WS2812B, 5,  GRB>(crgbLeds, count_); break;
+        case 6:  FastLED.addLeds<WS2812B, 6,  GRB>(crgbLeds, count_); break;
+        case 7:  FastLED.addLeds<WS2812B, 7,  GRB>(crgbLeds, count_); break;
+        case 8:  FastLED.addLeds<WS2812B, 8,  GRB>(crgbLeds, count_); break;
+        case 9:  FastLED.addLeds<WS2812B, 9,  GRB>(crgbLeds, count_); break;
+        case 10: FastLED.addLeds<WS2812B, 10, GRB>(crgbLeds, count_); break;
+        case 11: FastLED.addLeds<WS2812B, 11, GRB>(crgbLeds, count_); break;
+        case 12: FastLED.addLeds<WS2812B, 12, GRB>(crgbLeds, count_); break;
+        case 13: FastLED.addLeds<WS2812B, 13, GRB>(crgbLeds, count_); break;
+        case 14: FastLED.addLeds<WS2812B, 14, GRB>(crgbLeds, count_); break;
+        case 15: FastLED.addLeds<WS2812B, 15, GRB>(crgbLeds, count_); break;
+        case 16: FastLED.addLeds<WS2812B, 16, GRB>(crgbLeds, count_); break;
+        case 17: FastLED.addLeds<WS2812B, 17, GRB>(crgbLeds, count_); break;
+        case 18: FastLED.addLeds<WS2812B, 18, GRB>(crgbLeds, count_); break;
+        case 21: FastLED.addLeds<WS2812B, 21, GRB>(crgbLeds, count_); break;
+        case 38: FastLED.addLeds<WS2812B, 38, GRB>(crgbLeds, count_); break;
+        case 47: FastLED.addLeds<WS2812B, 47, GRB>(crgbLeds, count_); break;
+        case 48: FastLED.addLeds<WS2812B, 48, GRB>(crgbLeds, count_); break;
 #else
         case 2:  FastLED.addLeds<WS2812B, 2,  GRB>(crgbLeds, count_); break;
         case 4:  FastLED.addLeds<WS2812B, 4,  GRB>(crgbLeds, count_); break;

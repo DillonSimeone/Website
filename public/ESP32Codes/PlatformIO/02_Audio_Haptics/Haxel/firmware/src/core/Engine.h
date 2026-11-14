@@ -45,6 +45,7 @@ struct StagedState {
     bool        clearFault = false;
 
     // Audio Partitioning and Calibration Config
+    bool        audioReactive = false;
     float       startupFloor = 0.35f;
     // Audio partition defaults: Bin0=NONE, Bin1/Bin2=library patterns.
     uint8_t     numBins = 3;
@@ -69,7 +70,7 @@ public:
     void attachDriver(hal::IHapticDriver* drv);
     void attachAudio(AudioAnalyzer* audio);
 
-    // Called at 1 kHz from engineTask.
+    // Called at 250 Hz (4 ms) from engineTask.
     void tick();
 
     // Thread-safe: double-buffer the next full state snapshot (latest wins).
@@ -108,10 +109,13 @@ public:
 private:
     void drainCommands_();
     void hardAllOff_();
-    void writeAllChannels(float masterTime_ms);
+    void writeAllChannels(float masterTime_ms, float dtMs);
     void recordJitter(uint32_t tickUs);
 
+    static constexpr uint32_t kTargetTickUs = 4000; // 250 Hz
     hal::IHapticDriver* driver_ = nullptr;
+    uint32_t            lastTickDeltaUs_ = kTargetTickUs;
+    float               patternTimeMs_   = 0.0f;
     AudioAnalyzer*      audio_  = nullptr;
 
     StagedState         active_;

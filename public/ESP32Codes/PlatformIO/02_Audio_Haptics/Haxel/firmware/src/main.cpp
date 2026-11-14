@@ -5,6 +5,10 @@
 // core 1; web stack lives on core 0. See ARCHITECTURE.md §2.
 
 #include <Arduino.h>
+#include <esp_system.h>
+#include <esp_task_wdt.h>
+#include <esp_wifi.h>
+#include "web/StateApi.h"
 #include <LittleFS.h>
 #ifdef HAXEL_WIFI
 #include <WiFi.h>
@@ -96,7 +100,7 @@ void ledTask(void*) {
 #endif
 
 void engineTask(void*) {
-    const TickType_t period = pdMS_TO_TICKS(1);
+    const TickType_t period = pdMS_TO_TICKS(4); // 250 Hz
     TickType_t last = xTaskGetTickCount();
     for (;;) {
         gEngine.tick();
@@ -125,7 +129,15 @@ void housekeepingTask(void*) {
 #endif
 #endif
     bool eStopLatched = false;
+    esp_task_wdt_add(NULL);
+#ifdef HAXEL_WIFI
+    uint16_t radioLockDiv = 0;
+#endif
     for (;;) {
+        esp_task_wdt_reset();
+        if (web::isDeferredRebootDue()) {
+            ESP.restart();
+        }
         gStatusLed.tick();
 #if HAXEL_FEATURE_KNOBS
         gKnobs.tick();
@@ -142,7 +154,7 @@ void housekeepingTask(void*) {
 
         // Optional active-low E-stop GPIO (config.eStopPin, -1 = off).
         if (gConfig.eStopPin() >= 0) {
-            pinMode(gConfig.eStopPin(), INPUT_PULLUP);
+
             const bool pressed = digitalRead(gConfig.eStopPin()) == LOW;
             if (pressed && !eStopLatched) {
                 gEngine.requestEStop();
@@ -155,6 +167,13 @@ void housekeepingTask(void*) {
 
 #ifdef HAXEL_WIFI
         gPortal.pump();
+        if (++radioLockDiv >= 300) {
+            radioLockDiv = 0;
+            wifi_ps_type_t ps = WIFI_PS_NONE;
+            if (esp_wifi_get_ps(&ps) == ESP_OK && ps != WIFI_PS_NONE) {
+                esp_wifi_set_ps(WIFI_PS_NONE);
+            }
+        }
 #if !HAXEL_FEATURE_MESH_MASTER
         if (WiFi.getMode() == WIFI_STA && WiFi.status() != WL_CONNECTED) {
             // STA dropped — raise AP fallback alongside.
@@ -172,7 +191,7 @@ void housekeepingTask(void*) {
                 WiFi.softAPdisconnect(true);
                 gStatusLed.connected();
                 gPortal.end();
-            } else if (millis() - lastStaRetryMs > 15000) {
+            } else if (millis() - lastStaRetryMs > 15000 && WiFi.softAPgetStationNum() == 0) {
                 // Retry connecting to STA every 15 seconds
                 lastStaRetryMs = millis();
                 if (gConfig.staEnabled() && !gConfig.staSsid().isEmpty()) {
@@ -182,6 +201,9 @@ void housekeepingTask(void*) {
             }
         }
 #endif
+#endif
+#ifdef HAXEL_BLU
+        gBle.pump();
 #endif
 #if HAXEL_FEATURE_MESH_MASTER
         mesh::MeshMaster::instance().tick();
@@ -210,6 +232,7 @@ bool bringUpWifi() {
     if (gConfig.staEnabled() && !gConfig.staSsid().isEmpty()) {
         gStatusLed.breathing();
         WiFi.mode(WIFI_STA);
+        esp_wifi_set_ps(WIFI_PS_NONE);
         WiFi.setTxPower(WIFI_POWER_8_5dBm);
         Serial.printf("\n\n>>> Connecting to WiFi SSID: '%s' <<<\n\n", gConfig.staSsid().c_str());
         WiFi.begin(gConfig.staSsid().c_str(), gConfig.staPass().c_str());
@@ -227,6 +250,7 @@ bool bringUpWifi() {
     WiFi.mode(WIFI_OFF);
     delay(100);
     WiFi.mode(WIFI_AP);
+    esp_wifi_set_ps(WIFI_PS_NONE);
     WiFi.setTxPower(WIFI_POWER_19_5dBm); // Restoring standard Tx Power so the AP signal is strong/visible
     IPAddress apIP(192, 168, 4, 1);
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
@@ -248,6 +272,17 @@ bool bringUpWifi() {
 
 void setup() {
     Serial.begin(115200);
+#if ARDUINO_USB_CDC_ON_BOOT
+    Serial.setTxTimeoutMs(0); // Never block when running on a USB wall adapter
+#endif
+    {
+        esp_reset_reason_t reason = esp_reset_reason();
+        log_i("Haxel %s — booting (reset=%d)", kVersion, (int)reason);
+        if (reason == ESP_RST_TASK_WDT || reason == ESP_RST_WDT) {
+            log_w("Previous boot reset was caused by Watchdog Timer!");
+        }
+    }
+    esp_task_wdt_init(5, true);
     log_i("Haxel %s — booting", kVersion);
 
     if (!LittleFS.begin(true)) {
@@ -304,6 +339,7 @@ void setup() {
             boot.intensity = rt.intensity;
             boot.speed = rt.speed;
             boot.startupFloor = rt.startupFloor;
+            boot.audioReactive = rt.audioReactive;
             boot.numBins = rt.numBins;
             for (int i = 0; i < 4; ++i) boot.dividers[i] = rt.dividers[i];
             for (int i = 0; i < 5; ++i) {
@@ -396,13 +432,20 @@ void setup() {
     mesh::MeshFollower::instance().begin(&gEngine, &gConfig);
 #endif
 
-    xTaskCreatePinnedToCore(engineTask, "engine", 4096, nullptr, 5, &hEngine, HB_CORE_RT);
+    if (gConfig.eStopPin() >= 0) {
+        pinMode(gConfig.eStopPin(), INPUT_PULLUP);
+    }
+    constexpr UBaseType_t kEnginePrio = (HB_CORE_RT == HB_CORE_NET) ? 3 : 5;
+#if HAXEL_FEATURE_AUDIO
+    constexpr UBaseType_t kAudioPrio  = (HB_CORE_RT == HB_CORE_NET) ? 3 : 4;
+#endif
+    xTaskCreatePinnedToCore(engineTask, "engine", 4096, nullptr, kEnginePrio, &hEngine, HB_CORE_RT);
 #if HAXEL_FEATURE_AUDIO
     if (gConfig.audioEnabled()) {
-        xTaskCreatePinnedToCore(audioTask, "audio", 6144, nullptr, 4, &hAudio, HB_CORE_RT);
+        xTaskCreatePinnedToCore(audioTask, "audio", 6144, nullptr, kAudioPrio, &hAudio, HB_CORE_RT);
     }
 #endif
-    xTaskCreatePinnedToCore(housekeepingTask, "house", 4096, nullptr, 1, &hHouse, HB_CORE_NET);
+    xTaskCreatePinnedToCore(housekeepingTask, "house", 6144, nullptr, 2, &hHouse, HB_CORE_NET);
 
 #if HAXEL_FEATURE_LED
     if (gConfig.ledEnabled()) {

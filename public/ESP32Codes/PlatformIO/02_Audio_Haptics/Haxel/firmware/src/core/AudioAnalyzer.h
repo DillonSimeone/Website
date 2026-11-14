@@ -23,7 +23,7 @@ private:
     AudioConfig cfg_{};
     AudioFrame  latest_{};
 
-    static constexpr size_t kWindow = 1024;
+    static constexpr size_t kWindow = 512;
     float       samples_[kWindow]{};
     float       fftReal_[kWindow]{};
     float       fftImag_[kWindow]{};
@@ -31,6 +31,11 @@ private:
 
     // Double buffer and timer for non-blocking ADC sampling
     float       adcBuffers_[2][kWindow]{};
+    int32_t     i2sRaw_[kWindow]{};
+    int32_t     i2sScratch_[kWindow]{};
+    uint16_t    bandLo_[32]{};
+    uint16_t    bandHi_[32]{};
+    float       activeSampleRate_ = 22050.0f;
     volatile uint8_t activeBuffer_ = 0;
     volatile uint16_t adcWriteIdx_ = 0;
     volatile bool bufferReady_ = false;

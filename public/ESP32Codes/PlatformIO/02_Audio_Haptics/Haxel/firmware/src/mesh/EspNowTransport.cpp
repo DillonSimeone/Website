@@ -31,6 +31,7 @@ bool EspNowTransport::begin(uint8_t channel) {
         delay(50);
     }
 
+    esp_wifi_set_ps(WIFI_PS_NONE);
     esp_wifi_set_channel(channel_, WIFI_SECOND_CHAN_NONE);
 
     if (esp_now_init() != ESP_OK) {

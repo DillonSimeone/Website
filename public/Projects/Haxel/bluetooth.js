@@ -1,5 +1,15 @@
 import { Parser, tokenize, Evaluator, highlight, updateAudioState, pnoise1 } from './compiler.js';
 import { addSerialLog, triggerI2CBlink, updateHardwarePins, initBootLogs, serialConsole } from './emulator.js';
+import {
+    computeDividersForRange,
+    updateBinRangeLabels as updateBinRangeLabelsShared,
+    renderBinRows as renderBinRowsShared,
+    initSpectrumDividers as initSpectrumDividersShared,
+    drawSpectrum as drawSpectrumShared,
+    downsampleMicSpectrum,
+    computeSimulatedSpectrum,
+    evaluateAudioReactiveOutput
+} from './audio-reactive.js';
 import { PATTERNS, loadCustomPatterns, initPhoneHaptics } from './haptics.js';
 
 // ─── CANVAS REFS ────────────────────────────────────────────────────────────
@@ -105,9 +115,13 @@ document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () =>
     } else {
         stopMicrophone();
     }
+    if (t.dataset.tab === "studio" && customEvaluator && ta && bleReady && rxCharacteristic) {
+        pushStudioDraftDebounced(ta.value);
+    }
     // Setup visible canvases
     setupSharpCanvas(prevCanvas);
     setupSharpCanvas(heroCanvas);
+    syncStateToESP32();
 }));
 
 // ─── EDITOR WIRING ──────────────────────────────────────────────────────────
@@ -183,7 +197,76 @@ document.querySelectorAll(".chip-preset").forEach(btn => {
     });
 });
 
+const STUDIO_DRAFT_ID = "studio_draft";
+let studioDraftTimer = null;
 let customEvaluator = null;
+
+function pushStudioDraftToDevice(code, playAfter = true) {
+    if (!bleReady || !rxCharacteristic) {
+        return Promise.resolve(false);
+    }
+    const name = (customPatternNameInput && customPatternNameInput.value.trim()) || "Studio Draft";
+    addSerialLog(`[CTRL→ESP] Pushing studio draft (${code.length} chars)`);
+
+    return bleEnqueue(() => bleSendCustomPattern({ id: STUDIO_DRAFT_ID, name, code }))
+        .then(() => {
+            let draft = PATTERNS.find(p => p.id === STUDIO_DRAFT_ID);
+            if (!draft) {
+                draft = {
+                    id: STUDIO_DRAFT_ID,
+                    name: name + " (Live)",
+                    category: "custom",
+                    desc: "Live Pattern Studio draft on device.",
+                    isCustom: true,
+                    code,
+                    func: (t) => customEvaluator
+                        ? customEvaluator.run(t, frequencyShift, playbackSpeed, masterIntensity, startupFloor)
+                        : 0
+                };
+                PATTERNS.push(draft);
+            } else {
+                draft.name = name + " (Live)";
+                draft.code = code;
+                draft.func = (t) => customEvaluator
+                    ? customEvaluator.run(t, frequencyShift, playbackSpeed, masterIntensity, startupFloor)
+                    : 0;
+            }
+            activePattern = draft;
+            const label = document.getElementById("patternName");
+            if (label) label.textContent = `${name} (Studio)`;
+            if (playAfter) {
+                isPlaying = true;
+            }
+            sendStateUpdate({
+                on: isPlaying,
+                intensity: masterIntensity / 255,
+                speed: playbackSpeed,
+                startupFloor: startupFloor,
+                audioReactive: document.getElementById("tab-audio")?.style.display !== "none",
+                pattern: STUDIO_DRAFT_ID,
+                name,
+                numBins: numBins,
+                dividers: dividers,
+                binPatterns: Array.from({ length: numBins }).map((_, i) => {
+                    const el = document.getElementById(`bin-${i}-pattern`);
+                    return el ? el.value : "none";
+                })
+            });
+            return true;
+        })
+        .catch(err => {
+            addSerialLog(`[CTRL→ESP] Studio draft BLE failed: ${err.message}`);
+            return false;
+        });
+}
+
+function pushStudioDraftDebounced(code) {
+    clearTimeout(studioDraftTimer);
+    studioDraftTimer = setTimeout(() => {
+        if (customEvaluator) pushStudioDraftToDevice(code, true);
+    }, 350);
+}
+
 function compileCustom() {
     if (!ta) return;
     const src = ta.value;
@@ -193,7 +276,13 @@ function compileCustom() {
         compilerStatus.textContent = "compiled ✓";
         compilerStatus.className = "compilation-status ok";
         addSerialLog("[IDE] Compiled custom pattern successfully!");
+        if (bleReady && rxCharacteristic) {
+            pushStudioDraftDebounced(src);
+        } else {
+            addSerialLog("[IDE] Compiled locally — connect BLE to live-push to device");
+        }
     } catch (e) {
+        customEvaluator = null;
         compilerStatus.textContent = "Error: " + e.message;
         compilerStatus.className = "compilation-status err";
     }
@@ -321,36 +410,7 @@ if (audioGainInput) {
 function recalculateDividers() {
     const minFreq = parseFloat(audioMinFreqInput ? audioMinFreqInput.value : 40);
     const maxFreq = parseFloat(audioMaxFreqInput ? audioMaxFreqInput.value : 16000);
-    
-    const getBandAtFreq = (f) => Math.max(0, Math.min(32, Math.round(32 * Math.log(f / 40) / Math.log(20000 / 40))));
-    const minBandIdx = getBandAtFreq(minFreq);
-    const maxBandIdx = getBandAtFreq(maxFreq);
-    
-    const numDividers = numBins - 1;
-    if (numDividers >= 1) {
-        dividers = new Array(numDividers);
-        dividers[0] = minBandIdx;
-        if (numDividers > 1) {
-            dividers[numDividers - 1] = maxBandIdx;
-            for (let i = 1; i < numDividers - 1; i++) {
-                const ratio = i / (numDividers - 1);
-                dividers[i] = Math.round(minBandIdx + ratio * (maxBandIdx - minBandIdx));
-            }
-        }
-    }
-    
-    for (let i = 0; i < dividers.length; i++) {
-        if (i > 0 && dividers[i] <= dividers[i - 1]) {
-            dividers[i] = dividers[i - 1] + 1;
-        }
-    }
-    for (let i = dividers.length - 1; i >= 0; i--) {
-        if (dividers[i] >= 32) dividers[i] = 31;
-        if (i < dividers.length - 1 && dividers[i] >= dividers[i + 1]) {
-            dividers[i] = dividers[i + 1] - 1;
-        }
-    }
-    
+    dividers = computeDividersForRange(minFreq, maxFreq, numBins);
     renderBinRows();
     syncStateToESP32();
 }
@@ -612,7 +672,10 @@ async function setupMicrophone() {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 256; // 128 bands
+        analyser.fftSize = 1024; // 512 bands (~47 Hz resolution)
+        analyser.smoothingTimeConstant = 0.65;
+        analyser.minDecibels = -85;
+        analyser.maxDecibels = -15;
         
         micStream = stream;
         micSource = audioCtx.createMediaStreamSource(stream);
@@ -658,94 +721,246 @@ if (micSrcSelect) {
 }
 
 // ─── SPECTRUM ROUTING MATRIX GENERATION ─────────────────────────────────────
-const routingMatrix = document.getElementById("routingMatrix");
+const routingMatrix = document.getElementById("bins-container") || document.getElementById("routingMatrix");
+
+function updateBinRangeLabels() {
+    updateBinRangeLabelsShared(numBins, dividers);
+}
+
 function renderBinRows() {
-    if (!routingMatrix) return;
-    routingMatrix.innerHTML = "";
-    
-    for (let i = 0; i < numBins; ++i) {
-        const row = document.createElement("div");
-        row.className = "routing-row";
-        
-        let rangeStr = "";
-        const getFreqAtBand = (idx) => Math.round(40 * Math.pow(20000 / 40, idx / 32));
-        const lowIdx = (i === 0) ? 0 : dividers[i - 1];
-        const highIdx = (i === numBins - 1) ? 31 : dividers[i];
-        rangeStr = `${getFreqAtBand(lowIdx)}-${getFreqAtBand(highIdx)} Hz`;
-        
-        row.innerHTML = `
-            <div style="flex: 1; display: flex; flex-direction: column;">
-                <span class="bin-title" style="font-weight: bold; font-size: 11px;">BIN ${String(i).padStart(2, '0')}</span>
-                <span class="bin-freq-label" style="font-size: 10px; color: #555;">${rangeStr}</span>
-            </div>
-            
-            <div class="bin-divider-handles" style="display: flex; gap: 4px; align-items: center; margin-right: 15px;">
-                ${i < numBins - 1 ? `<button class="btn-div-adj down" data-div="${i}">&lt;</button><span class="div-val">${dividers[i]}</span><button class="btn-div-adj up" data-div="${i}">&gt;</button>` : ''}
-            </div>
-
-            <div style="flex: 2; display: flex; align-items: center; justify-content: flex-end; gap: 6px;">
-                <label style="font-size: 10px;">Pattern:</label>
-                <select class="bin-pattern-select" id="bin-${i}-pattern" style="padding: 4px; font-family: var(--font-display); font-size: 10px;">
-                    <option value="none">None (Muted)</option>
-                </select>
-            </div>
-        `;
-        
-        routingMatrix.appendChild(row);
-    }
-
-    document.querySelectorAll(".btn-div-adj").forEach(btn => {
-        btn.addEventListener("click", (e) => {
-            const divIdx = parseInt(btn.dataset.div);
-            const isUp = btn.classList.contains("up");
-            
-            let val = dividers[divIdx];
-            if (isUp) val++; else val--;
-            
-            const min = (divIdx === 0) ? 1 : dividers[divIdx - 1] + 1;
-            const max = (divIdx === dividers.length - 1) ? 30 : dividers[divIdx + 1] - 1;
-            
-            if (val >= min && val <= max) {
-                dividers[divIdx] = val;
-                recalculateDividers();
-            }
-        });
-    });
-
-    populateBinPatternSelects();
-    
-    document.querySelectorAll(".bin-pattern-select").forEach(sel => {
-        sel.addEventListener("change", () => {
-            syncStateToESP32();
-        });
+    renderBinRowsShared({
+        container: routingMatrix,
+        numBins,
+        dividers,
+        patterns: PATTERNS,
+        minFreq: parseFloat(audioMinFreqInput ? audioMinFreqInput.value : 40),
+        maxFreq: parseFloat(audioMaxFreqInput ? audioMaxFreqInput.value : 16000),
+        onSync: () => syncStateToESP32()
     });
 }
 
-function populateBinPatternSelects() {
+function _unusedRenderBinRowsLegacy() {
+    if (!routingMatrix) return;
+
+    const savedValues = [];
     for (let i = 0; i < numBins; ++i) {
-        const sel = document.getElementById(`bin-${i}-pattern`);
-        if (!sel) continue;
-        
-        const oldVal = sel.value;
-        sel.innerHTML = `<option value="none">None (Muted)</option>`;
+        const el = document.getElementById(`bin-${i}-pattern`);
+        savedValues.push(el ? el.value : null);
+    }
+
+    routingMatrix.innerHTML = "";
+    const defaults = ["none", "Pulse", "Rumble", "Staccato", "Ocean"];
+
+    for (let i = 0; i < numBins; ++i) {
+        const row = document.createElement("div");
+        row.className = "bin-row";
+
+        const minFreq = parseFloat(audioMinFreqInput ? audioMinFreqInput.value : 40);
+        const maxFreq = parseFloat(audioMaxFreqInput ? audioMaxFreqInput.value : 16000);
+        const getBandAtFreq = (f) => Math.max(0, Math.min(32, Math.round(32 * Math.log(f / 40) / Math.log(20000 / 40))));
+        const minBandIdx = getBandAtFreq(minFreq);
+        const maxBandIdx = getBandAtFreq(maxFreq);
+
+        let labelName = `Bin ${i}`;
+        if (i === 0 && minBandIdx > 0) {
+            labelName += ` (Anti-Loop / Low Cut)`;
+        } else if (i === numBins - 1 && maxBandIdx < 32) {
+            labelName += ` (High Cut / End Bin)`;
+        } else {
+            const activeIdx = (minBandIdx > 0) ? (i - 1) : i;
+            const activeCount = numBins - (minBandIdx > 0 ? 1 : 0) - (maxBandIdx < 32 ? 1 : 0);
+            if (activeCount === 3) {
+                const labels = ["Bass", "Mids", "Treble"];
+                labelName += ` (${labels[activeIdx] || `Active ${activeIdx + 1}`})`;
+            } else if (activeCount === 2) {
+                const labels = ["Bass/Mids", "Treble"];
+                labelName += ` (${labels[activeIdx] || `Active ${activeIdx + 1}`})`;
+            } else {
+                labelName += ` (Active ${activeIdx + 1})`;
+            }
+        }
+
+        row.innerHTML = `
+            <span class="bin-title">${labelName}:</span>
+            <span class="bin-range" id="bin-${i}-range">-</span>
+            <select class="bin-pattern-select" id="bin-${i}-pattern">
+                <option value="none">NONE (No Reactivity)</option>
+            </select>
+        `;
+
+        routingMatrix.appendChild(row);
+
+        const sel = row.querySelector(".bin-pattern-select");
+        sel.addEventListener("change", () => {
+            syncStateToESP32();
+        });
         PATTERNS.forEach(p => {
             const opt = document.createElement("option");
             opt.value = p.id;
             opt.textContent = p.name;
             sel.appendChild(opt);
         });
-        
+
+        const prevVal = savedValues[i];
+        const pickDefault = () => {
+            if (i === 0) return "none";
+            if (i === 1) return Array.from(sel.options).some(o => o.value === "Pulse") ? "Pulse" : (PATTERNS[0]?.id || "none");
+            if (i === 2) return Array.from(sel.options).some(o => o.value === "Rumble") ? "Rumble" : (PATTERNS[1]?.id || PATTERNS[0]?.id || "none");
+            const cand = defaults[i] || "none";
+            return Array.from(sel.options).some(o => o.value === cand) ? cand : "none";
+        };
+        if (prevVal && Array.from(sel.options).some(o => o.value === prevVal)) {
+            sel.value = prevVal;
+        } else {
+            sel.value = pickDefault();
+        }
+    }
+
+    updateBinRangeLabels();
+}
+
+function populateBinPatternSelects() {
+    for (let i = 0; i < numBins; ++i) {
+        const sel = document.getElementById(`bin-${i}-pattern`);
+        if (!sel) continue;
+
+        const oldVal = sel.value;
+        sel.innerHTML = `<option value="none">NONE (No Reactivity)</option>`;
+        PATTERNS.forEach(p => {
+            const opt = document.createElement("option");
+            opt.value = p.id;
+            opt.textContent = p.name;
+            sel.appendChild(opt);
+        });
+
         if (Array.from(sel.options).some(o => o.value === oldVal)) {
             sel.value = oldVal;
+        } else if (i === 0) {
+            sel.value = "none";
+        } else if (i === 1) {
+            sel.value = Array.from(sel.options).some(o => o.value === "Pulse") ? "Pulse" : (PATTERNS[0]?.id || "none");
+        } else if (i === 2) {
+            sel.value = Array.from(sel.options).some(o => o.value === "Rumble") ? "Rumble" : (PATTERNS[1]?.id || PATTERNS[0]?.id || "none");
         } else {
-            if (i === 0) sel.value = "Pulse";
-            else if (i === 1) sel.value = "Sawtooth";
-            else sel.value = "none";
+            sel.value = "none";
         }
     }
 }
 
+function initSpectrumDividers() {
+    initSpectrumDividersShared({
+        canvas: specCanvas,
+        getDividers: () => dividers,
+        onUpdate: () => updateBinRangeLabels(),
+        onCommit: () => syncStateToESP32()
+    });
+}
+
+function _unusedInitSpectrumDividersLegacy() {
+    if (!specCanvas) return;
+
+    const getMouseX = (e) => {
+        const rect = specCanvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        return clientX - rect.left;
+    };
+
+    const handleStart = (e) => {
+        const mx = getMouseX(e);
+        const dpr = window.devicePixelRatio || 1;
+        const cssW = specCanvas.width / dpr;
+
+        let closestIdx = -1;
+        let minDist = 15;
+        dividers.forEach((divVal, idx) => {
+            const x = divVal * (cssW / 32);
+            const dist = Math.abs(mx - x);
+            if (dist < minDist) {
+                minDist = dist;
+                closestIdx = idx;
+            }
+        });
+
+        if (closestIdx >= 0) {
+            draggingDividerIdx = closestIdx;
+            e.preventDefault();
+        }
+    };
+
+    const handleMove = (e) => {
+        if (draggingDividerIdx < 0) return;
+        const mx = getMouseX(e);
+        const dpr = window.devicePixelRatio || 1;
+        const cssW = specCanvas.width / dpr;
+        const band = Math.round((mx / cssW) * 32);
+
+        const minVal = draggingDividerIdx === 0 ? 1 : dividers[draggingDividerIdx - 1] + 1;
+        const maxVal = draggingDividerIdx === dividers.length - 1 ? 31 : dividers[draggingDividerIdx + 1] - 1;
+        dividers[draggingDividerIdx] = Math.max(minVal, Math.min(maxVal, band));
+
+        updateBinRangeLabels();
+        e.preventDefault();
+    };
+
+    const handleEnd = () => {
+        if (draggingDividerIdx >= 0) {
+            syncStateToESP32();
+        }
+        draggingDividerIdx = -1;
+    };
+
+    specCanvas.addEventListener("mousedown", handleStart);
+    specCanvas.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleEnd);
+
+    specCanvas.addEventListener("touchstart", handleStart, { passive: false });
+    specCanvas.addEventListener("touchmove", handleMove, { passive: false });
+    window.addEventListener("touchend", handleEnd);
+}
+
 renderBinRows();
+initSpectrumDividers();
+
+const addBinBtn = document.getElementById("addBinBtn");
+const subBinBtn = document.getElementById("subBinBtn");
+
+if (addBinBtn) {
+    addBinBtn.addEventListener("click", () => {
+        if (numBins >= 5) {
+            addSerialLog("[WARN] Max bin partition limit (5) reached.");
+            return;
+        }
+        numBins++;
+        let newDivVal = 16;
+        if (dividers.length > 0) {
+            const lastVal = dividers[dividers.length - 1];
+            newDivVal = Math.min(31, Math.round(lastVal + (32 - lastVal) / 2));
+        }
+        dividers.push(newDivVal);
+        dividers.sort((a, b) => a - b);
+
+        addSerialLog(`[AUDIO] Added bin partition. Total bins: ${numBins}`);
+        renderBinRows();
+        triggerI2CBlink();
+        syncStateToESP32();
+    });
+}
+
+if (subBinBtn) {
+    subBinBtn.addEventListener("click", () => {
+        if (numBins <= 1) {
+            addSerialLog("[WARN] Min bin partition limit (1) reached.");
+            return;
+        }
+        numBins--;
+        dividers.pop();
+
+        addSerialLog(`[AUDIO] Subtracted bin partition. Total bins: ${numBins}`);
+        renderBinRows();
+        triggerI2CBlink();
+        syncStateToESP32();
+    });
+}
 
 // ─── WEB BLUETOOTH INTEGRATION ───────────────────────────────────────────────
 let bleDevice = null;
@@ -758,6 +973,7 @@ let bleStateReceived = false;
 let bleConfigReceived = false;
 let pendingDeviceConfig = null;
 let bleSyncTimer = null;
+let bleSyncRetryTimer = null;
 let bleSyncRetryCount = 0;
 
 const HAXEL_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
@@ -783,6 +999,8 @@ function resetBleHydration(message = "connect BLE") {
     pendingDeviceConfig = null;
     bleSyncRetryCount = 0;
     clearTimeout(bleSyncTimer);
+    clearInterval(bleSyncRetryTimer);
+    bleSyncRetryTimer = null;
     setBlePortalLocked(true, message);
 }
 
@@ -790,6 +1008,8 @@ function finishBleHydrationIfReady() {
     if (!bleStateReceived || !bleConfigReceived) return;
     bleReady = true;
     clearTimeout(bleSyncTimer);
+    clearInterval(bleSyncRetryTimer);
+    bleSyncRetryTimer = null;
     setBlePortalLocked(false, "connected");
     const bleStatus = document.getElementById("bleStatusLabel");
     if (bleStatus) bleStatus.textContent = "Connected · settings loaded";
@@ -813,9 +1033,15 @@ async function bleWriteJson(obj) {
     if (!rxCharacteristic) throw new Error("BLE not connected");
     const payload = JSON.stringify(obj);
     const data = new TextEncoder().encode(payload);
-    // Prefer acknowledged writes — NR drops are silent when over MTU.
-    if (rxCharacteristic.properties && rxCharacteristic.properties.write) {
-        await rxCharacteristic.writeValue(data);
+    // Prefer Write-Without-Response: ESP32 Bluedroid + Windows WinRT silently drops acknowledged writes on RX.
+    if (rxCharacteristic.properties && rxCharacteristic.properties.writeWithoutResponse && typeof rxCharacteristic.writeValueWithoutResponse === "function") {
+        await rxCharacteristic.writeValueWithoutResponse(data);
+    } else if (rxCharacteristic.properties && rxCharacteristic.properties.write) {
+        if (typeof rxCharacteristic.writeValueWithResponse === "function") {
+            await rxCharacteristic.writeValueWithResponse(data);
+        } else {
+            await rxCharacteristic.writeValue(data);
+        }
     } else {
         await rxCharacteristic.writeValueWithoutResponse(data);
     }
@@ -958,14 +1184,25 @@ async function connectBLE() {
         
         // Read-only handshake. Never send portal defaults during connection.
         await bleWriteJson({ type: "sync-request" });
+        bleSyncRetryTimer = setInterval(() => {
+            if (bleReady || !rxCharacteristic) {
+                clearInterval(bleSyncRetryTimer);
+                bleSyncRetryTimer = null;
+                return;
+            }
+            addSerialLog("[BLE] Retrying sync-request...");
+            bleWriteJson({ type: "sync-request" }).catch(() => {});
+        }, 2500);
         bleSyncTimer = setTimeout(() => {
+            clearInterval(bleSyncRetryTimer);
+            bleSyncRetryTimer = null;
             if (!bleReady) {
                 addSerialLog("[SAFETY] Sync timed out; controls remain locked. Disconnect and retry.");
                 connText.textContent = "sync failed";
                 if (bleStatus) bleStatus.textContent = "Settings sync failed";
                 dot.className = "portal-dot error";
             }
-        }, 8000);
+        }, 10000);
         
     } catch (err) {
         addSerialLog(`[BLE] [ERROR] Connection failed: ${err.message}`);
@@ -1091,6 +1328,9 @@ function handleNotification(event) {
     
     try {
         const m = JSON.parse(str);
+        if (m.type !== "state" || !bleStateReceived) {
+            addSerialLog(`[BLE] <- ${m.type}${m.section ? ":" + m.section : ""} (${str.length}B)`);
+        }
         if (m.type === "config-start") {
             pendingDeviceConfig = { knobs: [] };
             return;
@@ -1133,43 +1373,8 @@ function handleNotification(event) {
             return;
         }
 
-function drawSpectrum(mags) {
-    if (!specCanvas) return;
-    const dpr = window.devicePixelRatio || 1;
-    const cssW = specCanvas.width / dpr;
-    const cssH = specCanvas.height / dpr;
-
-    specCtx.fillStyle = "#f4ebd0"; // Cream background
-    specCtx.fillRect(0, 0, cssW, cssH);
-    const barWidth = (cssW / 32);
-    const audioGainInput = document.getElementById("audioGain");
-    const gain = parseFloat(audioGainInput ? audioGainInput.value : 15) / 10;
-    
-    specCtx.strokeStyle = "#111111";
-    specCtx.lineWidth = 1.5;
-
-    for (let i = 0; i < 32; i++) {
-        const val = Math.min(1.0, (mags ? mags[i] : 0) * (gain * 0.25));
-        const barHeight = val * (cssH - 10);
-        
-        const hue = (i / 31) * 280;
-        specCtx.fillStyle = `hsl(${hue}, 85%, 45%)`;
-        specCtx.fillRect(i * barWidth + 1, cssH - barHeight, barWidth - 2, barHeight);
-        specCtx.strokeRect(i * barWidth + 1, cssH - barHeight, barWidth - 2, barHeight);
-    }
-
-    // Draw Dividers
-    dividers.forEach((divVal) => {
-        const x = divVal * barWidth;
-        specCtx.strokeStyle = "#e23b24"; // Bauhaus Red
-        specCtx.lineWidth = 2.5;
-        specCtx.beginPath();
-        specCtx.moveTo(x, 0);
-        specCtx.lineTo(x, cssH);
-        specCtx.stroke();
-    });
-}
         if (m.type === 'state' && m.data) {
+            if (bleStateReceived) return;
             const s = m.data;
             if (s.on !== undefined) {
                 isPlaying = !!s.on;
@@ -1243,6 +1448,47 @@ function drawSpectrum(mags) {
     } catch (e) {
         console.error("BLE Notification Parse Error:", e);
     }
+}
+
+function drawSpectrum(mags) {
+    drawSpectrumShared(specCanvas, specCtx, mags, dividers, numBins);
+}
+
+function _unusedDrawSpectrumLegacy(mags) {
+    if (!specCanvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = specCanvas.width / dpr;
+    const cssH = specCanvas.height / dpr;
+
+    specCtx.fillStyle = "#f4ebd0"; // Cream background
+    specCtx.fillRect(0, 0, cssW, cssH);
+    const barWidth = (cssW / 32);
+    const audioGainInput = document.getElementById("audioGain");
+    const gain = parseFloat(audioGainInput ? audioGainInput.value : 15) / 10;
+
+    specCtx.strokeStyle = "#111111";
+    specCtx.lineWidth = 1.5;
+
+    for (let i = 0; i < 32; i++) {
+        const val = Math.min(1.0, (mags ? mags[i] : 0) * gain);
+        const barHeight = val * (cssH - 10);
+
+        const hue = (i / 31) * 280;
+        specCtx.fillStyle = `hsl(${hue}, 85%, 45%)`;
+        specCtx.fillRect(i * barWidth + 1, cssH - barHeight, barWidth - 2, barHeight);
+        specCtx.strokeRect(i * barWidth + 1, cssH - barHeight, barWidth - 2, barHeight);
+    }
+
+    // Draw Dividers
+    dividers.forEach((divVal) => {
+        const x = divVal * barWidth;
+        specCtx.strokeStyle = "#e23b24"; // Bauhaus Red
+        specCtx.lineWidth = 2.5;
+        specCtx.beginPath();
+        specCtx.moveTo(x, 0);
+        specCtx.lineTo(x, cssH);
+        specCtx.stroke();
+    });
 }
 
 function throttle(fn, ms) {
@@ -1325,6 +1571,7 @@ function syncStateToESP32() {
         intensity: masterIntensity / 255,
         speed: playbackSpeed,
         startupFloor: startupFloor,
+        audioReactive: document.getElementById("tab-audio")?.style.display !== "none",
         pattern: activePattern ? activePattern.id : "",
         numBins: numBins,
         dividers: dividers,
@@ -1498,74 +1745,55 @@ function animate() {
     
     timeSec += 0.0167 * playbackSpeed;
     
-    // Evaluate active pattern haptic value
+    const isAudioTab = document.getElementById("tab-audio")?.style.display !== "none";
+    const isStudioTab = document.getElementById("tab-studio")?.style.display !== "none";
+    let mags = null;
+    if (isAudioTab) {
+        mags = (useLiveMic && analyser && dataArray)
+            ? downsampleMicSpectrum(analyser, dataArray)
+            : computeSimulatedSpectrum(timeSec);
+        drawSpectrum(mags);
+    }
+
+    // Evaluate active pattern or audio-reactive haptic value
     let amp = 0;
-    if (isPlaying && activePattern) {
-        if (activePattern.isCustom && customEvaluator) {
-            try {
-                amp = customEvaluator.run(timeSec, frequencyShift, playbackSpeed, masterIntensity, startupFloor);
-            } catch (e) {
+    if (isPlaying) {
+        if (isAudioTab && mags) {
+            const gain = parseFloat(audioGainInput ? audioGainInput.value : 4);
+            amp = evaluateAudioReactiveOutput({ mags, timeSec, numBins, dividers, gain, patterns: PATTERNS });
+
+            const nowMs = Date.now();
+            if (bleReady && !window._bleAudioInFlight && (!window._lastBleAudioMs || nowMs - window._lastBleAudioMs >= 100)) {
+                window._lastBleAudioMs = nowMs;
+                window._bleAudioInFlight = true;
+                const hexMags = mags.map(v => Math.round(Math.min(1, Math.max(0, v)) * 255).toString(16).padStart(2, '0')).join('');
+                bleWriteJson({ type: "state", patch: { af: hexMags, r: +(gain / 4.0).toFixed(2) } })
+                    .catch(() => {})
+                    .finally(() => { window._bleAudioInFlight = false; });
+            }
+        } else if (isStudioTab) {
+            if (customEvaluator) {
+                try {
+                    amp = customEvaluator.run(timeSec, frequencyShift, playbackSpeed, masterIntensity, startupFloor);
+                } catch (e) {
+                    amp = 0;
+                }
+            } else {
                 amp = 0;
             }
-        } else if (activePattern.func) {
-            amp = activePattern.func(timeSec);
+        } else if (activePattern) {
+            if (activePattern.isCustom && customEvaluator) {
+                try {
+                    amp = customEvaluator.run(timeSec, frequencyShift, playbackSpeed, masterIntensity, startupFloor);
+                } catch (e) {
+                    amp = 0;
+                }
+            } else if (activePattern.func) {
+                amp = activePattern.func(timeSec);
+            }
         }
-        
         if (amp < 0) amp = 0;
         if (amp > 1) amp = 1;
-    }
-    
-    // Handle audio reactivity input mapping if enabled
-    let mags = null;
-    if (useLiveMic && analyser && dataArray) {
-        analyser.getByteFrequencyData(dataArray);
-        mags = new Array(32).fill(0);
-        
-        // Logarithmic downsampling to 32 bands
-        for (let i = 0; i < 32; ++i) {
-            const startBand = Math.floor(Math.pow(128, i / 32));
-            const endBand = Math.floor(Math.pow(128, (i + 1) / 32));
-            let maxVal = 0;
-            for (let j = startBand; j < endBand; ++j) {
-                if (dataArray[j] > maxVal) maxVal = dataArray[j];
-            }
-            mags[i] = maxVal / 255;
-        }
-
-        // Apply audio reactivity routing matrix
-        let finalAudioAmp = 0;
-        for (let b = 0; b < numBins; ++b) {
-            const sel = document.getElementById(`bin-${b}-pattern`);
-            const pId = sel ? sel.value : "none";
-            if (pId !== "none") {
-                const lowIdx = (b === 0) ? 0 : dividers[b - 1];
-                const highIdx = (b === numBins - 1) ? 31 : dividers[b];
-                
-                let binSum = 0, count = 0;
-                for (let j = lowIdx; j <= highIdx; ++j) {
-                    binSum += mags[j];
-                    count++;
-                }
-                const binAvg = (count > 0) ? (binSum / count) : 0;
-                
-                const gain = parseFloat(audioGainInput ? audioGainInput.value : 15) / 10;
-                const routedAmp = Math.min(1.0, binAvg * gain);
-                if (routedAmp > finalAudioAmp) {
-                    finalAudioAmp = routedAmp;
-                }
-            }
-        }
-        
-        const gainVal = parseFloat(audioGainInput ? audioGainInput.value : 15) / 10;
-        smoothedAudioAmp += (finalAudioAmp - smoothedAudioAmp) * 0.15;
-        
-        if (isPlaying) {
-            amp = amp * (1.0 - smoothedAudioAmp) + (smoothedAudioAmp * amp);
-        } else {
-            amp = finalAudioAmp;
-        }
-
-        drawSpectrum(mags);
     }
     
     smoothedAmp += (amp - smoothedAmp) * 0.22;

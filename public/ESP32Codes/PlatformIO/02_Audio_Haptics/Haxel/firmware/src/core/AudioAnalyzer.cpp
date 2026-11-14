@@ -15,7 +15,8 @@
 
 namespace haxel::core {
 
-static constexpr float kSampleRate = 22050.0f;
+static constexpr float kI2sSampleRate = 22050.0f;
+static constexpr float kAdcSampleRate = 10000.0f;
 void AudioAnalyzer::adcTimerCallback(void* arg) {
     AudioAnalyzer* self = (AudioAnalyzer*)arg;
     if (!self || !self->ready_) return;
@@ -45,7 +46,7 @@ bool AudioAnalyzer::begin(const AudioConfig& cfg) {
         rxChan_ = (void*)rx_handle;
 
         i2s_std_config_t std_cfg = {
-            .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG((uint32_t)kSampleRate),
+            .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG((uint32_t)kI2sSampleRate),
             .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_32BIT, I2S_SLOT_MODE_MONO),
             .gpio_cfg = {
                 .mclk = I2S_GPIO_UNUSED,
@@ -80,11 +81,27 @@ bool AudioAnalyzer::begin(const AudioConfig& cfg) {
         esp_timer_handle_t timerHandle;
         if (esp_timer_create(&timer_args, &timerHandle) == ESP_OK) {
             adcTimer_ = timerHandle;
-            uint64_t intervalUs = (uint64_t)(1000000.0f / kSampleRate);
+            uint64_t intervalUs = (uint64_t)(1000000.0f / kAdcSampleRate);
             esp_timer_start_periodic(timerHandle, intervalUs);
         } else {
             return false;
         }
+    }
+
+    activeSampleRate_ = (cfg_.source == AudioConfig::ADC) ? kAdcSampleRate : kI2sSampleRate;
+    const float nyquist = activeSampleRate_ / 2.0f;
+    const float minFreq = 40.0f;
+    for (int b = 0; b < 32; ++b) {
+        float lo = minFreq * powf(nyquist / minFreq, b / 32.0f);
+        float hi = minFreq * powf(nyquist / minFreq, (b + 1) / 32.0f);
+        int loBin = (int)(lo * kWindow / activeSampleRate_);
+        int hiBin = (int)(hi * kWindow / activeSampleRate_);
+        if (loBin < 1) loBin = 1;
+        if (hiBin <= loBin) hiBin = loBin + 1;
+
+        if (hiBin > (int)(kWindow / 2)) hiBin = (int)(kWindow / 2);
+        bandLo_[b] = (uint16_t)loBin;
+        bandHi_[b] = (uint16_t)hiBin;
     }
 
     ready_ = true;
@@ -117,25 +134,27 @@ void AudioAnalyzer::processOneFrame() {
     //    analyze "now", not a Wi-Fi-delayed past).
     if (cfg_.source == AudioConfig::I2S_MEMS) {
         size_t bytesRead = 0;
-        int32_t raw[kWindow];
+
         i2s_chan_handle_t rx_handle = (i2s_chan_handle_t)rxChan_;
-        if (i2s_channel_read(rx_handle, raw, sizeof(raw), &bytesRead, portMAX_DELAY) != ESP_OK) {
+        if (i2s_channel_read(rx_handle, i2sRaw_, sizeof(i2sRaw_), &bytesRead, portMAX_DELAY) != ESP_OK) {
             return;
         }
         // Non-blocking drain: keep overwriting with newer full windows.
-        int32_t scratch[kWindow];
+
         for (;;) {
             size_t more = 0;
-            esp_err_t e = i2s_channel_read(rx_handle, scratch, sizeof(scratch), &more, 0);
-            if (e != ESP_OK || more < sizeof(scratch)) break;
-            memcpy(raw, scratch, sizeof(scratch));
+            esp_err_t e = i2s_channel_read(rx_handle, i2sScratch_, sizeof(i2sScratch_), &more, 0);
+            if (e != ESP_OK || more < sizeof(i2sScratch_)) break;
+            memcpy(i2sRaw_, i2sScratch_, sizeof(i2sScratch_));
+
+
             bytesRead = more;
         }
         size_t n = bytesRead / sizeof(int32_t);
         if (n > kWindow) n = kWindow;
         for (size_t i = 0; i < n; ++i) {
             // 32-bit MEMS samples are left-justified, sign-extended.
-            samples_[i] = (raw[i] >> 14) * (1.0f / 131072.0f) * cfg_.gain;
+            samples_[i] = (i2sRaw_[i] >> 14) * (1.0f / 131072.0f) * cfg_.gain;
         }
         for (size_t i = n; i < kWindow; ++i) samples_[i] = 0.0f;
     } else if (cfg_.source == AudioConfig::ADC) {
@@ -173,7 +192,7 @@ void AudioAnalyzer::processOneFrame() {
         fftReal_[i] = samples_[i];
         fftImag_[i] = 0.0f;
     }
-    ArduinoFFT<float> fft(fftReal_, fftImag_, kWindow, kSampleRate);
+    ArduinoFFT<float> fft(fftReal_, fftImag_, kWindow, activeSampleRate_);
     fft.windowing(FFTWindow::Hann, FFTDirection::Forward);
     fft.compute(FFTDirection::Forward);
     fft.complexToMagnitude();
@@ -183,15 +202,16 @@ void AudioAnalyzer::processOneFrame() {
     f.valid = true;
     f.rms = envelope_;
     f.peakDb = peakDb;
-    const float nyquist = kSampleRate / 2.0f;
-    const float minFreq = 40.0f, maxFreq = nyquist;
+
+
     float maxMag = 1e-9f;
     for (int b = 0; b < 32; ++b) {
-        float lo = minFreq * powf(maxFreq / minFreq, b / 32.0f);
-        float hi = minFreq * powf(maxFreq / minFreq, (b + 1) / 32.0f);
-        int   loBin = (int)(lo * kWindow / kSampleRate);
-        int   hiBin = (int)(hi * kWindow / kSampleRate);
-        if (hiBin <= loBin) hiBin = loBin + 1;
+        int loBin = bandLo_[b];
+        int hiBin = bandHi_[b];
+
+
+
+
         float s = 0;
         for (int k = loBin; k < hiBin && k < (int)(kWindow / 2); ++k) s += fftReal_[k];
         f.mags[b] = s / (hiBin - loBin);

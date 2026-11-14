@@ -2,11 +2,9 @@
 #include <Arduino.h>
 
 #if !defined(ESP_ARDUINO_VERSION) || ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3, 0, 0)
-static inline bool ledcAttach(uint8_t pin, uint32_t hz, uint8_t bits) {
-    static int chCounter = 0;
-    int ch = (chCounter++) % 16;
-    ledcSetup(ch, hz, bits);
-    ledcAttachPin(pin, ch);
+static inline bool ledcAttachSlot(int8_t slot, uint8_t pin, uint32_t hz, uint8_t bits) {
+    ledcSetup((uint8_t)slot, hz, bits);
+    ledcAttachPin(pin, (uint8_t)slot);
     return true;
 }
 static inline void ledcDetach(uint8_t pin) {
@@ -31,7 +29,11 @@ int8_t LedcAllocator::allocate(int8_t pin, uint32_t hz, uint8_t bits) {
     }
     for (int8_t i = 0; i < 16; ++i) {
         if (slots_[i].pin == -1) {
+#if !defined(ESP_ARDUINO_VERSION) || ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+            if (ledcAttachSlot(i, (uint8_t)pin, hz, bits)) {
+#else
             if (ledcAttach((uint8_t)pin, hz, bits)) {
+#endif
                 slots_[i].pin = pin;
                 slots_[i].bits = bits;
                 #if !defined(ESP_ARDUINO_VERSION) || ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3, 0, 0)
@@ -77,7 +79,11 @@ void LedcAllocator::write(int8_t pin, float duty01) {
     for (int8_t i = 0; i < 16; ++i) {
         if (slots_[i].pin == pin) {
             uint32_t maxDuty = (1u << slots_[i].bits) - 1u;
+#if !defined(ESP_ARDUINO_VERSION) || ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+            ledcWrite((uint8_t)i, (uint32_t)(duty01 * maxDuty));
+#else
             ledcWrite((uint8_t)pin, (uint32_t)(duty01 * maxDuty));
+#endif
             return;
         }
     }

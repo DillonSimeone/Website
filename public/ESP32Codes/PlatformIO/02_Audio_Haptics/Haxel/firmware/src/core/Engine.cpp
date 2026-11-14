@@ -11,6 +11,8 @@ bool Engine::begin() {
     state_ = EngineState::IDLE;
     tickCount_ = 0;
     lastTickUs_ = micros();
+    lastTickDeltaUs_ = kTargetTickUs;
+    patternTimeMs_ = 0.0f;
     wasIdle_ = true;
     if (!cmdQ_) {
         cmdQ_ = xQueueCreate(16, sizeof(EngineCmd));
@@ -148,7 +150,8 @@ void Engine::hardAllOff_() {
 
 void Engine::recordJitter(uint32_t tickUs) {
     uint32_t dt = tickUs - lastTickUs_;
-    int32_t  jitter = (int32_t)dt - 1000;
+    lastTickDeltaUs_ = dt;
+    int32_t  jitter = (int32_t)dt - (int32_t)kTargetTickUs;
     if (jitter < 0) jitter = -jitter;
     if (jitter > UINT16_MAX) jitter = UINT16_MAX;
     jitter_us_[jitterIdx_++ % kJitterWindow] = (uint16_t)jitter;
@@ -209,7 +212,7 @@ void Engine::tick() {
     if (state_ == EngineState::FAULT) return;
 
     // 3. Determine engine state.
-    if (!active_.on || !active_.pattern || !driver_) {
+    if (!active_.on || (!active_.pattern && !active_.audioReactive) || !driver_) {
         if (!wasIdle_) {
             if (driver_) driver_->allOff();
             for (int i = 0; i < 8; ++i) {
@@ -222,16 +225,20 @@ void Engine::tick() {
         return;
     }
     wasIdle_ = false;
-    const bool audioOk = (active_.pattern && active_.pattern->usesAudio()) &&
-                         ((audio_ && audio_->ready()) || hasRemoteAudio());
+    const bool audioOk = active_.audioReactive || ((active_.pattern && active_.pattern->usesAudio()) &&
+                         ((audio_ && audio_->ready()) || hasRemoteAudio(400)));
     state_ = audioOk ? EngineState::AUDIO_REACTIVE : EngineState::PLAYING;
 
     // 4. Evaluate + write.
-    float patternTimeMs = (tickCount_) * active_.speed;
-    writeAllChannels(patternTimeMs);
+    float dtMs = (float)lastTickDeltaUs_ * 0.001f;
+    if (dtMs < 0.5f) dtMs = 0.5f;
+    if (dtMs > 50.0f) dtMs = 50.0f;
+    patternTimeMs_ += dtMs * active_.speed;
+    writeAllChannels(patternTimeMs_, dtMs);
+
 }
 
-void Engine::writeAllChannels(float tMs) {
+void Engine::writeAllChannels(float tMs, float dtMs) {
     PatternContext ctx;
     ctx.tMs = tMs;
     ctx.intensityMaster = active_.intensity;
@@ -270,7 +277,10 @@ void Engine::writeAllChannels(float tMs) {
         if (p && !PatternRegistry::instance().contains(p)) p = nullptr;
 
         float v = 0.0f;
-        if (state_ == EngineState::AUDIO_REACTIVE && p && p->usesAudio()) {
+        if (state_ == EngineState::AUDIO_REACTIVE) {
+            if (!((audio_ && audio_->ready()) || hasRemoteAudio(400))) {
+                v = 0.0f;
+            } else {
             float maxAmp = 0.0f;
             for (int i = 0; i < active_.numBins; ++i) {
                 int startIdx = (i == 0) ? 0 : active_.dividers[i - 1];
@@ -294,6 +304,7 @@ void Engine::writeAllChannels(float tMs) {
                 }
             }
             v = maxAmp;
+            }
         } else if (p) {
             v = p->sample(ctx);
         }
@@ -315,8 +326,10 @@ void Engine::writeAllChannels(float tMs) {
         // Soft-start: rate-limit deltas on rising/falling play path.
         float prev = lastWritten_[ch];
         float delta = v - prev;
-        if (delta >  rampStepPerTick_) v = prev + rampStepPerTick_;
-        if (delta < -rampStepPerTick_) v = prev - rampStepPerTick_;
+        float rampStep = rampStepPerTick_ * dtMs;
+        if (delta >  rampStep) v = prev + rampStep;
+        if (delta < -rampStep) v = prev - rampStep;
+
         lastWritten_[ch] = v;
         driver_->write(ch, v);
     }

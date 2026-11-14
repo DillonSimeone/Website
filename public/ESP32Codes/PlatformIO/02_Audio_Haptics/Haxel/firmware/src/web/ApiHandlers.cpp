@@ -180,8 +180,8 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
             if (patch["reboot"].is<bool>() && patch["reboot"].as<bool>()) {
                 Serial.println("[CTRL] reboot requested");
                 req->send(200, "application/json", "{\"ok\":true,\"reboot\":true}");
-                delay(800);
-                ESP.restart();
+                requestDeferredReboot(300);
+
                 return;
             }
             applyStatePatch(patch, engine, config);
@@ -203,8 +203,8 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
             const bool reboot = configPatchNeedsReboot(patch);
             if (reboot) {
                 req->send(200, "application/json", "{\"ok\":true,\"reboot\":true}");
-                delay(800);
-                ESP.restart();
+                requestDeferredReboot(300);
+
             } else {
                 req->send(200, "application/json", "{\"ok\":true,\"reboot\":false}");
             }

@@ -1,4 +1,10 @@
 import { Parser, tokenize, Evaluator, highlight, updateAudioState, pnoise1 } from './compiler.js';
+import {
+    updateBinRangeLabels as updateBinRangeLabelsShared,
+    renderBinRows as renderBinRowsShared,
+    initSpectrumDividers as initSpectrumDividersShared,
+    evaluateAudioReactiveOutput
+} from './audio-reactive.js';
 import { addSerialLog, triggerI2CBlink, updateHardwarePins, initBootLogs, serialConsole } from './emulator.js';
 import { PATTERNS, loadCustomPatterns, initPhoneHaptics } from './haptics.js';
 
@@ -124,6 +130,7 @@ document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () =>
     // Setup visible canvases
     setupSharpCanvas(prevCanvas);
     setupSharpCanvas(heroCanvas);
+    syncStateToESP32();
 }));
 
 // ─── EDITOR WIRING ──────────────────────────────────────────────────────────
@@ -848,6 +855,10 @@ document.getElementById("micSrc").addEventListener("change", (e) => {
 
 // ─── AUDIO REACTIVE BINS DRAG INTERACTIVES ──────────────────────────────────
 function updateBinRangeLabels() {
+    updateBinRangeLabelsShared(numBins, dividers);
+}
+
+function _unusedUpdateBinRangeLabelsLegacy() {
     const getFreqAtBand = (b) => {
         if (b === 0) return 0;
         if (b === 32) return 20000;
@@ -872,6 +883,18 @@ export function populateBinPatternSelects() {
 }
 
 function renderBinRows() {
+    renderBinRowsShared({
+        container: document.getElementById("bins-container"),
+        numBins,
+        dividers,
+        patterns: PATTERNS,
+        minFreq: parseFloat(document.getElementById("audioMinFreq")?.value || 40),
+        maxFreq: parseFloat(document.getElementById("audioMaxFreq")?.value || 16000),
+        onSync: () => syncStateToESP32()
+    });
+}
+
+function _unusedRenderBinRowsLegacy() {
     const container = document.getElementById("bins-container");
     if (!container) return;
     
@@ -1351,28 +1374,14 @@ function animate() {
     let activeAmp = 0;
     if (isPlaying) {
         if (isAudioTab) {
-            const gain = parseFloat(document.getElementById("audioGain").value);
-            let maxAmp = 0;
-            
-            for (let i = 0; i < numBins; i++) {
-                const startIdx = i === 0 ? 0 : dividers[i - 1];
-                const endIdx = i === numBins - 1 ? 32 : dividers[i];
-                const len = Math.max(1, endIdx - startIdx);
-                
-                const vol = mags.slice(startIdx, endIdx).reduce((a,b)=>a+b, 0) / len * (gain * 0.45);
-                
-                const selectEl = document.getElementById(`bin-${i}-pattern`);
-                const patternId = selectEl ? selectEl.value : "none";
-                
-                if (patternId !== "none") {
-                    const pat = PATTERNS.find(p => p.id === patternId);
-                    if (pat) {
-                        const out = vol * pat.func(timeSec);
-                        if (out > maxAmp) maxAmp = out;
-                    }
-                }
+            const gain = parseFloat(document.getElementById("audioGain")?.value || 4);
+            activeAmp = evaluateAudioReactiveOutput({ mags, timeSec, numBins, dividers, gain, patterns: PATTERNS });
+            const nowMs = Date.now();
+            if ((isRealESP32 || isBleMode) && mags && (!window._lastWifiAudioMs || nowMs - window._lastWifiAudioMs >= 66)) {
+                window._lastWifiAudioMs = nowMs;
+                const qMags = mags.map(v => Math.round(Math.min(1, Math.max(0, v)) * 255));
+                sendStateUpdate({ audioFrame: { mags: qMags, rms: +(gain / 4.0).toFixed(2) } });
             }
-            activeAmp = maxAmp;
         } else if (isStudioTab && customEvaluator) {
             activeAmp = customEvaluator.run(timeSec, frequencyShift, playbackSpeed, masterIntensity, startupFloor);
             const customName = customPatternNameInput.value.trim() || "Pattern Studio";
@@ -1916,6 +1925,7 @@ async function syncStateToESP32() {
         intensity: masterIntensity / 255,
         speed: playbackSpeed,
         startupFloor: startupFloor,
+        audioReactive: document.getElementById("tab-audio")?.style.display !== "none",
         pattern: activePattern ? activePattern.id : "",
         numBins: numBins,
         dividers: dividers,

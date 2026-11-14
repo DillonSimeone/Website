@@ -19,6 +19,7 @@ static void snapshotFromState_(const StagedState& s, RuntimeSnapshot& out) {
     out.intensity = s.intensity;
     out.speed = s.speed;
     out.startupFloor = s.startupFloor;
+    out.audioReactive = s.audioReactive;
     out.numBins = s.numBins;
     for (int i = 0; i < 4; ++i) out.dividers[i] = s.dividers[i];
     for (int i = 0; i < 5; ++i) {
@@ -46,6 +47,7 @@ bool loadRuntime(RuntimeSnapshot& out) {
     out.intensity = doc["intensity"] | 0.6f;
     out.speed = doc["speed"] | 1.0f;
     out.startupFloor = doc["startupFloor"] | 0.35f;
+    out.audioReactive = doc["audioReactive"] | false;
     out.numBins = (uint8_t)(doc["numBins"] | 3);
     const char* pid = doc["pattern"] | "Heartbeat";
     strncpy(out.patternId, pid, sizeof(out.patternId) - 1);
@@ -79,6 +81,7 @@ bool saveRuntime(const RuntimeSnapshot& in) {
     doc["intensity"] = in.intensity;
     doc["speed"] = in.speed;
     doc["startupFloor"] = in.startupFloor;
+    doc["audioReactive"] = in.audioReactive;
     doc["pattern"] = in.patternId;
     doc["numBins"] = in.numBins;
     auto divs = doc["dividers"].to<JsonArray>();

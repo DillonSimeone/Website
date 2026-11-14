@@ -12,10 +12,22 @@ namespace haxel::web {
 
 using namespace haxel::core;
 
+static volatile bool     sRebootPending = false;
+static volatile uint32_t sRebootAtMs    = 0;
+
+void requestDeferredReboot(uint32_t delayMs) {
+    sRebootAtMs = millis() + delayMs;
+    sRebootPending = true;
+}
+
+bool isDeferredRebootDue() {
+    return sRebootPending && (int32_t)(millis() - sRebootAtMs) >= 0;
+}
+
 static void logIncomingJson_(const char* source, JsonObjectConst obj) {
-    String body;
-    serializeJson(obj, body);
-    Serial.printf("[CTRL] %s <- %s\n", source, body.c_str());
+    char buf[256];
+    serializeJson(obj, buf, sizeof(buf));
+    Serial.printf("[CTRL] %s <- %s\n", source, buf);
 }
 
 bool upsertCustomPattern(const char* id, const char* name, const char* code, String& errOut,
@@ -87,6 +99,7 @@ void serializeState(JsonObject root, Engine* engine) {
     root["speed"] = s.speed;
     root["pattern"] = s.pattern ? s.pattern->id() : "";
     root["startupFloor"] = s.startupFloor;
+    root["audioReactive"] = s.audioReactive;
     root["numBins"] = s.numBins;
 
     auto divs = root["dividers"].to<JsonArray>();
@@ -112,6 +125,42 @@ void serializeState(JsonObject root, Engine* engine) {
 }
 
 void applyStatePatch(JsonObjectConst patch, Engine* engine, Config* config) {
+    if (patch["af"].is<const char*>()) {
+        const char* hex = patch["af"].as<const char*>();
+        core::AudioFrame af{};
+        af.valid = true;
+        af.rms = patch["r"].is<float>() ? patch["r"].as<float>() : 1.0f;
+        for (int i = 0; i < 32 && hex[i * 2] && hex[i * 2 + 1]; ++i) {
+            auto hexNibble = [](char c) -> uint8_t {
+                if (c >= '0' && c <= '9') return c - '0';
+                if (c >= 'a' && c <= 'f') return 10 + (c - 'a');
+                if (c >= 'A' && c <= 'F') return 10 + (c - 'A');
+                return 0;
+            };
+            uint8_t byteVal = (hexNibble(hex[i * 2]) << 4) | hexNibble(hex[i * 2 + 1]);
+            af.mags[i] = byteVal / 255.0f;
+        }
+        engine->pushRemoteAudio(af);
+        if (patch.size() <= 2) return;
+    }
+    if (patch["audioFrame"].is<JsonObjectConst>()) {
+        JsonObjectConst afObj = patch["audioFrame"].as<JsonObjectConst>();
+        core::AudioFrame af{};
+        af.valid = true;
+        af.rms = afObj["rms"].is<float>() ? afObj["rms"].as<float>() : 1.0f;
+        JsonArrayConst arr = afObj["mags"].as<JsonArrayConst>();
+        if (arr) {
+            int i = 0;
+            for (JsonVariantConst v : arr) {
+                if (i < 32) {
+                    float val = v.as<float>();
+                    af.mags[i++] = (val > 1.0f) ? (val / 255.0f) : val;
+                }
+            }
+        }
+        engine->pushRemoteAudio(af);
+        if (patch.size() == 1) return;
+    }
     logIncomingJson_("state", patch);
 
     if (patch["estop"].is<bool>() && patch["estop"].as<bool>()) {
@@ -132,6 +181,7 @@ void applyStatePatch(JsonObjectConst patch, Engine* engine, Config* config) {
     if (patch["clear"].is<bool>())     s.clearFault = patch["clear"].as<bool>();
 
     if (patch["startupFloor"].is<float>()) s.startupFloor = patch["startupFloor"].as<float>();
+    if (patch["audioReactive"].is<bool>()) s.audioReactive = patch["audioReactive"].as<bool>();
     if (patch["numBins"].is<int>())        s.numBins      = patch["numBins"].as<int>();
     if (patch["dividers"].is<JsonArrayConst>()) {
         int i = 0;
@@ -210,7 +260,7 @@ void applyStatePatch(JsonObjectConst patch, Engine* engine, Config* config) {
                   s.pattern ? s.pattern->id() : "(none)");
     if (config && patch["channels"].is<JsonArrayConst>()) {
         syncChannelEnablesToConfig_(config, s);
-        config->save();
+        config->markDirty();
     }
     markRuntimeDirty(s);
 }
@@ -309,7 +359,7 @@ void applyConfigPatch(JsonObjectConst patch, Config* config, Engine* engine, boo
     }
     if (persist) {
         config->setFirstRunComplete();
-        config->save();
+        config->markDirty();
     }
 }
 

@@ -117,29 +117,29 @@ echo.
 set "CHOICE=1"
 set /p "CHOICE=Enter choice [1-7] (Default: 1): "
 
-set "TARGET_ENV=c3WIFILED"
+set "TARGET_ENV=c3WIFI"
 set "NEEDS_FS=1"
 
 if "%CHOICE%"=="1" (
-    set "TARGET_ENV=c3WIFILED"
+    set "TARGET_ENV=c3WIFI"
     set "NEEDS_FS=1"
 ) else if "%CHOICE%"=="2" (
-    set "TARGET_ENV=c3BLULED"
+    set "TARGET_ENV=c3BLU"
     set "NEEDS_FS=0"
 ) else if "%CHOICE%"=="3" (
-    set "TARGET_ENV=c6WIFILED"
+    set "TARGET_ENV=c6WIFI"
     set "NEEDS_FS=1"
 ) else if "%CHOICE%"=="4" (
-    set "TARGET_ENV=c6BLULED"
+    set "TARGET_ENV=c6BLU"
     set "NEEDS_FS=0"
 ) else if "%CHOICE%"=="5" (
     set "TARGET_ENV=c6WIFILED_FOLLOWER"
     set "NEEDS_FS=0"
 ) else if "%CHOICE%"=="6" (
-    set "TARGET_ENV=devWIFILED"
+    set "TARGET_ENV=devWIFI"
     set "NEEDS_FS=1"
 ) else if "%CHOICE%"=="7" (
-    set "TARGET_ENV=s3WIFILED"
+    set "TARGET_ENV=s3WIFI"
     set "NEEDS_FS=1"
 )
 
