@@ -684,7 +684,7 @@ function renderCards(filterTag = "all") {
         
         libCards.appendChild(card);
     });
-    populateBinPatternSelects();
+    renderBinRows();
 }
 
 function deleteCustomPattern(id, event) {
@@ -845,6 +845,18 @@ document.getElementById("micSrc").addEventListener("change", (e) => {
 // ─── AUDIO REACTIVE BINS DRAG INTERACTIVES ──────────────────────────────────
 function updateBinRangeLabels() {
     updateBinRangeLabelsShared(numBins, dividers);
+}
+
+function renderBinRows() {
+    renderBinRowsShared({
+        container: document.getElementById("bins-container"),
+        numBins,
+        dividers,
+        patterns: PATTERNS,
+        minFreq: parseFloat(document.getElementById("audioMinFreq")?.value || 40),
+        maxFreq: parseFloat(document.getElementById("audioMaxFreq")?.value || 16000),
+        onSync: () => syncStateToESP32()
+    });
 }
 
 // Initialize dividers and bin rows on startup
