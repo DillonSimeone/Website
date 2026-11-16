@@ -206,7 +206,7 @@
 
     </style>
 
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.p5js.org https://code.jquery.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://api.github.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.p5js.org https://code.jquery.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://api.github.com https://script.google.com https://script.googleusercontent.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com;">
 
 
 
@@ -656,6 +656,7 @@ Plug in an ESP32 or ESP32-C3 via USB, select firmware, and click "Connect &amp; 
 
     <script type="module" src="./scripts/indexScript.js" fetchpriority="low"></script>
     <script type="module" src="./scripts/background.js" fetchpriority="low"></script>
+    <script type="module" src="./scripts/analytics.js" fetchpriority="low"></script>
 </body>
 
 </html>
