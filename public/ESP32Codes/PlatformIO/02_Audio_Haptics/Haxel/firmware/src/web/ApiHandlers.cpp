@@ -58,56 +58,7 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
 
     server.on("/json/config", HTTP_GET, [config](AsyncWebServerRequest* req) {
         JsonDocument doc;
-        doc["firstRun"] = config->firstRun();
-        doc["hostname"] = config->hostname();
-        doc["apSsid"] = config->apSsid();
-        auto drv = doc["driver"].to<JsonObject>();
-        drv["kind"]  = (int)config->driverKind();
-        const auto& dc = config->driverConfig();
-        auto pins = drv["pins"].to<JsonArray>();
-        for (int i = 0; i < 8; ++i) pins.add(dc.pins[i]);
-        drv["sda"] = dc.sda;
-        drv["scl"] = dc.scl;
-        drv["pwmHz"] = dc.pwmHz;
-
-        auto au = doc["audio"].to<JsonObject>();
-        const auto& ac = config->audioConfig();
-        au["enabled"] = config->audioEnabled();
-        au["source"]  = (int)ac.source;
-        au["bclk"]    = ac.i2sBclk;
-        au["ws"]      = ac.i2sWs;
-        au["sd"]      = ac.i2sSd;
-        au["adc"]     = ac.adcPin;
-        au["gain"]    = ac.gain;
-
-        auto ld = doc["led"].to<JsonObject>();
-        ld["enabled"] = config->ledEnabled();
-        ld["pin"]     = config->ledConfig().pin;
-        ld["count"]   = config->ledConfig().count;
-
-        auto knobs = doc["knobs"].to<JsonArray>();
-        for (size_t i = 0; i < config->knobCount(); ++i) {
-            const auto& k = config->knob(i);
-            auto ko = knobs.add<JsonObject>();
-            ko["enabled"] = k.enabled;
-            ko["pin"]     = k.pin;
-            ko["param"]   = k.param;
-        }
-
-        const auto& oc = config->oledConfig();
-        auto ol = doc["oled"].to<JsonObject>();
-        ol["enabled"] = config->oledEnabled();
-        ol["sda"]     = oc.sda;
-        ol["scl"]     = oc.scl;
-        ol["i2cAddr"]  = oc.i2cAddr;
-        ol["width"]    = oc.width;
-        ol["height"]   = oc.height;
-        doc["eStopPin"] = config->eStopPin();
-        auto chEn = doc["channelEnabled"].to<JsonArray>();
-        for (size_t i = 0; i < Config::kMaxChannels; ++i) {
-            chEn.add(config->channelEnabled(i));
-        }
-
+        config->toJson(doc.to<JsonObject>(), false);
         String body; serializeJson(doc, body);
         req->send(200, "application/json", body);
     });
@@ -180,8 +131,8 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
             if (patch["reboot"].is<bool>() && patch["reboot"].as<bool>()) {
                 Serial.println("[CTRL] reboot requested");
                 req->send(200, "application/json", "{\"ok\":true,\"reboot\":true}");
-                delay(800);
-                ESP.restart();
+                requestDeferredReboot(300);
+
                 return;
             }
             applyStatePatch(patch, engine, config);
@@ -203,8 +154,8 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
             const bool reboot = configPatchNeedsReboot(patch);
             if (reboot) {
                 req->send(200, "application/json", "{\"ok\":true,\"reboot\":true}");
-                delay(800);
-                ESP.restart();
+                requestDeferredReboot(300);
+
             } else {
                 req->send(200, "application/json", "{\"ok\":true,\"reboot\":false}");
             }

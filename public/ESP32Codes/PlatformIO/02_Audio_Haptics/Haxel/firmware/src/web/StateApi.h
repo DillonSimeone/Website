@@ -17,6 +17,10 @@ void applyConfigPatch(ArduinoJson::JsonObjectConst patch, Config* config, core::
 
 bool configPatchNeedsReboot(ArduinoJson::JsonObjectConst patch);
 
+// Schedule a non-blocking reboot from async HTTP/BLE callbacks.
+void requestDeferredReboot(uint32_t delayMs = 300);
+bool isDeferredRebootDue();
+
 // Compile + register a custom / studio pattern. empty errOut => success.
 // studio_draft* ids skip LittleFS persistence (ephemeral live draft).
 bool upsertCustomPattern(const char* id, const char* name, const char* code, String& errOut,

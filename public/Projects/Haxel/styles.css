@@ -2312,3 +2312,38 @@ body::-webkit-scrollbar-thumb:hover,
     }
 }
 
+
+/* Audio-Reactive Frequency Band Partitioning */
+.bin-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 10px;
+}
+
+.bin-title {
+    font-weight: bold;
+    width: 155px;
+    flex-shrink: 0;
+    font-size: 11px;
+}
+
+.bin-range {
+    font-family: var(--mono);
+    font-size: 11px;
+    width: 105px;
+    flex-shrink: 0;
+    color: #555555;
+}
+
+.bin-pattern-select {
+    flex: 1;
+    min-width: 120px;
+    padding: 4px 6px;
+    border: 2px solid var(--black);
+    font-family: var(--mono);
+    font-size: 11px;
+    background: #ffffff;
+    outline: none;
+}

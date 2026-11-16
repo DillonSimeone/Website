@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include "../hal/IHapticDriver.h"
 
 namespace haxel {
@@ -91,6 +92,13 @@ public:
     void setKnobs(const KnobConfig* knobs, size_t count);
     void setOledConfig(const OledConfig& c) { oled_ = c; markDirty(); }
     void setAudioGain(float g) { audio_.gain = g; markDirty(); }
+
+    // Single source of truth for Config JSON serialization.
+    void driverToJson(JsonObject drv, bool includeDriverExtra = true) const;
+    void audioToJson(JsonObject au) const;
+    void ledToJson(JsonObject ld) const;
+    void oledToJson(JsonObject ol) const;
+    void toJson(JsonObject root, bool includeSecrets = false) const;
 
 private:
     bool firstRun_ = true;

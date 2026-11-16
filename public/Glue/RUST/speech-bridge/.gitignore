@@ -1,0 +1,9 @@
+# Local TTS/STT runtimes, DLLs, and neural voice/speech models
+piper/
+whisper/
+target/
+*.bin
+*.onnx
+*.onnx.json
+*.dll
+*.wav

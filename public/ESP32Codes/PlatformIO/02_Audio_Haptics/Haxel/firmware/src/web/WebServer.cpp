@@ -96,9 +96,11 @@ void WebServer::broadcastState() {
         binPats.add(s.binPatterns[i]);
     }
 
-    String body;
-    serializeJson(doc, body);
-    ws_->textAll(body);
+    static char body[512];
+    size_t len = serializeJson(doc, body, sizeof(body));
+    ws_->textAll(body, len);
+
+
 }
 
 void WebServer::mountStatic_() {

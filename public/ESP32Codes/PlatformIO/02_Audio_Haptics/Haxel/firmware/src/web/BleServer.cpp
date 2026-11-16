@@ -7,6 +7,11 @@
 
 namespace haxel::web {
 
+struct BleRxPacket {
+    uint16_t len;
+    char data[512];
+};
+
 static const char* HAXEL_SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
 static const char* RX_CHAR_UUID       = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
 static const char* TX_CHAR_UUID       = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
@@ -33,7 +38,11 @@ bool BleServer::begin(core::Engine* engine, Config* config) {
     Serial.printf("[System] Advertising BLE Device Name: '%s'\n", devName.c_str());
     Serial.println("==============================================\n");
 
+    if (!rxQueue_) {
+        rxQueue_ = xQueueCreate(8, sizeof(BleRxPacket));
+    }
     BLEDevice::init(devName.c_str());
+    BLEDevice::setMTU(512);
     pServer_ = BLEDevice::createServer();
     if (!pServer_) return false;
     pServer_->setCallbacks(this);
@@ -73,31 +82,59 @@ void BleServer::stop() {
     pTxCharacteristic_ = nullptr;
     pRxCharacteristic_ = nullptr;
     deviceConnected_ = false;
+    configSyncPending_ = false;
+    stateSyncPending_ = false;
+    advRestartPending_ = false;
+    if (rxQueue_) {
+        vQueueDelete(rxQueue_);
+        rxQueue_ = nullptr;
+    }
 }
 
 void BleServer::onConnect(BLEServer* pServer) {
     deviceConnected_ = true;
+    stateSyncPending_ = true;
     log_i("BLE client connected");
     // Broadcast initial state on connection
-    broadcastState();
+    // Deferred to housekeepingTask via pump() — never notify() inside Bluedroid callback!
 }
 
 void BleServer::onDisconnect(BLEServer* pServer) {
     deviceConnected_ = false;
+    configSyncPending_ = false;
+    stateSyncPending_ = false;
+    advRestartAtMs_ = millis() + 250;
+    advRestartPending_ = true;
     log_i("BLE client disconnected");
     // Restart advertising so client can reconnect
-    delay(500); // give the bluetooth stack the chance to get ready
-    pServer->startAdvertising();
-    log_i("BLE restarted advertising");
+    // Deferred to housekeepingTask via pump()
+
+
 }
 
 void BleServer::onWrite(BLECharacteristic* pCharacteristic) {
-    String value = pCharacteristic->getValue();
-    if (value.length() == 0) return;
+    auto value = pCharacteristic->getValue();
+    const size_t len = value.length();
+    if (len == 0 || !rxQueue_) return;
 
-    Serial.printf("[CTRL] BLE <- (%u bytes) %s\n", (unsigned)value.length(), value.c_str());
+    // Defer ALL JSON parsing, state/config writes, and Serial logging out of Bluedroid's
+    // BTC_TASK (~3KB stack) into housekeepingTask via pump().
+    static BleRxPacket sOnWriteScratch;
+    const size_t copyLen = len < sizeof(sOnWriteScratch.data) - 1 ? len : sizeof(sOnWriteScratch.data) - 1;
+    memcpy(sOnWriteScratch.data, value.c_str(), copyLen);
+    sOnWriteScratch.data[copyLen] = '\0';
+    sOnWriteScratch.len = (uint16_t)copyLen;
+    xQueueSend(rxQueue_, &sOnWriteScratch, 0);
+}
+
+void BleServer::processWrite_(const char* data, size_t len) {
+    if (!data || len == 0) return;
+
+    if (strstr(data, "\"af\"") == nullptr && strstr(data, "\"audioFrame\"") == nullptr) {
+        Serial.printf("[CTRL] BLE <- (%u bytes) %s\n", (unsigned)len, data);
+    }
     JsonDocument doc;
-    DeserializationError err = deserializeJson(doc, value.c_str(), value.length());
+    DeserializationError err = deserializeJson(doc, data, len);
     if (err) {
         log_e("BLE JSON parse error: %s", err.c_str());
         Serial.printf("[CTRL] BLE JSON parse error: %s\n", err.c_str());
@@ -107,8 +144,9 @@ void BleServer::onWrite(BLECharacteristic* pCharacteristic) {
     const char* type = doc["type"] | "";
     if (strcmp(type, "sync-request") == 0) {
         Serial.println("[CTRL] BLE sync requested (config + state)");
-        broadcastConfig();
-        broadcastState();
+        configSyncPending_ = true;
+        stateSyncPending_ = true;
+        // Deferred to housekeepingTask via pump() — never notify() inside Bluedroid callback!
         return;
     } else if (strcmp(type, "config-start") == 0) {
         configWriteInProgress_ = true;
@@ -121,8 +159,8 @@ void BleServer::onWrite(BLECharacteristic* pCharacteristic) {
             config_->save();
             Serial.println("[CTRL] BLE config upload complete");
             if (configWriteNeedsReboot_) {
-                delay(800);
-                ESP.restart();
+                requestDeferredReboot(300);
+
             }
             configWriteInProgress_ = false;
         }
@@ -173,8 +211,8 @@ void BleServer::onWrite(BLECharacteristic* pCharacteristic) {
             JsonObjectConst patch = doc["patch"].as<JsonObjectConst>();
             applyConfigPatch(patch, config_, engine_, true);
             if (configPatchNeedsReboot(patch)) {
-                delay(800);
-                ESP.restart();
+                requestDeferredReboot(300);
+
             }
         }
     } else if (strcmp(type, "custom-pattern") == 0) {
@@ -253,7 +291,35 @@ void BleServer::onWrite(BLECharacteristic* pCharacteristic) {
         Serial.printf("[CTRL] BLE unknown type '%s'\n", type);
     }
 
-    broadcastState();
+    // Deferred to housekeepingTask via pump() — never notify() inside Bluedroid callback!
+}
+
+void BleServer::pump() {
+    if (advRestartPending_ && (int32_t)(millis() - advRestartAtMs_) >= 0) {
+        advRestartPending_ = false;
+        if (rxQueue_) {
+            xQueueReset(rxQueue_);
+        }
+        if (pServer_ && !deviceConnected_) {
+            pServer_->startAdvertising();
+            log_i("BLE restarted advertising");
+        }
+    }
+    if (!deviceConnected_) return;
+    if (rxQueue_) {
+        BleRxPacket pkt;
+        while (xQueueReceive(rxQueue_, &pkt, 0) == pdTRUE) {
+            processWrite_(pkt.data, pkt.len);
+        }
+    }
+    if (configSyncPending_) {
+        configSyncPending_ = false;
+        broadcastConfig();
+    }
+    if (stateSyncPending_) {
+        stateSyncPending_ = false;
+        broadcastState();
+    }
 }
 
 void BleServer::broadcastState() {
@@ -277,7 +343,7 @@ void BleServer::notifyJson_(JsonDocument& doc) {
     pTxCharacteristic_->notify();
     const char* type = doc["type"] | "";
     if (strncmp(type, "config", 6) == 0) {
-        delay(25); // Keep the multi-part config burst from overrunning BLE queues.
+        delay(60); // Keep the multi-part config burst from overrunning BLE queues.
     }
 }
 
@@ -304,42 +370,23 @@ void BleServer::broadcastConfig() {
         doc["type"] = "config";
         doc["section"] = "driver";
         auto data = doc["data"].to<JsonObject>();
-        const auto& dc = config_->driverConfig();
-        data["kind"] = (int)config_->driverKind();
-        auto pins = data["pins"].to<JsonArray>();
-        for (int i = 0; i < 8; ++i) pins.add(dc.pins[i]);
-        data["sda"] = dc.sda;
-        data["scl"] = dc.scl;
-        data["pwmHz"] = dc.pwmHz;
+        config_->driverToJson(data, false);
         auto chEn = data["channelEnabled"].to<JsonArray>();
-        for (size_t i = 0; i < Config::kMaxChannels; ++i) {
-            chEn.add(config_->channelEnabled(i));
-        }
+        for (size_t i = 0; i < Config::kMaxChannels; ++i) chEn.add(config_->channelEnabled(i));
         notifyJson_(doc);
     }
     {
         JsonDocument doc;
         doc["type"] = "config";
         doc["section"] = "audio";
-        auto data = doc["data"].to<JsonObject>();
-        const auto& ac = config_->audioConfig();
-        data["enabled"] = config_->audioEnabled();
-        data["source"] = (int)ac.source;
-        data["bclk"] = ac.i2sBclk;
-        data["ws"] = ac.i2sWs;
-        data["sd"] = ac.i2sSd;
-        data["adc"] = ac.adcPin;
-        data["gain"] = ac.gain;
+        config_->audioToJson(doc["data"].to<JsonObject>());
         notifyJson_(doc);
     }
     {
         JsonDocument doc;
         doc["type"] = "config";
         doc["section"] = "led";
-        auto data = doc["data"].to<JsonObject>();
-        data["enabled"] = config_->ledEnabled();
-        data["pin"] = config_->ledConfig().pin;
-        data["count"] = config_->ledConfig().count;
+        config_->ledToJson(doc["data"].to<JsonObject>());
         notifyJson_(doc);
     }
     for (size_t i = 0; i < config_->knobCount(); ++i) {
@@ -358,13 +405,7 @@ void BleServer::broadcastConfig() {
         doc["type"] = "config";
         doc["section"] = "oled";
         auto data = doc["data"].to<JsonObject>();
-        const auto& oc = config_->oledConfig();
-        data["enabled"] = config_->oledEnabled();
-        data["sda"] = oc.sda;
-        data["scl"] = oc.scl;
-        data["i2cAddr"] = oc.i2cAddr;
-        data["width"] = oc.width;
-        data["height"] = oc.height;
+        config_->oledToJson(data);
         data["eStopPin"] = config_->eStopPin();
         notifyJson_(doc);
     }
