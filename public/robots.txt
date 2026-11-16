@@ -1,11 +1,51 @@
+# AI crawlers and search indexers are welcome on dillonsimeone.com.
+# Structured site summary for LLMs: https://dillonsimeone.com/llms.txt
+
 User-agent: *
 Allow: /
 
-# Prevent indexing of backup files to avoid duplicate content penalties
+# Explicitly welcome AI search & training crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+# Prevent indexing of backup files, vendored PlatformIO deps, and DHH Curriculum
+User-agent: *
 Disallow: /*/backups/*
 Disallow: /*/backup/*
-
-# Prevent indexing of DHH Curriculum
+Disallow: /*/.pio/*
 Disallow: /Projects/DHHCurriculum/
 Disallow: /Projects/DHHCurriculum
 

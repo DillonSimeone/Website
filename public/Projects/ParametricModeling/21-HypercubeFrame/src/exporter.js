@@ -1,11 +1,11 @@
-// Binary STL exporter module for 21-HypercubeFrame (v3.0 Dual-Mode)
+// Binary STL exporter module for 21-HypercubeFrame (v4.0 Tri-Mode)
 import { context, params } from './state.js';
 import {
     buildHypercubeFrame,
-    buildModularSlotTile,
-    buildCornerClip90,
-    buildFlatClip180,
-    buildClipFitTestArray,
+    buildOctaTile,
+    buildOctaHub,
+    buildMiterTile,
+    buildCotterPin,
     buildCornerStand,
     buildFullPrintPlate
 } from './geometry.js';
@@ -20,7 +20,7 @@ export function exportManifoldToBinarySTL(manifoldGeom, filename) {
     const buffer = new ArrayBuffer(84 + totalTriangles * 50);
     const view = new DataView(buffer);
 
-    const header = `21-HypercubeFrame v3.0 - ${filename}`;
+    const header = `21-HypercubeFrame v4.0 - ${filename}`;
     for (let i = 0; i < Math.min(80, header.length); i++) {
         view.setUint8(i, header.charCodeAt(i));
     }
@@ -73,37 +73,46 @@ export function triggerExport(componentName) {
 
     let geom = null;
     let filename = '';
+    const mTag = `M${params.screwNominalDia.toFixed(1)}`;
 
     switch (componentName) {
         case 'cube_frame':
             geom = buildHypercubeFrame(M, params);
-            filename = `Hypercube_64LED_ScrewCube_v3.stl`;
+            filename = `Hypercube_ScrewCube_${mTag}.stl`;
             break;
         case 'corner_stand':
             geom = buildCornerStand(M, params);
             filename = `Hypercube_Corner_Wire_Stand.stl`;
             break;
-        case 'slot_tile':
-            geom = buildModularSlotTile(M, params);
-            filename = `Hypercube_Rigid_CrossRing_Tile.stl`;
+        case 'octa_tile':
+            geom = buildOctaTile(M, params);
+            filename = `Hypercube_OctaNode_Tile_${mTag}.stl`;
             break;
-        case 'clip_90':
-            geom = buildCornerClip90(M, params);
-            filename = `Hypercube_OpenLOCK_90deg_Clip.stl`;
+        case 'octa_hub3':
+            geom = buildOctaHub(M, params, 3);
+            filename = `Hypercube_OctaHub_3Way_${mTag}.stl`;
             break;
-        case 'clip_180':
-            geom = buildFlatClip180(M, params);
-            filename = `Hypercube_OpenLOCK_180deg_Clip.stl`;
+        case 'octa_hub4':
+            geom = buildOctaHub(M, params, 4);
+            filename = `Hypercube_OctaHub_4Way_${mTag}.stl`;
             break;
-        case 'clip_test':
-            geom = buildClipFitTestArray(M, params);
-            filename = `Hypercube_Clip_FitTest_Array_00_to_-05mm.stl`;
+        case 'octa_hub5':
+            geom = buildOctaHub(M, params, 5);
+            filename = `Hypercube_OctaHub_5Way_${mTag}.stl`;
+            break;
+        case 'miter_tile':
+            geom = buildMiterTile(M, params);
+            filename = `Hypercube_MiterRail_Tile_${mTag}.stl`;
+            break;
+        case 'cotter_pin':
+            geom = buildCotterPin(M, params);
+            filename = `Hypercube_Tapered_CotterPin.stl`;
             break;
         case 'all_plate':
             geom = buildFullPrintPlate(M, params);
-            filename = params.mountMode === 'slots'
-                ? `Hypercube_6xTiles_16xClips_BambuA1_Plate.stl`
-                : `Hypercube_ScrewCube_BambuA1_Plate_v3.stl`;
+            if (params.mountMode === 'octa') filename = `Hypercube_OctaNode_BambuA1_Plate_${mTag}.stl`;
+            else if (params.mountMode === 'miter') filename = `Hypercube_MiterCotter_BambuA1_Plate_${mTag}.stl`;
+            else filename = `Hypercube_ScrewCube_BambuA1_Plate_${mTag}.stl`;
             break;
     }
 
