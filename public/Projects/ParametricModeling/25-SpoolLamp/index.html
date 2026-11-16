@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>25 — Bambu A1 Spool Lamp (Parametric CAD)</title>
+    <meta name="description" content="Parametric ForgeCAD configurator for turning Bambu A1 filament spools into ESP32-C3 + MAX4466 sound-reactive lamps with internal LED wave inserts.">
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="title-wrap">
+            <span class="cad-badge">CAD-25</span>
+            <h1>A1 SPOOL LAMP STUDIO</h1>
+        </div>
+        <div class="header-right">
+            <div class="strip-readout" id="strip-readout">STRIP: -- cm (~-- LEDs)</div>
+            <div class="status-badge" id="kernel-status-badge">
+                <div class="status-dot"></div>
+                <span>KERNEL: <span id="kernel-status">INITIALIZING...</span></span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div id="viewport-container">
+            <div class="hud-left">
+                <div class="hud-title">Hardware &amp; Power Specs</div>
+                <div class="hud-hw-box">
+                    <span class="hud-hw-badge">54.5mm FLUSH INSERT</span>
+                    <p>Houses <strong>ESP32-C3 SuperMini</strong> + <strong>MAX4466 Mic</strong> inside the cylinder bore (10mm capsule pokes through front center).</p>
+                </div>
+                <div class="hud-subtitle">WS2812B Strip Comparison (60 LEDs/m @ 5V)</div>
+                <table class="hud-table">
+                    <thead>
+                        <tr>
+                            <th>Setup</th>
+                            <th>Strip</th>
+                            <th>LEDs</th>
+                            <th>Bright (lm)</th>
+                            <th>5V Amps</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hud-power-rows">
+                        <tr><td colspan="5">Calculating...</td></tr>
+                    </tbody>
+                </table>
+                <div class="hud-note" id="hud-power-note"></div>
+            </div>
+        </div>
+
+        <aside class="sidebar">
+            <!-- Section 1: View & Wave Presets -->
+            <div class="sidebar-section">
+                <div class="section-title">1. Assembly & Wave Presets</div>
+                <div class="preset-grid">
+                    <button class="preset-btn active" data-preset="assembly">Full Assembly</button>
+                    <button class="preset-btn" data-preset="casing_mount">Casing + Wall Mount</button>
+                    <button class="preset-btn" data-preset="shade_adapter">Shade.stl Adapter</button>
+                    <button class="preset-btn" data-preset="wall_mount">Wall Mount Only</button>
+                    <button class="preset-btn" data-preset="hub_only">54.5mm Mic Hub</button>
+                    <button class="preset-btn" data-preset="wave_sinusoidal">Sinusoidal Wave</button>
+                    <button class="preset-btn" data-preset="wave_spiral">Serpentine Spiral</button>
+                    <button class="preset-btn" data-preset="wave_zigzag">Star Zig-Zag</button>
+                </div>
+                <div class="toggle-row">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="showSpoolGhost" checked>
+                        <span>Show Bambu A1 Spool Ghost</span>
+                    </label>
+                    <label class="toggle-label">
+                        <input type="checkbox" id="wireframe">
+                        <span>Wireframe</span>
+                    </label>
+                </div>
+                <div class="control-group" style="margin-top: 10px;">
+                    <div class="control-label">
+                        <span>Exploded View</span>
+                        <span class="control-val" id="val-explodedView">0.00</span>
+                    </div>
+                    <input type="range" id="explodedView" min="0" max="1" step="0.05" value="0">
+                </div>
+            </div>
+
+            <!-- Section 2: Wave Shape & LED Packing -->
+            <div class="sidebar-section">
+                <div class="section-title">2. Internal LED Wave Geometry</div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Wave Pattern</span>
+                        <span class="control-val" id="val-waveMode">sinusoidal</span>
+                    </div>
+                    <select id="waveMode" class="select-input">
+                        <option value="sinusoidal">Sinusoidal Corrugated Ring</option>
+                        <option value="spiral">Archimedean Spiral Coil</option>
+                        <option value="zigzag">Star / Zig-Zag Spokes</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Wave Lobes / Count</span>
+                        <span class="control-val" id="val-waveCount">10</span>
+                    </div>
+                    <input type="range" id="waveCount" min="4" max="24" step="1" value="10">
+                </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Wave Amplitude (mm)</span>
+                        <span class="control-val" id="val-waveAmplitude">24.0</span>
+                    </div>
+                    <input type="range" id="waveAmplitude" min="4" max="28" step="0.5" value="24">
+                </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Spiral Layers</span>
+                        <span class="control-val" id="val-spiralTurns">2.5</span>
+                    </div>
+                    <input type="range" id="spiralTurns" min="2" max="5" step="1" value="3">
+                </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Petal Sharpness</span>
+                        <span class="control-val" id="val-petalSharpness">0.0</span>
+                    </div>
+                    <input type="range" id="petalSharpness" min="0" max="1" step="0.05" value="0">
+                </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Wave Ribbon Height (mm)</span>
+                        <span class="control-val" id="val-waveHeight">58.0</span>
+                    </div>
+                    <input type="range" id="waveHeight" min="12" max="60" step="0.5" value="58">
+                </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Ribbon Wall Thick (mm)</span>
+                        <span class="control-val" id="val-waveWall">1.6</span>
+                    </div>
+                    <input type="range" id="waveWall" min="1.0" max="3.0" step="0.1" value="1.6">
+                </div>
+            </div>
+
+            <!-- Section 3: Spool & Center Mic Hub -->
+            <div class="sidebar-section">
+                <div class="section-title">3. Spool & 54.5mm Mic Hub</div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Spool Bore ID (mm)</span>
+                        <span class="control-val" id="val-spoolBoreDia">54.5</span>
+                    </div>
+                    <input type="range" id="spoolBoreDia" min="48" max="60" step="0.1" value="54.5">
+                </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Spool Core OD (mm)</span>
+                        <span class="control-val" id="val-spoolCoreOD">82.0</span>
+                    </div>
+                    <input type="range" id="spoolCoreOD" min="70" max="95" step="0.5" value="82.0">
+                </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Spool Inner Width (mm)</span>
+                        <span class="control-val" id="val-spoolInnerWidth">60.0</span>
+                    </div>
+                    <input type="range" id="spoolInnerWidth" min="45" max="75" step="0.5" value="60.0">
+                </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Spool Max Flange OD (mm)</span>
+                        <span class="control-val" id="val-spoolMaxOD">195.0</span>
+                    </div>
+                    <input type="range" id="spoolMaxOD" min="160" max="210" step="1" value="195">
+                </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>MAX4466 Mic Hole (mm)</span>
+                        <span class="control-val" id="val-micHoleDia">10.2</span>
+                    </div>
+                    <input type="range" id="micHoleDia" min="9.4" max="12.0" step="0.1" value="10.2">
+                </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Plug Depth (mm)</span>
+                        <span class="control-val" id="val-plugDepth">26.0</span>
+                    </div>
+                    <input type="range" id="plugDepth" min="16" max="42" step="1" value="26">
+                </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Friction Fit Clearance (mm)</span>
+                        <span class="control-val" id="val-plugClearance">0.20</span>
+                    </div>
+                    <input type="range" id="plugClearance" min="0.0" max="0.6" step="0.05" value="0.20">
+                </div>
+            </div>
+
+            <!-- Section 3b: Outer Casing & Wall Mount -->
+            <div class="sidebar-section">
+                <div class="section-title">3b. Parametric Casing &amp; Wall Mount</div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Side Pattern</span>
+                        <span class="control-val" id="val-casingPattern">twisted_ribs</span>
+                    </div>
+                    <select id="casingPattern" class="select-input">
+                        <option value="twisted_ribs">Twisted Ribs (Shade Style)</option>
+                        <option value="fluted">Straight Fluted</option>
+                        <option value="diamond">Zig-Zag Wave Ribs</option>
+                        <option value="double_helix">Double-Ripple Crown</option>
+                        <option value="scallop_concave">Concave Lotus Scallops</option>
+                        <option value="gear_square">Castellated Facets</option>
+                        <option value="ripple_beat">Sound-Wave Beat</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Casing Wall (0.85 ≈ 2 layers)</span>
+                        <span class="control-val" id="val-casingWall">0.85</span>
+                    </div>
+                    <input type="range" id="casingWall" min="0.45" max="2.4" step="0.05" value="0.85">
+                </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Pattern Rib Count</span>
+                        <span class="control-val" id="val-casingRibCount">32</span>
+                    </div>
+                    <input type="range" id="casingRibCount" min="12" max="60" step="2" value="32">
+                </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Rib Depth (mm)</span>
+                        <span class="control-val" id="val-casingRibDepth">6.5</span>
+                    </div>
+                    <input type="range" id="casingRibDepth" min="2" max="14" step="0.5" value="6.5">
+                </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Twist Angle (deg)</span>
+                        <span class="control-val" id="val-casingTwistDeg">38.0</span>
+                    </div>
+                    <input type="range" id="casingTwistDeg" min="0" max="90" step="2" value="38">
+                </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Wall Mount Upward Tilt (deg)</span>
+                        <span class="control-val" id="val-wallMountAngle">5.0</span>
+                    </div>
+                    <input type="range" id="wallMountAngle" min="0" max="15" step="1" value="5">
+                </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Wall Mount Cable Groove (mm)</span>
+                        <span class="control-val" id="val-wallMountGrooveW">12.0</span>
+                    </div>
+                    <input type="range" id="wallMountGrooveW" min="6" max="20" step="1" value="12">
+                </div>
+                <div class="toggle-row" style="margin-top: 8px;">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="lidHubCutout" checked>
+                        <span>Lid Center Hub Cutout (unchecked = Solid Lid)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Section 4: STL Export -->
+            <div class="sidebar-section">
+                <div class="section-title">4. Export 3D Print STLs</div>
+                <div class="export-grid">
+                    <button class="export-btn primary" data-export="hub">Export 54.5mm Mic Hub (.stl)</button>
+                    <button class="export-btn" data-export="wave_half">Export Wave Half (Print ×2) (.stl)</button>
+                    <button class="export-btn" data-export="casing">Export Parametric Casing (.stl)</button>
+                    <button class="export-btn" data-export="lid">Export Thin Lid (.stl)</button>
+                    <button class="export-btn" data-export="shade_adapter">Export Shade.stl Adapter (.stl)</button>
+                    <button class="export-btn" data-export="wall_mount">Export Angled Wall Mount (.stl)</button>
+                    <button class="export-btn" data-export="all_plate">Export Hub + Waves Plate (.stl)</button>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>
