@@ -6,8 +6,12 @@ use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
+#[path = "src/icon_gen.rs"]
+mod icon_gen;
+
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=src/icon_gen.rs");
 
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     let obj_path = out_dir.join("icon_rsrc.o");
@@ -26,11 +30,6 @@ fn main() {
 fn build_icon_dib(size: u32) -> Vec<u8> {
     let w = size as usize;
     let h = size as usize;
-    let cx = (w as f32 - 1.0) * 0.5;
-    let cy = (h as f32 - 1.0) * 0.5;
-    let half = w as f32 * 0.5;
-    let radius = w as f32 * 0.22;
-    let bar_heights = [0.28f32, 0.54, 0.78, 0.54, 0.28];
 
     // 40-byte BITMAPINFOHEADER (height = 2 * h for XOR + AND masks)
     let mut dib = Vec::with_capacity(40 + w * h * 4 + ((w + 31) / 32 * 4) * h);
@@ -46,50 +45,8 @@ fn build_icon_dib(size: u32) -> Vec<u8> {
     dib.extend_from_slice(&0u32.to_le_bytes());
     dib.extend_from_slice(&0u32.to_le_bytes());
 
-    // Bottom-up BGRA pixels
-    for y_rev in 0..h {
-        let y = h - 1 - y_rev;
-        for x in 0..w {
-            let dx = (x as f32 - cx).abs() - (half - radius - 1.0);
-            let dy = (y as f32 - cy).abs() - (half - radius - 1.0);
-            let ox = dx.max(0.0);
-            let oy = dy.max(0.0);
-            let dist = (ox * ox + oy * oy).sqrt() + dx.max(dy).min(0.0) - radius;
-
-            if dist > 0.6 {
-                dib.extend_from_slice(&[0, 0, 0, 0]);
-                continue;
-            }
-            let alpha = ((0.6 - dist).clamp(0.0, 1.0) * 255.0) as u8;
-            let mut b: u8 = 0x0E;
-            let mut g: u8 = 0x0A;
-            let mut r: u8 = 0x07;
-
-            if dist > -1.6 {
-                b = 0x88;
-                g = 0xFF;
-                r = 0x00;
-            } else {
-                let nx = x as f32 / w as f32;
-                let ny = (y as f32 - cy).abs() / half;
-                for (bi, &bh) in bar_heights.iter().enumerate() {
-                    let bx = 0.24 + (bi as f32) * 0.13;
-                    if (nx - bx).abs() < 0.042 && ny <= bh * 0.72 {
-                        if bi == 2 {
-                            b = 0xFF;
-                            g = 0xD4;
-                            r = 0x00;
-                        } else {
-                            b = 0x88;
-                            g = 0xFF;
-                            r = 0x00;
-                        }
-                    }
-                }
-            }
-            dib.extend_from_slice(&[b, g, r, alpha]);
-        }
-    }
+    // Bottom-up BGRA pixels from shared icon generator
+    dib.extend_from_slice(&icon_gen::generate_icon_bgra(size, true));
 
     // 1-bpp AND mask (all 0s since 32-bit alpha channel controls transparency)
     let mask_stride = ((w + 31) / 32) * 4;
@@ -137,7 +94,6 @@ fn build_rsrc_coff(dibs: &[Vec<u8>], grp: &[u8]) -> Vec<u8> {
     // Root dir: 16 + 2 * 8 = 32 bytes (at 0)
     // Type RT_ICON (3) dir: 16 + n_icons * 8 (at 32)
     // Type RT_GROUP_ICON (14) dir: 16 + 1 * 8 = 24 bytes
-    let off_root = 0u32;
     let off_type_icon = 32u32;
     let off_type_grp = off_type_icon + 16 + (n_icons as u32) * 8;
     let off_lang_dirs = off_type_grp + 24;
@@ -146,7 +102,6 @@ fn build_rsrc_coff(dibs: &[Vec<u8>], grp: &[u8]) -> Vec<u8> {
     // n_icons + 1 data entries, each 16 bytes
     let mut off_raw = off_data_entries + ((n_icons as u32) + 1) * 16;
 
-    let _ = off_root;
     // Root dir
     push_dir(
         &mut rsrc,

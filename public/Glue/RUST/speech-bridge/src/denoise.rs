@@ -3,10 +3,12 @@
 
 use std::f32::consts::PI;
 
-const FFT_N: usize = 512;
-const HOP: usize = 256;
+use crate::win_util::{AUDIO_CHUNK_SAMPLES, AUDIO_SAMPLE_RATE};
+
+const FFT_N: usize = AUDIO_CHUNK_SAMPLES;
+const HOP: usize = FFT_N / 2;
 const BINS: usize = FFT_N / 2 + 1;
-const SAMPLE_RATE: f32 = 16_000.0;
+const SAMPLE_RATE: f32 = AUDIO_SAMPLE_RATE as f32;
 
 #[derive(Clone, Copy)]
 struct Complex {

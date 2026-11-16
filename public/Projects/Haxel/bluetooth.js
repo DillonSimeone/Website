@@ -10,6 +10,7 @@ import {
     computeSimulatedSpectrum,
     evaluateAudioReactiveOutput
 } from './audio-reactive.js';
+import { setupSharpCanvas, renderTelemetryVisualizer } from './visualizer.js';
 import { PATTERNS, loadCustomPatterns, initPhoneHaptics } from './haptics.js';
 
 // ─── CANVAS REFS ────────────────────────────────────────────────────────────
@@ -33,7 +34,6 @@ let startupFloor = 0.35; // default 35%
 const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 let numBins = isMobileDevice ? 5 : 4;
 let dividers = isMobileDevice ? [5, 12, 22, 28] : [12, 22, 28];
-let draggingDividerIdx = -1;
 
 let timeSec = 0;
 const waveHistory = [];
@@ -75,19 +75,6 @@ function showMobileHapticGuide() {
             }, 400);
         }, 3500);
     }
-}
-
-// ─── HIGH-DPI CANVAS SHARPNESS HELPER ───────────────────────────────────────
-function setupSharpCanvas(canvas) {
-    if (!canvas) return;
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    
-    const ctx = canvas.getContext("2d");
-    ctx.setTransform(1, 0, 0, 1, 0, 0); // reset scale
-    ctx.scale(dpr, dpr);
 }
 
 // Initialize sharp canvases on load
@@ -455,19 +442,6 @@ actSelect.addEventListener("change", (e) => {
     triggerI2CBlink();
 });
 
-function getDriverKindEnum(kindStr) {
-    // Must match haxel::hal::DriverKind in firmware IHapticDriver.h
-    const map = {
-        "NONE": 0,
-        "L298N": 1,
-        "DRV8833": 2,
-        "DRV2605L": 3,
-        "MOSFET": 4,
-        "MINI_HBRIDGE": 5
-    };
-    return map[kindStr] !== undefined ? map[kindStr] : 4;
-}
-
 // ─── PATTERN LIBRARY CARD RENDER ─────────────────────────────────────────────
 const libCards = document.getElementById("libCards");
 const chips = document.querySelectorAll(".chip");
@@ -739,86 +713,6 @@ function renderBinRows() {
     });
 }
 
-function _unusedRenderBinRowsLegacy() {
-    if (!routingMatrix) return;
-
-    const savedValues = [];
-    for (let i = 0; i < numBins; ++i) {
-        const el = document.getElementById(`bin-${i}-pattern`);
-        savedValues.push(el ? el.value : null);
-    }
-
-    routingMatrix.innerHTML = "";
-    const defaults = ["none", "Pulse", "Rumble", "Staccato", "Ocean"];
-
-    for (let i = 0; i < numBins; ++i) {
-        const row = document.createElement("div");
-        row.className = "bin-row";
-
-        const minFreq = parseFloat(audioMinFreqInput ? audioMinFreqInput.value : 40);
-        const maxFreq = parseFloat(audioMaxFreqInput ? audioMaxFreqInput.value : 16000);
-        const getBandAtFreq = (f) => Math.max(0, Math.min(32, Math.round(32 * Math.log(f / 40) / Math.log(20000 / 40))));
-        const minBandIdx = getBandAtFreq(minFreq);
-        const maxBandIdx = getBandAtFreq(maxFreq);
-
-        let labelName = `Bin ${i}`;
-        if (i === 0 && minBandIdx > 0) {
-            labelName += ` (Anti-Loop / Low Cut)`;
-        } else if (i === numBins - 1 && maxBandIdx < 32) {
-            labelName += ` (High Cut / End Bin)`;
-        } else {
-            const activeIdx = (minBandIdx > 0) ? (i - 1) : i;
-            const activeCount = numBins - (minBandIdx > 0 ? 1 : 0) - (maxBandIdx < 32 ? 1 : 0);
-            if (activeCount === 3) {
-                const labels = ["Bass", "Mids", "Treble"];
-                labelName += ` (${labels[activeIdx] || `Active ${activeIdx + 1}`})`;
-            } else if (activeCount === 2) {
-                const labels = ["Bass/Mids", "Treble"];
-                labelName += ` (${labels[activeIdx] || `Active ${activeIdx + 1}`})`;
-            } else {
-                labelName += ` (Active ${activeIdx + 1})`;
-            }
-        }
-
-        row.innerHTML = `
-            <span class="bin-title">${labelName}:</span>
-            <span class="bin-range" id="bin-${i}-range">-</span>
-            <select class="bin-pattern-select" id="bin-${i}-pattern">
-                <option value="none">NONE (No Reactivity)</option>
-            </select>
-        `;
-
-        routingMatrix.appendChild(row);
-
-        const sel = row.querySelector(".bin-pattern-select");
-        sel.addEventListener("change", () => {
-            syncStateToESP32();
-        });
-        PATTERNS.forEach(p => {
-            const opt = document.createElement("option");
-            opt.value = p.id;
-            opt.textContent = p.name;
-            sel.appendChild(opt);
-        });
-
-        const prevVal = savedValues[i];
-        const pickDefault = () => {
-            if (i === 0) return "none";
-            if (i === 1) return Array.from(sel.options).some(o => o.value === "Pulse") ? "Pulse" : (PATTERNS[0]?.id || "none");
-            if (i === 2) return Array.from(sel.options).some(o => o.value === "Rumble") ? "Rumble" : (PATTERNS[1]?.id || PATTERNS[0]?.id || "none");
-            const cand = defaults[i] || "none";
-            return Array.from(sel.options).some(o => o.value === cand) ? cand : "none";
-        };
-        if (prevVal && Array.from(sel.options).some(o => o.value === prevVal)) {
-            sel.value = prevVal;
-        } else {
-            sel.value = pickDefault();
-        }
-    }
-
-    updateBinRangeLabels();
-}
-
 function populateBinPatternSelects() {
     for (let i = 0; i < numBins; ++i) {
         const sel = document.getElementById(`bin-${i}-pattern`);
@@ -854,68 +748,6 @@ function initSpectrumDividers() {
         onUpdate: () => updateBinRangeLabels(),
         onCommit: () => syncStateToESP32()
     });
-}
-
-function _unusedInitSpectrumDividersLegacy() {
-    if (!specCanvas) return;
-
-    const getMouseX = (e) => {
-        const rect = specCanvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        return clientX - rect.left;
-    };
-
-    const handleStart = (e) => {
-        const mx = getMouseX(e);
-        const dpr = window.devicePixelRatio || 1;
-        const cssW = specCanvas.width / dpr;
-
-        let closestIdx = -1;
-        let minDist = 15;
-        dividers.forEach((divVal, idx) => {
-            const x = divVal * (cssW / 32);
-            const dist = Math.abs(mx - x);
-            if (dist < minDist) {
-                minDist = dist;
-                closestIdx = idx;
-            }
-        });
-
-        if (closestIdx >= 0) {
-            draggingDividerIdx = closestIdx;
-            e.preventDefault();
-        }
-    };
-
-    const handleMove = (e) => {
-        if (draggingDividerIdx < 0) return;
-        const mx = getMouseX(e);
-        const dpr = window.devicePixelRatio || 1;
-        const cssW = specCanvas.width / dpr;
-        const band = Math.round((mx / cssW) * 32);
-
-        const minVal = draggingDividerIdx === 0 ? 1 : dividers[draggingDividerIdx - 1] + 1;
-        const maxVal = draggingDividerIdx === dividers.length - 1 ? 31 : dividers[draggingDividerIdx + 1] - 1;
-        dividers[draggingDividerIdx] = Math.max(minVal, Math.min(maxVal, band));
-
-        updateBinRangeLabels();
-        e.preventDefault();
-    };
-
-    const handleEnd = () => {
-        if (draggingDividerIdx >= 0) {
-            syncStateToESP32();
-        }
-        draggingDividerIdx = -1;
-    };
-
-    specCanvas.addEventListener("mousedown", handleStart);
-    specCanvas.addEventListener("mousemove", handleMove);
-    window.addEventListener("mouseup", handleEnd);
-
-    specCanvas.addEventListener("touchstart", handleStart, { passive: false });
-    specCanvas.addEventListener("touchmove", handleMove, { passive: false });
-    window.addEventListener("touchend", handleEnd);
 }
 
 renderBinRows();
@@ -1454,43 +1286,6 @@ function drawSpectrum(mags) {
     drawSpectrumShared(specCanvas, specCtx, mags, dividers, numBins);
 }
 
-function _unusedDrawSpectrumLegacy(mags) {
-    if (!specCanvas) return;
-    const dpr = window.devicePixelRatio || 1;
-    const cssW = specCanvas.width / dpr;
-    const cssH = specCanvas.height / dpr;
-
-    specCtx.fillStyle = "#f4ebd0"; // Cream background
-    specCtx.fillRect(0, 0, cssW, cssH);
-    const barWidth = (cssW / 32);
-    const audioGainInput = document.getElementById("audioGain");
-    const gain = parseFloat(audioGainInput ? audioGainInput.value : 15) / 10;
-
-    specCtx.strokeStyle = "#111111";
-    specCtx.lineWidth = 1.5;
-
-    for (let i = 0; i < 32; i++) {
-        const val = Math.min(1.0, (mags ? mags[i] : 0) * gain);
-        const barHeight = val * (cssH - 10);
-
-        const hue = (i / 31) * 280;
-        specCtx.fillStyle = `hsl(${hue}, 85%, 45%)`;
-        specCtx.fillRect(i * barWidth + 1, cssH - barHeight, barWidth - 2, barHeight);
-        specCtx.strokeRect(i * barWidth + 1, cssH - barHeight, barWidth - 2, barHeight);
-    }
-
-    // Draw Dividers
-    dividers.forEach((divVal) => {
-        const x = divVal * barWidth;
-        specCtx.strokeStyle = "#e23b24"; // Bauhaus Red
-        specCtx.lineWidth = 2.5;
-        specCtx.beginPath();
-        specCtx.moveTo(x, 0);
-        specCtx.lineTo(x, cssH);
-        specCtx.stroke();
-    });
-}
-
 function throttle(fn, ms) {
     let last = 0, timer = null;
     return function(...args) {
@@ -1583,98 +1378,6 @@ function syncStateToESP32() {
 }
 
 // ─── ANIMATION / EMULATOR RENDER LOOP ─────────────────────────────────────────
-function drawVirtualActuator(ctx, cx, cy, radius, amp) {
-    const isLRA = actSelect.value === "LRA";
-    const isSolenoid = actSelect.value === "Solenoid";
-    
-    if (amp > 0.02 && !isMotorStalled) {
-        ctx.lineWidth = 3;
-        const numWaves = 3;
-        for (let i = 0; i < numWaves; i++) {
-            const phase = (timeSec * 4 + i / numWaves) % 1.0;
-            const currentR = radius + phase * 50;
-            const alpha = (1.0 - phase) * 0.8 * amp;
-            ctx.strokeStyle = `rgba(0, 47, 108, ${alpha})`;
-            ctx.beginPath();
-            ctx.arc(cx, cy, currentR, 0, Math.PI * 2);
-            ctx.stroke();
-        }
-    }
-
-    let dx = 0;
-    let dy = 0;
-    if (amp > 0.01 && !isMotorStalled) {
-        const vibrationFreq = isLRA ? frequencyShift : 25;
-        dx = (Math.random() - 0.5) * 6 * amp * (1.0 + Math.sin(timeSec * vibrationFreq) * 0.2);
-        dy = (Math.random() - 0.5) * 6 * amp * (1.0 + Math.cos(timeSec * vibrationFreq) * 0.2);
-    }
-
-    const ax = cx + dx;
-    const ay = cy + dy;
-
-    ctx.fillStyle = isMotorStalled ? "#e23b24" : "#ffffff";
-    ctx.strokeStyle = "#111111";
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius + 4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    if (isLRA) {
-        ctx.strokeStyle = "#111111";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        for (let i = -15; i <= 15; i += 5) {
-            const sx = ax + i;
-            const sy = ay + Math.sin(i * 0.4) * 8;
-            if (i === -15) ctx.moveTo(sx, sy);
-            else ctx.lineTo(sx, sy);
-        }
-        ctx.stroke();
-
-        ctx.fillStyle = isMotorStalled ? "rgba(226,59,36,0.5)" : "#f2b134";
-        ctx.beginPath();
-        ctx.arc(ax, ay, radius * 0.45, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        
-        ctx.fillStyle = "#111111";
-        ctx.font = "bold 8px Inter";
-        ctx.textAlign = "center";
-        ctx.fillText(isMotorStalled ? "STALL" : "LRA", ax, ay + 3);
-    } else if (isSolenoid) {
-        ctx.fillStyle = "#002f6c";
-        ctx.fillRect(ax - 20, ay - 10, 40, 20);
-        ctx.strokeRect(ax - 20, ay - 10, 40, 20);
-
-        const stroke = isMotorStalled ? 0 : amp * 12;
-        ctx.fillStyle = isMotorStalled ? "rgba(226,59,36,0.8)" : "#e23b24";
-        ctx.fillRect(ax - 5 + stroke, ay - 6, 20, 12);
-        ctx.strokeRect(ax - 5 + stroke, ay - 6, 20, 12);
-    } else {
-        ctx.strokeStyle = "rgba(17,17,17,0.2)";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(ax, ay, radius * 0.75, 0, Math.PI * 2);
-        ctx.stroke();
-
-        const rotationSpeed = isMotorStalled ? 0 : amp * 25;
-        const angle = timeSec * rotationSpeed;
-        ctx.fillStyle = isMotorStalled ? "rgba(226,59,36,0.5)" : "#e23b24";
-        ctx.beginPath();
-        ctx.moveTo(ax, ay);
-        ctx.arc(ax, ay, radius * 0.7, angle, angle + Math.PI, false);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = "#111111";
-        ctx.beginPath();
-        ctx.arc(ax, ay, 4, 0, Math.PI * 2);
-        ctx.fill();
-    }
-}
-
 function animate() {
     requestAnimationFrame(animate);
     
@@ -1836,262 +1539,26 @@ function animate() {
 }
 
 function renderVisualizer(mags) {
-    const isAudioTab = (document.getElementById("tab-audio").style.display !== "none");
-    
-    waveHistory.push(smoothedAmp);
-    if (waveHistory.length > historyLen) waveHistory.shift();
-    
-    let activeColor = "rgba(0, 47, 108, 0.25)";
-    if (isAudioTab && mags) {
-        const sortedBins = Array.from({length: 32}, (_, idx) => ({index: idx, val: mags[idx]}))
-            .sort((a, b) => b.val - a.val);
-        const top3 = sortedBins.slice(0, 3);
-        const hue1 = (top3[0].index / 31) * 280;
-        const hue2 = (top3[1].index / 31) * 280;
-        const hue3 = (top3[2].index / 31) * 280;
-        const avgHue = (hue1 + hue2 + hue3) / 3;
-        activeColor = `hsl(${avgHue}, 85%, 45%)`;
-    }
-    colorHistory.push(activeColor);
-    if (colorHistory.length > historyLen) colorHistory.shift();
-    
-    specHistory.push(mags ? [...mags] : new Array(32).fill(0));
-    if (specHistory.length > historyLen) specHistory.shift();
-    
-    updateHardwarePins(smoothedAmp, isMotorStalled);
-
-    // Draw telemetry
-    const dpr = window.devicePixelRatio || 1;
-    const cssW = prevCanvas.width / dpr;
-    const cssH = prevCanvas.height / dpr;
-
-    prevCtx.fillStyle = "#f4ebd0";
-    prevCtx.fillRect(0, 0, cssW, cssH);
-    
-    drawVirtualActuator(prevCtx, 60, cssH / 2, 36, smoothedAmp);
-    
-    prevCtx.fillStyle = "#f4ebd0";
-    prevCtx.fillRect(120, 0, cssW - 120, cssH);
-    
-    prevCtx.strokeStyle = "#111111";
-    prevCtx.lineWidth = 4;
-    prevCtx.beginPath();
-    prevCtx.moveTo(120, 0);
-    prevCtx.lineTo(120, cssH);
-    prevCtx.stroke();
-
-    prevCtx.strokeStyle = "rgba(17, 17, 17, 0.08)";
-    prevCtx.lineWidth = 1;
-    for (let x = 120; x < cssW; x += 40) {
-        prevCtx.beginPath();
-        prevCtx.moveTo(x, 0);
-        prevCtx.lineTo(x, cssH);
-        prevCtx.stroke();
-    }
-    for (let y = 30; y < cssH; y += 30) {
-        prevCtx.beginPath();
-        prevCtx.moveTo(120, y);
-        prevCtx.lineTo(cssW, y);
-        prevCtx.stroke();
-    }
-    
-    if (isMotorStalled) {
-        prevCtx.fillStyle = "#e23b24";
-        prevCtx.font = "bold 11px Inter";
-        prevCtx.textAlign = "center";
-        prevCtx.fillText("MOTOR STALLED", 180, 25);
-    }
-
-    if (waveHistory.length > 1) {
-        const startX = 120;
-        const width = cssW - startX;
-        const step = width / (historyLen - 1);
-        
-        if (telemetryMode === "classic") {
-            for (let i = 0; i < waveHistory.length - 1; i++) {
-                const h1 = waveHistory[i] * (cssH - 20);
-                const h2 = waveHistory[i + 1] * (cssH - 20);
-                const x1 = startX + i * step;
-                const x2 = startX + (i + 1) * step;
-                
-                let fillCol = colorHistory[i] || "rgba(0, 47, 108, 0.25)";
-                if (fillCol.startsWith("hsl")) {
-                    fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
-                }
-                prevCtx.fillStyle = fillCol;
-                
-                prevCtx.beginPath();
-                prevCtx.moveTo(x1, cssH - 10);
-                prevCtx.lineTo(x1, cssH - 10 - h1);
-                prevCtx.lineTo(x2, cssH - 10 - h2);
-                prevCtx.lineTo(x2, cssH - 10);
-                prevCtx.closePath();
-                prevCtx.fill();
-                
-                prevCtx.strokeStyle = "#111111";
-                prevCtx.lineWidth = 3;
-                prevCtx.beginPath();
-                prevCtx.moveTo(x1, cssH - 10 - h1);
-                prevCtx.lineTo(x2, cssH - 10 - h2);
-                prevCtx.stroke();
-            }
-        } else if (telemetryMode === "symmetric") {
-            for (let i = 0; i < waveHistory.length - 1; i++) {
-                const h1 = waveHistory[i] * (cssH - 20);
-                const h2 = waveHistory[i + 1] * (cssH - 20);
-                const x1 = startX + i * step;
-                const x2 = startX + (i + 1) * step;
-                
-                let fillCol = colorHistory[i] || "rgba(0, 47, 108, 0.25)";
-                if (fillCol.startsWith("hsl")) {
-                    fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
-                }
-                prevCtx.fillStyle = fillCol;
-                
-                const y1_top = cssH / 2 - Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
-                const y2_top = cssH / 2 - Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
-                
-                const y1_bot = cssH / 2 + Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
-                const y2_bot = cssH / 2 + Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
-                
-                prevCtx.beginPath();
-                prevCtx.moveTo(x1, y1_top - h1 / 2);
-                prevCtx.lineTo(x2, y2_top - h2 / 2);
-                prevCtx.lineTo(x2, y2_bot + h2 / 2);
-                prevCtx.lineTo(x1, y1_bot + h1 / 2);
-                prevCtx.closePath();
-                prevCtx.fill();
-                
-                prevCtx.strokeStyle = "#111111";
-                prevCtx.lineWidth = 3;
-                prevCtx.beginPath();
-                prevCtx.moveTo(x1, y1_top - h1 / 2);
-                prevCtx.lineTo(x2, y2_top - h2 / 2);
-                prevCtx.stroke();
-                
-                prevCtx.beginPath();
-                prevCtx.moveTo(x2, y2_bot + h2 / 2);
-                prevCtx.lineTo(x1, y1_bot + h1 / 2);
-                prevCtx.stroke();
-            }
-        } else if (telemetryMode === "waterfall") {
-            const cellH = (cssH - 20) / 32;
-            for (let i = 0; i < specHistory.length; i++) {
-                const x = startX + i * step;
-                const spec = specHistory[i];
-                for (let j = 0; j < 32; j++) {
-                    const val = spec ? spec[j] : 0;
-                    if (val > 0.01) {
-                        const hue = (j / 31) * 280;
-                        prevCtx.fillStyle = `hsla(${hue}, 85%, 45%, ${val * 0.75})`;
-                        prevCtx.fillRect(x, cssH - 10 - (j + 1) * cellH, step + 1, cellH + 0.5);
-                    }
-                }
-            }
-        } else if (telemetryMode === "orbit") {
-            const cx = startX + width / 2;
-            const cy = cssH / 2;
-            
-            prevCtx.strokeStyle = "rgba(17, 17, 17, 0.05)";
-            prevCtx.lineWidth = 2;
-            prevCtx.beginPath();
-            prevCtx.arc(cx, cy, (cssH - 30) * 0.25, 0, Math.PI * 2);
-            prevCtx.stroke();
-            
-            for (let i = 0; i < waveHistory.length - 1; i++) {
-                const amp1 = waveHistory[i];
-                const amp2 = waveHistory[i + 1];
-                
-                const angle1 = (i / historyLen) * Math.PI * 2 * 4 + timeSec * 3;
-                const angle2 = ((i + 1) / historyLen) * Math.PI * 2 * 4 + timeSec * 3;
-                
-                const baseR = (cssH - 30) * 0.28;
-                const r1 = baseR + amp1 * baseR * 0.8;
-                const r2 = baseR + amp2 * baseR * 0.8;
-                
-                const x1 = cx + Math.cos(angle1) * r1;
-                const y1 = cy + Math.sin(angle1) * r1;
-                const x2 = cx + Math.cos(angle2) * r2;
-                const y2 = cy + Math.sin(angle2) * r2;
-                
-                let strokeCol = colorHistory[i] || "rgba(0, 47, 108, 0.25)";
-                const alpha = (i / (waveHistory.length - 1)) * 0.8;
-                if (strokeCol.startsWith("hsl")) {
-                    strokeCol = strokeCol.replace("hsl", "hsla").replace(")", `, ${alpha})`);
-                } else {
-                    strokeCol = `rgba(0, 47, 108, ${alpha})`;
-                }
-                
-                prevCtx.strokeStyle = strokeCol;
-                prevCtx.lineWidth = 2 + (i / waveHistory.length) * 3;
-                prevCtx.beginPath();
-                prevCtx.moveTo(x1, y1);
-                prevCtx.lineTo(x2, y2);
-                prevCtx.stroke();
-            }
-        }
-    }
-    
-    // Draw Hero banner
-    const heroCssW = heroCanvas.width / dpr;
-    const heroCssH = heroCanvas.height / dpr;
-
-    heroCtx.fillStyle = "#f4ebd0";
-    heroCtx.fillRect(0, 0, heroCssW, heroCssH);
-    
-    heroCtx.strokeStyle = "rgba(17, 17, 17, 0.05)";
-    heroCtx.lineWidth = 1;
-    for (let x = 0; x < heroCssW; x += 50) {
-        heroCtx.beginPath();
-        heroCtx.moveTo(x, 0);
-        heroCtx.lineTo(x, heroCssH);
-        heroCtx.stroke();
-    }
-    
-    if (waveHistory.length > 1) {
-        const step = heroCssW / (historyLen - 1);
-        
-        for (let i = 0; i < waveHistory.length - 1; i++) {
-            const h1 = waveHistory[i] * (heroCssH - 15);
-            const h2 = waveHistory[i + 1] * (heroCssH - 15);
-            const x1 = i * step;
-            const x2 = (i + 1) * step;
-            
-            let fillCol = colorHistory[i] || "rgba(226, 59, 36, 0.25)";
-            if (fillCol.startsWith("hsl")) {
-                fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
-            } else if (fillCol.startsWith("rgba(0, 47, 108")) {
-                fillCol = "rgba(226, 59, 36, 0.35)"; // default red for hero
-            }
-            heroCtx.fillStyle = fillCol;
-            
-            const y1_top = heroCssH / 2 - Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
-            const y2_top = heroCssH / 2 - Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
-            
-            const y1_bot = heroCssH / 2 + Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
-            const y2_bot = heroCtx ? (heroCssH / 2 + Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4) : 0;
-            
-            heroCtx.beginPath();
-            heroCtx.moveTo(x1, y1_top - h1 / 2);
-            heroCtx.lineTo(x2, y2_top - h2 / 2);
-            heroCtx.lineTo(x2, y2_bot + h2 / 2);
-            heroCtx.lineTo(x1, y1_bot + h1 / 2);
-            heroCtx.closePath();
-            heroCtx.fill();
-            
-            heroCtx.strokeStyle = "#111111";
-            heroCtx.lineWidth = 3;
-            heroCtx.beginPath();
-            heroCtx.moveTo(x1, y1_top - h1 / 2);
-            heroCtx.lineTo(x2, y2_top - h2 / 2);
-            heroCtx.stroke();
-            
-            heroCtx.beginPath();
-            heroCtx.moveTo(x2, y2_bot + h2 / 2);
-            heroCtx.lineTo(x1, y1_bot + h1 / 2);
-            heroCtx.stroke();
-        }
-    }
+    const isAudioTab = (document.getElementById("tab-audio")?.style.display !== "none");
+    renderTelemetryVisualizer({
+        prevCanvas,
+        prevCtx,
+        heroCanvas,
+        heroCtx,
+        waveHistory,
+        colorHistory,
+        specHistory,
+        historyLen,
+        smoothedAmp,
+        isMotorStalled,
+        telemetryMode,
+        timeSec,
+        frequencyShift,
+        actType: actSelect.value,
+        mags,
+        isAudioTab,
+        onPinsUpdate: updateHardwarePins
+    });
 }
 
 // ─── INITIALIZATION BOOT ─────────────────────────────────────────────────────

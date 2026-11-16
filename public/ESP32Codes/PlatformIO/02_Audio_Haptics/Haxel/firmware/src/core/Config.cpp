@@ -249,26 +249,20 @@ bool Config::load() {
     return true;
 }
 
-bool Config::save() {
-    JsonDocument doc;
-    doc["firstRun"] = firstRun_;
-    doc["staEnabled"] = staEnabled_;
-    doc["hostname"] = hostname_;
-    doc["apSsid"]   = apSsid_;
-    doc["staSsid"]  = staSsid_;
-    doc["staPass"]  = staPass_;
-
-    auto drv = doc["driver"].to<JsonObject>();
-    drv["kind"]    = (int)driverKind_;
+void Config::driverToJson(JsonObject drv, bool includeDriverExtra) const {
+    drv["kind"] = (int)driverKind_;
     auto pins = drv["pins"].to<JsonArray>();
     for (int i = 0; i < 8; ++i) pins.add(driverConfig_.pins[i]);
-    drv["sda"]     = driverConfig_.sda;
-    drv["scl"]     = driverConfig_.scl;
-    drv["i2cAddr"] = driverConfig_.i2cAddr;
-    drv["pwmHz"]   = driverConfig_.pwmHz;
-    drv["pwmBits"] = driverConfig_.pwmBits;
+    drv["sda"] = driverConfig_.sda;
+    drv["scl"] = driverConfig_.scl;
+    if (includeDriverExtra) {
+        drv["i2cAddr"] = driverConfig_.i2cAddr;
+        drv["pwmBits"] = driverConfig_.pwmBits;
+    }
+    drv["pwmHz"] = driverConfig_.pwmHz;
+}
 
-    auto au = doc["audio"].to<JsonObject>();
+void Config::audioToJson(JsonObject au) const {
     au["enabled"] = audio_.enabled;
     au["source"]  = (int)audio_.source;
     au["bclk"]    = audio_.i2sBclk;
@@ -276,13 +270,38 @@ bool Config::save() {
     au["sd"]      = audio_.i2sSd;
     au["adc"]     = audio_.adcPin;
     au["gain"]    = audio_.gain;
+}
 
-    auto ld = doc["led"].to<JsonObject>();
+void Config::ledToJson(JsonObject ld) const {
     ld["enabled"] = led_.enabled;
     ld["pin"]     = led_.pin;
     ld["count"]   = led_.count;
+}
 
-    auto knobs = doc["knobs"].to<JsonArray>();
+void Config::oledToJson(JsonObject ol) const {
+    ol["enabled"] = oled_.enabled;
+    ol["sda"]     = oled_.sda;
+    ol["scl"]     = oled_.scl;
+    ol["i2cAddr"] = oled_.i2cAddr;
+    ol["width"]   = oled_.width;
+    ol["height"]  = oled_.height;
+}
+
+void Config::toJson(JsonObject root, bool includeSecrets) const {
+    root["firstRun"] = firstRun_;
+    if (includeSecrets) {
+        root["staEnabled"] = staEnabled_;
+        root["staSsid"] = staSsid_;
+        root["staPass"] = staPass_;
+    }
+    root["hostname"] = hostname_;
+    root["apSsid"]   = apSsid_;
+
+    driverToJson(root["driver"].to<JsonObject>(), includeSecrets);
+    audioToJson(root["audio"].to<JsonObject>());
+    ledToJson(root["led"].to<JsonObject>());
+
+    auto knobs = root["knobs"].to<JsonArray>();
     for (size_t i = 0; i < knobCount_; ++i) {
         auto k = knobs.add<JsonObject>();
         k["enabled"] = knobs_[i].enabled;
@@ -290,18 +309,16 @@ bool Config::save() {
         k["param"]   = knobs_[i].param;
     }
 
-    auto ol = doc["oled"].to<JsonObject>();
-    ol["enabled"] = oled_.enabled;
-    ol["sda"]     = oled_.sda;
-    ol["scl"]     = oled_.scl;
-    ol["i2cAddr"]  = oled_.i2cAddr;
-    ol["width"]    = oled_.width;
-    ol["height"]   = oled_.height;
+    oledToJson(root["oled"].to<JsonObject>());
+    root["eStopPin"] = eStopPin_;
 
-    doc["eStopPin"] = eStopPin_;
-
-    auto chEn = doc["channelEnabled"].to<JsonArray>();
+    auto chEn = root["channelEnabled"].to<JsonArray>();
     for (size_t i = 0; i < kMaxChannels; ++i) chEn.add(channelEnabled_[i]);
+}
+
+bool Config::save() {
+    JsonDocument doc;
+    toJson(doc.to<JsonObject>(), true);
 
     String serialized;
     serializeJson(doc, serialized);

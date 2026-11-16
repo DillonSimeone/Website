@@ -1,10 +1,8 @@
 //! Leet-hacker double-buffered Win32 GDI UI with clickable TTS/STT cards,
 //! WASAPI loopback toggle, voice speed control, export, and always-on-top pin.
 
-use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::io::Write;
-use std::os::windows::ffi::OsStrExt;
 use std::sync::Arc;
 use windows::core::PCWSTR;
 use windows::Win32::Foundation::{
@@ -13,10 +11,10 @@ use windows::Win32::Foundation::{
 use windows::Win32::Graphics::Gdi::{
     BeginPaint, BitBlt, ClientToScreen, CreateCompatibleBitmap, CreateCompatibleDC, CreateFontW,
     CreatePen, CreateSolidBrush, DeleteDC, DeleteObject, DrawTextW, Ellipse, EndPaint, FillRect,
-    FrameRect, InvalidateRect, RestoreDC, SaveDC, ScreenToClient, SelectObject, SetBkColor,
-    SetBkMode, SetTextColor, IntersectClipRect, CLEARTYPE_QUALITY, CLIP_DEFAULT_PRECIS,
-    DEFAULT_CHARSET, DEFAULT_PITCH, DT_CALCRECT, DT_CENTER, DT_LEFT, DT_NOPREFIX, DT_RIGHT,
-    DT_SINGLELINE, DT_VCENTER, DT_WORDBREAK, FF_MODERN, FW_BOLD, FW_NORMAL, HBRUSH, HDC, HFONT,
+    FrameRect, IntersectClipRect, InvalidateRect, RestoreDC, SaveDC, ScreenToClient, SelectObject,
+    SetBkColor, SetBkMode, SetTextColor, CLEARTYPE_QUALITY, CLIP_DEFAULT_PRECIS, DEFAULT_CHARSET,
+    DEFAULT_PITCH, DT_CALCRECT, DT_CENTER, DT_LEFT, DT_NOPREFIX, DT_RIGHT, DT_SINGLELINE,
+    DT_VCENTER, DT_WORDBREAK, FF_MODERN, FW_BOLD, FW_NORMAL, HBRUSH, HDC, HFONT,
     OUT_DEFAULT_PRECIS, PAINTSTRUCT, PS_SOLID, SRCCOPY, TRANSPARENT,
 };
 use windows::Win32::System::DataExchange::{
@@ -42,6 +40,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
 use crate::meter::{AudioSource, MicMeter, BANDS};
 use crate::stt::{SttBackend, SttEngine, SttEvent, SttEventQueue};
 use crate::tts::{list_local_voices, TtsEngine, VoiceEntry};
+use crate::win_util::to_wide;
 
 pub const WM_APP_STT_EVENT: u32 = WM_APP + 1;
 pub const WM_APP_TTS_STATUS: u32 = WM_APP + 2;
@@ -56,7 +55,7 @@ const CF_UNICODETEXT: u32 = 13;
 const RATES: [f64; 4] = [0.8, 1.0, 1.25, 1.5];
 
 // Cyber-Terminal Palette (COLORREF is 0x00BBGGRR)
-const C_BG: COLORREF = COLORREF(0x000E0A07); // #070A0E
+pub const C_BG: COLORREF = COLORREF(0x000E0A07); // #070A0E
 const C_PANE: COLORREF = COLORREF(0x00140F0A); // #0A0F14
 const C_CARD: COLORREF = COLORREF(0x001D160F); // #0F161D
 const C_CARD_HOVER: COLORREF = COLORREF(0x00262113); // #132126
@@ -188,10 +187,7 @@ impl AppState {
             self.status_text = ">> SWITCHING STT...".to_string();
             self.stt.start(self.backend);
         } else {
-            self.status_text = match self.backend {
-                SttBackend::Win11Captions => ">> ENG: WIN11 CAPTIONS".to_string(),
-                SttBackend::WhisperLive => ">> ENG: WHISPER".to_string(),
-            };
+            self.status_text = format!(">> ENG: {}", self.backend.short_label());
         }
         self.redraw();
     }
@@ -361,7 +357,7 @@ impl AppState {
                     } else {
                         MF_UNCHECKED
                     };
-                let _ = AppendMenuW(menu, flags, i + 1, wide.as_ptr_pcwstr());
+                let _ = AppendMenuW(menu, flags, i + 1, PCWSTR(wide.as_ptr()));
             }
 
             let mut pt = POINT {
@@ -631,14 +627,14 @@ impl AppState {
 
             // Top Command Bar
             self.draw_mic_button(mem_dc);
-            let (eng_lbl, eng_acc) = match self.backend {
-                SttBackend::Win11Captions => ("STT: WIN11", C_CYAN),
-                SttBackend::WhisperLive => ("STT: WHISP", C_GREEN),
+            let eng_acc = match self.backend {
+                SttBackend::Win11Captions => C_CYAN,
+                SttBackend::WhisperLive => C_GREEN,
             };
             self.draw_button(
                 mem_dc,
                 self.rect_engine,
-                eng_lbl,
+                self.backend.button_label(),
                 self.hover == HitTarget::BtnEngine,
                 eng_acc,
                 self.backend == SttBackend::Win11Captions,
@@ -846,16 +842,7 @@ impl AppState {
 
         SelectObject(hdc, self.font_bold);
         SetTextColor(hdc, if active || hovered { accent } else { C_TEXT });
-        let mut trc = rc;
-        let mut wide: Vec<u16> = OsStr::new(label).encode_wide().collect();
-        if !wide.is_empty() {
-            DrawTextW(
-                hdc,
-                &mut wide,
-                &mut trc,
-                DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX,
-            );
-        }
+        draw_text_single(hdc, label, rc, DT_CENTER | DT_VCENTER);
     }
 
     unsafe fn draw_freq_meter(&self, hdc: HDC) {
@@ -1338,10 +1325,7 @@ pub unsafe extern "system" fn main_wnd_proc(
         }
         WM_MOUSEWHEEL => {
             let delta = ((wparam.0 >> 16) as u16 as i16) as i32;
-            let mut pt = POINT {
-                x: (lparam.0 & 0xFFFF) as i16 as i32,
-                y: ((lparam.0 >> 16) & 0xFFFF) as i16 as i32,
-            };
+            let mut pt = lparam_point(lparam);
             let _ = ScreenToClient(hwnd, &mut pt);
             if let Some(st) = get_state(hwnd) {
                 let step = -(delta / 120) * 44;
@@ -1369,7 +1353,7 @@ pub unsafe extern "system" fn main_wnd_proc(
                 } else {
                     st.active_reply_idx = None;
                     st.status_text = if st.mic_active {
-                        ">> RX LIVE [Whisper Live]".to_string()
+                        st.backend.live_status().to_string()
                     } else {
                         ">> STANDBY".to_string()
                     };
@@ -1500,8 +1484,8 @@ unsafe fn create_app_state(hwnd: HWND) -> Box<AppState> {
     let empty = to_wide("");
     let edit_input = CreateWindowExW(
         windows::Win32::UI::WindowsAndMessaging::WINDOW_EX_STYLE(0),
-        edit_class.as_ptr_pcwstr(),
-        empty.as_ptr_pcwstr(),
+        PCWSTR(edit_class.as_ptr()),
+        PCWSTR(empty.as_ptr()),
         windows::Win32::UI::WindowsAndMessaging::WINDOW_STYLE(
             WS_CHILD.0
                 | WS_VISIBLE.0
@@ -1591,7 +1575,7 @@ unsafe fn create_app_state(hwnd: HWND) -> Box<AppState> {
 }
 
 fn copy_to_clipboard(hwnd: HWND, text: &str) -> bool {
-    let wide: Vec<u16> = OsStr::new(text).encode_wide().chain(Some(0)).collect();
+    let wide = to_wide(text);
     let bytes = wide.len() * 2;
     unsafe {
         if OpenClipboard(hwnd).is_err() {
@@ -1616,6 +1600,7 @@ fn copy_to_clipboard(hwnd: HWND, text: &str) -> bool {
 }
 
 unsafe fn make_font(face: &str, height: i32, weight: i32) -> HFONT {
+    let face_w = to_wide(face);
     CreateFontW(
         height,
         0,
@@ -1630,7 +1615,7 @@ unsafe fn make_font(face: &str, height: i32, weight: i32) -> HFONT {
         CLIP_DEFAULT_PRECIS.0 as u32,
         CLEARTYPE_QUALITY.0 as u32,
         (DEFAULT_PITCH.0 | FF_MODERN.0) as u32,
-        to_wide(face).as_ptr_pcwstr(),
+        PCWSTR(face_w.as_ptr()),
     )
 }
 
@@ -1658,21 +1643,24 @@ unsafe fn draw_text_single(
     mut rc: RECT,
     flags: windows::Win32::Graphics::Gdi::DRAW_TEXT_FORMAT,
 ) {
-    let mut wide: Vec<u16> = OsStr::new(text).encode_wide().collect();
+    let mut wide = to_wide(text);
+    wide.pop();
     if !wide.is_empty() {
         DrawTextW(hdc, &mut wide, &mut rc, flags | DT_SINGLELINE | DT_NOPREFIX);
     }
 }
 
 unsafe fn draw_text_wrapped(hdc: HDC, text: &str, mut rc: RECT) {
-    let mut wide: Vec<u16> = OsStr::new(text).encode_wide().collect();
+    let mut wide = to_wide(text);
+    wide.pop();
     if !wide.is_empty() {
         DrawTextW(hdc, &mut wide, &mut rc, DT_LEFT | DT_WORDBREAK | DT_NOPREFIX);
     }
 }
 
 unsafe fn measure_wrapped_height(hdc: HDC, text: &str, width: i32) -> i32 {
-    let mut wide: Vec<u16> = OsStr::new(text).encode_wide().collect();
+    let mut wide = to_wide(text);
+    wide.pop();
     if wide.is_empty() {
         return 18;
     }
@@ -1710,7 +1698,7 @@ fn now_hms() -> String {
 fn set_window_text(hwnd: HWND, text: &str) {
     let w = to_wide(text);
     unsafe {
-        let _ = SetWindowTextW(hwnd, w.as_ptr_pcwstr());
+        let _ = SetWindowTextW(hwnd, PCWSTR(w.as_ptr()));
     }
 }
 
@@ -1724,17 +1712,4 @@ fn get_window_text(hwnd: HWND) -> String {
         let copied = GetWindowTextW(hwnd, &mut buf);
         String::from_utf16_lossy(&buf[..copied as usize])
     }
-}
-
-struct WideStr(Vec<u16>);
-impl WideStr {
-    fn as_ptr_pcwstr(&self) -> PCWSTR {
-        PCWSTR(self.0.as_ptr())
-    }
-}
-
-fn to_wide(s: &str) -> WideStr {
-    let mut v: Vec<u16> = OsStr::new(s).encode_wide().collect();
-    v.push(0);
-    WideStr(v)
 }

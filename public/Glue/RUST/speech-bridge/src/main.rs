@@ -2,19 +2,18 @@
 
 mod denoise;
 mod icon;
+mod icon_gen;
 mod live_captions;
 mod meter;
 mod stt;
 mod tts;
 mod ui;
+mod win_util;
 
-use std::ffi::OsStr;
-use std::os::windows::ffi::OsStrExt;
 use windows::core::PCWSTR;
-use windows::Win32::Foundation::{COLORREF, LPARAM, WPARAM};
+use windows::Win32::Foundation::{LPARAM, WPARAM};
 use windows::Win32::Graphics::Dwm::{DwmSetWindowAttribute, DWMWA_USE_IMMERSIVE_DARK_MODE};
 use windows::Win32::Graphics::Gdi::CreateSolidBrush;
-use windows::Win32::System::Com::{CoInitializeEx, CoUninitialize, COINIT_APARTMENTTHREADED};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::UI::HiDpi::{
     SetProcessDpiAwarenessContext, DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2,
@@ -26,26 +25,21 @@ use windows::Win32::UI::WindowsAndMessaging::{
 };
 
 use crate::icon::create_cyber_icon;
-use crate::ui::main_wnd_proc;
+use crate::ui::{main_wnd_proc, C_BG};
+use crate::win_util::{to_wide, ComGuard};
 
 fn main() {
     unsafe {
         let _ = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-        let _ = CoInitializeEx(None, COINIT_APARTMENTTHREADED);
+        let _com = ComGuard::sta();
 
         let hinstance = GetModuleHandleW(None).unwrap_or_default();
-        let class_name: Vec<u16> = OsStr::new("GlueSpeechBridgeWindow")
-            .encode_wide()
-            .chain(Some(0))
-            .collect();
-        let title: Vec<u16> = OsStr::new("SPEECH_BRIDGE // GLUE_NET")
-            .encode_wide()
-            .chain(Some(0))
-            .collect();
+        let class_name = to_wide("GlueSpeechBridgeWindow");
+        let title = to_wide("SPEECH_BRIDGE // GLUE_NET");
 
         let icon_big = create_cyber_icon(32);
         let icon_small = create_cyber_icon(16);
-        let bg_brush = CreateSolidBrush(COLORREF(0x000E0B07));
+        let bg_brush = CreateSolidBrush(C_BG);
         let wc = WNDCLASSW {
             style: CS_HREDRAW | CS_VREDRAW,
             lpfnWndProc: Some(main_wnd_proc),
@@ -97,7 +91,5 @@ fn main() {
             let _ = TranslateMessage(&msg);
             DispatchMessageW(&msg);
         }
-
-        CoUninitialize();
     }
 }

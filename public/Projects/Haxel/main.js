@@ -1,10 +1,13 @@
-import { Parser, tokenize, Evaluator, highlight, updateAudioState, pnoise1 } from './compiler.js';
 import {
     updateBinRangeLabels as updateBinRangeLabelsShared,
     renderBinRows as renderBinRowsShared,
     initSpectrumDividers as initSpectrumDividersShared,
+    drawSpectrum as drawSpectrumShared,
+    downsampleMicSpectrum,
+    computeSimulatedSpectrum,
     evaluateAudioReactiveOutput
 } from './audio-reactive.js';
+import { setupSharpCanvas, renderTelemetryVisualizer } from './visualizer.js';
 import { addSerialLog, triggerI2CBlink, updateHardwarePins, initBootLogs, serialConsole } from './emulator.js';
 import { PATTERNS, loadCustomPatterns, initPhoneHaptics } from './haptics.js';
 
@@ -45,7 +48,6 @@ const isBluetoothSupported = 'bluetooth' in navigator;
 
 let numBins = 3;
 let dividers = [8, 18];
-let draggingDividerIdx = -1;
 
 let timeSec = 0;
 const waveHistory = [];
@@ -87,19 +89,6 @@ function showMobileHapticGuide() {
             }, 400);
         }, 3500);
     }
-}
-
-// ─── HIGH-DPI CANVAS SHARPNESS HELPER ───────────────────────────────────────
-function setupSharpCanvas(canvas) {
-    if (!canvas) return;
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    
-    const ctx = canvas.getContext("2d");
-    ctx.setTransform(1, 0, 0, 1, 0, 0); // reset scale
-    ctx.scale(dpr, dpr);
 }
 
 // Initialize sharp canvases on load
@@ -858,435 +847,15 @@ function updateBinRangeLabels() {
     updateBinRangeLabelsShared(numBins, dividers);
 }
 
-function _unusedUpdateBinRangeLabelsLegacy() {
-    const getFreqAtBand = (b) => {
-        if (b === 0) return 0;
-        if (b === 32) return 20000;
-        return Math.round(40 * Math.pow(20000 / 40, b / 32));
-    };
-    for (let i = 0; i < numBins; i++) {
-        const startVal = i === 0 ? 0 : dividers[i - 1];
-        const endVal = i === numBins - 1 ? 32 : dividers[i];
-        
-        const fStart = getFreqAtBand(startVal);
-        const fEnd = getFreqAtBand(endVal);
-        
-        const label = document.getElementById(`bin-${i}-range`);
-        if (label) {
-            label.textContent = `${fStart} - ${fEnd} Hz`;
-        }
-    }
-}
-
-export function populateBinPatternSelects() {
-    // Handled in renderBinRows to ensure options are always clean
-}
-
-function renderBinRows() {
-    renderBinRowsShared({
-        container: document.getElementById("bins-container"),
-        numBins,
-        dividers,
-        patterns: PATTERNS,
-        minFreq: parseFloat(document.getElementById("audioMinFreq")?.value || 40),
-        maxFreq: parseFloat(document.getElementById("audioMaxFreq")?.value || 16000),
-        onSync: () => syncStateToESP32()
-    });
-}
-
-function _unusedRenderBinRowsLegacy() {
-    const container = document.getElementById("bins-container");
-    if (!container) return;
-    
-    // Save current values of selects
-    const savedValues = [];
-    for (let i = 0; i < numBins; i++) {
-        const el = document.getElementById(`bin-${i}-pattern`);
-        savedValues.push(el ? el.value : null);
-    }
-    
-    container.innerHTML = "";
-    
-    // Defaults must match firmware IDs. Bin 0 = NONE; Bin 1 & 2 = library.
-    const defaults = ["none", "Pulse", "Rumble", "Staccato", "Ocean"];
-    
-    for (let i = 0; i < numBins; i++) {
-        const row = document.createElement("div");
-        row.className = "bin-row";
-        row.style = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px;";
-        
-        const minFreq = parseFloat(document.getElementById("audioMinFreq")?.value || 40);
-        const maxFreq = parseFloat(document.getElementById("audioMaxFreq")?.value || 16000);
-        const getBandAtFreq = (f) => Math.max(0, Math.min(32, Math.round(32 * Math.log(f / 40) / Math.log(20000 / 40))));
-        const minBandIdx = getBandAtFreq(minFreq);
-        const maxBandIdx = getBandAtFreq(maxFreq);
-
-        let labelName = `Bin ${i}`;
-        if (i === 0 && minBandIdx > 0) {
-            labelName += ` (Anti-Loop / Low Cut)`;
-        } else if (i === numBins - 1 && maxBandIdx < 32) {
-            labelName += ` (High Cut / End Bin)`;
-        } else {
-            const activeIdx = (minBandIdx > 0) ? (i - 1) : i;
-            const activeCount = numBins - (minBandIdx > 0 ? 1 : 0) - (maxBandIdx < 32 ? 1 : 0);
-            if (activeCount === 3) {
-                const labels = ["Bass", "Mids", "Treble"];
-                labelName += ` (${labels[activeIdx]})`;
-            } else if (activeCount === 2) {
-                const labels = ["Bass/Mids", "Treble"];
-                labelName += ` (${labels[activeIdx]})`;
-            } else {
-                labelName += ` (Active ${activeIdx + 1})`;
-            }
-        }
-        
-        row.innerHTML = `
-            <span class="bin-title" style="font-weight: bold; width: 110px;">${labelName}:</span>
-            <span class="bin-range" id="bin-${i}-range" style="font-family: var(--mono); font-size: 11px; width: 110px;">-</span>
-            <select class="bin-pattern-select" id="bin-${i}-pattern" style="flex: 1; padding: 4px; border: 2px solid #111; font-family: var(--mono); font-size: 11px;">
-                <option value="none">NONE (No Reactivity)</option>
-            </select>
-        `;
-        container.appendChild(row);
-        
-        // Populate select options
-        const select = row.querySelector(".bin-pattern-select");
-        select.addEventListener("change", () => {
-            syncStateToESP32();
-        });
-        PATTERNS.forEach(pat => {
-            const opt = document.createElement("option");
-            opt.value = pat.id;
-            opt.textContent = pat.name;
-            select.appendChild(opt);
-        });
-        
-        // Restore value or set default (Bin0=none, Bin1=Pulse, Bin2=Rumble…)
-        const prevVal = savedValues[i];
-        const pickDefault = () => {
-            if (i === 0) return "none";
-            if (i === 1) return Array.from(select.options).some(o => o.value === "Pulse") ? "Pulse" : (PATTERNS[0]?.id || "none");
-            if (i === 2) return Array.from(select.options).some(o => o.value === "Rumble") ? "Rumble" : (PATTERNS[1]?.id || PATTERNS[0]?.id || "none");
-            const cand = defaults[i] || "none";
-            return Array.from(select.options).some(o => o.value === cand) ? cand : "none";
-        };
-        if (prevVal && Array.from(select.options).some(o => o.value === prevVal)) {
-            select.value = prevVal;
-        } else {
-            select.value = pickDefault();
-        }
-    }
-    
-    updateBinRangeLabels();
-}
-
-function initSpectrumDividers() {
-    if (!specCanvas) return;
-    
-    const getMouseX = (e) => {
-        const rect = specCanvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        return clientX - rect.left;
-    };
-
-    const handleStart = (e) => {
-        const mx = getMouseX(e);
-        const dpr = window.devicePixelRatio || 1;
-        const cssW = specCanvas.width / dpr;
-        
-        // Find which divider is clicked/touched
-        let closestIdx = -1;
-        let minDist = 15;
-        dividers.forEach((divVal, idx) => {
-            const x = divVal * (cssW / 32);
-            const dist = Math.abs(mx - x);
-            if (dist < minDist) {
-                minDist = dist;
-                closestIdx = idx;
-            }
-        });
-        
-        if (closestIdx >= 0) {
-            draggingDividerIdx = closestIdx;
-            e.preventDefault();
-        }
-    };
-
-    const handleMove = (e) => {
-        if (draggingDividerIdx < 0) return;
-        const mx = getMouseX(e);
-        const dpr = window.devicePixelRatio || 1;
-        const cssW = specCanvas.width / dpr;
-        
-        const band = Math.round((mx / cssW) * 32);
-        
-        // Constraints
-        const minVal = draggingDividerIdx === 0 ? 1 : dividers[draggingDividerIdx - 1] + 1;
-        const maxVal = draggingDividerIdx === dividers.length - 1 ? 31 : dividers[draggingDividerIdx + 1] - 1;
-        
-        dividers[draggingDividerIdx] = Math.max(minVal, Math.min(maxVal, band));
-        
-        updateBinRangeLabels();
-        e.preventDefault();
-    };
-
-    const handleEnd = () => {
-        if (draggingDividerIdx >= 0) {
-            syncStateToESP32();
-        }
-        draggingDividerIdx = -1;
-    };
-
-    specCanvas.addEventListener("mousedown", handleStart);
-    specCanvas.addEventListener("mousemove", handleMove);
-    window.addEventListener("mouseup", handleEnd);
-
-    specCanvas.addEventListener("touchstart", handleStart, { passive: false });
-    specCanvas.addEventListener("touchmove", handleMove, { passive: false });
-    window.addEventListener("touchend", handleEnd);
-
-    // Wire buttons
-    const addBtn = document.getElementById("addBinBtn");
-    const subBtn = document.getElementById("subBinBtn");
-    
-    if (addBtn) {
-        addBtn.addEventListener("click", () => {
-            if (numBins >= 5) {
-                addSerialLog("[WARN] Max bin partition limit (5) reached.");
-                return;
-            }
-            numBins++;
-            let newDivVal = 16;
-            if (dividers.length > 0) {
-                const lastVal = dividers[dividers.length - 1];
-                newDivVal = Math.min(31, Math.round(lastVal + (32 - lastVal) / 2));
-            }
-            dividers.push(newDivVal);
-            dividers.sort((a,b)=>a-b);
-            
-            addSerialLog(`[AUDIO] Added bin partition. Total bins: ${numBins}`);
-            renderBinRows();
-            triggerI2CBlink();
-            syncStateToESP32();
-        });
-    }
-    
-    if (subBtn) {
-        subBtn.addEventListener("click", () => {
-            if (numBins <= 1) {
-                addSerialLog("[WARN] Min bin partition limit (1) reached.");
-                return;
-            }
-            numBins--;
-            dividers.pop();
-            
-            addSerialLog(`[AUDIO] Subtracted bin partition. Total bins: ${numBins}`);
-            renderBinRows();
-            triggerI2CBlink();
-            syncStateToESP32();
-        });
-    }
-}
-
 // Initialize dividers and bin rows on startup
-initSpectrumDividers();
+initSpectrumDividersShared({
+    canvas: specCanvas,
+    getDividers: () => dividers,
+    onUpdate: () => updateBinRangeLabels(),
+    onCommit: () => syncStateToESP32()
+});
 renderBinRows();
 
-function getAudioData() {
-    if (useLiveMic && analyser) {
-        analyser.getByteFrequencyData(dataArray);
-        const rawMags = Array.from(dataArray).map(v => v / 255);
-        const mags = new Array(32).fill(0);
-        
-        const kWindow = analyser.fftSize;
-        const sampleRate = audioCtx.sampleRate;
-        const minFreq = 40;
-        const maxFreq = 20000;
-        let maxMag = 1e-9;
-        
-        for (let b = 0; b < 32; ++b) {
-            const lo = minFreq * Math.pow(maxFreq / minFreq, b / 32);
-            const hi = minFreq * Math.pow(maxFreq / minFreq, (b + 1) / 32);
-            let loBin = Math.floor(lo * kWindow / sampleRate);
-            let hiBin = Math.floor(hi * kWindow / sampleRate);
-            if (hiBin <= loBin) hiBin = loBin + 1;
-            
-            let sum = 0;
-            let count = 0;
-            for (let k = loBin; k < hiBin && k < rawMags.length; ++k) {
-                sum += rawMags[k];
-                count++;
-            }
-            mags[b] = count > 0 ? (sum / count) : 0;
-            if (mags[b] > maxMag) maxMag = mags[b];
-        }
-        for (let b = 0; b < 32; ++b) {
-            mags[b] = Math.min(1.0, mags[b] / (maxMag * 1.2));
-        }
-        
-        smoothedAudioAmp += (mags.slice(0, 4).reduce((a,b)=>a+b,0)/4 - smoothedAudioAmp) * 0.2;
-        updateAudioState(mags, smoothedAudioAmp);
-        return mags;
-    }
-    const mags = new Array(32).fill(0);
-    const pulse1 = Math.pow(Math.max(0, Math.sin(timeSec * 4.5)), 4);
-    const pulse2 = Math.pow(Math.max(0, Math.cos(timeSec * 2.2)), 8);
-    
-    for (let i = 0; i < 32; i++) {
-        if (i < 4) {
-            mags[i] = pulse1 * 0.95 + Math.random() * 0.05;
-        } else if (i < 12) {
-            mags[i] = pulse2 * 0.65 + Math.sin(timeSec * 8 + i) * 0.15 + Math.random() * 0.05;
-        } else {
-            mags[i] = Math.max(0, Math.sin(timeSec * 15 + i) * 0.25) + Math.random() * 0.08;
-        }
-    }
-    smoothedAudioAmp += (mags.slice(0, 4).reduce((a,b)=>a+b,0)/4 - smoothedAudioAmp) * 0.2;
-    updateAudioState(mags, smoothedAudioAmp);
-    return mags;
-}
-
-function drawSpectrum(mags) {
-    if (!specCanvas) return;
-    const dpr = window.devicePixelRatio || 1;
-    const cssW = specCanvas.width / dpr;
-    const cssH = specCanvas.height / dpr;
-
-    specCtx.fillStyle = "#f4ebd0"; // Cream background
-    specCtx.fillRect(0, 0, cssW, cssH);
-    const barWidth = (cssW / 32);
-    const gain = parseFloat(document.getElementById("audioGain").value);
-    
-    specCtx.strokeStyle = "#111111";
-    specCtx.lineWidth = 1.5;
-
-    for (let i = 0; i < 32; i++) {
-        const val = Math.min(1.0, mags[i] * (gain * 0.25));
-        const barHeight = val * (cssH - 10);
-        
-        // Map 0-31 frequency bands to HSL color wheel (Hue 0 for Red, shifting to Hue 280 for Purple)
-        const hue = (i / 31) * 280;
-        specCtx.fillStyle = `hsl(${hue}, 85%, 45%)`;
-        specCtx.fillRect(i * barWidth + 1, cssH - barHeight, barWidth - 2, barHeight);
-        specCtx.strokeRect(i * barWidth + 1, cssH - barHeight, barWidth - 2, barHeight);
-    }
-
-    // Draw Dividers
-    dividers.forEach((divVal, idx) => {
-        const x = divVal * barWidth;
-        const color = ["#e23b24", "#f2b134", "#002f6c", "#9b59b6"][idx % 4];
-        
-        specCtx.strokeStyle = color;
-        specCtx.lineWidth = 3;
-        specCtx.beginPath();
-        specCtx.moveTo(x, 0);
-        specCtx.lineTo(x, cssH);
-        specCtx.stroke();
-
-        specCtx.fillStyle = color;
-        specCtx.strokeStyle = "#111111";
-        specCtx.lineWidth = 2;
-        specCtx.beginPath();
-        specCtx.arc(x, 15, 7, 0, Math.PI * 2);
-        specCtx.fill();
-        specCtx.stroke();
-    });
-}
-
-// ─── PHYSICAL ACTUATOR DRAWING ──────────────────────────────────────────────
-function drawVirtualActuator(ctx, cx, cy, radius, activeAmp) {
-    const isLRA = actSelect.value === "LRA";
-    const isSolenoid = actSelect.value === "Solenoid";
-    
-    if (activeAmp > 0.02 && !isMotorStalled) {
-        ctx.lineWidth = 3;
-        const numWaves = 3;
-        for (let i = 0; i < numWaves; i++) {
-            const phase = (timeSec * 4 + i / numWaves) % 1.0;
-            const currentR = radius + phase * 50;
-            const alpha = (1.0 - phase) * 0.8 * activeAmp;
-            ctx.strokeStyle = `rgba(0, 47, 108, ${alpha})`;
-            ctx.beginPath();
-            ctx.arc(cx, cy, currentR, 0, Math.PI * 2);
-            ctx.stroke();
-        }
-    }
-
-    let dx = 0;
-    let dy = 0;
-    if (activeAmp > 0.01 && !isMotorStalled) {
-        const vibrationFreq = isLRA ? frequencyShift : 25;
-        dx = (Math.random() - 0.5) * 6 * activeAmp * (1.0 + Math.sin(timeSec * vibrationFreq) * 0.2);
-        dy = (Math.random() - 0.5) * 6 * activeAmp * (1.0 + Math.cos(timeSec * vibrationFreq) * 0.2);
-    }
-
-    const ax = cx + dx;
-    const ay = cy + dy;
-
-    ctx.fillStyle = isMotorStalled ? "#e23b24" : "#ffffff";
-    ctx.strokeStyle = "#111111";
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius + 4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    if (isLRA) {
-        ctx.strokeStyle = "#111111";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        for (let i = -15; i <= 15; i += 5) {
-            const sx = ax + i;
-            const sy = ay + Math.sin(i * 0.4) * 8;
-            if (i === -15) ctx.moveTo(sx, sy);
-            else ctx.lineTo(sx, sy);
-        }
-        ctx.stroke();
-
-        ctx.fillStyle = isMotorStalled ? "rgba(226,59,36,0.5)" : "#f2b134";
-        ctx.beginPath();
-        ctx.arc(ax, ay, radius * 0.45, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        
-        ctx.fillStyle = "#111111";
-        ctx.font = "bold 8px Inter";
-        ctx.textAlign = "center";
-        ctx.fillText(isMotorStalled ? "STALL" : "LRA", ax, ay + 3);
-    } else if (isSolenoid) {
-        ctx.fillStyle = "#002f6c";
-        ctx.fillRect(ax - 20, ay - 10, 40, 20);
-        ctx.strokeRect(ax - 20, ay - 10, 40, 20);
-
-        const stroke = isMotorStalled ? 0 : activeAmp * 12;
-        ctx.fillStyle = isMotorStalled ? "rgba(226,59,36,0.8)" : "#e23b24";
-        ctx.fillRect(ax - 5 + stroke, ay - 6, 20, 12);
-        ctx.strokeRect(ax - 5 + stroke, ay - 6, 20, 12);
-    } else {
-        ctx.strokeStyle = "rgba(17,17,17,0.2)";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(ax, ay, radius * 0.75, 0, Math.PI * 2);
-        ctx.stroke();
-
-        const rotationSpeed = isMotorStalled ? 0 : activeAmp * 25;
-        const angle = timeSec * rotationSpeed;
-        ctx.fillStyle = isMotorStalled ? "rgba(226,59,36,0.5)" : "#e23b24";
-        ctx.beginPath();
-        ctx.moveTo(ax, ay);
-        ctx.arc(ax, ay, radius * 0.7, angle, angle + Math.PI, false);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = "#111111";
-        ctx.beginPath();
-        ctx.arc(ax, ay, 4, 0, Math.PI * 2);
-        ctx.fill();
-    }
-}
-
-// ─── TICK LOOP ──────────────────────────────────────────────────────────────
 function animate() {
     requestAnimationFrame(animate);
 
@@ -1365,10 +934,14 @@ function animate() {
     timeSec += 0.016 * playbackSpeed;
     const isAudioTab = document.getElementById("tab-audio").style.display !== "none";
     const isStudioTab = document.getElementById("tab-studio").style.display !== "none";
-    const mags = getAudioData();
-    
+    const mags = (useLiveMic && analyser && dataArray)
+        ? downsampleMicSpectrum(analyser, dataArray)
+        : computeSimulatedSpectrum(timeSec);
+    smoothedAudioAmp += (mags.slice(0, 4).reduce((a, b) => a + b, 0) / 4 - smoothedAudioAmp) * 0.2;
+    updateAudioState(mags, smoothedAudioAmp);
+
     if (isAudioTab) {
-        drawSpectrum(mags);
+        drawSpectrumShared(specCanvas, specCtx, mags, dividers, numBins);
     }
 
     let activeAmp = 0;
@@ -1440,286 +1013,25 @@ function animate() {
         }
     }
     
-    waveHistory.push(smoothedAmp);
-    if (waveHistory.length > historyLen) waveHistory.shift();
-    
-    let activeColor = "rgba(0, 47, 108, 0.25)";
-    if (isAudioTab && mags) {
-        const sortedBins = Array.from({length: 32}, (_, idx) => ({index: idx, val: mags[idx]}))
-            .sort((a, b) => b.val - a.val);
-        const top3 = sortedBins.slice(0, 3);
-        const hue1 = (top3[0].index / 31) * 280;
-        const hue2 = (top3[1].index / 31) * 280;
-        const hue3 = (top3[2].index / 31) * 280;
-        const avgHue = (hue1 + hue2 + hue3) / 3;
-        activeColor = `hsl(${avgHue}, 85%, 45%)`;
-    }
-    colorHistory.push(activeColor);
-    if (colorHistory.length > historyLen) colorHistory.shift();
-    
-    specHistory.push(mags ? [...mags] : new Array(32).fill(0));
-    if (specHistory.length > historyLen) specHistory.shift();
-    
-    updateHardwarePins(smoothedAmp, isMotorStalled);
-
-    // 1. Draw telemetry
-    const dpr = window.devicePixelRatio || 1;
-    const cssW = prevCanvas.width / dpr;
-    const cssH = prevCanvas.height / dpr;
-
-    prevCtx.fillStyle = "#f4ebd0";
-    prevCtx.fillRect(0, 0, cssW, cssH);
-    
-    drawVirtualActuator(prevCtx, 60, cssH / 2, 36, smoothedAmp);
-    
-    prevCtx.fillStyle = "#f4ebd0";
-    prevCtx.fillRect(120, 0, cssW - 120, cssH);
-    
-    prevCtx.strokeStyle = "#111111";
-    prevCtx.lineWidth = 4;
-    prevCtx.beginPath();
-    prevCtx.moveTo(120, 0);
-    prevCtx.lineTo(120, cssH);
-    prevCtx.stroke();
-
-    prevCtx.strokeStyle = "rgba(17, 17, 17, 0.08)";
-    prevCtx.lineWidth = 1;
-    for (let x = 120; x < cssW; x += 40) {
-        prevCtx.beginPath();
-        prevCtx.moveTo(x, 0);
-        prevCtx.lineTo(x, cssH);
-        prevCtx.stroke();
-    }
-    for (let y = 30; y < cssH; y += 30) {
-        prevCtx.beginPath();
-        prevCtx.moveTo(120, y);
-        prevCtx.lineTo(cssW, y);
-        prevCtx.stroke();
-    }
-    
-    if (isMotorStalled) {
-        prevCtx.fillStyle = "#e23b24";
-        prevCtx.font = "bold 11px Inter";
-        prevCtx.textAlign = "center";
-        prevCtx.fillText("MOTOR STALLED", 180, 25);
-    }
-
-    if (waveHistory.length > 1) {
-        const startX = 120;
-        const width = cssW - startX;
-        const step = width / (historyLen - 1);
-        
-        if (telemetryMode === "classic") {
-            for (let i = 0; i < waveHistory.length - 1; i++) {
-                const h1 = waveHistory[i] * (cssH - 20);
-                const h2 = waveHistory[i + 1] * (cssH - 20);
-                const x1 = startX + i * step;
-                const x2 = startX + (i + 1) * step;
-                
-                let fillCol = colorHistory[i] || "rgba(0, 47, 108, 0.25)";
-                if (fillCol.startsWith("hsl")) {
-                    fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
-                }
-                prevCtx.fillStyle = fillCol;
-                
-                prevCtx.beginPath();
-                prevCtx.moveTo(x1, cssH - 10);
-                prevCtx.lineTo(x1, cssH - 10 - h1);
-                prevCtx.lineTo(x2, cssH - 10 - h2);
-                prevCtx.lineTo(x2, cssH - 10);
-                prevCtx.closePath();
-                prevCtx.fill();
-                
-                prevCtx.strokeStyle = "#111111";
-                prevCtx.lineWidth = 3;
-                prevCtx.beginPath();
-                prevCtx.moveTo(x1, cssH - 10 - h1);
-                prevCtx.lineTo(x2, cssH - 10 - h2);
-                prevCtx.stroke();
-            }
-        } else if (telemetryMode === "symmetric") {
-            for (let i = 0; i < waveHistory.length - 1; i++) {
-                const h1 = waveHistory[i] * (cssH - 20);
-                const h2 = waveHistory[i + 1] * (cssH - 20);
-                const x1 = startX + i * step;
-                const x2 = startX + (i + 1) * step;
-                
-                let fillCol = colorHistory[i] || "rgba(0, 47, 108, 0.25)";
-                if (fillCol.startsWith("hsl")) {
-                    fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
-                }
-                prevCtx.fillStyle = fillCol;
-                
-                const y1_top = cssH / 2 - Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
-                const y2_top = cssH / 2 - Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
-                
-                const y1_bot = cssH / 2 + Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
-                const y2_bot = cssH / 2 + Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
-                
-                prevCtx.beginPath();
-                prevCtx.moveTo(x1, y1_top - h1 / 2);
-                prevCtx.lineTo(x2, y2_top - h2 / 2);
-                prevCtx.lineTo(x2, y2_bot + h2 / 2);
-                prevCtx.lineTo(x1, y1_bot + h1 / 2);
-                prevCtx.closePath();
-                prevCtx.fill();
-                
-                prevCtx.strokeStyle = "#111111";
-                prevCtx.lineWidth = 3;
-                prevCtx.beginPath();
-                prevCtx.moveTo(x1, y1_top - h1 / 2);
-                prevCtx.lineTo(x2, y2_top - h2 / 2);
-                prevCtx.stroke();
-                
-                prevCtx.beginPath();
-                prevCtx.moveTo(x2, y2_bot + h2 / 2);
-                prevCtx.lineTo(x1, y1_bot + h1 / 2);
-                prevCtx.stroke();
-            }
-        } else if (telemetryMode === "waterfall") {
-            const cellH = (cssH - 20) / 32;
-            for (let i = 0; i < specHistory.length; i++) {
-                const x = startX + i * step;
-                const spec = specHistory[i];
-                for (let j = 0; j < 32; j++) {
-                    const val = spec ? spec[j] : 0;
-                    if (val > 0.01) {
-                        const hue = (j / 31) * 280;
-                        prevCtx.fillStyle = `hsla(${hue}, 85%, 45%, ${val * 0.75})`;
-                        prevCtx.fillRect(x, cssH - 10 - (j + 1) * cellH, step + 1, cellH + 0.5);
-                    }
-                }
-            }
-        } else if (telemetryMode === "orbit") {
-            const cx = startX + width / 2;
-            const cy = cssH / 2;
-            
-            prevCtx.strokeStyle = "rgba(17, 17, 17, 0.05)";
-            prevCtx.lineWidth = 2;
-            prevCtx.beginPath();
-            prevCtx.arc(cx, cy, (cssH - 30) * 0.25, 0, Math.PI * 2);
-            prevCtx.stroke();
-            
-            for (let i = 0; i < waveHistory.length - 1; i++) {
-                const amp1 = waveHistory[i];
-                const amp2 = waveHistory[i + 1];
-                
-                const angle1 = (i / historyLen) * Math.PI * 2 * 4 + timeSec * 3;
-                const angle2 = ((i + 1) / historyLen) * Math.PI * 2 * 4 + timeSec * 3;
-                
-                const baseR = (cssH - 30) * 0.28;
-                const r1 = baseR + amp1 * baseR * 0.8;
-                const r2 = baseR + amp2 * baseR * 0.8;
-                
-                const x1 = cx + Math.cos(angle1) * r1;
-                const y1 = cy + Math.sin(angle1) * r1;
-                const x2 = cx + Math.cos(angle2) * r2;
-                const y2 = cy + Math.sin(angle2) * r2;
-                
-                let strokeCol = colorHistory[i] || "rgba(0, 47, 108, 0.25)";
-                const alpha = (i / (waveHistory.length - 1)) * 0.8;
-                if (strokeCol.startsWith("hsl")) {
-                    strokeCol = strokeCol.replace("hsl", "hsla").replace(")", `, ${alpha})`);
-                } else {
-                    strokeCol = `rgba(0, 47, 108, ${alpha})`;
-                }
-                
-                prevCtx.strokeStyle = strokeCol;
-                prevCtx.lineWidth = 2 + (i / waveHistory.length) * 3;
-                prevCtx.beginPath();
-                prevCtx.moveTo(x1, y1);
-                prevCtx.lineTo(x2, y2);
-                prevCtx.stroke();
-            }
-            
-            if (waveHistory.length > 0) {
-                const latestAmp = waveHistory[waveHistory.length - 1];
-                const latestAngle = Math.PI * 2 * 4 + timeSec * 3;
-                const baseR = (cssH - 30) * 0.28;
-                const latestR = baseR + latestAmp * baseR * 0.8;
-                const lx = cx + Math.cos(latestAngle) * latestR;
-                const ly = cy + Math.sin(latestAngle) * latestR;
-                
-                prevCtx.fillStyle = colorHistory[colorHistory.length - 1] || "#111111";
-                prevCtx.strokeStyle = "#111111";
-                prevCtx.lineWidth = 2;
-                prevCtx.beginPath();
-                prevCtx.arc(lx, ly, 6 + latestAmp * 5, 0, Math.PI * 2);
-                prevCtx.fill();
-                prevCtx.stroke();
-                
-                prevCtx.strokeStyle = "rgba(17, 17, 17, 0.25)";
-                prevCtx.lineWidth = 1.5;
-                prevCtx.beginPath();
-                prevCtx.moveTo(cx, cy);
-                prevCtx.lineTo(lx, ly);
-                prevCtx.stroke();
-            }
-        }
-    }
-    
-    // 2. Draw Hero banner
-    if (heroCanvas && heroCtx) {
-        const heroCssW = heroCanvas.width / dpr;
-        const heroCssH = heroCanvas.height / dpr;
-
-        heroCtx.fillStyle = "#f4ebd0";
-        heroCtx.fillRect(0, 0, heroCssW, heroCssH);
-        
-        heroCtx.strokeStyle = "rgba(17, 17, 17, 0.05)";
-        heroCtx.lineWidth = 1;
-        for (let x = 0; x < heroCssW; x += 50) {
-            heroCtx.beginPath();
-            heroCtx.moveTo(x, 0);
-            heroCtx.lineTo(x, heroCssH);
-            heroCtx.stroke();
-        }
-        
-        if (waveHistory.length > 1) {
-            const step = heroCssW / (historyLen - 1);
-            
-            for (let i = 0; i < waveHistory.length - 1; i++) {
-                const h1 = waveHistory[i] * (heroCssH - 15);
-                const h2 = waveHistory[i + 1] * (heroCssH - 15);
-                const x1 = i * step;
-                const x2 = (i + 1) * step;
-                
-                let fillCol = colorHistory[i] || "rgba(226, 59, 36, 0.25)";
-                if (fillCol.startsWith("hsl")) {
-                    fillCol = fillCol.replace("hsl", "hsla").replace(")", ", 0.45)");
-                } else if (fillCol.startsWith("rgba(0, 47, 108")) {
-                    fillCol = "rgba(226, 59, 36, 0.35)"; // default red for hero
-                }
-                heroCtx.fillStyle = fillCol;
-                
-                const y1_top = heroCssH / 2 - Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
-                const y2_top = heroCssH / 2 - Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
-                
-                const y1_bot = heroCssH / 2 + Math.sin(timeSec * 5 + i * 0.05) * h1 * 0.4;
-                const y2_bot = heroCssH / 2 + Math.sin(timeSec * 5 + (i + 1) * 0.05) * h2 * 0.4;
-                
-                heroCtx.beginPath();
-                heroCtx.moveTo(x1, y1_top - h1 / 2);
-                heroCtx.lineTo(x2, y2_top - h2 / 2);
-                heroCtx.lineTo(x2, y2_bot + h2 / 2);
-                heroCtx.lineTo(x1, y1_bot + h1 / 2);
-                heroCtx.closePath();
-                heroCtx.fill();
-                
-                heroCtx.strokeStyle = "#111111";
-                heroCtx.lineWidth = 3;
-                heroCtx.beginPath();
-                heroCtx.moveTo(x1, y1_top - h1 / 2);
-                heroCtx.lineTo(x2, y2_top - h2 / 2);
-                heroCtx.stroke();
-                
-                heroCtx.beginPath();
-                heroCtx.moveTo(x2, y2_bot + h2 / 2);
-                heroCtx.lineTo(x1, y1_bot + h1 / 2);
-                heroCtx.stroke();
-            }
-        }
-    }
+    renderTelemetryVisualizer({
+        prevCanvas,
+        prevCtx,
+        heroCanvas,
+        heroCtx,
+        waveHistory,
+        colorHistory,
+        specHistory,
+        historyLen,
+        smoothedAmp,
+        isMotorStalled,
+        telemetryMode,
+        timeSec,
+        frequencyShift,
+        actType: actSelect.value,
+        mags,
+        isAudioTab,
+        onPinsUpdate: updateHardwarePins
+    });
 
     const uptimeText = document.getElementById("uptime");
     if (uptimeText) {

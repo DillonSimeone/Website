@@ -370,42 +370,23 @@ void BleServer::broadcastConfig() {
         doc["type"] = "config";
         doc["section"] = "driver";
         auto data = doc["data"].to<JsonObject>();
-        const auto& dc = config_->driverConfig();
-        data["kind"] = (int)config_->driverKind();
-        auto pins = data["pins"].to<JsonArray>();
-        for (int i = 0; i < 8; ++i) pins.add(dc.pins[i]);
-        data["sda"] = dc.sda;
-        data["scl"] = dc.scl;
-        data["pwmHz"] = dc.pwmHz;
+        config_->driverToJson(data, false);
         auto chEn = data["channelEnabled"].to<JsonArray>();
-        for (size_t i = 0; i < Config::kMaxChannels; ++i) {
-            chEn.add(config_->channelEnabled(i));
-        }
+        for (size_t i = 0; i < Config::kMaxChannels; ++i) chEn.add(config_->channelEnabled(i));
         notifyJson_(doc);
     }
     {
         JsonDocument doc;
         doc["type"] = "config";
         doc["section"] = "audio";
-        auto data = doc["data"].to<JsonObject>();
-        const auto& ac = config_->audioConfig();
-        data["enabled"] = config_->audioEnabled();
-        data["source"] = (int)ac.source;
-        data["bclk"] = ac.i2sBclk;
-        data["ws"] = ac.i2sWs;
-        data["sd"] = ac.i2sSd;
-        data["adc"] = ac.adcPin;
-        data["gain"] = ac.gain;
+        config_->audioToJson(doc["data"].to<JsonObject>());
         notifyJson_(doc);
     }
     {
         JsonDocument doc;
         doc["type"] = "config";
         doc["section"] = "led";
-        auto data = doc["data"].to<JsonObject>();
-        data["enabled"] = config_->ledEnabled();
-        data["pin"] = config_->ledConfig().pin;
-        data["count"] = config_->ledConfig().count;
+        config_->ledToJson(doc["data"].to<JsonObject>());
         notifyJson_(doc);
     }
     for (size_t i = 0; i < config_->knobCount(); ++i) {
@@ -424,13 +405,7 @@ void BleServer::broadcastConfig() {
         doc["type"] = "config";
         doc["section"] = "oled";
         auto data = doc["data"].to<JsonObject>();
-        const auto& oc = config_->oledConfig();
-        data["enabled"] = config_->oledEnabled();
-        data["sda"] = oc.sda;
-        data["scl"] = oc.scl;
-        data["i2cAddr"] = oc.i2cAddr;
-        data["width"] = oc.width;
-        data["height"] = oc.height;
+        config_->oledToJson(data);
         data["eStopPin"] = config_->eStopPin();
         notifyJson_(doc);
     }

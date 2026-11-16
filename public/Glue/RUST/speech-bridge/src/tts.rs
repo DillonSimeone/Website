@@ -7,21 +7,17 @@ use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{self, Sender};
+use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Instant;
 use windows::core::HSTRING;
 use windows::Media::SpeechSynthesis::{SpeechSynthesizer, VoiceInformation};
 use windows::Storage::Streams::{DataReader, IInputStream};
-use windows::Win32::Foundation::{HWND, LPARAM, WPARAM};
 use windows::Win32::Media::Audio::{PlaySoundW, SND_ASYNC, SND_MEMORY, SND_NODEFAULT, SND_SYNC};
-use windows::Win32::System::Com::{CoInitializeEx, CoUninitialize, COINIT_MULTITHREADED};
-use windows::Win32::UI::WindowsAndMessaging::PostMessageW;
 
 use crate::ui::{WM_APP_BENCH_PROGRESS, WM_APP_TTS_STATUS};
-
-const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+use crate::win_util::{post_app_msg, resolve_asset_path, ComGuard, CREATE_NO_WINDOW};
 
 #[derive(Clone)]
 pub enum VoiceKind {
@@ -67,117 +63,7 @@ impl TtsEngine {
         let cancel_bg = Arc::clone(&cancel_flag);
         let status_bg = Arc::clone(&bench_status);
 
-        thread::spawn(move || {
-            unsafe {
-                let _ = CoInitializeEx(None, COINIT_MULTITHREADED);
-            }
-            let synth = SpeechSynthesizer::new().ok();
-            let piper_exe = find_piper_exe();
-            let mut active_wav: Vec<u8> = Vec::new();
-
-            while let Ok(cmd) = rx.recv() {
-                match cmd {
-                    TtsCommand::Stop => {
-                        cancel_bg.store(true, Ordering::Relaxed);
-                        unsafe {
-                            let _ = PlaySoundW(None, None, SND_ASYNC);
-                        }
-                        active_wav.clear();
-                        post_tts_status(notify_hwnd, false);
-                    }
-                    TtsCommand::Speak { text, voice, rate } => {
-                        cancel_bg.store(false, Ordering::Relaxed);
-                        post_tts_status(notify_hwnd, true);
-                        let wav = synthesize_voice(
-                            synth.as_ref(),
-                            piper_exe.as_deref(),
-                            voice.as_ref(),
-                            &text,
-                            rate,
-                        );
-                        if !wav.is_empty() {
-                            unsafe {
-                                let _ = PlaySoundW(None, None, SND_ASYNC);
-                                active_wav = wav;
-                                let ok = PlaySoundW(
-                                    windows::core::PCWSTR(active_wav.as_ptr() as *const u16),
-                                    None,
-                                    SND_MEMORY | SND_ASYNC | SND_NODEFAULT,
-                                )
-                                .as_bool();
-                                if !ok {
-                                    active_wav.clear();
-                                }
-                            }
-                        }
-                        post_tts_status(notify_hwnd, false);
-                    }
-                    TtsCommand::Benchmark {
-                        voices,
-                        sample_text,
-                        rate,
-                    } => {
-                        cancel_bg.store(false, Ordering::Relaxed);
-                        let total = voices.len();
-                        for (idx, v) in voices.iter().enumerate() {
-                            if cancel_bg.load(Ordering::Relaxed) {
-                                break;
-                            }
-                            let phrase = match sample_text.as_deref() {
-                                Some(s) if !s.trim().is_empty() => s.trim().to_string(),
-                                _ => format!(
-                                    "Voice {} of {}: {}. Ready for conversation.",
-                                    idx + 1,
-                                    total,
-                                    v.display_name
-                                ),
-                            };
-                            let t0 = Instant::now();
-                            let wav = synthesize_voice(
-                                synth.as_ref(),
-                                piper_exe.as_deref(),
-                                Some(v),
-                                &phrase,
-                                rate,
-                            );
-                            let ms = t0.elapsed().as_millis();
-                            if cancel_bg.load(Ordering::Relaxed) {
-                                break;
-                            }
-
-                            if let Ok(mut g) = status_bg.lock() {
-                                *g = format!(
-                                    ">> BENCH [{}/{}]: {} ({} ms)",
-                                    idx + 1,
-                                    total,
-                                    v.display_name,
-                                    ms
-                                );
-                            }
-                            post_bench_progress(notify_hwnd, true);
-
-                            if !wav.is_empty() {
-                                unsafe {
-                                    active_wav = wav;
-                                    let _ = PlaySoundW(
-                                        windows::core::PCWSTR(active_wav.as_ptr() as *const u16),
-                                        None,
-                                        SND_MEMORY | SND_SYNC | SND_NODEFAULT,
-                                    );
-                                    active_wav.clear();
-                                }
-                            }
-                        }
-                        post_bench_progress(notify_hwnd, false);
-                    }
-                }
-            }
-
-            unsafe {
-                let _ = PlaySoundW(None, None, SND_ASYNC);
-                CoUninitialize();
-            }
-        });
+        thread::spawn(move || tts_worker_loop(rx, notify_hwnd, cancel_bg, status_bg));
 
         Self {
             tx,
@@ -291,23 +177,20 @@ fn synthesize_voice(
     rate: f64,
 ) -> Vec<u8> {
     match voice.map(|v| &v.kind) {
-        Some(VoiceKind::Piper { model_path }) => {
-            if let Some(exe) = piper_exe {
-                if let Ok(wav) = synthesize_piper_wav(exe, model_path, text, rate) {
-                    return wav;
-                }
-            }
-            Vec::new()
-        }
-        Some(VoiceKind::WinRt { id }) => {
+        Some(VoiceKind::Piper { model_path }) => piper_exe
+            .and_then(|exe| synthesize_piper_wav(exe, model_path, text, rate).ok())
+            .unwrap_or_default(),
+        other => {
             let Some(synth) = synth else {
                 return Vec::new();
             };
-            if let Ok(voices) = SpeechSynthesizer::AllVoices() {
-                for v in voices {
-                    if v.Id().map(|vid| vid.to_string_lossy() == *id).unwrap_or(false) {
-                        let _ = synth.SetVoice(&v);
-                        break;
+            if let Some(VoiceKind::WinRt { id }) = other {
+                if let Ok(voices) = SpeechSynthesizer::AllVoices() {
+                    for v in voices {
+                        if v.Id().map(|vid| vid.to_string_lossy() == *id).unwrap_or(false) {
+                            let _ = synth.SetVoice(&v);
+                            break;
+                        }
                     }
                 }
             }
@@ -316,16 +199,148 @@ fn synthesize_voice(
             }
             synthesize_winrt_wav(synth, text).unwrap_or_default()
         }
-        None => {
-            let Some(synth) = synth else {
-                return Vec::new();
-            };
-            if let Ok(opts) = synth.Options() {
-                let _ = opts.SetSpeakingRate(rate);
+    }
+}
+
+fn tts_worker_loop(
+    rx: Receiver<TtsCommand>,
+    notify_hwnd: isize,
+    cancel_bg: Arc<AtomicBool>,
+    status_bg: Arc<Mutex<String>>,
+) {
+    let _com = ComGuard::mta();
+    let synth = SpeechSynthesizer::new().ok();
+    let piper_exe = find_piper_exe();
+    let mut active_wav: Vec<u8> = Vec::new();
+
+    while let Ok(cmd) = rx.recv() {
+        match cmd {
+            TtsCommand::Stop => {
+                cancel_bg.store(true, Ordering::Relaxed);
+                unsafe {
+                    let _ = PlaySoundW(None, None, SND_ASYNC);
+                }
+                active_wav.clear();
+                post_app_msg(notify_hwnd, WM_APP_TTS_STATUS, 0);
             }
-            synthesize_winrt_wav(synth, text).unwrap_or_default()
+            TtsCommand::Speak { text, voice, rate } => {
+                cancel_bg.store(false, Ordering::Relaxed);
+                handle_speak(
+                    notify_hwnd,
+                    synth.as_ref(),
+                    piper_exe.as_deref(),
+                    &mut active_wav,
+                    &text,
+                    voice.as_ref(),
+                    rate,
+                );
+            }
+            TtsCommand::Benchmark {
+                voices,
+                sample_text,
+                rate,
+            } => {
+                cancel_bg.store(false, Ordering::Relaxed);
+                handle_benchmark(
+                    notify_hwnd,
+                    synth.as_ref(),
+                    piper_exe.as_deref(),
+                    &cancel_bg,
+                    &status_bg,
+                    &mut active_wav,
+                    &voices,
+                    sample_text.as_deref(),
+                    rate,
+                );
+            }
         }
     }
+
+    unsafe {
+        let _ = PlaySoundW(None, None, SND_ASYNC);
+    }
+}
+
+fn handle_speak(
+    notify_hwnd: isize,
+    synth: Option<&SpeechSynthesizer>,
+    piper_exe: Option<&Path>,
+    active_wav: &mut Vec<u8>,
+    text: &str,
+    voice: Option<&VoiceEntry>,
+    rate: f64,
+) {
+    post_app_msg(notify_hwnd, WM_APP_TTS_STATUS, 1);
+    let wav = synthesize_voice(synth, piper_exe, voice, text, rate);
+    if !wav.is_empty() {
+        unsafe {
+            let _ = PlaySoundW(None, None, SND_ASYNC);
+            *active_wav = wav;
+            let ok = PlaySoundW(
+                windows::core::PCWSTR(active_wav.as_ptr() as *const u16),
+                None,
+                SND_MEMORY | SND_ASYNC | SND_NODEFAULT,
+            )
+            .as_bool();
+            if !ok {
+                active_wav.clear();
+            }
+        }
+    }
+    post_app_msg(notify_hwnd, WM_APP_TTS_STATUS, 0);
+}
+
+#[allow(clippy::too_many_arguments)]
+fn handle_benchmark(
+    notify_hwnd: isize,
+    synth: Option<&SpeechSynthesizer>,
+    piper_exe: Option<&Path>,
+    cancel_bg: &AtomicBool,
+    status_bg: &Mutex<String>,
+    active_wav: &mut Vec<u8>,
+    voices: &[VoiceEntry],
+    sample_text: Option<&str>,
+    rate: f64,
+) {
+    let total = voices.len();
+    for (idx, v) in voices.iter().enumerate() {
+        if cancel_bg.load(Ordering::Relaxed) {
+            break;
+        }
+        let phrase = match sample_text {
+            Some(s) if !s.trim().is_empty() => s.trim().to_string(),
+            _ => format!(
+                "Voice {} of {}: {}. Ready for conversation.",
+                idx + 1,
+                total,
+                v.display_name
+            ),
+        };
+        let t0 = Instant::now();
+        let wav = synthesize_voice(synth, piper_exe, Some(v), &phrase, rate);
+        let ms = t0.elapsed().as_millis();
+        if cancel_bg.load(Ordering::Relaxed) {
+            break;
+        }
+
+        if let Ok(mut g) = status_bg.lock() {
+            *g = format!(">> BENCH [{}/{}]: {} ({} ms)", idx + 1, total, v.display_name, ms);
+        }
+        post_app_msg(notify_hwnd, WM_APP_BENCH_PROGRESS, 1);
+
+        if !wav.is_empty() {
+            unsafe {
+                *active_wav = wav;
+                let _ = PlaySoundW(
+                    windows::core::PCWSTR(active_wav.as_ptr() as *const u16),
+                    None,
+                    SND_MEMORY | SND_SYNC | SND_NODEFAULT,
+                );
+                active_wav.clear();
+            }
+        }
+    }
+    post_app_msg(notify_hwnd, WM_APP_BENCH_PROGRESS, 0);
 }
 
 fn synthesize_piper_wav(
@@ -375,46 +390,9 @@ fn synthesize_winrt_wav(synth: &SpeechSynthesizer, text: &str) -> windows::core:
 }
 
 fn find_piper_exe() -> Option<PathBuf> {
-    let exe_dir = std::env::current_exe().ok()?.parent()?.to_path_buf();
-    let candidates = [
-        exe_dir.join("piper").join("piper").join("piper.exe"),
-        exe_dir.join("piper").join("piper.exe"),
-        exe_dir.join("..").join("..").join("piper").join("piper").join("piper.exe"),
-        PathBuf::from("piper").join("piper").join("piper.exe"),
-    ];
-    candidates.into_iter().find(|p| p.is_file())
+    resolve_asset_path(&["piper/piper/piper.exe", "piper/piper.exe"], false)
 }
 
 fn find_piper_voices_dir() -> Option<PathBuf> {
-    let exe_dir = std::env::current_exe().ok()?.parent()?.to_path_buf();
-    let candidates = [
-        exe_dir.join("piper").join("voices"),
-        exe_dir.join("..").join("..").join("piper").join("voices"),
-        PathBuf::from("piper").join("voices"),
-    ];
-    candidates.into_iter().find(|p| p.is_dir())
-}
-
-fn post_tts_status(hwnd_raw: isize, speaking: bool) {
-    let hwnd = HWND(hwnd_raw as *mut core::ffi::c_void);
-    unsafe {
-        let _ = PostMessageW(
-            hwnd,
-            WM_APP_TTS_STATUS,
-            WPARAM(usize::from(speaking)),
-            LPARAM(0),
-        );
-    }
-}
-
-fn post_bench_progress(hwnd_raw: isize, active: bool) {
-    let hwnd = HWND(hwnd_raw as *mut core::ffi::c_void);
-    unsafe {
-        let _ = PostMessageW(
-            hwnd,
-            WM_APP_BENCH_PROGRESS,
-            WPARAM(usize::from(active)),
-            LPARAM(0),
-        );
-    }
+    resolve_asset_path(&["piper/voices"], true)
 }

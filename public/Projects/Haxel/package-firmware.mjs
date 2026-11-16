@@ -31,7 +31,7 @@ if (!fs.existsSync(FIRMWARE_DIR)) {
 
 // Sync shared web UI files into firmware/data/ (single source of truth)
 const DATA_DIR = path.join(FIRMWARE_DIR, 'data');
-const SHARED_UI_FILES = ['index.html', 'styles.css', 'main.js', 'audio-reactive.js', 'compiler.js', 'emulator.js', 'haptics.js'];
+const SHARED_UI_FILES = ['index.html', 'manual.html', 'styles.css', 'main.js', 'audio-reactive.js', 'visualizer.js', 'compiler.js', 'emulator.js', 'haptics.js'];
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 for (const file of SHARED_UI_FILES) {
   const srcFile = path.join(__dirname, file);

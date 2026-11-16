@@ -11,16 +11,14 @@ use std::sync::mpsc::{self, Receiver, SyncSender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
-use windows::Win32::Foundation::{HWND, LPARAM, WPARAM};
-use windows::Win32::UI::WindowsAndMessaging::PostMessageW;
 
 use crate::denoise::VoiceIsolator;
 use crate::live_captions::{run_live_captions_loop, LcCommand};
 use crate::meter::MicMeter;
 use crate::ui::WM_APP_STT_EVENT;
+use crate::win_util::{post_app_msg, resolve_asset_path, AUDIO_SAMPLE_RATE, CREATE_NO_WINDOW};
 
-const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-const SAMPLE_RATE: u32 = 16_000;
+const SAMPLE_RATE: u32 = AUDIO_SAMPLE_RATE;
 const PRE_ROLL_CHUNKS: usize = 10; // ~320 ms
 const SILENCE_CHUNKS_END: usize = 9; // ~288 ms pause triggers finalization
 const PARTIAL_INTERVAL_MS: u64 = 650; // live partial transcription cadence while speaking
@@ -31,6 +29,29 @@ const MAX_UTT_SAMPLES: usize = 56_000; // ~3.5 seconds max segment in continuous
 pub enum SttBackend {
     Win11Captions,
     WhisperLive,
+}
+
+impl SttBackend {
+    pub fn short_label(self) -> &'static str {
+        match self {
+            Self::Win11Captions => "Win11 Captions",
+            Self::WhisperLive => "Whisper Live",
+        }
+    }
+
+    pub fn button_label(self) -> &'static str {
+        match self {
+            Self::Win11Captions => "STT: WIN11",
+            Self::WhisperLive => "STT: WHISP",
+        }
+    }
+
+    pub fn live_status(self) -> &'static str {
+        match self {
+            Self::Win11Captions => ">> RX LIVE [Win11 Captions]",
+            Self::WhisperLive => ">> RX LIVE [Whisper Live]",
+        }
+    }
 }
 
 /// Events emitted by the speech recognition worker to the UI thread.
@@ -66,10 +87,7 @@ impl SttEventQueue {
         if let Ok(mut q) = self.queue.lock() {
             q.push_back(event);
         }
-        let hwnd = HWND(self.notify_hwnd as *mut core::ffi::c_void);
-        unsafe {
-            let _ = PostMessageW(hwnd, WM_APP_STT_EVENT, WPARAM(0), LPARAM(0));
-        }
+        post_app_msg(self.notify_hwnd, WM_APP_STT_EVENT, 0);
     }
 
     pub fn drain_all(&self) -> VecDeque<SttEvent> {
@@ -225,8 +243,17 @@ impl Drop for WhisperServer {
 
 fn stt_worker(rx: Receiver<SttCommand>, events: Arc<SttEventQueue>, meter: Arc<MicMeter>) {
     let mut server: Option<WhisperServer> = None;
+    let mut pending_cmd: Option<SttCommand> = None;
 
-    while let Ok(cmd) = rx.recv() {
+    loop {
+        let cmd = match pending_cmd.take() {
+            Some(c) => c,
+            None => match rx.recv() {
+                Ok(c) => c,
+                Err(_) => break,
+            },
+        };
+
         match cmd {
             SttCommand::Shutdown => break,
             SttCommand::Stop => {}
@@ -235,7 +262,6 @@ fn stt_worker(rx: Receiver<SttCommand>, events: Arc<SttEventQueue>, meter: Arc<M
                 let ev_bg = Arc::clone(&events);
                 let handle = thread::spawn(move || run_live_captions_loop(&lc_rx, &ev_bg));
                 let mut should_quit = false;
-                let mut next_start: Option<SttBackend> = None;
 
                 while let Ok(c) = rx.recv() {
                     match c {
@@ -250,7 +276,7 @@ fn stt_worker(rx: Receiver<SttCommand>, events: Arc<SttEventQueue>, meter: Arc<M
                         }
                         SttCommand::Start(b) => {
                             let _ = lc_tx.send(LcCommand::Stop);
-                            next_start = Some(b);
+                            pending_cmd = Some(SttCommand::Start(b));
                             break;
                         }
                     }
@@ -259,22 +285,6 @@ fn stt_worker(rx: Receiver<SttCommand>, events: Arc<SttEventQueue>, meter: Arc<M
                 events.push(SttEvent::Stopped);
                 if should_quit {
                     break;
-                }
-                if let Some(b) = next_start {
-                    // Re-process immediately by handling Start(b) on next iteration via local loop?
-                    // Simpler: if switched to WhisperLive, fall through by starting it below.
-                    if b == SttBackend::WhisperLive {
-                        if ensure_whisper(&mut server, &events) {
-                            if let Some(ref srv) = server {
-                                let quit = run_streaming_session(&rx, &events, &meter, srv);
-                                meter.set_audio_sink(None);
-                                events.push(SttEvent::Stopped);
-                                if quit {
-                                    break;
-                                }
-                            }
-                        }
-                    }
                 }
             }
             SttCommand::Start(SttBackend::WhisperLive) => {
@@ -327,7 +337,7 @@ fn run_streaming_session(
     let (pcm_tx, pcm_rx): (SyncSender<Vec<i16>>, Receiver<Vec<i16>>) = mpsc::sync_channel(64);
     meter.set_audio_sink(Some(pcm_tx));
     events.push(SttEvent::Started {
-        backend: "Whisper Live",
+        backend: SttBackend::WhisperLive.short_label(),
     });
 
     let mut pre_roll: VecDeque<Vec<i16>> = VecDeque::with_capacity(PRE_ROLL_CHUNKS);
@@ -446,20 +456,14 @@ fn pick_free_port() -> Option<u16> {
 }
 
 fn find_whisper_server() -> Option<(PathBuf, PathBuf)> {
-    let exe_dir = std::env::current_exe().ok()?.parent()?.to_path_buf();
-    let candidates = [
-        exe_dir.join("whisper"),
-        exe_dir.join("..").join("..").join("whisper"),
-        PathBuf::from("whisper"),
-    ];
-    for base in candidates {
-        let srv = base.join("Release").join("whisper-server.exe");
-        let model = base.join("ggml-base.en.bin");
-        if srv.is_file() && model.is_file() {
-            return Some((srv, model));
-        }
+    let base = resolve_asset_path(&["whisper"], true)?;
+    let srv = base.join("Release").join("whisper-server.exe");
+    let model = base.join("ggml-base.en.bin");
+    if srv.is_file() && model.is_file() {
+        Some((srv, model))
+    } else {
+        None
     }
-    None
 }
 
 fn build_wav_16k_mono(samples: &[i16]) -> Vec<u8> {

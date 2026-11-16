@@ -219,13 +219,22 @@ export function drawSpectrum(canvas, ctx, mags, dividers, numBins) {
         }
     }
 
-    ctx.strokeStyle = "#e23b24";
-    ctx.lineWidth = 2;
     for (let i = 0; i < Math.min(dividers.length, numBins - 1); ++i) {
         const x = (dividers[i] / 32) * cssW;
+        const color = ["#e23b24", "#f2b134", "#002f6c", "#9b59b6"][i % 4];
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, cssH);
+        ctx.stroke();
+
+        ctx.fillStyle = color;
+        ctx.strokeStyle = "#111111";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, 15, 7, 0, Math.PI * 2);
+        ctx.fill();
         ctx.stroke();
     }
 }

@@ -8,19 +8,18 @@ use std::sync::mpsc::SyncSender;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
-use windows::Win32::Foundation::{HWND, LPARAM, WPARAM};
 use windows::Win32::Media::Audio::{
     waveInAddBuffer, waveInClose, waveInOpen, waveInPrepareHeader, waveInReset, waveInStart,
     waveInStop, waveInUnprepareHeader, CALLBACK_NULL, HWAVEIN, WAVEFORMATEX, WAVEHDR, WAVE_MAPPER,
     WAVE_FORMAT_PCM, WHDR_DONE,
 };
-use windows::Win32::UI::WindowsAndMessaging::PostMessageW;
 
 use crate::ui::WM_APP_METER_TICK;
+use crate::win_util::{post_app_msg, AUDIO_CHUNK_SAMPLES, AUDIO_SAMPLE_RATE};
 
 pub const BANDS: usize = 24;
-const SAMPLE_RATE: f32 = 16_000.0;
-const CHUNK_SAMPLES: usize = 512; // ~32ms per frame
+const SAMPLE_RATE: f32 = AUDIO_SAMPLE_RATE as f32;
+const CHUNK_SAMPLES: usize = AUDIO_CHUNK_SAMPLES; // ~32ms per frame
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -182,37 +181,22 @@ fn run_mic_capture(
         && desired_source.load(Ordering::Relaxed) == AudioSource::Mic as u8
     {
         let mut updated = false;
-
-        if (hdr_a.dwFlags & WHDR_DONE) != 0 {
-            process_chunk(
-                &buf_a,
-                coeffs,
-                &mut samples_f32,
-                &mut smoothed,
-                &mut smoothed_peak,
-            );
-            forward_pcm(audio_tx, &buf_a);
-            unsafe {
-                hdr_a.dwFlags &= !WHDR_DONE;
-                let _ = waveInAddBuffer(hwi, &mut hdr_a, hdr_sz);
+        for (hdr, buf) in [(&mut hdr_a, &buf_a), (&mut hdr_b, &buf_b)] {
+            if (hdr.dwFlags & WHDR_DONE) != 0 {
+                process_chunk(
+                    buf,
+                    coeffs,
+                    &mut samples_f32,
+                    &mut smoothed,
+                    &mut smoothed_peak,
+                );
+                forward_pcm(audio_tx, buf);
+                unsafe {
+                    hdr.dwFlags &= !WHDR_DONE;
+                    let _ = waveInAddBuffer(hwi, hdr, hdr_sz);
+                }
+                updated = true;
             }
-            updated = true;
-        }
-
-        if (hdr_b.dwFlags & WHDR_DONE) != 0 {
-            process_chunk(
-                &buf_b,
-                coeffs,
-                &mut samples_f32,
-                &mut smoothed,
-                &mut smoothed_peak,
-            );
-            forward_pcm(audio_tx, &buf_b);
-            unsafe {
-                hdr_b.dwFlags &= !WHDR_DONE;
-                let _ = waveInAddBuffer(hwi, &mut hdr_b, hdr_sz);
-            }
-            updated = true;
         }
 
         if updated {
@@ -327,10 +311,7 @@ fn publish_meter(
         guard.bands = bands;
         guard.peak = peak;
     }
-    let hwnd = HWND(notify_hwnd as *mut core::ffi::c_void);
-    unsafe {
-        let _ = PostMessageW(hwnd, WM_APP_METER_TICK, WPARAM(0), LPARAM(0));
-    }
+    post_app_msg(notify_hwnd, WM_APP_METER_TICK, 0);
 }
 
 fn forward_pcm(audio_tx: &Arc<Mutex<Option<SyncSender<Vec<i16>>>>>, pcm: &[i16]) {
