@@ -16,19 +16,16 @@ The ESP32Codes uploader builds firmware and, for LittleFS projects, uploads `dat
 
 Uploader docs: [`_tooling/uploader/README.md`](../../../../_tooling/uploader/README.md).
 
-### Useful ENV names
+### Available ENV profiles
 
 | Env | Meaning |
 |-----|---------|
-| `c3WIFILED` | **Default** — ESP32-C3, WiFi + FastLED |
-| `c3WIFI` | ESP32-C3, WiFi only |
-| `c3WIFIAUDIOLED` | WiFi + LED + mic FFT |
-| `c3BLULED` | ESP32-C3, BLE + FastLED |
-| `c3FULLOLED` | WiFi + LED + Audio + Knobs + OLED |
-| `s3WIFILED` / `s3BLULED` | ESP32-S3 profiles |
-| `devWIFILED` / `devBLULED` | Classic ESP32 |
-
-Legacy aliases still work: `esp32-c3-wifi` → `c3WIFILED`, `esp32-c3-ble` → `c3BLULED`, etc.
+| `c3WIFI` | **Default** — ESP32-C3, WiFi + FastLED + Audio + Knobs + OLED + Mesh |
+| `c3BLU` | ESP32-C3, BLE + FastLED + Audio + Knobs + OLED |
+| `c6WIFI` | FireBeetle 2 ESP32-C6, WiFi + Mesh + all peripherals |
+| `c6BLU` | FireBeetle 2 ESP32-C6, BLE + all peripherals |
+| `s3WIFI` / `s3BLU` | ESP32-S3 profiles |
+| `devWIFI` / `devBLU` | Classic ESP32 profiles |
 
 ---
 
@@ -40,12 +37,12 @@ Requires PlatformIO CLI (`pio`).
 cd PlatformIO\02_Audio_Haptics\Haxel\firmware
 
 :: Default profile
-pio run -e c3WIFILED -t upload
-pio run -e c3WIFILED -t uploadfs
+pio run -e c3WIFI -t upload
+pio run -e c3WIFI -t uploadfs
 pio device monitor
 
-:: BLE + LED (no AsyncWebServer / no captive portal)
-pio run -e c3BLULED -t upload
+:: BLE profile (no AsyncWebServer / no captive portal)
+pio run -e c3BLU -t upload
 ```
 
 Optional: set `upload_port` / `monitor_port` in `platformio.ini` if auto-detect fails.
@@ -58,12 +55,15 @@ Hold **BOOT** → press/release **RESET** → release **BOOT**, then flash again
 
 ## Feature modules (`HAXEL_FEATURE_*`)
 
-| Flag | Enables | Typical env |
+All 8 profiles compile `LED`, `AUDIO`, `KNOBS`, and `OLED` enabled (`=1`), plus `MESH=1` on `*WIFI` builds (role selectable at runtime in **Device** settings: Standalone / Master / Follower).
+
+| Flag | Enables | Included in |
 |------|---------|-------------|
-| `LED` | FastLED strip | `c3WIFILED` |
-| `AUDIO` | I2S/ADC FFT | `c3WIFIAUDIOLED` |
-| `KNOBS` | ADC knobs | `c3FULLOLED` |
-| `OLED` | SSD1306 HUD | `c3FULLOLED` |
+| `LED` | FastLED strip | All 8 profiles |
+| `AUDIO` | I2S/ADC FFT | All 8 profiles |
+| `KNOBS` | ADC knobs | All 8 profiles |
+| `OLED` | SSD1306 HUD | All 8 profiles |
+| `MESH` | ESP-NOW Fleet Master/Follower | `*WIFI` profiles |
 
 Transport is compile-time: `-DHAXEL_WIFI` or `-DHAXEL_BLU`. Shared state JSON is in `StateApi`; WiFi HTTP handlers stay out of BLE builds.
 

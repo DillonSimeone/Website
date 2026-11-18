@@ -63,6 +63,8 @@ private:
     std::shared_ptr<ASTNode> parseProgram(const std::vector<Token>& tokens);
     std::shared_ptr<ASTNode> parseStmt(const std::vector<Token>& tokens, size_t& p);
     std::shared_ptr<ASTNode> parseTern(const std::vector<Token>& tokens, size_t& p);
+    std::shared_ptr<ASTNode> parseOr(const std::vector<Token>& tokens, size_t& p);
+    std::shared_ptr<ASTNode> parseAnd(const std::vector<Token>& tokens, size_t& p);
     std::shared_ptr<ASTNode> parseCmp(const std::vector<Token>& tokens, size_t& p);
     std::shared_ptr<ASTNode> parseAdd(const std::vector<Token>& tokens, size_t& p);
     std::shared_ptr<ASTNode> parseMul(const std::vector<Token>& tokens, size_t& p);
@@ -74,6 +76,8 @@ private:
     std::shared_ptr<ASTNode> root_;
     std::unordered_map<std::string, float> vars_;
     std::string lastError_;
+    double lastEvalMs_ = -1.0;
+    float cachedDt_ = 0.016f;
     float lastT_ = 0.0f;
     float runT_ = 0.0f;
 };

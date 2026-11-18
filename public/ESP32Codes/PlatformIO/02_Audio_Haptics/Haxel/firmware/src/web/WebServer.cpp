@@ -2,6 +2,7 @@
 
 #include "WebServer.h"
 #include "ApiHandlers.h"
+#include "StateApi.h"
 #include "../core/Engine.h"
 #include "../core/Config.h"
 #include "../core/AudioAnalyzer.h"
@@ -18,15 +19,22 @@ public:
     virtual ~CaptiveRequestHandler() {}
 
     bool canHandle(AsyncWebServerRequest *request) const override {
+        if (request->method() == HTTP_OPTIONS) return false;
+        const wifi_mode_t mode = WiFi.getMode();
+        if (mode == WIFI_STA || mode == WIFI_OFF) return false;
+
         String host = request->host();
         int colonIndex = host.indexOf(':');
         if (colonIndex != -1) {
             host = host.substring(0, colonIndex);
         }
-        if (host != "192.168.4.1" && host != "haxel.local" && host != config_->hostname() + ".local") {
-            return true;
+        if (host == "192.168.4.1" || host == "haxel.local" ||
+            host == config_->hostname() + ".local" ||
+            host == WiFi.softAPIP().toString() ||
+            (mode == WIFI_AP_STA && host == WiFi.localIP().toString())) {
+            return false;
         }
-        return false;
+        return true;
     }
 
     void handleRequest(AsyncWebServerRequest *request) override {
@@ -47,6 +55,10 @@ bool WebServer::begin(core::Engine* engine, Config* config, core::AudioAnalyzer*
     audio_  = audio;
     server_ = new AsyncWebServer(80);
     ws_     = new AsyncWebSocket("/ws");
+
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "Content-Type");
 
     // Wildcard DNS redirect handler registered FIRST
     server_->addHandler(new CaptiveRequestHandler(config_));
@@ -76,31 +88,11 @@ void WebServer::broadcastState() {
     JsonDocument doc;
     doc["type"] = "state";
     auto data = doc["data"].to<JsonObject>();
-    core::StagedState s;
-    engine_->copyState(s);
-    data["on"] = s.on;
-    data["mute"] = s.mute;
-    data["intensity"] = s.intensity;
-    data["speed"] = s.speed;
-    data["pattern"] = s.pattern ? s.pattern->id() : "";
-    data["startupFloor"] = s.startupFloor;
-    data["numBins"] = s.numBins;
+    serializeState(data, engine_);
 
-    auto divs = data["dividers"].to<JsonArray>();
-    for (int i = 0; i < s.numBins - 1 && i < 4; ++i) {
-        divs.add(s.dividers[i]);
-    }
-
-    auto binPats = data["binPatterns"].to<JsonArray>();
-    for (int i = 0; i < s.numBins && i < 5; ++i) {
-        binPats.add(s.binPatterns[i]);
-    }
-
-    static char body[512];
-    size_t len = serializeJson(doc, body, sizeof(body));
-    ws_->textAll(body, len);
-
-
+    String body;
+    serializeJson(doc, body);
+    ws_->textAll(body);
 }
 
 void WebServer::mountStatic_() {
@@ -143,12 +135,20 @@ void WebServer::mountCaptiveProbes_() {
         server_->on(path, HTTP_GET, redirect);
     }
     server_->onNotFound([](AsyncWebServerRequest* req) {
+        if (req->method() == HTTP_OPTIONS) {
+            req->send(204);
+            return;
+        }
         const String& url = req->url();
         // API paths must NEVER receive an HTML redirect  Eclients expect JSON
         // (or 404 text). Returning HTML here is what makes fetch().json() blow up.
         if (url.startsWith("/json") || url.startsWith("/win") || url == "/ws") {
-            req->send(404, "application/json",
-                      String("{\"error\":\"no route\",\"path\":\"") + url + "\"}");
+            JsonDocument errDoc;
+            errDoc["error"] = "no route";
+            errDoc["path"] = url;
+            String errBody;
+            serializeJson(errDoc, errBody);
+            req->send(404, "application/json", errBody);
             return;
         }
         // If the URL is already root, redirecting to root would cause an infinite redirection loop.

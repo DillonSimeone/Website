@@ -3,6 +3,7 @@
 #include "PatternRegistry.h"
 #include "../hal/IHapticDriver.h"
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 
 namespace haxel::core {
@@ -12,7 +13,7 @@ bool Engine::begin() {
     tickCount_ = 0;
     lastTickUs_ = micros();
     lastTickDeltaUs_ = kTargetTickUs;
-    patternTimeMs_ = 0.0f;
+    patternTimeMs_ = 0.0;
     wasIdle_ = true;
     if (!cmdQ_) {
         cmdQ_ = xQueueCreate(16, sizeof(EngineCmd));
@@ -80,6 +81,14 @@ bool Engine::hasRemoteAudio(uint32_t maxAgeMs) const {
     return ok;
 }
 
+bool Engine::copyRemoteAudio(AudioFrame& out, uint32_t maxAgeMs) const {
+    portENTER_CRITICAL(const_cast<portMUX_TYPE*>(&mux_));
+    const bool ok = remoteAudio_.valid && (uint32_t)(millis() - remoteAudioMs_) <= maxAgeMs;
+    if (ok) out = remoteAudio_;
+    portEXIT_CRITICAL(const_cast<portMUX_TYPE*>(&mux_));
+    return ok;
+}
+
 void Engine::copyState(StagedState& out) const {
     portENTER_CRITICAL(const_cast<portMUX_TYPE*>(&mux_));
     out = active_;
@@ -103,16 +112,20 @@ float Engine::getPatternValue(uint8_t ch) const {
 }
 
 void Engine::detachPatternById(const char* id) {
+    replacePatternById(id, nullptr);
+}
+
+void Engine::replacePatternById(const char* id, IPattern* replacement) {
     if (!id || !id[0]) return;
     portENTER_CRITICAL(&mux_);
-    auto detachIfMatch = [id](IPattern*& slot) {
-        if (slot && strcmp(slot->id(), id) == 0) slot = nullptr;
+    auto replaceIfMatch = [id, replacement](IPattern*& slot) {
+        if (slot && strcmp(slot->id(), id) == 0) slot = replacement;
     };
-    detachIfMatch(active_.pattern);
-    detachIfMatch(staged_.pattern);
+    replaceIfMatch(active_.pattern);
+    replaceIfMatch(staged_.pattern);
     for (int i = 0; i < 8; ++i) {
-        detachIfMatch(active_.channels[i].patternOverride);
-        detachIfMatch(staged_.channels[i].patternOverride);
+        replaceIfMatch(active_.channels[i].patternOverride);
+        replaceIfMatch(staged_.channels[i].patternOverride);
     }
     portEXIT_CRITICAL(&mux_);
 }
@@ -205,14 +218,17 @@ void Engine::tick() {
         portEXIT_CRITICAL(&mux_);
     }
 
-    if (active_.pattern && !PatternRegistry::instance().contains(active_.pattern)) {
+    if (state_ == EngineState::FAULT) return;
+
+    auto& reg = PatternRegistry::instance();
+    reg.lockEval();
+    if (active_.pattern && !reg.contains(active_.pattern)) {
         active_.pattern = nullptr;
     }
 
-    if (state_ == EngineState::FAULT) return;
-
     // 3. Determine engine state.
     if (!active_.on || (!active_.pattern && !active_.audioReactive) || !driver_) {
+        reg.unlockEval();
         if (!wasIdle_) {
             if (driver_) driver_->allOff();
             for (int i = 0; i < 8; ++i) {
@@ -225,32 +241,37 @@ void Engine::tick() {
         return;
     }
     wasIdle_ = false;
+    const bool localAudioReady = (audio_ && audio_->ready() && audio_->latest().valid);
     const bool audioOk = active_.audioReactive || ((active_.pattern && active_.pattern->usesAudio()) &&
-                         ((audio_ && audio_->ready()) || hasRemoteAudio(400)));
+                         (localAudioReady || hasRemoteAudio(400)));
     state_ = audioOk ? EngineState::AUDIO_REACTIVE : EngineState::PLAYING;
 
     // 4. Evaluate + write.
     float dtMs = (float)lastTickDeltaUs_ * 0.001f;
     if (dtMs < 0.5f) dtMs = 0.5f;
     if (dtMs > 50.0f) dtMs = 50.0f;
-    patternTimeMs_ += dtMs * active_.speed;
+    patternTimeMs_ += (double)dtMs * (double)active_.speed;
     writeAllChannels(patternTimeMs_, dtMs);
-
+    reg.unlockEval();
 }
 
-void Engine::writeAllChannels(float tMs, float dtMs) {
+void Engine::writeAllChannels(double tMs, float dtMs) {
     PatternContext ctx;
     ctx.tMs = tMs;
     ctx.intensityMaster = active_.intensity;
     ctx.speed = active_.speed;
+    ctx.freq = active_.freq;
     ctx.startupFloor = active_.startupFloor;
-    // Prefer fresh mesh audio (Follower) over local mic when present.
-    if (hasRemoteAudio()) {
-        portENTER_CRITICAL(&mux_);
-        ctx.audio = remoteAudio_;
-        portEXIT_CRITICAL(&mux_);
-    } else {
-        ctx.audio = audio_ ? audio_->latest() : AudioFrame{};
+    // Prefer active local hardware audio (with a valid FFT frame); fall back to remote audio (mesh / browser).
+    if (audio_ && audio_->ready()) {
+        AudioFrame af = audio_->latest();
+        if (af.valid) {
+            ctx.audio = af;
+        } else if (!copyRemoteAudio(ctx.audio, 400)) {
+            ctx.audio = AudioFrame{};
+        }
+    } else if (!copyRemoteAudio(ctx.audio, 400)) {
+        ctx.audio = AudioFrame{};
     }
     ctx.externalValues = externalValues_;
 
@@ -262,7 +283,12 @@ void Engine::writeAllChannels(float tMs, float dtMs) {
         minDuty = caps.minDuty;
     }
 
+    auto& reg = PatternRegistry::instance();
+    reg.lockEval();
+
     uint8_t n = std::min<uint8_t>(active_.channelCount, driver_->channelCount());
+    const uint8_t numBins = std::max<uint8_t>(1, std::min<uint8_t>(5, active_.numBins));
+
     for (uint8_t ch = 0; ch < n; ++ch) {
         const ChannelState& cs = active_.channels[ch];
         if (!cs.on || active_.mute) {
@@ -274,42 +300,48 @@ void Engine::writeAllChannels(float tMs, float dtMs) {
         }
         ctx.channelIndex = ch;
         IPattern* p = cs.patternOverride ? cs.patternOverride : active_.pattern;
-        if (p && !PatternRegistry::instance().contains(p)) p = nullptr;
+        if (p && !reg.contains(p)) p = nullptr;
 
         float v = 0.0f;
-        if (state_ == EngineState::AUDIO_REACTIVE) {
-            if (!((audio_ && audio_->ready()) || hasRemoteAudio(400))) {
+        if (active_.audioReactive) {
+            if (!ctx.audio.valid) {
                 v = 0.0f;
             } else {
-            float maxAmp = 0.0f;
-            for (int i = 0; i < active_.numBins; ++i) {
-                int startIdx = (i == 0) ? 0 : active_.dividers[i - 1];
-                int endIdx = (i == active_.numBins - 1) ? 32 : active_.dividers[i];
-                int len = endIdx - startIdx;
-                if (len < 1) len = 1;
+                float maxAmp = 0.0f;
+                for (int i = 0; i < numBins; ++i) {
+                    int startIdx = (i == 0) ? 0 : active_.dividers[i - 1];
+                    int endIdx = (i == numBins - 1) ? 32 : active_.dividers[i];
+                    if (startIdx < 0) startIdx = 0;
+                    if (startIdx > 31) startIdx = 31;
+                    if (endIdx < startIdx + 1) endIdx = startIdx + 1;
+                    if (endIdx > 32) endIdx = 32;
+                    int len = endIdx - startIdx;
 
-                float sum = 0.0f;
-                for (int b = startIdx; b < endIdx && b < 32; ++b) {
-                    sum += ctx.audio.mags[b];
-                }
-                float vol = (sum / len) * (ctx.audio.rms * 4.0f * 0.45f);
+                    float sum = 0.0f;
+                    for (int b = startIdx; b < endIdx; ++b) {
+                        sum += ctx.audio.mags[b];
+                    }
+                    float vol = (sum / (float)len) * (ctx.audio.rms * 4.0f * 0.45f);
 
-                const char* patId = active_.binPatterns[i];
-                if (strcmp(patId, "none") != 0 && strlen(patId) > 0) {
-                    IPattern* binPat = PatternRegistry::instance().find(patId);
-                    if (binPat) {
-                        float out = vol * binPat->sample(ctx);
-                        if (out > maxAmp) maxAmp = out;
+                    const char* patId = active_.binPatterns[i];
+                    if (strcmp(patId, "none") != 0 && strlen(patId) > 0) {
+                        IPattern* binPat = reg.find(patId);
+                        if (binPat) {
+                            float sampleVal = binPat->sample(ctx);
+                            if (!std::isfinite(sampleVal)) sampleVal = 0.0f;
+                            float out = vol * sampleVal;
+                            if (out > maxAmp) maxAmp = out;
+                        }
                     }
                 }
-            }
-            v = maxAmp;
+                v = maxAmp;
             }
         } else if (p) {
             v = p->sample(ctx);
         }
 
         v *= cs.intensity * active_.intensity;
+        if (!std::isfinite(v)) v = 0.0f;
         if (v < 0.0f) v = 0.0f;
         if (v > 1.0f) v = 1.0f;
         // Capture pattern envelope before motor-floor / soft-start for LEDs.
@@ -324,7 +356,7 @@ void Engine::writeAllChannels(float tMs, float dtMs) {
         if (v > maxDuty) v = maxDuty;
 
         // Soft-start: rate-limit deltas on rising/falling play path.
-        float prev = lastWritten_[ch];
+        float prev = std::isfinite(lastWritten_[ch]) ? lastWritten_[ch] : 0.0f;
         float delta = v - prev;
         float rampStep = rampStepPerTick_ * dtMs;
         if (delta >  rampStep) v = prev + rampStep;
@@ -333,6 +365,8 @@ void Engine::writeAllChannels(float tMs, float dtMs) {
         lastWritten_[ch] = v;
         driver_->write(ch, v);
     }
+
+    reg.unlockEval();
 }
 
 } // namespace haxel::core

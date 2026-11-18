@@ -4,7 +4,7 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
-#include <DNSServer.h>
+#include <AsyncUDP.h>
 #include <ESPAsyncWebServer.h>
 #include <AsyncWebSocket.h>
 #include <ESPmDNS.h>
@@ -16,8 +16,6 @@
 #include <arduinoFFT.h>
 #include <driver/i2s.h>
 #include <driver/rmt.h>
-#include <soc/soc.h>
-#include <soc/rtc_cntl_reg.h>
 #include <atomic>
 #include <vector>
 #include <cstring>
@@ -33,63 +31,63 @@
 //
 struct Settings {
     int   pixelPin    = 5;
-#ifdef EMBER_BATHROOM
+#ifdef EMBER_AUDIO
     int   pixelCount  = 100;
 #else
     int   pixelCount  = 30;
 #endif
     int   brightness  = 128;
-#ifdef EMBER_BATHROOM
-    char  hostname[32] = "ember-audio";
+#ifdef EMBER_AUDIO
+    char  hostname[32] = "";
 #else
     char  hostname[32] = "ember";
 #endif
     char  wifiSSID[64] = "";
     char  wifiPass[64] = "";
-#ifdef EMBER_BATHROOM
-    char  apSSID[64]   = "Ember-Audio";
-#else
     char  apSSID[64]   = "";
-#endif
 
     // Audio
-#ifdef EMBER_BATHROOM
-    int   micSource   = 2;          // Default MAX4466 on bathroom build
+#ifdef EMBER_AUDIO
+    int   micSource   = 2;          // Default MAX4466 on audio build
 #else
     int   micSource   = 0;          // 0=off, 1=INMP441, 2=MAX4466
 #endif
     int   micBCLK     = 6;          // INMP441 SCK
     int   micWS       = 7;          // INMP441 WS  (LRCK)
-    int   micData     = 5;          // INMP441 SD
+    int   micData     = 2;          // INMP441 SD (avoid collision with LED GPIO 5)
     int   micADCPin   = 3;          // MAX4466 OUT → ADC1_CHx (must be GPIO 0-4)
     int   micGndPin   = 4;          // Soft ground for MAX4466 (driven LOW when >= 0)
     float micGain     = 1.5f;       // Output multiplier on level/bands/MAD
     float micSmoothing= 0.6f;       // EMA factor (0=no smoothing, 0.95=very smooth)
 
-    // Audio Gate & Bathroom Ambient Showcase
-#ifdef EMBER_BATHROOM
+    // Audio Gate & Ambient Showcase
+#ifdef EMBER_AUDIO
     bool  audioGateEnabled = true;
     int   gateThreshold    = 2500;  // Trigger threshold X in MAD units (200..30000)
-    bool  autoCycle        = true;  // Curated bathroom ambient showcase cycling
-    int   cycleSeconds     = 30;    // Configurable showcase interval
 #else
     bool  audioGateEnabled = false;
     int   gateThreshold    = 2500;
-    bool  autoCycle        = false;
-    int   cycleSeconds     = 30;
 #endif
+    bool  autoCycle        = true;  // Curated ambient showcase cycling
+    int   cycleSeconds     = 5;     // Configurable showcase interval
 } settings;
+static Settings g_stagedSettings;
 
 // ─── Globals ─────────────────────────────────────────────────────────────────
 AsyncWebServer  server(80);
 AsyncWebSocket  ws("/ws");
-static DNSServer       dnsServer;
+static AsyncUDP        g_dnsUdp;
+static IPAddress       g_apIp(192, 168, 4, 1);
+static bool            g_dnsStarted = false;
 static bool            g_apMode = false;
-CRGB*           leds = nullptr;
+static constexpr int   MAX_PIXELS = 600;
+static CRGB            leds[MAX_PIXELS];
+static volatile int    g_clearTailTo = 0; // Previous pixelCount when shrinking live
 volatile float  g_fps = 0.0f;
 String          g_currentName = "Untitled";
 String          g_currentSource;
 String          g_lastError;
+String          g_audioError;
 
 // Audio Gate runtime state. Attack ~2s, release ~3.5s, held 400ms below the floor.
 static volatile bool  g_gateActive   = false;
@@ -97,10 +95,33 @@ static volatile float g_gateLinear   = 0.0f; // 0.0 .. 1.0 linear progress
 static volatile float g_gateEnvelope = 0.0f; // Perceptual envelope (smootherstep + gamma)
 static uint32_t       g_gateQuietSince  = 0;
 static bool           g_gateQuietTiming = false;
-static bool           g_settingsDirty = false;
-static unsigned long  g_settingsChangedAtMs = 0;
+static volatile bool  g_settingsDirty = false;
+static volatile unsigned long g_settingsChangedAtMs = 0;
+static volatile bool  g_activeDirty   = false;
+static volatile unsigned long g_activeChangedAtMs   = 0;
+static volatile bool  g_pendingReboot = false;
+static volatile bool  g_stagedReboot  = false;
+static uint32_t       g_rebootAtMs    = 0;
+static volatile bool  g_otaInProgress = false;
+static volatile uint32_t g_otaLastActivityMs = 0;
+static volatile bool     g_otaUploadSeen     = false;
+static volatile bool     g_otaUploadFinished = false;
+static volatile bool  g_forceSensorPush   = false;
+static volatile bool  g_broadcastStatus   = false;
+static volatile bool  g_broadcastPatterns = false;
 
-// Curated Bathroom Ambient Showcase patterns
+static void scheduleReboot(uint32_t delayMs = 200) {
+    g_rebootAtMs    = millis() + delayMs;
+    g_pendingReboot = true;
+}
+
+static void getDeviceMacSuffix(uint8_t& b4, uint8_t& b5) {
+    uint64_t efuse = ESP.getEfuseMac();
+    b4 = (uint8_t)((efuse >> 32) & 0xFF);
+    b5 = (uint8_t)((efuse >> 40) & 0xFF);
+}
+
+// Curated Ambient Showcase patterns
 struct ShowcasePattern {
     const char* name;
     const char* code;
@@ -121,6 +142,15 @@ static const ShowcasePattern kShowcasePatterns[] = {
         "hsv(h, 1, b*0.9 + 0.1);"
     },
     {
+        "Fire Lick",
+        "// Hot core, cooler tips, animated with perlin.\n"
+        "y = i/n;\n"
+        "flame = perlin2D(y*3, t*1.4);\n"
+        "h = 0.05 - flame*0.05;\n"
+        "v = clamp(flame*1.5 - y*0.4, 0, 1);\n"
+        "hsv(h, 1, v);"
+    },
+    {
         "Ocean Swell",
         "x = i/n;\n"
         "swell = perlin2D(x*2, t*0.4);\n"
@@ -128,6 +158,51 @@ static const ShowcasePattern kShowcasePatterns[] = {
         "s = 1 - swell*0.3;\n"
         "v = wave(x + t*0.1);\n"
         "hsv(h, s, v);"
+    },
+    {
+        "Comet Trail",
+        "// Bright head, decaying tail.\n"
+        "head = time(4)*n;\n"
+        "d = abs(i - head);\n"
+        "d = min(d, abs(i - head - n));\n"
+        "v = clamp(1 - d/8, 0, 1);\n"
+        "v = v*v;\n"
+        "hsv(0.6, 0.4, v);"
+    },
+    {
+        "KITT Scanner",
+        "// Knight-Rider sweep with falloff.\n"
+        "pos = (triangle(time(3)))*n;\n"
+        "d = abs(i - pos);\n"
+        "v = clamp(1 - d/4, 0, 1);\n"
+        "hsv(0, 1, v*v);"
+    },
+    {
+        "Sparkle Snow",
+        "// Twinkling stars, hash for stable per-pixel phase.\n"
+        "phase = hash(i)*10;\n"
+        "blink = wave(t*1.5 + phase);\n"
+        "blink = pow(blink, 6);\n"
+        "hsv(0.6, 0.2, blink);"
+    },
+    {
+        "Plasma Field",
+        "x = i/n;\n"
+        "p = perlin2D(x*4 + t*0.3, t*0.2);\n"
+        "h = p + time(20);\n"
+        "hsv(h, 1, 1);"
+    },
+    {
+        "Square Pulse",
+        "// Hard-edged moving bars with adjustable duty.\n"
+        "bar = square(i*0.1 + time(2), 0.4);\n"
+        "hsv(time(15), 1, bar);"
+    },
+    {
+        "Triangle Chase",
+        "x = i/n;\n"
+        "b = triangle(x*3 + time(4));\n"
+        "hsv(x + time(10), 1, b);"
     },
     {
         "Lava Lamp",
@@ -138,11 +213,61 @@ static const ShowcasePattern kShowcasePatterns[] = {
         "hsv(h, 1, blob*0.9 + 0.1);"
     },
     {
+        "Heartbeat",
+        "// Two-beat heartbeat envelope.\n"
+        "p = frac(time(1.2));\n"
+        "beat = pow(wave(p*2), 8) + pow(wave(p*2 + 0.3), 8)*0.7;\n"
+        "hsv(0, 1, clamp(beat, 0, 1));"
+    },
+    {
+        "Cylon Rainbow",
+        "pos = triangle(time(5))*n;\n"
+        "d = abs(i - pos);\n"
+        "v = clamp(1 - d/6, 0, 1);\n"
+        "hsv(i/n + time(8), 1, v);"
+    },
+    {
+        "Twinkle Forest",
+        "// Random forest of greens, occasional warm flicker.\n"
+        "phase = hash(i)*7;\n"
+        "brt = pow(wave(t*0.8 + phase), 4);\n"
+        "h = 0.33 + hash(i+1)*0.06;\n"
+        "if (hash(i+5) > 0.92) h = 0.07;\n"
+        "hsv(h, 0.9, brt);"
+    },
+    {
+        "Stripes",
+        "// Four colour stripes, slow drift.\n"
+        "stripe = floor(frac(i/n + time(8))*4);\n"
+        "hsv(stripe*0.25, 1, 1);"
+    },
+    {
+        "Bouncing Dot",
+        "pos = triangle(time(2))*(n-1);\n"
+        "v = i==floor(pos+0.5) ? 1 : 0;\n"
+        "hsv(0.83, 1, v);"
+    },
+    {
         "Perlin Painter",
         "// Slow drifting hue painted by 2D noise.\n"
         "h = perlin2D(i*0.04, t*0.15);\n"
         "s = 0.6 + perlin1D(i*0.1 + 100)*0.4;\n"
         "hsv(h, s, 1);"
+    },
+    {
+        "Strobe",
+        "// Hard strobe at ~5 Hz, hue drifts.\n"
+        "flash = square(time(0.2), 0.15);\n"
+        "hsv(time(6), 1, flash);"
+    },
+    {
+        "Pendulum",
+        "// Smooth pendulum sweep using sine.\n"
+        "s = wave(time(3));\n"
+        "pos = s*(n-1);\n"
+        "d = abs(i - pos);\n"
+        "v = clamp(1 - d/3, 0, 1);\n"
+        "hsv(0.55, 1, v*v);"
     },
     {
         "Galaxy",
@@ -152,14 +277,103 @@ static const ShowcasePattern kShowcasePatterns[] = {
         "h = 0.72 + dust*0.1;\n"
         "v = star + dust*0.4;\n"
         "hsv(h, 1 - star*0.3, v);"
+    },
+    {
+        "Frequency Rainbow",
+        "// Bass=red, mids=green, highs=purple. Strip is divided\n"
+        "// into 8 bands; each pixel's hue = its band index -> hue\n"
+        "// (mapped 0..0.83 so the high end lands on magenta/purple).\n"
+        "b = floor(i / n * 8);\n"
+        "lev = band(b);\n"
+        "hsv(b/8 * 0.83, 1, lev);"
+    },
+    {
+        "Spectrum Bars",
+        "// Each pixel maps to a band, lights up if level > threshold.\n"
+        "b = floor(i / n * 8);\n"
+        "thresh = (i/n - floor(i/n*8)/8) * 8;\n"
+        "lev = band(b);\n"
+        "h = b/8 * 0.83;\n"
+        "on = lev > thresh ? 1 : 0;\n"
+        "hsv(h, 1, on * lev);"
+    },
+    {
+        "VU Meter",
+        "// Pixels light up to the current VU level.\n"
+        "// Green low, yellow mid, red top.\n"
+        "level = vu();\n"
+        "x = i/n;\n"
+        "lit = x < level ? 1 : 0;\n"
+        "h = (1 - x) * 0.33;\n"
+        "hsv(h, 1, lit);"
+    },
+    {
+        "Beat Pulse",
+        "// Whole strip flashes on each beat.\n"
+        "b = beat();\n"
+        "hsv(time(20), 1, b);"
+    },
+    {
+        "Bass Bloom",
+        "// Bass drives brightness, ambient drift drives hue.\n"
+        "h = perlin1D(i*0.05 + t*0.2);\n"
+        "v = bass()*1.3 + 0.05;\n"
+        "hsv(h, 1, clamp(v, 0, 1));"
+    },
+    {
+        "Pitch Painter",
+        "// Dominant pitch sets a moving point of colour.\n"
+        "p = pitch();\n"
+        "d = abs(i/n - p);\n"
+        "v = clamp(1 - d*4, 0, 1) * (vu() + 0.1);\n"
+        "hsv(p * 0.83, 1, v);"
+    },
+    {
+        "Treble Sparkle",
+        "// High frequencies trigger sparkles on random pixels.\n"
+        "phase = hash(i)*7;\n"
+        "flicker = wave(t*4 + phase);\n"
+        "level = treble();\n"
+        "v = pow(flicker, 8) * level * 4;\n"
+        "hsv(0.7 + hash(i)*0.15, 0.3, clamp(v, 0, 1));"
+    },
+    {
+        "Equalizer",
+        "// Continuous spectrum across the strip - no hard band edges.\n"
+        "x = i/n;\n"
+        "bIdx = x * 7;\n"
+        "b1 = floor(bIdx);\n"
+        "b2 = b1 + 1;\n"
+        "frac = bIdx - b1;\n"
+        "lev = mix(band(b1), band(b2), frac);\n"
+        "hsv(x * 0.83, 1, lev);"
     }
 };
 static constexpr int kShowcaseCount = sizeof(kShowcasePatterns) / sizeof(kShowcasePatterns[0]);
-static int           g_showcaseIdx  = 0;
-static unsigned long g_lastCycleMs  = 0;
+static int                  g_showcaseIdx  = 0;
+static volatile unsigned long g_lastCycleMs  = 0;
+static volatile uint32_t    g_cycleCount   = 0;
+
+static int findShowcaseIndexByName(const String& name) {
+    for (int i = 0; i < kShowcaseCount; i++) {
+        if (name == kShowcasePatterns[i].name) return i;
+    }
+    return -1;
+}
 
 static SemaphoreHandle_t g_progMu   = nullptr;
 static SemaphoreHandle_t g_rmtAdcMu = nullptr;
+static SemaphoreHandle_t g_stateMu  = nullptr;
+static SemaphoreHandle_t g_fsMu     = nullptr;
+static SemaphoreHandle_t g_wsMu     = nullptr;
+
+static void beginOtaDrain() {
+    g_otaLastActivityMs = millis();
+    g_otaInProgress = true;
+    if (g_progMu)   { xSemaphoreTake(g_progMu,   portMAX_DELAY); xSemaphoreGive(g_progMu); }
+    if (g_fsMu)     { xSemaphoreTake(g_fsMu,     portMAX_DELAY); xSemaphoreGive(g_fsMu); }
+    if (g_rmtAdcMu) { xSemaphoreTake(g_rmtAdcMu, portMAX_DELAY); xSemaphoreGive(g_rmtAdcMu); }
+}
 
 // ─── Bytecode VM ─────────────────────────────────────────────────────────────
 //
@@ -283,7 +497,7 @@ struct Program {
 enum TokType : uint8_t {
     TK_EOF, TK_NUM, TK_IDENT,
     TK_PLUS, TK_MINUS, TK_STAR, TK_SLASH, TK_PERCENT,
-    TK_LPAREN, TK_RPAREN, TK_COMMA, TK_SEMI, TK_ASSIGN,
+    TK_LPAREN, TK_RPAREN, TK_LBRACE, TK_RBRACE, TK_COMMA, TK_SEMI, TK_ASSIGN,
     TK_LT, TK_GT, TK_LE, TK_GE, TK_EQ, TK_NE,
     TK_QMARK, TK_COLON,
     TK_ERR,
@@ -343,8 +557,8 @@ public:
         if (isalpha((unsigned char)c) || c == '_') {
             uint16_t start = pos;
             while (pos < len && (isalnum((unsigned char)src[pos]) || src[pos] == '_')) pos++;
-            uint8_t n = pos - start;
-            if (n > 31) n = 31;
+            uint16_t rawLen = pos - start;
+            uint8_t n = (rawLen > 31) ? 31 : (uint8_t)rawLen;
             return {TK_IDENT, 0, start, n};
         }
 
@@ -357,9 +571,10 @@ public:
             case '%': return {TK_PERCENT, 0, 0, 0};
             case '(': return {TK_LPAREN, 0, 0, 0};
             case ')': return {TK_RPAREN, 0, 0, 0};
+            case '{': return {TK_LBRACE, 0, 0, 0};
+            case '}': return {TK_RBRACE, 0, 0, 0};
             case ',': return {TK_COMMA, 0, 0, 0};
             case ';': return {TK_SEMI, 0, 0, 0};
-            case '{': case '}': return {TK_SEMI, 0, 0, 0};
             case '?': return {TK_QMARK, 0, 0, 0};
             case ':': return {TK_COLON, 0, 0, 0};
             case '<':
@@ -388,6 +603,18 @@ public:
     Program prog;
     String  err;
     bool    failed = false;
+    uint8_t depth  = 0;
+    static constexpr uint8_t MAX_DEPTH = 32;
+
+    struct DepthGuard {
+        Compiler& c;
+        bool ok;
+        DepthGuard(Compiler& comp) : c(comp), ok(comp.depth < MAX_DEPTH) {
+            if (ok) c.depth++;
+            else c.fail("expression too deep");
+        }
+        ~DepthGuard() { if (ok && c.depth > 0) c.depth--; }
+    };
 
     // Note: `source` must be initialised before `lex`; Lexer borrows
     // source.c_str() and we want it to point into our owned copy.
@@ -479,6 +706,8 @@ public:
 
     // ── Pratt-ish recursive descent producing bytecode directly ─────────────
     void parseTernary() {
+        DepthGuard dg(*this);
+        if (!dg.ok || failed) return;
         parseComparison();
         if (cur.type == TK_QMARK) {
             advance();
@@ -495,8 +724,8 @@ public:
 
     void parseComparison() {
         parseAdd();
-        while (cur.type == TK_LT || cur.type == TK_GT || cur.type == TK_LE ||
-               cur.type == TK_GE || cur.type == TK_EQ || cur.type == TK_NE) {
+        while (!failed && (cur.type == TK_LT || cur.type == TK_GT || cur.type == TK_LE ||
+               cur.type == TK_GE || cur.type == TK_EQ || cur.type == TK_NE)) {
             TokType op = cur.type;
             advance();
             parseAdd();
@@ -514,7 +743,7 @@ public:
 
     void parseAdd() {
         parseMul();
-        while (cur.type == TK_PLUS || cur.type == TK_MINUS) {
+        while (!failed && (cur.type == TK_PLUS || cur.type == TK_MINUS)) {
             TokType op = cur.type;
             advance();
             parseMul();
@@ -524,7 +753,7 @@ public:
 
     void parseMul() {
         parseUnary();
-        while (cur.type == TK_STAR || cur.type == TK_SLASH || cur.type == TK_PERCENT) {
+        while (!failed && (cur.type == TK_STAR || cur.type == TK_SLASH || cur.type == TK_PERCENT)) {
             TokType op = cur.type;
             advance();
             parseUnary();
@@ -533,6 +762,8 @@ public:
     }
 
     void parseUnary() {
+        DepthGuard dg(*this);
+        if (!dg.ok || failed) return;
         if (cur.type == TK_MINUS) {
             advance();
             parseUnary();
@@ -544,6 +775,8 @@ public:
     }
 
     void parsePrimary() {
+        DepthGuard dg(*this);
+        if (!dg.ok || failed) return;
         if (cur.type == TK_NUM) {
             emit2(OP_PUSH_CONST, addConst(cur.num));
             advance();
@@ -567,7 +800,9 @@ public:
                 uint8_t argc = 0;
                 if (cur.type != TK_RPAREN) {
                     for (;;) {
+                        if (argc >= 16) { fail(name + " too many args"); return; }
                         parseTernary();
+                        if (failed) return;
                         argc++;
                         if (cur.type != TK_COMMA) break;
                         advance();
@@ -576,14 +811,14 @@ public:
                 if (cur.type != TK_RPAREN) { fail("expected ')'"); return; }
                 advance();
                 const FnEntry& fe = kFnTable[fi];
+                if (fe.id == FN_SQUARE && argc == 1) {
+                    // Default duty cycle = 0.5 when square(v) is called with 1 arg.
+                    emit2(OP_PUSH_CONST, addConst(0.5f));
+                    argc++;
+                }
                 if (argc < fe.minArgs) {
-                    // Pad with default constants for known optional args.
-                    if (fe.id == FN_SQUARE && argc == 1) {
-                        emit2(OP_PUSH_CONST, addConst(0.5f)); argc++;
-                    } else {
-                        fail(name + " needs " + fe.minArgs + " args");
-                        return;
-                    }
+                    fail(name + " needs " + fe.minArgs + " args");
+                    return;
                 }
                 if (argc > fe.maxArgs && fe.maxArgs != 0xFF) {
                     fail(name + " too many args"); return;
@@ -616,6 +851,7 @@ public:
 
         size_t jFalse = emitJump(OP_JMP_FALSE);
         parseStatement();
+        while (cur.type == TK_SEMI) advance();
         if (isKeyword("else")) {
             advance();
             size_t jEnd = emitJump(OP_JMP);
@@ -628,9 +864,22 @@ public:
     }
 
     void parseStatement() {
-        // Optional leading semicolons.
-        while (cur.type == TK_SEMI) advance();
+        DepthGuard dg(*this);
+        if (!dg.ok || failed) return;
+        if (cur.type == TK_SEMI) { advance(); return; }
         if (cur.type == TK_EOF) return;
+        if (cur.type == TK_RBRACE) { fail("unexpected '}'"); return; }
+
+        if (cur.type == TK_LBRACE) {
+            advance();
+            while (cur.type != TK_RBRACE && cur.type != TK_EOF && !failed) {
+                parseStatement();
+            }
+            if (cur.type != TK_RBRACE) { fail("expected '}'"); return; }
+            advance();
+            while (cur.type == TK_SEMI) advance();
+            return;
+        }
 
         if (isKeyword("if")) {
             parseIfStatement();
@@ -681,9 +930,10 @@ struct RunResult {
 };
 
 static inline float fastSin01(float v) {
-    // sin16 takes uint16_t, returns int16_t -32768..32767. Period = 65536.
-    uint16_t u = (uint16_t)(int32_t)(v * 65536.0f);
-    return sin16(u) * (1.0f / 32767.0f);
+    // Wrap into [0, 1) first so |v| >= 32768 never saturates int32_t on RISC-V.
+    v -= floorf(v);
+    uint16_t u = (uint16_t)(v * 65536.0f);
+    return sin16(u) * (1.0f / 32768.0f);
 }
 
 static inline float perlin1D_f(float x) {
@@ -736,11 +986,16 @@ static inline float callFn(uint8_t id, float* a, uint8_t argc) {
         case FN_MIX:        return a[0] + (a[1] - a[0]) * a[2];
         case FN_STEP:       return a[1] < a[0] ? 0.0f : 1.0f;
         case FN_SMOOTHSTEP: {
-            float t = (a[2] - a[0]) / (a[1] - a[0]);
+            float denom = a[1] - a[0];
+            if (fabsf(denom) < 1e-9f) return a[2] >= a[0] ? 1.0f : 0.0f;
+            float t = (a[2] - a[0]) / denom;
             if (t < 0) t = 0; else if (t > 1) t = 1;
             return t * t * (3.0f - 2.0f * t);
         }
-        case FN_WAVE:       return (fastSin01(a[0]) + 1.0f) * 0.5f;
+        case FN_WAVE: {
+            float w = (fastSin01(a[0]) + 1.0f) * 0.5f;
+            return w < 0.0f ? 0.0f : (w > 1.0f ? 1.0f : w);
+        }
         case FN_TRIANGLE: {
             float f = a[0] - floorf(a[0]);
             return f < 0.5f ? f * 2.0f : 2.0f - f * 2.0f;
@@ -760,8 +1015,9 @@ static inline float callFn(uint8_t id, float* a, uint8_t argc) {
         case FN_PERLIN2D:   return perlin2D_f(a[0], a[1]);
         case FN_RANDOM:     return (float)random(0, 10000) / 10000.0f;
         case FN_HASH: {
-            // Cheap 32-bit hash for stable per-pixel randomness.
-            uint32_t x = (uint32_t)(int32_t)(a[0] * 1000.0f);
+            // Cheap 32-bit hash for stable per-pixel randomness (floor matches JS).
+            int32_t xi = (int32_t)floorf(a[0] * 1000.0f);
+            uint32_t x = (uint32_t)xi;
             x ^= x >> 16; x *= 0x7feb352d;
             x ^= x >> 15; x *= 0x846ca68b;
             x ^= x >> 16;
@@ -821,9 +1077,12 @@ bool exec(const Program* p, float* vars, RunResult& out) {
             case OP_DIV:
                 stack[sp-2] = (stack[sp-1] != 0.0f) ? stack[sp-2] / stack[sp-1] : 0.0f;
                 sp--; break;
-            case OP_MOD:
-                stack[sp-2] = (stack[sp-1] != 0.0f) ? fmodf(stack[sp-2], stack[sp-1]) : 0.0f;
+            case OP_MOD: {
+                float r = stack[sp-1];
+                float l = stack[sp-2];
+                stack[sp-2] = (r != 0.0f) ? (l - floorf(l / r) * r) : 0.0f;
                 sp--; break;
+            }
             case OP_NEG: stack[sp-1] = -stack[sp-1]; break;
             case OP_LT: stack[sp-2] = stack[sp-2] <  stack[sp-1] ? 1.0f : 0.0f; sp--; break;
             case OP_GT: stack[sp-2] = stack[sp-2] >  stack[sp-1] ? 1.0f : 0.0f; sp--; break;
@@ -904,6 +1163,7 @@ struct Snap {
     float beat    = 0.0f;
     float mad     = 0.0f;
     float madPeak = 0.0f;
+    int   rawAdc  = 0;
     float bands[BAND_COUNT] = {0};
 };
 
@@ -912,11 +1172,12 @@ static portMUX_TYPE        g_snapMu = portMUX_INITIALIZER_UNLOCKED;
 static volatile bool       g_audioRunning = false;
 static TaskHandle_t        g_audioTaskHandle = nullptr;
 
-float vu()    { float v; portENTER_CRITICAL(&g_snapMu); v = g_snap.vu;    portEXIT_CRITICAL(&g_snapMu); return v; }
-float peak()  { float v; portENTER_CRITICAL(&g_snapMu); v = g_snap.peak;  portEXIT_CRITICAL(&g_snapMu); return v; }
-float pitch() { float v; portENTER_CRITICAL(&g_snapMu); v = g_snap.pitch; portEXIT_CRITICAL(&g_snapMu); return v; }
-float beat()  { float v; portENTER_CRITICAL(&g_snapMu); v = g_snap.beat;  portEXIT_CRITICAL(&g_snapMu); return v; }
-float mad()   { float v; portENTER_CRITICAL(&g_snapMu); v = g_snap.mad;   portEXIT_CRITICAL(&g_snapMu); return v; }
+float vu()     { float v; portENTER_CRITICAL(&g_snapMu); v = g_snap.vu;     portEXIT_CRITICAL(&g_snapMu); return v; }
+float peak()   { float v; portENTER_CRITICAL(&g_snapMu); v = g_snap.peak;   portEXIT_CRITICAL(&g_snapMu); return v; }
+float pitch()  { float v; portENTER_CRITICAL(&g_snapMu); v = g_snap.pitch;  portEXIT_CRITICAL(&g_snapMu); return v; }
+float beat()   { float v; portENTER_CRITICAL(&g_snapMu); v = g_snap.beat;   portEXIT_CRITICAL(&g_snapMu); return v; }
+float mad()    { float v; portENTER_CRITICAL(&g_snapMu); v = g_snap.mad;    portEXIT_CRITICAL(&g_snapMu); return v; }
+int   rawAdc() { int   v; portENTER_CRITICAL(&g_snapMu); v = g_snap.rawAdc; portEXIT_CRITICAL(&g_snapMu); return v; }
 float band(int n) {
     if (n < 0) n = 0; if (n >= BAND_COUNT) n = BAND_COUNT - 1;
     float v; portENTER_CRITICAL(&g_snapMu); v = g_snap.bands[n]; portEXIT_CRITICAL(&g_snapMu); return v;
@@ -963,14 +1224,19 @@ static bool isADC1Gpio(int gpio) { return gpio >= 0 && gpio <= 4; }
 static int32_t i2sBuf[FFT_N];
 
 static bool sampleI2S(float* out, float& dcState, float& rawMadOut) {
-    size_t bytesRead = 0;
-    if (i2s_read(I2S_NUM_0, i2sBuf, sizeof(i2sBuf), &bytesRead, pdMS_TO_TICKS(50)) != ESP_OK)
-        return false;
-    int n = bytesRead / sizeof(int32_t);
-    if (n <= 0) return false;
+    int got = 0;
+    uint32_t deadline = millis() + 60;
+    while (got < FFT_N && (int32_t)(millis() - deadline) < 0) {
+        size_t bytesRead = 0;
+        size_t want = (size_t)(FFT_N - got) * sizeof(int32_t);
+        if (i2s_read(I2S_NUM_0, i2sBuf + got, want, &bytesRead, pdMS_TO_TICKS(25)) != ESP_OK)
+            return false;
+        got += (int)(bytesRead / sizeof(int32_t));
+    }
+    if (got < FFT_N) return false;
     float madSum = 0.0f;
     for (int i = 0; i < FFT_N; i++) {
-        float s = (float)(i2sBuf[i % n] >> 8);   // -2^23..2^23
+        float s = (float)(i2sBuf[i] >> 8);        // -2^23..2^23
         float x = s - dcState;
         dcState = dcState + (1.0f - DC_BLOCK) * x;
         float norm = x * (1.0f / 8388608.0f);    // → ~[-1, 1]
@@ -981,26 +1247,42 @@ static bool sampleI2S(float* out, float& dcState, float& rawMadOut) {
     return true;
 }
 
-static bool sampleADC(float* out, float& dcState, float& iirPrevIn, float& iirPrevOut, float& rawMadOut) {
+static bool sampleADC(float* out, float& dcState, float& iirPrevIn, float& iirPrevOut, float& rawMadOut, int& rawAdcOut) {
     float madSum = 0.0f;
-    for (int i = 0; i < FFT_N; i++) {
-        int v = analogRead(settings.micADCPin);
-        float inSample = (float)v;
+    int lastSample = 0;
+    constexpr int kChunk = 32;
+    for (int base = 0; base < FFT_N; base += kChunk) {
+        int limit = base + kChunk;
+        if (limit > FFT_N) limit = FFT_N;
+        if (g_rmtAdcMu) xSemaphoreTake(g_rmtAdcMu, portMAX_DELAY);
+        int64_t chunkT0 = esp_timer_get_time();
+        for (int i = base; i < limit; i++) {
+            int v = analogRead(settings.micADCPin);
+            lastSample = v;
+            float inSample = (float)v;
 
-        // DeafDoorbell DC-blocking IIR high-pass filter (~80Hz cutoff at ~20kHz)
-        float iirOut = inSample - iirPrevIn + (0.985f * iirPrevOut);
-        iirPrevIn  = inSample;
-        iirPrevOut = iirOut;
-        madSum += fabsf(iirOut);
+            // DC-blocking IIR high-pass filter (~78Hz cutoff at 16kHz)
+            float iirOut = inSample - iirPrevIn + (0.97f * iirPrevOut);
+            iirPrevIn  = inSample;
+            iirPrevOut = iirOut;
+            madSum += fabsf(iirOut);
 
-        // Ember FFT normalized sample
-        float x = inSample - dcState;
-        dcState = dcState + (1.0f - DC_BLOCK) * x;
-        out[i] = x * (1.0f / 2048.0f);
+            // Ember FFT normalized sample
+            float x = inSample - dcState;
+            dcState = dcState + (1.0f - DC_BLOCK) * x;
+            out[i] = x * (1.0f / 2048.0f);
 
-        delayMicroseconds(25);
+            int64_t targetUs = chunkT0 + (((int64_t)(i - base + 1) * 1000000LL) / SAMPLE_RATE);
+            int64_t remUs = targetUs - esp_timer_get_time();
+            if (remUs > 0 && remUs < 500) delayMicroseconds((uint32_t)remUs);
+        }
+        if (g_rmtAdcMu) xSemaphoreGive(g_rmtAdcMu);
+        // Yield cleanly to same-priority loopTask so auto-cycle, WS pushes, and OTA stay responsive.
+        if (base == 96) vTaskDelay(1);
+        else taskYIELD();
     }
 
+    rawAdcOut = lastSample;
     rawMadOut = (madSum / (float)FFT_N) * ANALOG_MAD_SCALE * settings.micGain;
     return true;
 }
@@ -1011,7 +1293,9 @@ static float vImag[FFT_N];
 static ArduinoFFT<float> g_fft(vReal, vImag, FFT_N, (float)SAMPLE_RATE);
 
 static void audioTask(void*) {
+    if (g_rmtAdcMu && settings.micSource == 2) xSemaphoreTake(g_rmtAdcMu, portMAX_DELAY);
     float dcState    = (settings.micSource == 2) ? (float)analogRead(settings.micADCPin) : 0.0f;
+    if (g_rmtAdcMu && settings.micSource == 2) xSemaphoreGive(g_rmtAdcMu);
     float iirPrevIn  = dcState;
     float iirPrevOut = 0.0f;
     float bandsSmoothed[BAND_COUNT] = {0};
@@ -1020,17 +1304,26 @@ static void audioTask(void*) {
     float peakLevel   = 0.0f;
     float beatLevel   = 0.0f;
     float prevVU      = 0.0f;
+    uint32_t lastAudioMs = millis();
 
     g_audioRunning = true;
     Serial.printf("audio: source=%d running (ADC=%d, softGND=%d)\n",
                   settings.micSource, settings.micADCPin, settings.micGndPin);
 
     while (g_audioRunning) {
+        if (g_otaInProgress) { lastAudioMs = millis(); vTaskDelay(pdMS_TO_TICKS(25)); continue; }
         bool  ok     = false;
         float rawMad = 0.0f;
+        int   lastAdc = 0;
         if (settings.micSource == 1)      ok = sampleI2S(vReal, dcState, rawMad);
-        else if (settings.micSource == 2) ok = sampleADC(vReal, dcState, iirPrevIn, iirPrevOut, rawMad);
-        if (!ok) { vTaskDelay(pdMS_TO_TICKS(50)); continue; }
+        else if (settings.micSource == 2) ok = sampleADC(vReal, dcState, iirPrevIn, iirPrevOut, rawMad, lastAdc);
+        if (!ok) { lastAudioMs = millis(); vTaskDelay(pdMS_TO_TICKS(50)); continue; }
+
+        uint32_t nowMs = millis();
+        float dt = (nowMs - lastAudioMs) * 0.001f;
+        if (dt < 0.0f) dt = 0.0f;
+        if (dt > 0.5f) dt = 0.5f;
+        lastAudioMs = nowMs;
 
         if (rawMad > 65000.0f) rawMad = 65000.0f;
 
@@ -1049,7 +1342,8 @@ static void audioTask(void*) {
             float sum = 0;
             for (int k = a; k < z; k++) sum += vReal[k];
             float mag = sum / (float)(z - a);
-            float shaped = log1pf(mag * 0.02f) * settings.micGain;
+            // Samples are normalized in [-1, 1], so scale normalized FFT magnitudes into usable curves.
+            float shaped = log1pf(mag * 0.85f) * settings.micGain;
             if (shaped < 0) shaped = 0;
             if (shaped > 1) shaped = 1;
             bandsNew[b] = shaped;
@@ -1070,30 +1364,31 @@ static void audioTask(void*) {
         vuSmoothed  = vuSmoothed  * a + vuNew  * oneMinusA;
         madSmoothed = madSmoothed * 0.45f + rawMad * 0.55f;
 
-        // Peak with slow decay.
+        // Peak with dt-scaled slow decay.
         if (vuSmoothed > peakLevel) peakLevel = vuSmoothed;
-        else                        peakLevel *= 0.95f;
+        else                        peakLevel *= expf(-dt * 2.5f);
 
-        // Beat: trigger when level rises sharply, then decay quickly.
+        // Beat: trigger when level rises sharply, then decay quickly (dt-scaled).
         float dv = vuSmoothed - prevVU;
         if (dv > 0.08f) beatLevel = 1.0f;
-        else            beatLevel *= 0.85f;
+        else            beatLevel *= expf(-dt * 8.0f);
         prevVU = vuSmoothed;
 
         // Publish.
         portENTER_CRITICAL(&g_snapMu);
-        g_snap.vu    = vuSmoothed;
-        g_snap.peak  = peakLevel;
-        g_snap.pitch = pitchNew;
-        g_snap.beat  = beatLevel;
-        g_snap.mad   = madSmoothed;
+        g_snap.vu     = vuSmoothed;
+        g_snap.peak   = peakLevel;
+        g_snap.pitch  = pitchNew;
+        g_snap.beat   = beatLevel;
+        g_snap.mad    = madSmoothed;
+        g_snap.rawAdc = lastAdc;
         if (rawMad > g_snap.madPeak) g_snap.madPeak = rawMad;
         for (int b = 0; b < BAND_COUNT; b++) g_snap.bands[b] = bandsSmoothed[b];
         portEXIT_CRITICAL(&g_snapMu);
 
         // CRITICAL on single-core ESP32-C3: yield to FreeRTOS scheduler so
         // RenderTask (prio 2) and loop() can run without starvation!
-        vTaskDelay(pdMS_TO_TICKS(8));
+        vTaskDelay(pdMS_TO_TICKS(16));
     }
 
     if (settings.micSource == 1) i2s_driver_uninstall(I2S_NUM_0);
@@ -1102,18 +1397,46 @@ static void audioTask(void*) {
     vTaskDelete(nullptr);
 }
 
+static void setAudioError(const String& msg) {
+    if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+    g_audioError = msg;
+    if (g_stateMu) xSemaphoreGive(g_stateMu);
+    if (!msg.isEmpty()) Serial.println(msg);
+}
+
 static void start() {
     if (g_audioTaskHandle) return;
+    setAudioError("");
     if (settings.micSource == 0) return;
 
     if (settings.micSource == 1) {
+        if (settings.micBCLK == settings.pixelPin ||
+            settings.micWS   == settings.pixelPin ||
+            settings.micData == settings.pixelPin) {
+            setAudioError("audio: I2S pins (" + String(settings.micBCLK) + "," +
+                          String(settings.micWS) + "," + String(settings.micData) +
+                          ") collide with LED pin " + String(settings.pixelPin));
+            return;
+        }
+        if (settings.micBCLK == settings.micWS ||
+            settings.micBCLK == settings.micData ||
+            settings.micWS   == settings.micData) {
+            setAudioError("audio: duplicate I2S pins (" + String(settings.micBCLK) + "," +
+                          String(settings.micWS) + "," + String(settings.micData) + ")");
+            return;
+        }
         if (!setupI2S()) {
-            Serial.println("audio: I2S setup failed");
+            setAudioError("audio: I2S setup failed");
             return;
         }
     } else if (settings.micSource == 2) {
         if (!isADC1Gpio(settings.micADCPin)) {
-            Serial.printf("audio: GPIO %d is not ADC1 (use 0-4)\n", settings.micADCPin);
+            setAudioError("audio: GPIO " + String(settings.micADCPin) + " is not ADC1 (use 0-4)");
+            return;
+        }
+        if (settings.micADCPin == settings.pixelPin) {
+            setAudioError("audio: ADC pin " + String(settings.micADCPin) +
+                          " collides with LED pin " + String(settings.pixelPin));
             return;
         }
         // Assert soft ground on micGndPin (e.g. GPIO 4) when valid and not colliding
@@ -1123,6 +1446,8 @@ static void start() {
             pinMode(settings.micGndPin, OUTPUT);
             digitalWrite(settings.micGndPin, LOW);
             Serial.printf("audio: soft GND enabled on GPIO %d\n", settings.micGndPin);
+        } else if (settings.micGndPin >= 0) {
+            setAudioError("audio: Soft GND pin " + String(settings.micGndPin) + " collides or invalid; disabled");
         }
         pinMode(settings.micADCPin, INPUT);
         analogReadResolution(12);
@@ -1157,7 +1482,7 @@ static bool recompile(const String& source, String& errOut) {
 }
 
 // ─── Native ESP-IDF RMT WS2812B Driver (ESP32-C3 safe) ──────────────────────
-static uint8_t* g_grbBuf     = nullptr;
+static uint8_t  g_grbBuf[MAX_PIXELS * 3];
 static bool     g_rmtInited  = false;
 
 static void IRAM_ATTR ws2812_rmt_adapter(const void* src, rmt_item32_t* dest,
@@ -1192,49 +1517,67 @@ static void IRAM_ATTR ws2812_rmt_adapter(const void* src, rmt_item32_t* dest,
 
 static bool g_stripIsBlack = false;
 
-static void showStrip(bool forceSend = false) {
-    if (!leds || !g_grbBuf || !g_rmtInited) return;
-    const int n = settings.pixelCount;
+static void showStrip(bool forceSend = false, int countOverride = -1) {
+    if (!g_rmtInited) return;
+    const int n = constrain((countOverride > 0) ? countOverride : settings.pixelCount, 1, MAX_PIXELS);
     uint32_t scale = (uint32_t)constrain(settings.brightness, 0, 255);
 
     uint32_t rawSum = 0;
-    for (int i = 0; i < n; i++) {
-        rawSum += (uint32_t)leds[i].r + (uint32_t)leds[i].g + (uint32_t)leds[i].b;
+    if (scale > 0) {
+        for (int i = 0; i < n; i++) {
+            rawSum += (uint32_t)leds[i].r + (uint32_t)leds[i].g + (uint32_t)leds[i].b;
+        }
     }
 
-    if (rawSum == 0) {
+    bool allBlack = (rawSum == 0 || scale == 0);
+    if (!allBlack) {
+        // Safe power cap for 100 pixels (~450mA USB budget) to prevent 5V rail brownouts
+        constexpr uint32_t kMaxChannelSum = 9000UL;
+        uint32_t scaledSum = (rawSum * scale) >> 8;
+        if (scaledSum > kMaxChannelSum) {
+            scale = (kMaxChannelSum << 8) / rawSum;
+        }
+
+        uint32_t outSum = 0;
+        for (int i = 0; i < n; i++) {
+            uint8_t g = (uint8_t)(((uint32_t)leds[i].g * scale) >> 8);
+            uint8_t r = (uint8_t)(((uint32_t)leds[i].r * scale) >> 8);
+            uint8_t b = (uint8_t)(((uint32_t)leds[i].b * scale) >> 8);
+            g_grbBuf[i * 3 + 0] = g;
+            g_grbBuf[i * 3 + 1] = r;
+            g_grbBuf[i * 3 + 2] = b;
+            outSum += (uint32_t)g + (uint32_t)r + (uint32_t)b;
+        }
+        allBlack = (outSum == 0);
+    }
+
+    if (allBlack) {
         if (g_stripIsBlack && !forceSend) {
-            return; // Strip is already black; keep GPIO 5 silent so ADC has zero RMT noise
+            return; // Strip is already black; keep LED pin silent so ADC has zero RMT noise
         }
         memset(g_grbBuf, 0, n * 3);
         g_stripIsBlack = true;
     } else {
         g_stripIsBlack = false;
-        // Safe power cap for 100 pixels (~450mA USB budget) to prevent 5V rail brownouts
-        constexpr uint32_t kMaxChannelSum = 9000UL;
-        uint32_t scaledSum = (rawSum * scale) >> 8;
-        if (scaledSum > kMaxChannelSum && rawSum > 0) {
-            scale = (kMaxChannelSum << 8) / rawSum;
-        }
-
-        for (int i = 0; i < n; i++) {
-            g_grbBuf[i * 3 + 0] = (uint8_t)(((uint32_t)leds[i].g * scale) >> 8);
-            g_grbBuf[i * 3 + 1] = (uint8_t)(((uint32_t)leds[i].r * scale) >> 8);
-            g_grbBuf[i * 3 + 2] = (uint8_t)(((uint32_t)leds[i].b * scale) >> 8);
-        }
     }
 
+    if (g_fsMu) xSemaphoreTake(g_fsMu, portMAX_DELAY);
     if (g_rmtAdcMu) xSemaphoreTake(g_rmtAdcMu, portMAX_DELAY);
-    rmt_write_sample(RMT_CHANNEL_0, g_grbBuf, n * 3, true);
-    delayMicroseconds(60);
+    if (!g_otaInProgress) {
+        rmt_write_sample(RMT_CHANNEL_0, g_grbBuf, n * 3, true);
+        delayMicroseconds(60);
+    }
     if (g_rmtAdcMu) xSemaphoreGive(g_rmtAdcMu);
+    if (g_fsMu) xSemaphoreGive(g_fsMu);
 }
 
 static void initFastLED() {
-    if (leds) { delete[] leds; leds = nullptr; }
-    if (g_grbBuf) { free(g_grbBuf); g_grbBuf = nullptr; }
-    leds = new CRGB[settings.pixelCount];
-    g_grbBuf = (uint8_t*)malloc(settings.pixelCount * 3);
+    if (g_rmtInited) {
+        rmt_driver_uninstall(RMT_CHANNEL_0);
+        g_rmtInited = false;
+    }
+    memset(leds, 0, sizeof(leds));
+    memset(g_grbBuf, 0, sizeof(g_grbBuf));
 
     rmt_config_t config = {};
     config.rmt_mode = RMT_MODE_TX;
@@ -1255,8 +1598,8 @@ static void initFastLED() {
         Serial.println("RMT WS2812B init failed");
     }
 
-    fill_solid(leds, settings.pixelCount, CRGB::Black);
-    showStrip(true);
+    fill_solid(leds, MAX_PIXELS, CRGB::Black);
+    showStrip(true, settings.pixelCount);
 }
 
 // Quintic smootherstep, then gamma 2.2 so WS2812 steps look even.
@@ -1267,20 +1610,28 @@ static float shapeGateEnvelope(float lin) {
     return powf(shaped, 2.2f);
 }
 
+static inline uint8_t safeByte(float v) {
+    if (!std::isfinite(v) || v <= 0.0f) return 0;
+    if (v >= 255.0f) return 255;
+    return (uint8_t)v;
+}
+
 // ─── LED render task ─────────────────────────────────────────────────────────
 static void renderTask(void*) {
-    const TickType_t period = pdMS_TO_TICKS(20);  // ~50 Hz target, yields cleanly
-    TickType_t       last   = xTaskGetTickCount();
     uint32_t         frameCounter = 0;
     uint32_t         lastFpsTick  = millis();
     uint32_t         lastFrameMs  = millis();
     float            vars[vm::MAX_VARS];
 
     for (;;) {
-        vTaskDelayUntil(&last, period);
-        if (!leds) continue;
+        if (g_otaInProgress) {
+            lastFrameMs = millis();
+            vTaskDelay(pdMS_TO_TICKS(20));
+            continue;
+        }
 
-        uint32_t now = millis();
+        uint32_t frameStartMs = millis();
+        uint32_t now = frameStartMs;
         float dt = (now - lastFrameMs) * 0.001f;
         if (dt < 0.0f) dt = 0.0f;
         if (dt > 0.1f) dt = 0.1f;
@@ -1330,162 +1681,318 @@ static void renderTask(void*) {
             env               = 1.0f;
         }
 
+        if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+        int n = constrain(settings.pixelCount, 1, MAX_PIXELS);
+        int txCount = n;
+        if (g_clearTailTo > n) {
+            txCount = constrain((int)g_clearTailTo, n, MAX_PIXELS);
+            g_clearTailTo = 0;
+        }
+        if (g_stateMu) xSemaphoreGive(g_stateMu);
+
         if (g_progMu) xSemaphoreTake(g_progMu, portMAX_DELAY);
         vm::Program* p = g_program.load(std::memory_order_relaxed);
         float t = now / 1000.0f;
-        int n = settings.pixelCount;
 
         // Fast-path when completely faded out: clear strip without running VM for 500 pixels
         if (env <= 0.0005f) {
-            fill_solid(leds, n, CRGB::Black);
+            fill_solid(leds, txCount, CRGB::Black);
         } else if (p) {
-            // Initialise the reserved variable slots.
-            memset(vars, 0, sizeof(vars));
-            vars[vm::VAR_N]          = (float)n;
-            vars[vm::VAR_PIXELCOUNT] = (float)n;
-            vars[vm::VAR_T]          = t;
-            vars[vm::VAR_TIME]       = t;
-            vars[vm::VAR_PI]         = (float)M_PI;
-            vars[vm::VAR_TAU]        = (float)(2.0 * M_PI);
-            vars[vm::VAR_MOTION]     = 0.0f;
-            vars[vm::VAR_GATE]       = env;
-            vars[vm::VAR_FADE]       = env;
+            // Initialise frame-constant reserved slots; copy per pixel so user vars reset cleanly.
+            float baseVars[vm::MAX_VARS] = {0};
+            baseVars[vm::VAR_N]          = (float)n;
+            baseVars[vm::VAR_PIXELCOUNT] = (float)n;
+            baseVars[vm::VAR_T]          = t;
+            baseVars[vm::VAR_TIME]       = t;
+            baseVars[vm::VAR_PI]         = (float)M_PI;
+            baseVars[vm::VAR_TAU]        = (float)(2.0 * M_PI);
+            baseVars[vm::VAR_MOTION]     = 0.0f;
+            baseVars[vm::VAR_GATE]       = env;
+            baseVars[vm::VAR_FADE]       = env;
+            const uint8_t varCount = (p->numVars <= vm::MAX_VARS) ? p->numVars : vm::MAX_VARS;
 
             for (int i = 0; i < n; i++) {
+                memcpy(vars, baseVars, varCount * sizeof(float));
                 vars[vm::VAR_I]     = (float)i;
                 vars[vm::VAR_INDEX] = (float)i;
                 vm::RunResult r;
                 if (vm::exec(p, vars, r)) {
                     if (r.useRGB) {
                         leds[i] = CRGB(
-                            (uint8_t)constrain(r.r * env * 255.0f, 0.0f, 255.0f),
-                            (uint8_t)constrain(r.g * env * 255.0f, 0.0f, 255.0f),
-                            (uint8_t)constrain(r.b * env * 255.0f, 0.0f, 255.0f));
+                            safeByte(r.r * env * 255.0f),
+                            safeByte(r.g * env * 255.0f),
+                            safeByte(r.b * env * 255.0f));
                     } else {
-                        float hh = r.h - floorf(r.h);
+                        float hh = std::isfinite(r.h) ? (r.h - floorf(r.h)) : 0.0f;
                         if (hh < 0) hh += 1.0f;
                         leds[i] = CHSV(
-                            (uint8_t)(hh * 255.0f),
-                            (uint8_t)constrain(r.s * 255.0f, 0.0f, 255.0f),
-                            (uint8_t)constrain(r.v * env * 255.0f, 0.0f, 255.0f));
+                            safeByte(hh * 255.0f),
+                            safeByte(r.s * 255.0f),
+                            safeByte(r.v * env * 255.0f));
                     }
                 } else {
                     leds[i] = CRGB::Black;
                 }
             }
+            if (txCount > n) {
+                fill_solid(leds + n, txCount - n, CRGB::Black);
+            }
         } else {
-            fill_solid(leds, n, CRGB::Black);
+            fill_solid(leds, txCount, CRGB::Black);
         }
         if (g_progMu) xSemaphoreGive(g_progMu);
 
-        showStrip();
+        if (!g_otaInProgress) showStrip(txCount > n, txCount);
 
         frameCounter++;
-        if (now - lastFpsTick >= 1000) {
-            g_fps = (float)frameCounter * 1000.0f / (now - lastFpsTick);
-            Serial.printf("stat: fps=%.1f mad=%.0f rawADC=%d env=%.2f\n", (float)g_fps, audio::mad(), analogRead(3), env);
+        uint32_t afterMs = millis();
+        if (afterMs - lastFpsTick >= 1000) {
+            g_fps = (float)frameCounter * 1000.0f / (afterMs - lastFpsTick);
+            if (Serial.availableForWrite() >= 64) {
+                Serial.printf("stat: fps=%.1f mad=%.0f rawADC=%d env=%.2f\n",
+                              (float)g_fps, audio::mad(), audio::rawAdc(), env);
+            }
             frameCounter = 0;
-            lastFpsTick = now;
+            lastFpsTick = afterMs;
         }
+
+        // Always yield >= 5ms per frame so lower-priority loopTask and audioTask never starve.
+        uint32_t elapsed = afterMs - frameStartMs;
+        uint32_t targetMs = (n > 150) ? 25 : 20;
+        uint32_t minYieldMs = (settings.micSource != 0) ? 5 : 4;
+        uint32_t sleepMs = (elapsed + minYieldMs < targetMs) ? (targetMs - elapsed) : minYieldMs;
+        vTaskDelay(pdMS_TO_TICKS(sleepMs));
     }
 }
 
 // ─── Persistence ─────────────────────────────────────────────────────────────
 static void loadSettings() {
-    if (!LittleFS.exists("/settings.json")) return;
-    File f = LittleFS.open("/settings.json", "r");
-    JsonDocument doc;
-    if (deserializeJson(doc, f) == DeserializationError::Ok) {
-        settings.pixelPin         = doc["pin"]        | settings.pixelPin;
-        settings.pixelCount       = doc["count"]      | settings.pixelCount;
-        settings.brightness       = doc["brightness"] | settings.brightness;
-        strlcpy(settings.hostname, doc["hostname"] | settings.hostname, sizeof(settings.hostname));
-        strlcpy(settings.wifiSSID, doc["ssid"]     | settings.wifiSSID, sizeof(settings.wifiSSID));
-        strlcpy(settings.wifiPass, doc["pass"]     | settings.wifiPass, sizeof(settings.wifiPass));
-        strlcpy(settings.apSSID,   doc["apSSID"]   | settings.apSSID,   sizeof(settings.apSSID));
-        settings.micSource        = doc["micSrc"]     | settings.micSource;
-        settings.micBCLK          = doc["micBCLK"]    | settings.micBCLK;
-        settings.micWS            = doc["micWS"]      | settings.micWS;
-        settings.micData          = doc["micData"]    | settings.micData;
-        settings.micADCPin        = doc["micADC"]     | settings.micADCPin;
-        settings.micGndPin        = doc["micGnd"]     | settings.micGndPin;
-        settings.micGain          = doc["micGain"]    | settings.micGain;
-        settings.micSmoothing     = doc["micSmooth"]  | settings.micSmoothing;
-        settings.audioGateEnabled = doc["gateEn"]     | settings.audioGateEnabled;
-        settings.gateThreshold    = doc["gateThresh"] | settings.gateThreshold;
-        settings.autoCycle        = doc["autoCycle"]  | settings.autoCycle;
-        settings.cycleSeconds     = doc["cycleSec"]   | settings.cycleSeconds;
+    if (g_fsMu) xSemaphoreTake(g_fsMu, portMAX_DELAY);
+    if (LittleFS.exists("/settings.json")) {
+        File f = LittleFS.open("/settings.json", "r");
+        if (f) {
+            JsonDocument doc;
+            if (deserializeJson(doc, f) == DeserializationError::Ok) {
+                settings.pixelPin         = doc["pin"]        | settings.pixelPin;
+                settings.pixelCount       = doc["count"]      | settings.pixelCount;
+                settings.brightness       = doc["brightness"] | settings.brightness;
+                strlcpy(settings.hostname, doc["hostname"] | settings.hostname, sizeof(settings.hostname));
+                strlcpy(settings.wifiSSID, doc["ssid"]     | settings.wifiSSID, sizeof(settings.wifiSSID));
+                strlcpy(settings.wifiPass, doc["pass"]     | settings.wifiPass, sizeof(settings.wifiPass));
+                strlcpy(settings.apSSID,   doc["apSSID"]   | settings.apSSID,   sizeof(settings.apSSID));
+                settings.micSource        = doc["micSrc"]     | settings.micSource;
+                settings.micBCLK          = doc["micBCLK"]    | settings.micBCLK;
+                settings.micWS            = doc["micWS"]      | settings.micWS;
+                settings.micData          = doc["micData"]    | settings.micData;
+                settings.micADCPin        = doc["micADC"]     | settings.micADCPin;
+                settings.micGndPin        = doc["micGnd"]     | settings.micGndPin;
+                settings.micGain          = doc["micGain"]    | settings.micGain;
+                settings.micSmoothing     = doc["micSmooth"]  | settings.micSmoothing;
+                settings.audioGateEnabled = doc["gateEn"]     | settings.audioGateEnabled;
+                settings.gateThreshold    = doc["gateThresh"] | settings.gateThreshold;
+                settings.autoCycle        = doc["autoCycle"]  | settings.autoCycle;
+                settings.cycleSeconds     = doc["cycleSec"]   | settings.cycleSeconds;
+            }
+            f.close();
+        }
     }
+    if (g_fsMu) xSemaphoreGive(g_fsMu);
+
+    // Clamp loaded values to valid runtime ranges in case settings.json was edited or corrupted.
+    if (settings.pixelPin < 0 || settings.pixelPin > 10) settings.pixelPin = 5;
+    settings.pixelCount       = constrain(settings.pixelCount, 1, 600);
+    settings.brightness       = constrain(settings.brightness, 0, 255);
+    settings.apSSID[32]       = '\0';
+    settings.micSource        = constrain(settings.micSource, 0, 2);
+    settings.micBCLK          = constrain(settings.micBCLK, 0, 10);
+    settings.micWS            = constrain(settings.micWS, 0, 10);
+    settings.micData          = constrain(settings.micData, 0, 10);
+    settings.micADCPin        = constrain(settings.micADCPin, 0, 4);
+    settings.micGndPin        = constrain(settings.micGndPin, -1, 10);
+    settings.micGain          = constrain(settings.micGain, 0.0f, 10.0f);
+    settings.micSmoothing     = constrain(settings.micSmoothing, 0.0f, 0.95f);
+    settings.gateThreshold    = constrain(settings.gateThreshold, 200, 30000);
+    settings.cycleSeconds     = constrain(settings.cycleSeconds, 5, 600);
+}
+
+static void saveSettingsStruct(const Settings& s) {
+    if (g_fsMu) xSemaphoreTake(g_fsMu, portMAX_DELAY);
+    File f = LittleFS.open("/settings.json", "w");
+    if (!f) {
+        Serial.println("Failed to open /settings.json for write");
+        if (g_fsMu) xSemaphoreGive(g_fsMu);
+        return;
+    }
+    JsonDocument doc;
+    doc["pin"]        = s.pixelPin;
+    doc["count"]      = s.pixelCount;
+    doc["brightness"] = s.brightness;
+    doc["hostname"]   = s.hostname;
+    doc["ssid"]       = s.wifiSSID;
+    doc["pass"]       = s.wifiPass;
+    doc["apSSID"]     = s.apSSID;
+    doc["micSrc"]     = s.micSource;
+    doc["micBCLK"]    = s.micBCLK;
+    doc["micWS"]      = s.micWS;
+    doc["micData"]    = s.micData;
+    doc["micADC"]     = s.micADCPin;
+    doc["micGnd"]     = s.micGndPin;
+    doc["micGain"]    = s.micGain;
+    doc["micSmooth"]  = s.micSmoothing;
+    doc["gateEn"]     = s.audioGateEnabled;
+    doc["gateThresh"] = s.gateThreshold;
+    doc["autoCycle"]  = s.autoCycle;
+    doc["cycleSec"]   = s.cycleSeconds;
+    serializeJson(doc, f);
     f.close();
-#ifdef EMBER_BATHROOM
-    // Enforce bathroom defaults: exactly 100 pixels, MAX4466 on GPIO 3, Soft GND on GPIO 4
-    settings.pixelPin   = 5;
-    settings.pixelCount = 100;
-    settings.micSource  = 2;
-    settings.micADCPin  = 3;
-    settings.micGndPin  = 4;
-#endif
+    if (g_fsMu) xSemaphoreGive(g_fsMu);
 }
 
 static void saveSettings() {
-    File f = LittleFS.open("/settings.json", "w");
-    JsonDocument doc;
-    doc["pin"]        = settings.pixelPin;
-    doc["count"]      = settings.pixelCount;
-    doc["brightness"] = settings.brightness;
-    doc["hostname"]   = settings.hostname;
-    doc["ssid"]       = settings.wifiSSID;
-    doc["pass"]       = settings.wifiPass;
-    doc["apSSID"]     = settings.apSSID;
-    doc["micSrc"]     = settings.micSource;
-    doc["micBCLK"]    = settings.micBCLK;
-    doc["micWS"]      = settings.micWS;
-    doc["micData"]    = settings.micData;
-    doc["micADC"]     = settings.micADCPin;
-    doc["micGnd"]     = settings.micGndPin;
-    doc["micGain"]    = settings.micGain;
-    doc["micSmooth"]  = settings.micSmoothing;
-    doc["gateEn"]     = settings.audioGateEnabled;
-    doc["gateThresh"] = settings.gateThreshold;
-    doc["autoCycle"]  = settings.autoCycle;
-    doc["cycleSec"]   = settings.cycleSeconds;
-    serializeJson(doc, f);
-    f.close();
+    if (g_stagedReboot) return;
+    Settings snap;
+    if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+    if (g_stagedReboot) {
+        if (g_stateMu) xSemaphoreGive(g_stateMu);
+        return;
+    }
     g_settingsDirty = false;
+    snap = settings;
+    if (g_stateMu) xSemaphoreGive(g_stateMu);
+    saveSettingsStruct(snap);
+}
+
+static void flushSettingsIfDirty() {
+    if (g_stagedReboot || !g_settingsDirty) return;
+    Settings snap;
+    if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+    if (g_stagedReboot || !g_settingsDirty) {
+        if (g_stateMu) xSemaphoreGive(g_stateMu);
+        return;
+    }
+    g_settingsDirty = false;
+    snap = settings;
+    if (g_stateMu) xSemaphoreGive(g_stateMu);
+    saveSettingsStruct(snap);
+}
+
+static void stageRebootWithSettings(const Settings& nextSettings) {
+    if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+    g_stagedSettings = nextSettings;
+    g_stagedReboot = true;
+    g_settingsDirty = false;
+    scheduleReboot(200);
+    if (g_stateMu) xSemaphoreGive(g_stateMu);
+    saveSettingsStruct(nextSettings);
+}
+
+static Settings getSettingsForEdit() {
+    if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+    Settings base = g_stagedReboot ? g_stagedSettings : settings;
+    if (g_stateMu) xSemaphoreGive(g_stateMu);
+    return base;
+}
+
+static void resetSettingsToDefaults() {
+    // Stage into a local struct so active renderTask/audioTask buffers stay valid until reboot.
+    Settings nextSettings{};
+    uint8_t mac4 = 0, mac5 = 0;
+    getDeviceMacSuffix(mac4, mac5);
+#ifdef EMBER_AUDIO
+    snprintf(nextSettings.apSSID, sizeof(nextSettings.apSSID), "Ember-Audio-%02X%02X", mac4, mac5);
+    snprintf(nextSettings.hostname, sizeof(nextSettings.hostname), "ember-audio-%02x%02x", mac4, mac5);
+#else
+    snprintf(nextSettings.apSSID, sizeof(nextSettings.apSSID), "Ember-%02X%02X", mac4, mac5);
+#endif
+    stageRebootWithSettings(nextSettings);
 }
 
 static void markSettingsDirty() {
-    g_settingsDirty = true;
-    g_settingsChangedAtMs = millis();
+    if (g_stagedReboot) return;
+    if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+    if (!g_stagedReboot) {
+        g_settingsDirty = true;
+        g_settingsChangedAtMs = millis();
+    }
+    if (g_stateMu) xSemaphoreGive(g_stateMu);
+}
+
+static void markActiveDirty() {
+    g_activeDirty = true;
+    g_activeChangedAtMs = millis();
+}
+
+static bool isValidPatternName(const String& name) {
+    // ESP32 LittleFS max path length is 31 chars: "/patterns/" (10) + name + ".wfl" (4) -> <= 17
+    if (name.isEmpty() || name.length() > 17) return false;
+    if (name.indexOf('/') >= 0 || name.indexOf('\\') >= 0 || name.indexOf("..") >= 0) return false;
+    return true;
 }
 
 static void loadPattern(const String& name) {
+    if (!isValidPatternName(name)) {
+        if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+        g_lastError = "invalid pattern name";
+        if (g_stateMu) xSemaphoreGive(g_stateMu);
+        return;
+    }
     String path = "/patterns/" + name + ".wfl";
-    if (!LittleFS.exists(path)) return;
-    File f = LittleFS.open(path, "r");
-    String src = f.readString();
-    f.close();
+    String src;
+    bool found = false;
+    if (g_fsMu) xSemaphoreTake(g_fsMu, portMAX_DELAY);
+    if (LittleFS.exists(path)) {
+        File f = LittleFS.open(path, "r");
+        if (f) {
+            src = f.readString();
+            f.close();
+            found = true;
+        }
+    }
+    if (g_fsMu) xSemaphoreGive(g_fsMu);
+    if (!found) {
+        if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+        g_lastError = "pattern not found";
+        if (g_stateMu) xSemaphoreGive(g_stateMu);
+        return;
+    }
+
     String err;
-    if (recompile(src, err)) {
+    bool ok = recompile(src, err);
+    if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+    if (ok) {
         g_currentSource = src;
         g_currentName   = name;
         g_lastError     = "";
     } else {
         g_lastError = err;
     }
+    if (g_stateMu) xSemaphoreGive(g_stateMu);
 }
 
 static void savePattern(const String& name, const String& code) {
+    if (!isValidPatternName(name)) return;
+    if (g_fsMu) xSemaphoreTake(g_fsMu, portMAX_DELAY);
     if (!LittleFS.exists("/patterns")) LittleFS.mkdir("/patterns");
     String path = "/patterns/" + name + ".wfl";
     File f = LittleFS.open(path, "w");
+    if (!f) {
+        Serial.printf("Failed to open %s for write\n", path.c_str());
+        if (g_fsMu) xSemaphoreGive(g_fsMu);
+        return;
+    }
     f.print(code);
     f.close();
+    if (g_fsMu) xSemaphoreGive(g_fsMu);
+
+    if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
     g_currentName = name;
     g_currentSource = code;
+    if (g_stateMu) xSemaphoreGive(g_stateMu);
 }
 
 static void saveActivePattern(const String& name, const String& code) {
+    g_activeDirty = false;
+    if (g_fsMu) xSemaphoreTake(g_fsMu, portMAX_DELAY);
     File f = LittleFS.open("/active.wfl", "w");
     if (f) {
         f.print(code);
@@ -1496,11 +2003,22 @@ static void saveActivePattern(const String& name, const String& code) {
         fn.print(name);
         fn.close();
     }
+    if (g_fsMu) xSemaphoreGive(g_fsMu);
+}
+
+static void flushActivePatternIfDirty() {
+    if (!g_activeDirty) return;
+    if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+    String name = g_currentName;
+    String code = g_currentSource;
+    if (g_stateMu) xSemaphoreGive(g_stateMu);
+    saveActivePattern(name, code);
 }
 
 static String patternListJson() {
     JsonDocument doc;
     JsonArray arr = doc.to<JsonArray>();
+    if (g_fsMu) xSemaphoreTake(g_fsMu, portMAX_DELAY);
     File root = LittleFS.open("/patterns");
     if (root && root.isDirectory()) {
         File file = root.openNextFile();
@@ -1510,9 +2028,12 @@ static String patternListJson() {
                 name = name.substring(0, name.length() - 4);
                 arr.add(name);
             }
+            file.close();
             file = root.openNextFile();
         }
+        root.close();
     }
+    if (g_fsMu) xSemaphoreGive(g_fsMu);
     String out;
     serializeJson(doc, out);
     return out;
@@ -1521,15 +2042,82 @@ static String patternListJson() {
 // ─── WebSocket handler ───────────────────────────────────────────────────────
 static void pushSensors(bool force = false);
 
-static void sendStatus(AsyncWebSocketClient* c, const String& err) {
+static bool wsHasReadyClient() {
+    return ws.count() > 0;
+}
+
+static void wsBroadcastText(const String& out) {
+    if (ws.count() == 0) return;
+    ws.textAll(out);
+}
+
+static void buildSensorsJson(JsonDocument& doc, bool includeStatus, bool resetMadPeak) {
+    doc["type"]       = "sensors";
+    doc["fps"]        = (int)roundf(g_fps);
+    doc["gate"]       = roundf(g_gateEnvelope * 100.0f) / 100.0f;
+    doc["gateActive"] = (bool)g_gateActive;
+    if (settings.autoCycle) {
+        int32_t interval = (int32_t)(max(5, settings.cycleSeconds) * 1000L);
+        int32_t elapsed  = (int32_t)(millis() - g_lastCycleMs);
+        int32_t rem      = interval - elapsed;
+        if (rem < 0) rem = 0;
+        doc["cycleRem"] = rem;
+    } else {
+        doc["cycleRem"] = -1;
+    }
+    doc["cycleCount"] = (uint32_t)g_cycleCount;
+
+    if (settings.micSource != 0) {
+        audio::Snap s;
+        audio::getSnap(s, resetMadPeak);
+        doc["vu"]    = roundf(s.vu * 100.0f) / 100.0f;
+        doc["peak"]  = roundf(s.peak * 100.0f) / 100.0f;
+        doc["pitch"] = roundf(s.pitch * 100.0f) / 100.0f;
+        doc["beat"]  = roundf(s.beat * 100.0f) / 100.0f;
+        doc["mad"]   = (int)roundf(s.madPeak);
+        JsonArray a = doc["bands"].to<JsonArray>();
+        for (int i = 0; i < audio::BAND_COUNT; i++) {
+            a.add((int)roundf(s.bands[i] * 100.0f));
+        }
+    } else {
+        doc["mad"] = 0;
+    }
+
+    if (includeStatus) {
+        if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+        doc["name"]  = g_currentName;
+        doc["error"] = !g_lastError.isEmpty() ? g_lastError : g_audioError;
+        doc["count"] = settings.pixelCount;
+        if (g_stateMu) xSemaphoreGive(g_stateMu);
+        doc["pin"]       = settings.pixelPin;
+        doc["bright"]    = settings.brightness;
+        doc["micSrc"]    = settings.micSource;
+        doc["micGain"]   = settings.micGain;
+        doc["micSmooth"] = settings.micSmoothing;
+        doc["gateEn"]    = settings.audioGateEnabled;
+        doc["gateThresh"]= settings.gateThreshold;
+        doc["autoCycle"] = settings.autoCycle;
+        doc["cycleSec"]  = settings.cycleSeconds;
+#ifdef EMBER_AUDIO
+        doc["audioBuild"] = true;
+#else
+        doc["audioBuild"] = false;
+#endif
+    }
+}
+
+static void sendStatus(AsyncWebSocketClient* c) {
     JsonDocument resp;
     resp["type"]      = "status";
+    if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
     resp["name"]      = g_currentName;
+    resp["error"]     = !g_lastError.isEmpty() ? g_lastError : g_audioError;
+    int pxCount       = settings.pixelCount;
+    if (g_stateMu) xSemaphoreGive(g_stateMu);
     resp["fps"]       = (float)g_fps;
-    resp["count"]     = settings.pixelCount;
+    resp["count"]     = pxCount;
     resp["pin"]       = settings.pixelPin;
     resp["bright"]    = settings.brightness;
-    resp["error"]     = err;
     resp["micSrc"]    = settings.micSource;
     resp["micBCLK"]   = settings.micBCLK;
     resp["micWS"]     = settings.micWS;
@@ -1548,28 +2136,140 @@ static void sendStatus(AsyncWebSocketClient* c, const String& err) {
     resp["apSSID"]    = settings.apSSID;
     resp["hostname"]  = settings.hostname;
     resp["wifiSSID"]  = settings.wifiSSID;
-    resp["wifiPass"]  = settings.wifiPass;
+    resp["apMode"]    = g_apMode;
+#ifdef EMBER_AUDIO
+    resp["audioBuild"] = true;
+#else
+    resp["audioBuild"] = false;
+#endif
     String out; serializeJson(resp, out);
-    if (c) c->text(out); else ws.textAll(out);
+    if (c) {
+        if (g_wsMu) xSemaphoreTake(g_wsMu, portMAX_DELAY);
+        if (c->status() == WS_CONNECTED && !c->queueIsFull()) c->text(out);
+        if (g_wsMu) xSemaphoreGive(g_wsMu);
+    } else {
+        wsBroadcastText(out);
+    }
+}
+
+static void wsReplyClient(AsyncWebSocketClient* client, const String& out) {
+    if (!client) return;
+    if (g_wsMu) xSemaphoreTake(g_wsMu, portMAX_DELAY);
+    client->text(out);
+    if (g_wsMu) xSemaphoreGive(g_wsMu);
 }
 
 static void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient* client,
-                      AwsEventType type, void*, uint8_t* data, size_t len) {
+                      AwsEventType type, void* arg, uint8_t* data, size_t len) {
+    static constexpr size_t kMaxWsPayload = 4096;
+    struct WsFragSlot {
+        uint32_t clientId = 0;
+        String   buf;
+        bool     oversized = false;
+    };
+    static constexpr size_t kMaxFragClients = 4;
+    static WsFragSlot fragSlots[kMaxFragClients];
+
+    auto findOrClaimSlot = [&](uint32_t cid, bool create) -> WsFragSlot* {
+        WsFragSlot* emptySlot = nullptr;
+        for (size_t i = 0; i < kMaxFragClients; i++) {
+            if (fragSlots[i].clientId == cid) return &fragSlots[i];
+            if (!emptySlot && fragSlots[i].clientId == 0) emptySlot = &fragSlots[i];
+        }
+        if (create && emptySlot) {
+            emptySlot->clientId = cid;
+            emptySlot->buf = "";
+            emptySlot->oversized = false;
+            return emptySlot;
+        }
+        return nullptr;
+    };
+
+    if (type == WS_EVT_DISCONNECT) {
+        if (client) {
+            if (WsFragSlot* sl = findOrClaimSlot(client->id(), false)) {
+                sl->clientId = 0;
+                sl->buf = "";
+                sl->oversized = false;
+            }
+        }
+        return;
+    }
     if (type == WS_EVT_CONNECT) {
-        sendStatus(client, g_lastError);
+        if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+        String name = g_currentName;
+        String src  = g_currentSource;
+        String err  = !g_lastError.isEmpty() ? g_lastError : g_audioError;
+        if (g_stateMu) xSemaphoreGive(g_stateMu);
+
+        sendStatus(client);
         // Also send current pattern code so the editor populates immediately
         JsonDocument loaded;
         loaded["type"]  = "loaded";
-        loaded["name"]  = g_currentName;
-        loaded["code"]  = g_currentSource;
-        loaded["error"] = g_lastError;
+        loaded["name"]  = name;
+        loaded["code"]  = src;
+        loaded["error"] = err;
         String out; serializeJson(loaded, out);
-        client->text(out);
+        wsReplyClient(client, out);
         return;
     }
-    if (type != WS_EVT_DATA) return;
+    if (type != WS_EVT_DATA || !arg || !client) return;
 
-    String msg((char*)data, len);
+    AwsFrameInfo* info = (AwsFrameInfo*)arg;
+    String msg;
+    if (info->final && info->index == 0 && info->len == len) {
+        if (info->len > kMaxWsPayload) {
+            wsReplyClient(client, "{\"type\":\"compile\",\"success\":false,\"error\":\"payload too large\"}");
+            return;
+        }
+        if (info->opcode != WS_TEXT) return;
+        msg = String((const char*)data, len);
+    } else {
+        WsFragSlot* sl = findOrClaimSlot(client->id(), info->num == 0 && info->index == 0);
+        if (!sl) return;
+        if (info->num == 0 && info->index == 0) {
+            sl->buf = "";
+            sl->oversized = (info->len > kMaxWsPayload);
+            if (sl->oversized) {
+                wsReplyClient(client, "{\"type\":\"compile\",\"success\":false,\"error\":\"payload too large\"}");
+                return;
+            }
+            if (info->opcode != WS_TEXT) {
+                sl->clientId = 0;
+                return;
+            }
+            sl->buf.reserve(info->len);
+        } else {
+            if (sl->oversized) {
+                if (info->final && (info->index + len) >= info->len) {
+                    sl->clientId = 0;
+                    sl->oversized = false;
+                }
+                return;
+            }
+            if (info->num > 0 && info->index == 0 && info->opcode != WS_CONTINUATION && info->opcode != WS_TEXT) {
+                sl->clientId = 0;
+                sl->buf = "";
+                return;
+            }
+        }
+        if (sl->buf.length() + len > kMaxWsPayload) {
+            sl->oversized = true;
+            sl->buf = "";
+            wsReplyClient(client, "{\"type\":\"compile\",\"success\":false,\"error\":\"payload too large\"}");
+            if (info->final && (info->index + len) >= info->len) {
+                sl->clientId = 0;
+                sl->oversized = false;
+            }
+            return;
+        }
+        sl->buf.concat((const char*)data, len);
+        if (!info->final || (info->index + len) < info->len) return;
+        msg = std::move(sl->buf);
+        sl->buf = "";
+        sl->clientId = 0;
+    }
+
     JsonDocument doc;
     if (deserializeJson(doc, msg)) return;
     String action = doc["action"] | "";
@@ -1578,126 +2278,217 @@ static void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient* client,
         String code = doc["code"] | "";
         String err;
         bool ok = recompile(code, err);
+        String curName;
+        if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
         if (ok) {
             g_currentSource = code;
+            if (doc["name"].is<const char*>()) {
+                String n = doc["name"].as<const char*>();
+                if (!n.isEmpty() && n.length() <= 32) g_currentName = n;
+            }
             g_lastError = "";
-            saveActivePattern(g_currentName, code);
         } else {
             g_lastError = err;
         }
+        curName = g_currentName;
+        int matchIdx = findShowcaseIndexByName(curName);
+        if (matchIdx >= 0) {
+            g_showcaseIdx = matchIdx;
+        }
+        g_lastCycleMs = millis();
+        if (g_stateMu) xSemaphoreGive(g_stateMu);
+        if (ok) markActiveDirty();
+
         JsonDocument resp;
         resp["type"]    = "compile";
         resp["success"] = ok;
+        resp["name"]    = curName;
         resp["error"]   = err;
         String out; serializeJson(resp, out);
-        client->text(out);
+        wsReplyClient(client, out);
     }
     else if (action == "save") {
         String name = doc["name"] | "Untitled";
         String code = doc["code"] | "";
-        savePattern(name, code);
+        if (!isValidPatternName(name)) {
+            wsReplyClient(client, "{\"type\":\"compile\",\"success\":false,\"error\":\"name must be 1..17 chars without / or ..\"}");
+            return;
+        }
         String err;
-        recompile(code, err);
+        bool ok = recompile(code, err);
+        String curName;
+        if (ok) {
+            savePattern(name, code);
+            saveActivePattern(name, code);
+        }
+        if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
         g_lastError = err;
-        saveActivePattern(name, code);
-        ws.textAll(String("{\"type\":\"patterns\",\"list\":") + patternListJson() + "}");
+        curName = g_currentName;
+        int matchIdx = findShowcaseIndexByName(curName);
+        if (matchIdx >= 0) {
+            g_showcaseIdx = matchIdx;
+        }
+        g_lastCycleMs = millis();
+        if (g_stateMu) xSemaphoreGive(g_stateMu);
+        g_broadcastPatterns = true;
+
+        JsonDocument resp;
+        resp["type"]    = "compile";
+        resp["success"] = ok;
+        resp["name"]    = curName;
+        resp["error"]   = err;
+        String out; serializeJson(resp, out);
+        wsReplyClient(client, out);
     }
     else if (action == "load") {
         String name = doc["name"] | "";
         loadPattern(name);
-        if (g_lastError.isEmpty()) {
-            saveActivePattern(name, g_currentSource);
+        if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+        String curName = g_currentName;
+        String curSrc  = g_currentSource;
+        String err     = g_lastError;
+        int matchIdx   = findShowcaseIndexByName(curName);
+        if (matchIdx >= 0) {
+            g_showcaseIdx = matchIdx;
+        }
+        g_lastCycleMs = millis();
+        if (g_stateMu) xSemaphoreGive(g_stateMu);
+        if (err.isEmpty()) {
+            saveActivePattern(curName, curSrc);
         }
         JsonDocument resp;
         resp["type"]  = "loaded";
-        resp["name"]  = g_currentName;
-        resp["code"]  = g_currentSource;
-        resp["error"] = g_lastError;
+        resp["name"]  = curName;
+        resp["code"]  = curSrc;
+        resp["error"] = err;
         String out; serializeJson(resp, out);
-        client->text(out);
+        wsReplyClient(client, out);
     }
     else if (action == "delete") {
         String name = doc["name"] | "";
-        String path = "/patterns/" + name + ".wfl";
-        if (LittleFS.exists(path)) LittleFS.remove(path);
-        ws.textAll(String("{\"type\":\"patterns\",\"list\":") + patternListJson() + "}");
+        if (isValidPatternName(name)) {
+            String path = "/patterns/" + name + ".wfl";
+            if (g_fsMu) xSemaphoreTake(g_fsMu, portMAX_DELAY);
+            if (LittleFS.exists(path)) LittleFS.remove(path);
+            if (g_fsMu) xSemaphoreGive(g_fsMu);
+        }
+        g_broadcastPatterns = true;
     }
     else if (action == "brightness") {
         settings.brightness = constrain(doc["value"] | 128, 0, 255);
         markSettingsDirty();
-        sendStatus(nullptr, g_lastError);
+        g_broadcastStatus = true;
     }
     else if (action == "gateSet") {
         if (doc["enabled"].is<bool>()) settings.audioGateEnabled = doc["enabled"].as<bool>();
         if (doc["thresh"].is<int>())   settings.gateThreshold = constrain(doc["thresh"].as<int>(), 200, 30000);
         if (doc["autoCycle"].is<bool>()) {
+            bool prevAuto = settings.autoCycle;
             settings.autoCycle = doc["autoCycle"].as<bool>();
-            g_lastCycleMs = millis();
+            if (settings.autoCycle && !prevAuto) g_lastCycleMs = millis();
         }
         if (doc["cycleSec"].is<int>()) {
             settings.cycleSeconds = constrain(doc["cycleSec"].as<int>(), 5, 600);
         }
         markSettingsDirty();
-        sendStatus(nullptr, g_lastError);
+        g_broadcastStatus = true;
     }
     else if (action == "count") {
-        int n = doc["value"] | 30;
-        n = constrain(n, 1, 600);
-        if (n != settings.pixelCount) {
+        int n = constrain(doc["value"] | 30, 1, MAX_PIXELS);
+        bool changed = false;
+        if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+        int prevN = settings.pixelCount;
+        if (n != prevN) {
             settings.pixelCount = n;
-            saveSettings();
-            client->text("{\"type\":\"reboot\"}");
-            delay(150);
-            ESP.restart();
+            if (g_stagedReboot) g_stagedSettings.pixelCount = n;
+            if (n < prevN && prevN > g_clearTailTo) {
+                g_clearTailTo = prevN;
+            }
+            changed = true;
+        }
+        if (g_stateMu) xSemaphoreGive(g_stateMu);
+        if (changed) {
+            markSettingsDirty();
+            g_broadcastStatus = true;
         }
     }
     else if (action == "pin") {
+        Settings nextSettings = getSettingsForEdit();
         int p = doc["value"] | 5;
         const int allowed[] = {0,1,2,3,4,5,6,7,8,9,10};
         bool ok = false;
         for (int a : allowed) if (a == p) { ok = true; break; }
-        if (ok && p != settings.pixelPin) {
-            settings.pixelPin = p;
-            saveSettings();
-            client->text("{\"type\":\"reboot\"}");
-            delay(150);
-            ESP.restart();
+        if (ok && p != nextSettings.pixelPin) {
+            flushActivePatternIfDirty();
+            nextSettings.pixelPin = p;
+            stageRebootWithSettings(nextSettings);
+            wsReplyClient(client, "{\"type\":\"reboot\"}");
         }
     }
     else if (action == "micSrc") {
+        Settings nextSettings = getSettingsForEdit();
         int s = doc["value"] | 0;
-        if (s >= 0 && s <= 2 && s != settings.micSource) {
-            settings.micSource = s;
-            saveSettings();
-            client->text("{\"type\":\"reboot\"}");
-            delay(150);
-            ESP.restart();
+        if (s >= 0 && s <= 2 && s != nextSettings.micSource) {
+            flushActivePatternIfDirty();
+            nextSettings.micSource = s;
+            stageRebootWithSettings(nextSettings);
+            wsReplyClient(client, "{\"type\":\"reboot\"}");
         }
     }
     else if (action == "micPins") {
+        Settings nextSettings = getSettingsForEdit();
         bool dirty = false;
-        if (doc["bclk"].is<int>()) { settings.micBCLK   = doc["bclk"];  dirty = true; }
-        if (doc["ws"]  .is<int>()) { settings.micWS     = doc["ws"];    dirty = true; }
-        if (doc["data"].is<int>()) { settings.micData   = doc["data"];  dirty = true; }
-        if (doc["adc"] .is<int>()) { settings.micADCPin = doc["adc"];   dirty = true; }
-        if (doc["gnd"] .is<int>()) { settings.micGndPin = doc["gnd"];   dirty = true; }
+        if (doc["src"].is<int>())  { int v = doc["src"];  if (v >= 0 && v <= 2)   { nextSettings.micSource = v; dirty = true; } }
+        if (doc["bclk"].is<int>()) { int v = doc["bclk"]; if (v >= 0 && v <= 10) { nextSettings.micBCLK   = v; dirty = true; } }
+        if (doc["ws"]  .is<int>()) { int v = doc["ws"];   if (v >= 0 && v <= 10) { nextSettings.micWS     = v; dirty = true; } }
+        if (doc["data"].is<int>()) { int v = doc["data"]; if (v >= 0 && v <= 10) { nextSettings.micData   = v; dirty = true; } }
+        if (doc["adc"] .is<int>()) { int v = doc["adc"];  if (v >= 0 && v <= 4)  { nextSettings.micADCPin = v; dirty = true; } }
+        if (doc["gnd"] .is<int>()) { int v = doc["gnd"];  if (v >= -1 && v <= 10){ nextSettings.micGndPin = v; dirty = true; } }
         if (dirty) {
-            saveSettings();
-            client->text("{\"type\":\"reboot\"}");
-            delay(150);
-            ESP.restart();
+            flushActivePatternIfDirty();
+            stageRebootWithSettings(nextSettings);
+            wsReplyClient(client, "{\"type\":\"reboot\"}");
         }
     }
     else if (action == "wifiSet") {
-        if (doc["apSSID"].is<const char*>()) strlcpy(settings.apSSID, doc["apSSID"], sizeof(settings.apSSID));
-        if (doc["hostname"].is<const char*>()) strlcpy(settings.hostname, doc["hostname"], sizeof(settings.hostname));
-        // Station join is not used. Drop any credentials a client still sends.
-        settings.wifiSSID[0] = '\0';
-        settings.wifiPass[0] = '\0';
-        saveSettings();
-        client->text("{\"type\":\"reboot\"}");
-        delay(150);
-        ESP.restart();
+        Settings nextSettings = getSettingsForEdit();
+        if (doc["apSSID"].is<const char*>()) {
+            char tmp[33];
+            strlcpy(tmp, doc["apSSID"], sizeof(tmp));
+            strlcpy(nextSettings.apSSID, tmp, sizeof(nextSettings.apSSID));
+        }
+        if (doc["hostname"].is<const char*>()) {
+            const char* hn = doc["hostname"];
+            if (hn[0] != '\0') strlcpy(nextSettings.hostname, hn, sizeof(nextSettings.hostname));
+        }
+#ifdef EMBER_AUDIO
+        // Audio build stays AP-only.
+        nextSettings.wifiSSID[0] = '\0';
+        nextSettings.wifiPass[0] = '\0';
+#else
+        bool ssidChanged = false;
+        if (doc["ssid"].is<const char*>()) {
+            ssidChanged = strcmp(nextSettings.wifiSSID, doc["ssid"]) != 0;
+            strlcpy(nextSettings.wifiSSID, doc["ssid"], sizeof(nextSettings.wifiSSID));
+        }
+        bool clearPass = doc["clearPass"] | false;
+        if (nextSettings.wifiSSID[0] == '\0' || clearPass) {
+            nextSettings.wifiPass[0] = '\0';
+        } else if (doc["pass"].is<const char*>()) {
+            const char* p = doc["pass"];
+            if (ssidChanged || p[0] != '\0') {
+                strlcpy(nextSettings.wifiPass, p, sizeof(nextSettings.wifiPass));
+            }
+        }
+#endif
+        flushActivePatternIfDirty();
+        stageRebootWithSettings(nextSettings);
+        wsReplyClient(client, "{\"type\":\"reboot\"}");
+    }
+    else if (action == "resetSettings") {
+        flushActivePatternIfDirty();
+        resetSettingsToDefaults();
+        wsReplyClient(client, "{\"type\":\"reboot\"}");
     }
     else if (action == "micGain") {
         float g = doc["value"] | 1.0f;
@@ -1705,7 +2496,7 @@ static void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient* client,
         if (g > 10.0f) g = 10.0f;
         settings.micGain = g;
         markSettingsDirty();
-        sendStatus(nullptr, g_lastError);
+        g_broadcastStatus = true;
     }
     else if (action == "micSmooth") {
         float s = doc["value"] | 0.6f;
@@ -1713,23 +2504,29 @@ static void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient* client,
         if (s > 0.95f) s = 0.95f;
         settings.micSmoothing = s;
         markSettingsDirty();
-        sendStatus(nullptr, g_lastError);
+        g_broadcastStatus = true;
     }
     else if (action == "ping") {
-        sendStatus(client, g_lastError);
+        sendStatus(client);
     }
     else if (action == "poll") {
-        pushSensors(true);
+        g_forceSensorPush = true;
     }
 }
 
 // ─── OTA Update Page HTML ────────────────────────────────────────────────────
+#ifdef EMBER_AUDIO
+#define EMBER_OTA_TITLE "Ember-Audio OTA Update"
+#else
+#define EMBER_OTA_TITLE "Ember OTA Update"
+#endif
+
 static const char UPDATE_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Ember-Audio OTA Update</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>)rawliteral" EMBER_OTA_TITLE R"rawliteral(</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">)rawliteral" R"rawliteral(
   <style>
     body { background: #0b0d12; color: #e6e9f2; font-family: -apple-system, "Segoe UI", system-ui, sans-serif; padding: 24px; display: flex; justify-content: center; }
     .box { width: 100%; max-width: 420px; background: #141821; border: 1px solid #232938; border-radius: 12px; padding: 24px; }
@@ -1798,10 +2595,10 @@ static bool mdnsHostnameTaken(const char* name) {
 static void setupMDNS() {
     delay(300);
 
-    if (strcmp(settings.hostname, "ember") == 0 && mdnsHostnameTaken("ember")) {
-        uint8_t mac[6];
-        WiFi.macAddress(mac);
-        snprintf(settings.hostname, sizeof(settings.hostname), "ember-%02x%02x", mac[4], mac[5]);
+    if (!g_apMode && strcmp(settings.hostname, "ember") == 0 && mdnsHostnameTaken("ember")) {
+        uint8_t mac4 = 0, mac5 = 0;
+        getDeviceMacSuffix(mac4, mac5);
+        snprintf(settings.hostname, sizeof(settings.hostname), "ember-%02x%02x", mac4, mac5);
         Serial.printf("mDNS: ember.local taken, using %s.local\n", settings.hostname);
         saveSettings();
     }
@@ -1819,6 +2616,24 @@ static void setupMDNS() {
 
     ArduinoOTA.setHostname(settings.hostname);
     ArduinoOTA.setPort(3232);
+    ArduinoOTA.onStart([]() {
+        g_otaUploadSeen = true;
+        g_otaUploadFinished = false;
+        beginOtaDrain();
+    });
+    ArduinoOTA.onProgress([](unsigned int, unsigned int) {
+        g_otaLastActivityMs = millis();
+    });
+    ArduinoOTA.onEnd([]() {
+        g_otaUploadFinished = true;
+        g_otaUploadSeen = false;
+        g_otaInProgress = false;
+    });
+    ArduinoOTA.onError([](ota_error_t) {
+        g_otaUploadFinished = false;
+        g_otaUploadSeen = false;
+        g_otaInProgress = false;
+    });
     ArduinoOTA.begin();
 }
 
@@ -1838,28 +2653,100 @@ static bool startSoftApOnce(const char* ssid) {
     return WiFi.softAP(ssid, "ember123", 6, 0, 4);
 }
 
+// Captive-portal async DNS responder accepting EDNS0 (ARCount >= 0) queries immediately inside lwIP RX context.
+static void handleCaptiveDnsPacket(AsyncUDPPacket& packet) {
+    const uint8_t* pkt = packet.data();
+    size_t r = packet.length();
+    if (!pkt || r < 12 || r > 512) return;
+
+    uint16_t flags   = ((uint16_t)pkt[2] << 8) | pkt[3];
+    uint16_t qdCount = ((uint16_t)pkt[4] << 8) | pkt[5];
+    // Only handle standard queries (QR=0, OPCODE=0) with at least one question; allow ARCount >= 0 (EDNS0 OPT).
+    if ((flags & 0xF800) != 0 || qdCount == 0) return;
+
+    size_t pos = 12;
+    bool terminated = false;
+    while (pos < r) {
+        uint8_t labLen = pkt[pos++];
+        if (labLen == 0) {
+            terminated = true;
+            break;
+        }
+        if ((labLen & 0xC0) != 0 || pos + labLen > r) return;
+        pos += labLen;
+    }
+    if (!terminated || pos + 4 > r) return;
+
+    size_t qEnd = pos + 4;
+    if (qEnd > 512 - 16) return;
+
+    uint16_t qType  = ((uint16_t)pkt[pos] << 8) | pkt[pos + 1];
+    uint16_t qClass = ((uint16_t)pkt[pos + 2] << 8) | pkt[pos + 3];
+
+    uint8_t resp[512];
+    memcpy(resp, pkt, qEnd);
+    uint16_t rFlags = 0x8400 | (flags & 0x0100); // QR=1, AA=1, copy RD, RCODE=0
+    resp[2]  = (uint8_t)(rFlags >> 8);
+    resp[3]  = (uint8_t)(rFlags & 0xFF);
+    resp[4]  = 0; resp[5]  = 1; // QDCOUNT = 1
+    resp[8]  = 0; resp[9]  = 0; // NSCOUNT = 0
+    resp[10] = 0; resp[11] = 0; // ARCOUNT = 0
+
+    size_t respLen = qEnd;
+    if ((qClass == 1 || qClass == 255) && (qType == 1 || qType == 255)) {
+        resp[6] = 0; resp[7] = 1; // ANCOUNT = 1
+        uint8_t ans[16] = {
+            0xC0, 0x0C,             // Name pointer to Question (offset 12)
+            0x00, 0x01,             // TYPE = A
+            0x00, 0x01,             // CLASS = IN
+            0x00, 0x00, 0x00, 0x3C, // TTL = 60s
+            0x00, 0x04,             // RDLENGTH = 4
+            g_apIp[0], g_apIp[1], g_apIp[2], g_apIp[3]
+        };
+        memcpy(resp + qEnd, ans, sizeof(ans));
+        respLen = qEnd + sizeof(ans);
+    } else {
+        // Answer AAAA/HTTPS/SVCB with clean NOERROR NODATA so clients immediately fall back to IPv4 A.
+        resp[6] = 0; resp[7] = 0;
+    }
+
+    packet.write(resp, respLen);
+}
+
 static bool bringUpAp(const char* ssid) {
     bool apOk = startSoftApOnce(ssid);
     if (!apOk) {
         Serial.println("AP start failed, retrying");
         apOk = startSoftApOnce(ssid);
     }
-    dnsServer.start(53, "*", IPAddress(192, 168, 4, 1));
-    Serial.printf("AP up ssid=%s IP=%s ok=%d ch=%d\n",
+    g_apIp = WiFi.softAPIP();
+    g_dnsUdp.close();
+    g_dnsStarted = g_dnsUdp.listen(53);
+    if (g_dnsStarted) {
+        g_dnsUdp.onPacket(handleCaptiveDnsPacket);
+    }
+    Serial.printf("AP up ssid=%s IP=%s ok=%d dns=%d ch=%d\n",
                   ssid,
-                  WiFi.softAPIP().toString().c_str(),
+                  g_apIp.toString().c_str(),
                   (int)apOk,
+                  (int)g_dnsStarted,
                   WiFi.channel());
     return apOk;
 }
 
 static void setupWiFi() {
     g_apMode = false;
+    uint8_t mac4 = 0, mac5 = 0;
+    getDeviceMacSuffix(mac4, mac5);
 
-#ifdef EMBER_BATHROOM
+#ifdef EMBER_AUDIO
     bool credsDirty = false;
-    if (strcmp(settings.apSSID, "Ember-Audio") != 0) {
-        strlcpy(settings.apSSID, "Ember-Audio", sizeof(settings.apSSID));
+    if (settings.apSSID[0] == '\0') {
+        snprintf(settings.apSSID, sizeof(settings.apSSID), "Ember-Audio-%02X%02X", mac4, mac5);
+        credsDirty = true;
+    }
+    if (settings.hostname[0] == '\0') {
+        snprintf(settings.hostname, sizeof(settings.hostname), "ember-audio-%02x%02x", mac4, mac5);
         credsDirty = true;
     }
     if (settings.wifiSSID[0] != '\0' || settings.wifiPass[0] != '\0') {
@@ -1869,13 +2756,11 @@ static void setupWiFi() {
     }
     if (credsDirty) saveSettings();
     g_apMode = true;
-    bringUpAp("Ember-Audio");
+    bringUpAp(settings.apSSID);
     return;
 #else
     if (strlen(settings.apSSID) == 0) {
-        uint8_t mac[6];
-        WiFi.macAddress(mac);
-        snprintf(settings.apSSID, sizeof(settings.apSSID), "Ember-%02X%02X", mac[4], mac[5]);
+        snprintf(settings.apSSID, sizeof(settings.apSSID), "Ember-%02X%02X", mac4, mac5);
         saveSettings();
     }
 
@@ -1903,11 +2788,17 @@ static void setupWiFi() {
 }
 
 static void sendPortalRedirect(AsyncWebServerRequest* request) {
-    AsyncWebServerResponse* response = request->beginResponse(302, "text/plain", "");
+    AsyncWebServerResponse* response = request->beginResponse(
+        302,
+        "text/html",
+        "<!doctype html><html><head><meta http-equiv=\"refresh\" content=\"0;url=http://192.168.4.1/\"></head>"
+        "<body>Redirecting to <a href=\"http://192.168.4.1/\">Ember Studio</a>...</body></html>"
+    );
     response->addHeader("Location", "http://192.168.4.1/");
     response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     response->addHeader("Pragma", "no-cache");
     response->addHeader("Expires", "-1");
+    response->addHeader("Connection", "close");
     request->send(response);
 }
 
@@ -1922,7 +2813,10 @@ public:
         if (colonIndex != -1) {
             host = host.substring(0, colonIndex);
         }
-        if (host != "192.168.4.1" && host != "ember-audio.local" && host != "emberwearable1.local" && host != String(settings.hostname) + ".local") {
+        host.toLowerCase();
+        String hn = String(settings.hostname);
+        hn.toLowerCase();
+        if (host != "192.168.4.1" && host != "ember-audio.local" && host != "ember.local" && host != hn + ".local") {
             return true;
         }
         return false;
@@ -1935,71 +2829,49 @@ public:
 
 // ─── Setup ───────────────────────────────────────────────────────────────────
 void setup() {
-    // Prevent brief 5V USB rail dips from 500-pixel strip transients from triggering brownout reset
-    REG_CLR_BIT(RTC_CNTL_BROWN_OUT_REG, RTC_CNTL_BROWN_OUT_RST_ENA);
-
     Serial.begin(115200);
+    Serial.setTxTimeoutMs(0); // Never block USB-CDC writes on wall power (matches DeafDoorbell)
     delay(300);
     Serial.printf("Boot reset_reason=%d\n", (int)esp_reset_reason());
 
-    // Hardware setup: MAX4466 Soft GND on GPIO 4, ADC on GPIO 3
-    pinMode(4, OUTPUT);
-    digitalWrite(4, LOW);
-    pinMode(3, INPUT);
-    analogReadResolution(12);
-    analogSetPinAttenuation(3, ADC_11db);
-
     g_progMu   = xSemaphoreCreateMutex();
     g_rmtAdcMu = xSemaphoreCreateMutex();
-
-    // Ensure soft ground on GPIO 4 is asserted immediately on boot for MAX4466
-    if (settings.micGndPin >= 0 && settings.micGndPin <= 10) {
-        pinMode(settings.micGndPin, OUTPUT);
-        digitalWrite(settings.micGndPin, LOW);
-    }
+    g_stateMu  = xSemaphoreCreateMutex();
+    g_fsMu     = xSemaphoreCreateMutex();
+    g_wsMu     = xSemaphoreCreateMutex();
 
     if (!LittleFS.begin(true)) Serial.println("LittleFS mount failed");
     if (!LittleFS.exists("/patterns")) LittleFS.mkdir("/patterns");
 
     loadSettings();
 
-#ifdef EMBER_BATHROOM
-    // Ensure Bathroom build defaults apply if an older default settings.json was present
-    if (settings.micSource == 0) {
-        settings.micSource = 2;
-        settings.micADCPin = 3;
-        settings.micGndPin = 4;
-    }
-#endif
-
-    setupWiFi();
-    setupMDNS();
-
     initFastLED();
 
     // Load active pattern or fallback to default
     bool loadedActive = false;
-#ifndef EMBER_BATHROOM
+    String bootSrc, bootName = "Untitled";
+    if (g_fsMu) xSemaphoreTake(g_fsMu, portMAX_DELAY);
     if (LittleFS.exists("/active.wfl")) {
         File f = LittleFS.open("/active.wfl", "r");
         if (f) {
-            String src = f.readString();
+            bootSrc = f.readString();
             f.close();
-            String name = "Untitled";
             if (LittleFS.exists("/active_name.txt")) {
                 File fn = LittleFS.open("/active_name.txt", "r");
-                if (fn) { name = fn.readString(); fn.close(); }
-            }
-            String err;
-            if (recompile(src, err)) {
-                g_currentSource = src;
-                g_currentName   = name;
-                g_lastError     = "";
-                loadedActive = true;
+                if (fn) { bootName = fn.readString(); fn.close(); }
             }
         }
     }
-#endif
+    if (g_fsMu) xSemaphoreGive(g_fsMu);
+    if (!bootSrc.isEmpty()) {
+        String err;
+        if (recompile(bootSrc, err)) {
+            g_currentSource = bootSrc;
+            g_currentName   = bootName;
+            g_lastError     = "";
+            loadedActive = true;
+        }
+    }
 
     if (!loadedActive) {
         const char* defaultSrc = kShowcasePatterns[0].code;
@@ -2009,36 +2881,57 @@ void setup() {
         g_currentName   = kShowcasePatterns[0].name;
         g_lastError     = err;
     }
+    {
+        int bootIdx = findShowcaseIndexByName(g_currentName);
+        g_showcaseIdx = (bootIdx >= 0) ? bootIdx : 0;
+    }
+
+    // Bring up Wi-Fi AP after registering HTTP/WS handlers below so port 80 & DNS are ready immediately.
+    setupWiFi();
 
     ws.onEvent(onWsEvent);
     server.addHandler(&ws);
     if (g_apMode) {
         server.addHandler(new CaptiveRequestHandler());
         const char* probes[] = {
-            "/generate_204", "/gen_204", "/hotspot-detect.html",
-            "/ncsi.txt", "/connecttest.txt", "/fwlink"
+            "/generate_204", "/gen_204", "/mobile/status.php",
+            "/hotspot-detect.html", "/library/test/success.html",
+            "/ncsi.txt", "/connecttest.txt", "/redirect", "/fwlink",
+            "/success.txt", "/canonical.html", "/kindle-wifi/wifiredirect.html",
+            "/check_network_status.txt", "/connectivity-check.html", "/connectivity-check.txt"
         };
         for (const char* path : probes) {
-            server.on(path, HTTP_GET, [](AsyncWebServerRequest* r) { sendPortalRedirect(r); });
+            server.on(path, HTTP_ANY, [](AsyncWebServerRequest* r) { sendPortalRedirect(r); });
         }
     }
-
-    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
 
     server.on("/", HTTP_GET, [](AsyncWebServerRequest* r) {
         r->send(LittleFS, "/index.html", "text/html");
     });
+    server.on("/manual.html", HTTP_GET, [](AsyncWebServerRequest* r) {
+        if (LittleFS.exists("/manual.html") || LittleFS.exists("/manual.html.gz"))
+            r->send(LittleFS, "/manual.html", "text/html");
+        else
+            r->redirect("/");
+    });
+    server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest* r) {
+        r->send(204);
+    });
     server.on("/demo.json", HTTP_GET, [](AsyncWebServerRequest* r) {
-        if (LittleFS.exists("/demo.json"))
+        if (LittleFS.exists("/demo.json") || LittleFS.exists("/demo.json.gz"))
             r->send(LittleFS, "/demo.json", "application/json");
         else
             r->send(200, "application/json", "[]");
     });
     server.on("/api/patterns", HTTP_GET, [](AsyncWebServerRequest* r) {
-        r->send(200, "application/json", patternListJson());
+        AsyncWebServerResponse* resp = r->beginResponse(200, "application/json", patternListJson());
+        resp->addHeader("Access-Control-Allow-Origin", "*");
+        r->send(resp);
     });
     server.on("/api/patterns", HTTP_OPTIONS, [](AsyncWebServerRequest* r) {
-        r->send(204);
+        AsyncWebServerResponse* resp = r->beginResponse(204);
+        resp->addHeader("Access-Control-Allow-Origin", "*");
+        r->send(resp);
     });
     server.on("/api/discover", HTTP_GET, [](AsyncWebServerRequest* r) {
         JsonDocument doc;
@@ -2047,130 +2940,324 @@ void setup() {
         doc["ip"]       = g_apMode ? WiFi.softAPIP().toString() : WiFi.localIP().toString();
         String out;
         serializeJson(doc, out);
-        r->send(200, "application/json", out);
+        AsyncWebServerResponse* resp = r->beginResponse(200, "application/json", out);
+        resp->addHeader("Access-Control-Allow-Origin", "*");
+        r->send(resp);
     });
     server.on("/api/discover", HTTP_OPTIONS, [](AsyncWebServerRequest* r) {
-        r->send(204);
+        AsyncWebServerResponse* resp = r->beginResponse(204);
+        resp->addHeader("Access-Control-Allow-Origin", "*");
+        r->send(resp);
+    });
+    // DeafDoorbell-style HTTP polling & control fallbacks so CaptivePortalLogin WebViews stay live even without WS.
+    server.on("/api/sensors", HTTP_GET, [](AsyncWebServerRequest* r) {
+        JsonDocument doc;
+        buildSensorsJson(doc, true, true);
+        String out;
+        serializeJson(doc, out);
+        AsyncWebServerResponse* resp = r->beginResponse(200, "application/json", out);
+        resp->addHeader("Access-Control-Allow-Origin", "*");
+        resp->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        r->send(resp);
+    });
+    server.on("/api/active", HTTP_GET, [](AsyncWebServerRequest* r) {
+        JsonDocument doc;
+        if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+        doc["name"]  = g_currentName;
+        doc["code"]  = g_currentSource;
+        doc["error"] = g_lastError;
+        if (g_stateMu) xSemaphoreGive(g_stateMu);
+        String out;
+        serializeJson(doc, out);
+        AsyncWebServerResponse* resp = r->beginResponse(200, "application/json", out);
+        resp->addHeader("Access-Control-Allow-Origin", "*");
+        resp->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        r->send(resp);
+    });
+    server.on("/api/gate", HTTP_ANY, [](AsyncWebServerRequest* r) {
+        if (r->hasParam("enabled")) {
+            String v = r->getParam("enabled")->value();
+            settings.audioGateEnabled = (v == "1" || v == "true");
+        }
+        if (r->hasParam("thresh")) {
+            settings.gateThreshold = constrain(r->getParam("thresh")->value().toInt(), 200, 30000);
+        }
+        if (r->hasParam("autoCycle")) {
+            String v = r->getParam("autoCycle")->value();
+            bool prevAuto = settings.autoCycle;
+            settings.autoCycle = (v == "1" || v == "true");
+            if (settings.autoCycle && !prevAuto) g_lastCycleMs = millis();
+        }
+        if (r->hasParam("cycleSec")) {
+            settings.cycleSeconds = constrain(r->getParam("cycleSec")->value().toInt(), 5, 600);
+        }
+        markSettingsDirty();
+        g_broadcastStatus = true;
+        JsonDocument doc;
+        doc["ok"]        = true;
+        doc["autoCycle"] = settings.autoCycle;
+        doc["cycleSec"]  = settings.cycleSeconds;
+        doc["gateEn"]    = settings.audioGateEnabled;
+        doc["gateThresh"]= settings.gateThreshold;
+        String out;
+        serializeJson(doc, out);
+        AsyncWebServerResponse* resp = r->beginResponse(200, "application/json", out);
+        resp->addHeader("Access-Control-Allow-Origin", "*");
+        resp->addHeader("Cache-Control", "no-store");
+        r->send(resp);
+    });
+    server.on("/api/live", HTTP_POST, [](AsyncWebServerRequest* r) {
+        String code = r->hasParam("code", true) ? r->getParam("code", true)->value() : "";
+        String name = r->hasParam("name", true) ? r->getParam("name", true)->value() : "";
+        String err;
+        bool ok = recompile(code, err);
+        String curName;
+        if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+        if (ok) {
+            g_currentSource = code;
+            if (!name.isEmpty() && name.length() <= 32) g_currentName = name;
+            g_lastError = "";
+        } else {
+            g_lastError = err;
+        }
+        curName = g_currentName;
+        int matchIdx = findShowcaseIndexByName(curName);
+        if (matchIdx >= 0) g_showcaseIdx = matchIdx;
+        g_lastCycleMs = millis();
+        if (g_stateMu) xSemaphoreGive(g_stateMu);
+        if (ok) markActiveDirty();
+        JsonDocument doc;
+        doc["ok"]    = ok;
+        doc["name"]  = curName;
+        doc["error"] = err;
+        String out;
+        serializeJson(doc, out);
+        AsyncWebServerResponse* resp = r->beginResponse(ok ? 200 : 400, "application/json", out);
+        resp->addHeader("Access-Control-Allow-Origin", "*");
+        resp->addHeader("Cache-Control", "no-store");
+        r->send(resp);
+    });
+    server.on("/api/set", HTTP_ANY, [](AsyncWebServerRequest* r) {
+        if (r->hasParam("bright")) {
+            settings.brightness = constrain(r->getParam("bright")->value().toInt(), 0, 255);
+            markSettingsDirty();
+            g_broadcastStatus = true;
+        }
+        if (r->hasParam("count")) {
+            int n = constrain(r->getParam("count")->value().toInt(), 1, MAX_PIXELS);
+            if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+            int prevN = settings.pixelCount;
+            if (n != prevN) {
+                settings.pixelCount = n;
+                if (g_stagedReboot) g_stagedSettings.pixelCount = n;
+                if (n < prevN && prevN > g_clearTailTo) g_clearTailTo = prevN;
+                markSettingsDirty();
+                g_broadcastStatus = true;
+            }
+            if (g_stateMu) xSemaphoreGive(g_stateMu);
+        }
+        JsonDocument doc;
+        doc["ok"]     = true;
+        doc["bright"] = settings.brightness;
+        doc["count"]  = settings.pixelCount;
+        String out;
+        serializeJson(doc, out);
+        AsyncWebServerResponse* resp = r->beginResponse(200, "application/json", out);
+        resp->addHeader("Access-Control-Allow-Origin", "*");
+        resp->addHeader("Cache-Control", "no-store");
+        r->send(resp);
     });
     server.on("/api/reboot", HTTP_POST, [](AsyncWebServerRequest* r) {
         r->send(200, "text/plain", "rebooting");
-        delay(200);
-        ESP.restart();
+        scheduleReboot(200);
     });
     server.on("/update", HTTP_GET, [](AsyncWebServerRequest* r) {
         r->send_P(200, "text/html", UPDATE_HTML);
     });
     server.on("/update", HTTP_POST,
         [](AsyncWebServerRequest* r) {
-            bool ok = !Update.hasError();
-            AsyncWebServerResponse* resp = r->beginResponse(200, "text/plain", ok ? "OK" : "FAIL");
+            bool ok = g_otaUploadSeen && g_otaUploadFinished && !Update.hasError();
+            g_otaUploadSeen = false;
+            g_otaUploadFinished = false;
+            AsyncWebServerResponse* resp = r->beginResponse(ok ? 200 : 400, "text/plain", ok ? "OK" : "FAIL");
             resp->addHeader("Connection", "close");
             r->send(resp);
-            delay(250);
-            ESP.restart();
+            if (ok) {
+                scheduleReboot(350);
+            } else {
+                if (Update.isRunning()) Update.abort();
+                g_otaInProgress = false;
+            }
         },
         [](AsyncWebServerRequest* r, String filename, size_t index, uint8_t* data, size_t len, bool final) {
             if (!index) {
+                g_otaUploadSeen = true;
+                g_otaUploadFinished = false;
+                beginOtaDrain();
+                r->onDisconnect([]() {
+                    if (g_otaInProgress && !g_otaUploadFinished) {
+                        if (Update.isRunning()) Update.abort();
+                        g_otaUploadSeen = false;
+                        g_otaInProgress = false;
+                    }
+                });
                 Serial.printf("OTA Update Start: %s\n", filename.c_str());
                 if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
                     Update.printError(Serial);
+                    g_otaUploadSeen = false;
+                    g_otaInProgress = false;
+                    return;
                 }
             }
-            if (!Update.hasError()) {
+            g_otaLastActivityMs = millis();
+            if (len > 0 && Update.isRunning() && !Update.hasError()) {
                 if (Update.write(data, len) != len) {
                     Update.printError(Serial);
+                    Update.abort();
+                    g_otaUploadSeen = false;
+                    g_otaInProgress = false;
                 }
             }
             if (final) {
-                if (Update.end(true)) {
+                if (Update.isRunning() && Update.end(true)) {
+                    g_otaUploadFinished = true;
                     Serial.printf("OTA Update Success: %uB\n", (unsigned)(index + len));
                 } else {
+                    if (Update.isRunning()) Update.abort();
                     Update.printError(Serial);
+                    g_otaUploadSeen = false;
+                    g_otaInProgress = false;
                 }
             }
         }
     );
-    server.onNotFound([](AsyncWebServerRequest* r) { r->redirect("/"); });
+    server.onNotFound([](AsyncWebServerRequest* r) {
+        if (g_apMode && !r->url().startsWith("/api/") && r->url() != "/ws") {
+            sendPortalRedirect(r);
+        } else {
+            r->send(404, "text/plain", "not found");
+        }
+    });
     server.begin();
+    setupMDNS();
 
     xTaskCreatePinnedToCore(renderTask, "render", 6144, nullptr, 2, nullptr, 0);
 
     audio::start();
 
     g_lastCycleMs = millis();
+#ifdef EMBER_AUDIO
     Serial.printf("Ember-Audio ready (reset_reason=%d)\n", (int)esp_reset_reason());
-    Serial.flush();
+#else
+    Serial.printf("Ember ready (reset_reason=%d)\n", (int)esp_reset_reason());
+#endif
 }
 
 // Broadcast sensor, MAD, & audio gate data to all WS clients at ~6.6Hz (~150ms cadence).
 // Uses zero-copy ws.textAll() with compact integer representations to guarantee reliable delivery.
 static unsigned long g_lastSensorPush = 0;
 static void pushSensors(bool force) {
-    if (ws.count() == 0) return;
+    if (!wsHasReadyClient()) return;
+
     unsigned long now = millis();
-    if (!force && (now - g_lastSensorPush < 150)) return;
+    if (!force && (int32_t)(now - g_lastSensorPush) < 150) return;
     g_lastSensorPush = now;
 
     JsonDocument doc;
-    doc["type"]       = "sensors";
-    doc["fps"]        = (int)roundf(g_fps);
-    doc["gate"]       = roundf(g_gateEnvelope * 100.0f) / 100.0f;
-    doc["gateActive"] = (bool)g_gateActive;
-
-    if (settings.micSource != 0) {
-        audio::Snap s;
-        audio::getSnap(s, true);
-        doc["vu"]   = roundf(s.vu * 100.0f) / 100.0f;
-        doc["mad"]  = (int)roundf(audio::mad());
-        JsonArray a = doc["bands"].to<JsonArray>();
-        for (int i = 0; i < audio::BAND_COUNT; i++) {
-            a.add((int)roundf(s.bands[i] * 100.0f));
-        }
-    } else {
-        doc["mad"] = 0;
-    }
+    buildSensorsJson(doc, false, true);
 
     String out;
     serializeJson(doc, out);
-    ws.textAll(out);
+    wsBroadcastText(out);
 }
 
 static void serviceAutoCycle(unsigned long now) {
     if (!settings.autoCycle) return;
-    // Advance showcase pattern according to configured cycleSeconds
-    unsigned long interval = (unsigned long)max(5, settings.cycleSeconds) * 1000UL;
-    if (now - g_lastCycleMs >= interval) {
-        g_lastCycleMs = now;
+    // Advance showcase pattern according to configured cycleSeconds (signed diff immune to AsyncTCP preemption)
+    int32_t interval = (int32_t)(max(5, settings.cycleSeconds) * 1000L);
+    if ((int32_t)(now - g_lastCycleMs) < interval) return;
+
+    int nextIdx = 0;
+    if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+    g_lastCycleMs = now;
+    g_showcaseIdx = (g_showcaseIdx + 1) % kShowcaseCount;
+    if (kShowcaseCount > 1 && g_currentName == kShowcasePatterns[g_showcaseIdx].name) {
         g_showcaseIdx = (g_showcaseIdx + 1) % kShowcaseCount;
-        const auto& pat = kShowcasePatterns[g_showcaseIdx];
-        String err;
-        if (recompile(pat.code, err)) {
-            g_currentName   = pat.name;
-            g_currentSource = pat.code;
-            g_lastError     = "";
-            if (ws.count() > 0) {
-                JsonDocument resp;
-                resp["type"]  = "loaded";
-                resp["name"]  = g_currentName;
-                resp["code"]  = g_currentSource;
-                resp["error"] = "";
-                String out; serializeJson(resp, out);
-                ws.textAll(out);
-            }
+    }
+    nextIdx = g_showcaseIdx;
+    if (g_stateMu) xSemaphoreGive(g_stateMu);
+
+    const auto& pat = kShowcasePatterns[nextIdx];
+    String err;
+    if (recompile(pat.code, err)) {
+        g_cycleCount = g_cycleCount + 1;
+        if (Serial.availableForWrite() >= 64) {
+            Serial.printf("autocycle -> %s (#%d)\n", pat.name, nextIdx);
         }
+        if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+        g_currentName   = pat.name;
+        g_currentSource = pat.code;
+        g_lastError     = "";
+        if (g_stateMu) xSemaphoreGive(g_stateMu);
+
+        JsonDocument resp;
+        resp["type"]  = "loaded";
+        resp["name"]  = pat.name;
+        resp["code"]  = pat.code;
+        resp["error"] = "";
+        resp["auto"]  = true;
+        String out; serializeJson(resp, out);
+        wsBroadcastText(out);
+    } else {
+        if (g_stateMu) xSemaphoreTake(g_stateMu, portMAX_DELAY);
+        g_lastError = "autocycle (" + String(pat.name) + "): " + err;
+        if (g_stateMu) xSemaphoreGive(g_stateMu);
     }
 }
 
 void loop() {
     unsigned long now = millis();
-    dnsServer.processNextRequest();
+    if (g_pendingReboot && (int32_t)(now - g_rebootAtMs) >= 0) {
+        g_otaInProgress = true; // Pause renderTask/audioTask during shutdown
+        flushActivePatternIfDirty();
+        flushSettingsIfDirty();
+        delay(40);
+        // Never call HWCDC Serial.flush(): it loops forever with no USB-CDC host attached.
+        ESP.restart();
+    }
     ArduinoOTA.handle();
-    ws.cleanupClients();
-    pushSensors();
-    serviceAutoCycle(now);
+    ws.cleanupClients(4);
 
-    if (g_settingsDirty && (now - g_settingsChangedAtMs >= 1200UL)) {
-        saveSettings();
+    if (g_otaInProgress) {
+        // Watchdog: recover from stalled/aborted OTA transfers after 30s of inactivity.
+        if (!g_pendingReboot && (int32_t)(millis() - g_otaLastActivityMs) >= 30000) {
+            Serial.println("OTA watchdog timeout: restoring normal tasks");
+            if (Update.isRunning()) Update.abort();
+            g_otaUploadSeen = false;
+            g_otaUploadFinished = false;
+            g_otaInProgress = false;
+        }
+    } else {
+        serviceAutoCycle(millis());
+        if (g_broadcastStatus) {
+            g_broadcastStatus = false;
+            sendStatus(nullptr);
+        }
+        if (g_broadcastPatterns) {
+            g_broadcastPatterns = false;
+            String plist = String("{\"type\":\"patterns\",\"list\":") + patternListJson() + "}";
+            wsBroadcastText(plist);
+        }
+        bool forcePush = g_forceSensorPush;
+        g_forceSensorPush = false;
+        pushSensors(forcePush);
+
+        if (g_settingsDirty && (int32_t)(millis() - g_settingsChangedAtMs) >= 1200) {
+            flushSettingsIfDirty();
+        }
+        if (g_activeDirty && (int32_t)(millis() - g_activeChangedAtMs) >= 3500) {
+            flushActivePatternIfDirty();
+        }
     }
     delay(20);
 }

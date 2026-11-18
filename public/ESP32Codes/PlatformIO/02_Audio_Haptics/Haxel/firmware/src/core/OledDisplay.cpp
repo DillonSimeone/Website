@@ -6,6 +6,7 @@
 
 #include "OledDisplay.h"
 #include "PatternRegistry.h"
+#include "../hal/I2cBus.h"
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
@@ -37,7 +38,7 @@ void truncateCopy(char* dst, size_t cap, const char* src, size_t maxChars) {
 
 size_t patternIndex(IPattern* p) {
     if (!p) return 0;
-    const auto& all = PatternRegistry::instance().all();
+    auto all = PatternRegistry::instance().snapshot();
     for (size_t i = 0; i < all.size(); ++i) {
         if (all[i] == p) return i;
     }
@@ -55,16 +56,19 @@ bool OledDisplay::begin(Config* config, Engine* engine) {
     const auto& oc = config_->oledConfig();
     if (oc.sda < 0 || oc.scl < 0) return false;
 
-    Wire.begin(oc.sda, oc.scl);
+    hal::I2cBus::instance().ensureInit(oc.sda, oc.scl, 400000);
     auto* disp = new Adafruit_SSD1306(
         (int)oc.width, (int)oc.height, &Wire, -1);
-    if (!disp->begin(SSD1306_SWITCHCAPVCC, oc.i2cAddr)) {
-        delete disp;
-        return false;
+    {
+        hal::I2cLock guard;
+        if (!disp->begin(SSD1306_SWITCHCAPVCC, oc.i2cAddr)) {
+            delete disp;
+            return false;
+        }
+        disp->clearDisplay();
+        disp->setTextColor(SSD1306_WHITE);
+        disp->display();
     }
-    disp->clearDisplay();
-    disp->setTextColor(SSD1306_WHITE);
-    disp->display();
     display_ = disp;
     memset(wave_, 0, sizeof(wave_));
     waveIdx_ = 0;
@@ -94,7 +98,7 @@ void OledDisplay::appendKnobSegment_(char* line, size_t cap, const KnobConfig& k
                                      const StagedState& s) const {
     if (cap < 2 || !k.enabled || k.pin < 0 || k.param == "none") return;
 
-    char seg[10];
+    char seg[16];
     const char* ab = paramAbbrev(k.param);
 
     if (k.param == "speed") {
@@ -130,15 +134,16 @@ void OledDisplay::draw_() {
 
     // Row 0: current pattern (max ~21 chars at 6px/char on 128px).
     disp->setCursor(0, 0);
-    if (s.pattern) {
+    char patId[32] = "";
+    if (PatternRegistry::instance().copyIdIfValid(s.pattern, patId, sizeof(patId)) && patId[0]) {
         char pname[22];
-        truncateCopy(pname, sizeof(pname), s.pattern->id(), 21);
+        truncateCopy(pname, sizeof(pname), patId, 21);
         disp->print(pname);
     } else {
         disp->print(F("---"));
     }
 
-    // Row 1: knob assignments  Ee.g. "S1.2 I72 G3.1 P5"
+    // Row 1: knob assignments - e.g. "S1.2 I72 G3.1 P5"
     char knobLine[24] = "";
     for (size_t i = 0; i < config_->knobCount(); ++i) {
         appendKnobSegment_(knobLine, sizeof(knobLine), config_->knob(i), s);
@@ -162,7 +167,10 @@ void OledDisplay::draw_() {
         disp->drawLine(x, y0, x + 1, y1, SSD1306_WHITE);
     }
 
-    disp->display();
+    {
+        hal::I2cLock guard;
+        disp->display();
+    }
 }
 
 void OledDisplay::tick() {

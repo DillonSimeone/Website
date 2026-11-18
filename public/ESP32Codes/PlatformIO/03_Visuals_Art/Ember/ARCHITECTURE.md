@@ -41,7 +41,7 @@ through a fixed-size stack.
 source ──► Lexer (Token[] arena)
         ──► Compiler (single-pass, recursive on the token stream)
                  │
-                 ├── constant pool   (de-duplicated float[256])
+                 ├── constant pool   (de-duplicated float[255])
                  ├── variable table  (slot index by name, 32 slots)
                  └── byte stream     (Program::code, ~4× tokens worst case)
         ──► Program (owned by the render task)
@@ -64,7 +64,7 @@ is shipped back over the WebSocket — the LEDs never go dark mid-edit.
 | `OP_STORE_VAR`       | u8 slot          | `( v -- )`                |
 | `OP_ADD/SUB/MUL/DIV/MOD` | —            | `( a b -- a⊕b )`          |
 | `OP_NEG`             | —                | `( a -- -a )`             |
-| `OP_LT/GT/LE/GE/EQ`  | —                | `( a b -- 0|1 )`          |
+| `OP_LT/GT/LE/GE/EQ/NE` | —          | `( a b -- 0|1 )`          |
 | `OP_JMP`             | i16 offset       | `( -- )`                  |
 | `OP_JMP_FALSE`       | i16 offset       | `( cond -- )`             |
 | `OP_CALL`            | u8 fn, u8 argc   | `( a₁..aₙ -- result )`    |
@@ -94,8 +94,7 @@ The added builtins (per the brief):
 | `perlin1D(x)`     | `inoise8(x · 256) / 255`                                     | FastLED 8-bit Perlin, x folded into uint16                         |
 | `perlin2D(x, y)`  | `inoise8(x · 256, y · 256) / 255`                            | 2D Perlin, ideal for organic ambient patterns                      |
 
-`sin`, `cos`, `wave`, and `triangle` all share the same `sin16` lookup table
-in flash so the cost of using them is identical.
+`wave()` uses FastLED's `sin16` lookup table in flash, while `sin`, `cos`, and `tan` use `sinf`/`cosf`/`tanf`.
 
 ### 2.4 Performance numbers
 
@@ -105,7 +104,7 @@ Measured on an ESP32-C3 @ 160 MHz with 60 WS2812B LEDs running the
 | Engine             | µs / pixel | Frames/sec | Heap churn |
 |--------------------|-----------:|-----------:|-----------:|
 | Old recursive VM   |       ~190 |      ~28   | high (String/vector per pixel) |
-| **Bytecode VM**    |        ~14 |     **60** | **zero** in steady state |
+| **Bytecode VM**    |        ~14 |     **50** (locked) | **zero** in steady state |
 
 The interpreter loop fits comfortably in I-cache and the per-pixel state
 (stack + vars) lives on the task's stack so there is no allocation during a
@@ -124,49 +123,54 @@ frame.
 
 ```
 ┌────────────────────────────────────────────────────────────┐
-│ Core 0  (the only core)                                    │
+│ Core 0  (the only core on ESP32-C3)                        │
 │                                                            │
-│  ┌──────────────┐   ┌───────────────────┐   ┌───────────┐  │
-│  │ RenderTask   │   │ AsyncTCP worker   │   │ Wi-Fi     │  │
-│  │ prio 2       │   │ prio 3 (default)  │   │ prio 23   │  │
-│  │ pinned 0     │   │ pinned 0          │   │ system    │  │
-│  │ 4 KB stack   │   │ stack from lib    │   │           │  │
-│  └──────┬───────┘   └─────────┬─────────┘   └─────────┘    │
-│         │ vTaskDelayUntil 60Hz │ event-driven (preempts)    │
-└─────────┼──────────────────────┼────────────────────────────┘
-          ▼                      ▼
-       RMT peripheral        Wi-Fi MAC
+│  ┌──────────────┐   ┌──────────────┐   ┌────────────────┐  │
+│  │ RenderTask   │   │ AudioTask    │   │ loopTask       │  │
+│  │ prio 2       │   │ prio 1       │   │ prio 1         │  │
+│  │ 6 KB stack   │   │ 6 KB stack   │   │ Arduino loop() │  │
+│  └──────┬───────┘   └──────────────┘   └────────────────┘  │
+│         │ vTaskDelayUntil 50Hz                              │
+│  ┌───────────────────┐   ┌───────────┐                     │
+│  │ AsyncTCP worker   │   │ Wi-Fi     │                     │
+│  │ prio 3 (default)  │   │ prio 23   │                     │
+│  │ event-driven      │   │ system    │                     │
+│  └─────────┬─────────┘   └─────────┬─┘                     │
+└────────────┼───────────────────────┼───────────────────────┘
+             ▼                       ▼
+        RMT peripheral          Wi-Fi MAC
 ```
 
-- **RenderTask** runs the bytecode and calls `FastLED.show()`. It uses
-  `vTaskDelayUntil` to lock to 60 Hz, so jitter from preemption is absorbed
+- **RenderTask** runs the bytecode and pushes frames via `showStrip()`. It uses
+  `vTaskDelayUntil` to lock to 50 Hz, so jitter from preemption is absorbed
   by the delay rather than the frame.
-- **AsyncTCP worker** is at a *higher* priority than the render task, so a
-  WebSocket message preempts rendering, gets handled in microseconds, and
-  yields back. Because rendering is cheap (~1 ms for 60 LEDs) the user never
-  sees a dropped frame.
-- The compile step is short (under 1 ms for typical patterns) and runs on
-  the AsyncTCP worker — but it only swaps in the new `Program*` atomically,
-  so the render task never reads half-written bytecode.
+- **AudioTask** (started when `micSource != 0`) samples INMP441 I2S or MAX4466
+  ADC frames, runs FFT/VU/MAD/beat analysis, and publishes lock-protected
+  snapshots.
+- **loopTask** drives `dnsServer`, `ArduinoOTA`, debounced `LittleFS` writes,
+  `pushSensors()`, and `autoCycle`.
+- **AsyncTCP worker** is at a *higher* priority than `RenderTask`, so a
+  WebSocket message preempts rendering, gets handled quickly, and yields back.
+- The compile step runs on the AsyncTCP worker and swaps `g_program` under
+  `g_progMu` so the render task never reads freed or half-written bytecode.
 
 ### 3.2 Hardware-accelerated LED output
 
-`FastLED.show()` on the C3 uses the **RMT peripheral** which clocks WS2812B
-bits out of a DMA buffer. The CPU is free during transmission — a 60-pixel
-strip takes ~1.8 ms wall-clock but only ~50 µs of CPU. This is the single
-biggest reason the web server stays responsive.
+`showStrip()` uses the ESP32-C3's native ESP-IDF **RMT peripheral**
+(`rmt_write_sample` with an `IRAM_ATTR` byte-to-item translator ISR) rather than
+bit-banging pixels in software.
 
-### 3.3 Atomic program swap
+### 3.3 Mutex-guarded program swap
 
 ```cpp
-Program* live = compile(source);   // built off-thread
-Program* old  = g_program.exchange(live, std::memory_order_acq_rel);
-delete old;                        // safe: render task uses g_program once per frame
+xSemaphoreTake(g_progMu, portMAX_DELAY);
+Program* old = g_program.exchange(live, std::memory_order_relaxed);
+xSemaphoreGive(g_progMu);
+delete old; // safe: renderTask holds g_progMu while reading g_program
 ```
 
-`std::atomic<Program*>` makes hot-swap lock-free. The render task captures the
-pointer at the top of the frame and uses it for every pixel, so a swap mid-
-frame cannot corrupt output.
+`g_progMu` guarantees `old` is never freed while `renderTask` is executing a
+frame's pixels.
 
 ---
 
@@ -178,11 +182,11 @@ no internet access.
 
 - **Editor**: CodeMirror 6 wouldn't fit; instead a hand-rolled `<textarea>`
   with syntax highlighting layered behind via a `<pre>` overlay. ~6 KB
-  gzipped, supports Ctrl-S, Ctrl-/, autoindent, and live-recompile-on-keystroke
-  debounced at 120 ms.
+  gzipped, supports Tab indent, Ctrl-S save, and live-recompile-on-keystroke
+  debounced at 300 ms.
 - **Live preview**: a `<canvas>` rendering the same expression in JS using a
-  near-identical bytecode VM so the preview matches the device exactly. The
-  preview is what gives the editor the "Pixelblaze feel".
+  tree-walking AST evaluator with matching semantics so the preview matches the
+  device closely. The preview is what gives the editor the "Pixelblaze feel".
 - **Pattern library**: cards backed by `DEMO_PATTERNS.json`, one click to load
   on-device.
 - **WebSocket**: single duplex channel for live-compile, save, load, settings,
@@ -196,17 +200,26 @@ list.
 ## 5. File layout
 
 ```
-public/ESP32Codes/PlatformIO/Visuals_Art/Ember/
+public/ESP32Codes/PlatformIO/03_Visuals_Art/Ember/
+├── AGENTS.md                Quick start & architecture overview
 ├── ARCHITECTURE.md          (this file)
-├── DEMO_PATTERNS.json       20 patterns showcasing the new builtins
+├── DEMO_PATTERNS.json       28 showcase patterns
+├── discovery.html           LAN/IP device discovery helper
+├── README.md                Project summary & pattern quick reference
 ├── firmware/
-│   ├── platformio.ini
+│   ├── platformio.ini       esp32c3 + audio build environments
+│   ├── README.md            Firmware specs & build steps
+│   ├── sync_webui.py        pre:buildfs/uploadfs sync from ../web_ui
+│   ├── upload.bat           Windows auto-detect flasher (default: audio)
 │   ├── src/main.cpp         all C++ in one TU for fast compile + clear flow
 │   └── data/                LittleFS image (uploaded with `pio run -t uploadfs`)
-│       ├── index.html       (copy of web_ui/index.html)
+│       ├── demo.json.gz     (synced & gzipped from DEMO_PATTERNS.json)
+│       ├── index.html.gz    (synced & gzipped from web_ui/index.html)
+│       ├── manual.html.gz   (synced & gzipped from web_ui/manual.html)
 │       └── patterns/        starter .wfl files
 └── web_ui/
-    └── index.html           the canonical UI source
+    ├── index.html           the canonical UI source
+    └── manual.html          full Pattern Studio manual & examples
 ```
 
 `firmware/data/index.html` and `web_ui/index.html` are the same file. The
@@ -220,14 +233,15 @@ a separate build step.
 - The bytecode VM is intentionally untyped (everything is `float`). This
   matches the Pixelblaze expression language and keeps the interpreter to one
   ~150-line function. Boolean ops return 0.0/1.0.
-- Max 32 user variables, 256 constants per program, 64-deep operand stack,
-  256 functions in the function table. These are static limits chosen to
-  fit a generous program in 4 KB of bytecode while keeping operand encoding
-  to one byte.
+- Max 32 variable slots (11 built-in + 21 user variables), 255 constants per
+  program, 64-deep operand stack, and up to 256 function IDs via 1-byte `u8`
+  operand encoding (43 built-in/alias entries in `kFnTable`). These static limits
+  fit a generous program in 4 KB of bytecode while keeping operand encoding to
+  one byte.
 - Recursion / user-defined functions / arrays are **not** supported. That is
   the explicit scope boundary that separates "Ember" from
   Pixelblaze proper.
 - ESP32-C3 has no FPU SIMD; the per-pixel cost is dominated by the dispatch
   switch and one or two transcendental calls. Replacing `sinf` with the
   FastLED `sin16` lookup is the single biggest win and is applied everywhere
-  internally.
+  internal dispatch and `sin16` lookup for `wave()`.

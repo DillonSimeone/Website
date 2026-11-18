@@ -39,6 +39,7 @@ struct StagedState {
     bool        mute      = false;
     float       intensity = 0.5f;
     float       speed     = 1.0f;
+    float       freq      = 150.0f;
     IPattern*   pattern   = nullptr;
     ChannelState channels[8];
     uint8_t     channelCount = 1;
@@ -69,6 +70,7 @@ public:
     bool begin();
     void attachDriver(hal::IHapticDriver* drv);
     void attachAudio(AudioAnalyzer* audio);
+    AudioAnalyzer* attachedAudio() const { return audio_; }
 
     // Called at 250 Hz (4 ms) from engineTask.
     void tick();
@@ -83,9 +85,10 @@ public:
     // Direct sample injection for the "External" pattern.
     void pushExternal(uint8_t channel, float value01);
 
-    // Remote AudioFrame from mesh Master (overrides local mic while fresh).
+    // Remote AudioFrame from mesh Master (or browser streamer when local mic absent).
     void pushRemoteAudio(const AudioFrame& frame);
     bool hasRemoteAudio(uint32_t maxAgeMs = 250) const;
+    bool copyRemoteAudio(AudioFrame& out, uint32_t maxAgeMs = 400) const;
 
     // Snapshot for /json/diag. Lock-free read; values may be slightly stale.
     DiagSnapshot diag() const;
@@ -100,8 +103,9 @@ public:
     // so motor calibration floor does not wash out visual dynamics.
     float getPatternValue(uint8_t ch) const;
 
-    // Drop registry-owned pattern pointers before unregister/delete (UAF guard).
+    // Swap/clear registry-owned pattern pointers under lock before unregister/delete (UAF guard).
     void detachPatternById(const char* id);
+    void replacePatternById(const char* id, IPattern* replacement);
 
     EngineState state() const { return state_; }
     void raiseFault(const char* code);
@@ -109,13 +113,13 @@ public:
 private:
     void drainCommands_();
     void hardAllOff_();
-    void writeAllChannels(float masterTime_ms, float dtMs);
+    void writeAllChannels(double masterTime_ms, float dtMs);
     void recordJitter(uint32_t tickUs);
 
     static constexpr uint32_t kTargetTickUs = 4000; // 250 Hz
     hal::IHapticDriver* driver_ = nullptr;
     uint32_t            lastTickDeltaUs_ = kTargetTickUs;
-    float               patternTimeMs_   = 0.0f;
+    double              patternTimeMs_   = 0.0;
     AudioAnalyzer*      audio_  = nullptr;
 
     StagedState         active_;

@@ -63,16 +63,21 @@ void KnobController::applyKnob_(const KnobConfig& knob, float v) {
         return;
     }
     if (!strcmp(param, "pattern")) {
-        const auto& all = PatternRegistry::instance().all();
+        auto all = PatternRegistry::instance().snapshot();
         const size_t n = all.size();
         if (n == 0) return;
         size_t idx = (n > 1) ? (size_t)(v * (float)(n - 1) + 0.5f) : 0;
         if (idx >= n) idx = n - 1;
-        StagedState s;
-        engine_->copyState(s);
-        s.pattern = all[idx];
-        s.on = true;
-        engine_->stageState(s);
+        PatternRegistry::instance().lockEval();
+        IPattern* chosen = all[idx];
+        if (PatternRegistry::instance().contains(chosen)) {
+            StagedState s;
+            engine_->copyState(s);
+            s.pattern = chosen;
+            s.on = true;
+            engine_->stageState(s);
+        }
+        PatternRegistry::instance().unlockEval();
         return;
     }
 
@@ -80,14 +85,20 @@ void KnobController::applyKnob_(const KnobConfig& knob, float v) {
     engine_->copyState(s);
     if (!s.pattern) return;
 
-    const auto& meta = s.pattern->meta();
-    for (uint8_t pi = 0; pi < meta.paramCount; ++pi) {
-        if (strcmp(meta.params[pi].id, param) != 0) continue;
-        float scaled = meta.params[pi].minV +
-                       v * (meta.params[pi].maxV - meta.params[pi].minV);
-        if (s.pattern->setParam(param, scaled)) engine_->stageState(s);
-        return;
+    PatternRegistry::instance().lockEval();
+    bool applied = false;
+    if (PatternRegistry::instance().contains(s.pattern)) {
+        const auto& meta = s.pattern->meta();
+        for (uint8_t pi = 0; pi < meta.paramCount; ++pi) {
+            if (strcmp(meta.params[pi].id, param) != 0) continue;
+            float scaled = meta.params[pi].minV +
+                           v * (meta.params[pi].maxV - meta.params[pi].minV);
+            if (s.pattern->setParam(param, scaled)) applied = true;
+            break;
+        }
     }
+    PatternRegistry::instance().unlockEval();
+    if (applied) engine_->stageState(s);
 }
 
 void KnobController::tick() {

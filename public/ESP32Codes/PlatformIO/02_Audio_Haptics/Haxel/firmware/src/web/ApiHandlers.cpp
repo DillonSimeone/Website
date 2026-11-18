@@ -10,7 +10,7 @@
 #include "../core/RuntimeStore.h"
 #include "../patterns/CustomPattern.h"
 #include "../patterns/Patterns.h"
-#if HAXEL_FEATURE_MESH_MASTER
+#if HAXEL_FEATURE_MESH || HAXEL_FEATURE_MESH_MASTER
 #include "../mesh/MeshMaster.h"
 #endif
 #include <ArduinoJson.h>
@@ -32,8 +32,8 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
         int safe[] = {0,1,2,3,4,5,6,7,8,9,10,20,21};
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
         doc["target"] = "esp32-c6";
-        // FireBeetle 2 ESP32-C6 Mini — user-routed haptic/LED pins
-        int safe[] = {8,16,17,19,20};
+        // FireBeetle 2 ESP32-C6 Mini — safe user-routed haptic/LED/I2C/audio pins
+        int safe[] = {4,5,6,7,8,14,15,16,17,18,19,20,21,22,23};
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
         doc["target"] = "esp32-s3";
         int safe[] = {1,2,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,21,33,34,35,36,37,38,39,40,41,42,47,48};
@@ -67,7 +67,7 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
         JsonDocument doc;
         serializeState(doc["state"].to<JsonObject>(), engine);
         auto pats = doc["patterns"].to<JsonArray>();
-        for (auto* p : PatternRegistry::instance().all()) {
+        for (auto* p : PatternRegistry::instance().snapshot()) {
             auto m = pats.add<JsonObject>();
             const auto& meta = p->meta();
             m["id"] = meta.id;
@@ -193,7 +193,7 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
     server.on("/json/custom-patterns", HTTP_GET, [](AsyncWebServerRequest* req) {
         JsonDocument doc;
         JsonArray arr = doc.to<JsonArray>();
-        for (auto* p : PatternRegistry::instance().all()) {
+        for (auto* p : PatternRegistry::instance().snapshot()) {
             if (strcmp(p->meta().category, "custom") == 0) {
                 patterns::CustomPattern* cp = static_cast<patterns::CustomPattern*>(p);
                 if (cp) {
@@ -225,8 +225,12 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
             std::string code = obj["code"] | "";
             String err;
             if (!upsertCustomPattern(id.c_str(), name.c_str(), code.c_str(), err, engine)) {
-                req->send(400, "application/json",
-                          String("{\"ok\":false,\"error\":\"") + err + "\"}");
+                JsonDocument errDoc;
+                errDoc["ok"] = false;
+                errDoc["error"] = err;
+                String errBody;
+                serializeJson(errDoc, errBody);
+                req->send(400, "application/json", errBody);
                 return;
             }
             req->send(200, "application/json", "{\"ok\":true}");
@@ -246,16 +250,24 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
 
         String err;
         if (!deleteCustomPattern(id.c_str(), err, engine)) {
-            req->send(400, "application/json",
-                      String("{\"ok\":false,\"error\":\"") + err + "\"}");
+            JsonDocument errDoc;
+            errDoc["ok"] = false;
+            errDoc["error"] = err;
+            String errBody;
+            serializeJson(errDoc, errBody);
+            req->send(400, "application/json", errBody);
             return;
         }
 
         req->send(200, "application/json", "{\"ok\":true}");
     });
 
-#if HAXEL_FEATURE_MESH_MASTER
-    server.on("/json/fleet", HTTP_GET, [](AsyncWebServerRequest* req) {
+#if HAXEL_FEATURE_MESH || HAXEL_FEATURE_MESH_MASTER
+    server.on("/json/fleet", HTTP_GET, [config](AsyncWebServerRequest* req) {
+        if (!config || config->meshRole() != MeshRole::MASTER) {
+            req->send(400, "application/json", "{\"ok\":false,\"error\":\"mesh master not active\"}");
+            return;
+        }
         JsonDocument doc;
         mesh::MeshMaster::instance().serializeFleet(doc.to<JsonObject>());
         String body;
@@ -264,7 +276,11 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
     });
 
     auto* fleetJson = new AsyncCallbackJsonWebHandler("/json/fleet",
-        [](AsyncWebServerRequest* req, JsonVariant& json) {
+        [config](AsyncWebServerRequest* req, JsonVariant& json) {
+            if (!config || config->meshRole() != MeshRole::MASTER) {
+                req->send(400, "application/json", "{\"ok\":false,\"error\":\"mesh master not active\"}");
+                return;
+            }
             JsonObjectConst obj = json.as<JsonObjectConst>();
             const char* action = obj["action"] | "";
             auto& master = mesh::MeshMaster::instance();
@@ -297,8 +313,12 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
                 ok = master.applyFleetStatePatch(patch, target);
             } else if (!strcmp(action, "pushConfig")) {
                 uint8_t mac[6];
-                if (obj["mac"].is<const char*>() && parseMac(obj["mac"], mac)) {
-                    ok = master.pushConfigToNode(mac);
+                JsonObjectConst cfgObj = obj["config"].is<JsonObjectConst>()
+                    ? obj["config"].as<JsonObjectConst>()
+                    : obj["patch"].as<JsonObjectConst>();
+                if (obj["mac"].is<const char*>() && parseMac(obj["mac"], mac) &&
+                    !cfgObj.isNull() && cfgObj.size() > 0) {
+                    ok = master.pushConfigToNode(mac, cfgObj);
                 }
             } else {
                 req->send(400, "application/json", "{\"ok\":false,\"error\":\"unknown action\"}");

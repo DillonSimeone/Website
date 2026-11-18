@@ -23,13 +23,17 @@ bool DRV8833Driver::begin(const DriverConfig& cfg) {
     auto& alloc = LedcAllocator::instance();
     // AIN1, AIN2, BIN1, BIN2 — all PWM.
     for (int i = 0; i < 4; ++i) {
-        if (cfg_.pins[i] < 0) return false;
+        if (cfg_.pins[i] < 0) {
+            for (int j = 0; j < i; ++j) alloc.release(cfg_.pins[j]);
+            return false;
+        }
         if (alloc.allocate(cfg_.pins[i], cfg_.pwmHz ? cfg_.pwmHz : 30000, cfg_.pwmBits) < 0) {
+            for (int j = 0; j < i; ++j) alloc.release(cfg_.pins[j]);
             return false;
         }
     }
     if (cfg_.pins[4] >= 0) { pinMode(cfg_.pins[4], OUTPUT); digitalWrite(cfg_.pins[4], HIGH); }
-    slowDecay_ = (cfg_.flags & 0x2) == 0; // flag bit1 = fast decay
+    slowDecay_ = (cfg_.flags & kFlagDrv8833FastDecay) == 0; // flag bit1 = fast decay
     allOff();
     ready_ = true;
     return true;

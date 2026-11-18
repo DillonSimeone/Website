@@ -94,19 +94,22 @@ export function buildParametricCasing(M, p) {
         .translate([0, 0, bodyH + shoulderH - 0.2]);
     shell = shell.add(lidRing);
 
-    // 5. Center 54.8mm pass-through bore (no 82mm collar blocking solid spool flanges)
-    //    + downward 14mm cable slot through the backplate for USB-C / JST routing
-    const centerR = (p.spoolBoreDia + 0.4) / 2;
-    const centerPass = M.cylinder(baseThick + 4, centerR, centerR, 64).translate([0, 0, -1]);
+    // 5. Centered 54.2mm OD / 48.2mm ID collar goes up into spool's 54.5mm bore
+    //    Wall mount peg slides inside this collar so spools always stay centered
+    const collarOutR = (p.spoolBoreDia - p.plugClearance - 0.1) / 2; // ~27.1mm (54.2mm OD)
+    const collarInR = collarOutR - (p.collarWall || 3.0);             // ~24.1mm (48.2mm ID)
+    const collarH = 20.0;
+    const centerCollar = M.cylinder(collarH, collarOutR, collarOutR, 64).translate([0, 0, baseThick]);
+    const centerPass = M.cylinder(collarH + baseThick + 4, collarInR, collarInR, 56).translate([0, 0, -1]);
     const cableSlot = M.cube([14.0, innerR * 0.72, baseThick + 4], true)
         .translate([0, -innerR * 0.36, baseThick / 2]);
-    shell = shell.subtract(centerPass).subtract(cableSlot);
+    shell = shell.add(centerCollar).subtract(centerPass).subtract(cableSlot);
 
     // 6. Radial light/ventilation cutouts in base plate (skip ONLY i === 4 straight-down where cableSlot sits)
     for (let i = 0; i < 6; i++) {
         if (i === 4) continue;
         const slot = M.cube([28, 16, baseThick + 4], true)
-            .translate([centerR + 30, 0, baseThick / 2])
+            .translate([collarOutR + 28, 0, baseThick / 2])
             .rotate([0, 0, i * 60 + 30]);
         shell = shell.subtract(slot);
     }
@@ -153,38 +156,49 @@ export function buildCasingLid(M, p) {
 }
 
 /**
- * Drop-in Center Adapter for existing Shade.stl (156mm hole, 6-bolt ring at R=91.35mm)
- * Completely flat 3mm plate with 54.8mm center hole (no raised collar blocking solid spools).
+ * Under-Mount Center Adapter for existing Shade.stl (156mm bed hole, 1.05mm shelf, 6-bolt ring at R=91.35mm)
+ * - Prints 100% flat on the bed with ZERO overhangs:
+ *   193mm outer flange (6 screw holes) sits flat on bed (z = 0..2.6mm)
+ *   155.6mm locating lip rises up into Shade.stl's 156mm hole (z = 2.6..3.9mm)
+ *   54.2mm center collar rises up into the spool's main cylinder
  */
 export function buildShadeAdapter(M, p) {
     const shadeHoleR = p.shadeHoleDia / 2;   // 78.0mm (156mm ID of Shade.stl)
+    const bedFitR = shadeHoleR - 0.2;        // 77.8mm (155.6mm OD zero-wiggle fit)
     const flangeR = shadeHoleR + 18.5;       // 96.5mm (covers 6-bolt ring at R=91.35mm)
-    const flangeThick = 3.0;                 // Uniform 3mm thin flat base
+    const flangeThick = 2.6;                 // Flat baseplate on bed (goes under Shade.stl)
+    const locateStepH = 1.3;                 // Rises up into Shade.stl's 1.05mm shelf opening
+    const totalBaseH = flangeThick + locateStepH;
 
-    // 1. Flat 3mm outer ring
-    let adapter = M.cylinder(flangeThick, flangeR, flangeR, 72);
+    const collarOutR = (p.spoolBoreDia - p.plugClearance - 0.1) / 2; // ~27.1mm
+    const collarInR = collarOutR - (p.collarWall || 3.0);             // ~24.1mm
+    const collarH = 20.0;
 
-    // 2. Hollow out middle ring while keeping 6 radial spokes to the 54.8mm center ring
-    const midCutR = shadeHoleR - 3.0;
-    const centerInR = (p.spoolBoreDia + 0.4) / 2; // 27.45mm (54.9mm ID fits wall mount peg)
-    const centerOutR = centerInR + 4.5;           // 31.95mm
-    const midHollow = M.cylinder(flangeThick + 2, midCutR, midCutR, 64)
-        .subtract(M.cylinder(flangeThick + 4, centerOutR, centerOutR, 64).translate([0, 0, -1]))
+    // 1. Flat 193mm outer flange on bed (z=0..2.6) + 155.6mm locating lip rising up (z=2.6..3.9)
+    const bottomFlange = M.cylinder(flangeThick, flangeR, flangeR, 96);
+    const locateLip = M.cylinder(locateStepH, bedFitR, bedFitR, 96).translate([0, 0, flangeThick]);
+    let adapter = bottomFlange.add(locateLip);
+
+    // 2. Hollow out inner window while keeping 6 radial spokes + 155.6mm locating rim
+    const midCutR = shadeHoleR - 5.0;
+    const midHollow = M.cylinder(totalBaseH + 2, midCutR, midCutR, 72)
+        .subtract(M.cylinder(totalBaseH + 4, collarOutR, collarOutR, 64).translate([0, 0, -1]))
         .translate([0, 0, -1]);
     adapter = adapter.subtract(midHollow);
 
-    // 3. 6 Radial structural spokes (3mm thin) bridging outer ring to center ring
-    const spokeLen = midCutR - centerOutR + 4.0;
+    // 3. 6 Radial structural spokes (flat on bed) bridging locating rim to center collar
+    const spokeLen = midCutR - collarOutR + 4.0;
     for (let i = 0; i < 6; i++) {
         const spoke = M.cube([spokeLen, 6.0, flangeThick], false)
-            .translate([centerOutR - 2.0, -3.0, 0])
+            .translate([collarOutR - 2.0, -3.0, 0])
             .rotate([0, 0, i * 60 + 30]);
         adapter = adapter.add(spoke);
     }
 
-    // 4. Flat 3mm center 54.8mm pass-through hole (no tall collar blocking solid spool)
-    const centerHole = M.cylinder(flangeThick + 4, centerInR, centerInR, 64).translate([0, 0, -1]);
-    adapter = adapter.subtract(centerHole);
+    // 4. Center 54.2mm OD / 48.2mm ID collar rising up into the spool's main cylinder
+    const centerCollar = M.cylinder(collarH + flangeThick, collarOutR, collarOutR, 64);
+    const centerHole = M.cylinder(collarH + flangeThick + 4, collarInR, collarInR, 64).translate([0, 0, -1]);
+    adapter = adapter.add(centerCollar).subtract(centerHole);
 
     // 5. 6 Screw holes matching Shade.stl (BCD = 182.7mm -> R = 91.35mm, every 60 deg)
     const boltR = p.shadeBoltR;
@@ -200,6 +214,7 @@ export function buildShadeAdapter(M, p) {
 
 /**
  * Wall Mount Bracket (2 top screws only, 5 deg upward tilt, 12mm cable groove + downward USB-C exit)
+ * Peg OD is sized to pass smoothly through the 48.2mm center collar of the shade / adapter.
  */
 export function buildWallMount(M, p) {
     const plateW = 74.0;
@@ -217,14 +232,19 @@ export function buildWallMount(M, p) {
         mount = mount.subtract(bore).subtract(cSink);
     });
 
-    // Center cylinder peg sized for 54.5mm spool bore, reaching max safe depth without hitting front hub
-    const pegR = (p.spoolBoreDia - p.plugClearance - 0.15) / 2; // ~27.08mm (54.15mm OD)
-    const pegInnerR = Math.max(10, pegR - 3.4);
+    // Tapered cone peg: full pegR at base, 5mm narrower in diameter (2.5mm radius) at tip
+    // Fits a wider range of adapter/collar tolerances and self-centers as it slides back
+    const collarOutR = (p.spoolBoreDia - p.plugClearance - 0.1) / 2;
+    const collarInR = collarOutR - (p.collarWall || 3.0);
+    const pegR = Math.max(14, collarInR - 0.55);
+    const pegTipR = Math.max(11, pegR - 2.5); // 5mm narrower diameter at tip
+    const pegInnerR = Math.max(9, pegR - 3.2);
+    const pegInnerTipR = Math.max(6, pegTipR - 3.2);
     const maxSafeLen = Math.max(14, (p.spoolInnerWidth + 4.0) - p.plugDepth - 2.0); // ~36mm
 
-    let peg = M.cylinder(maxSafeLen + 5.0, pegR, pegR, 64)
+    let peg = M.cylinder(maxSafeLen + 5.0, pegR, pegTipR, 64)
         .translate([0, 0, -4.0])
-        .subtract(M.cylinder(maxSafeLen + 3.0, pegInnerR, pegInnerR, 56).translate([0, 0, 0.0]));
+        .subtract(M.cylinder(maxSafeLen + 3.0, pegInnerR, pegInnerTipR, 56).translate([0, 0, 0.0]));
 
     if (Math.abs(p.wallMountAngle) > 0.1) {
         peg = peg.rotate([-p.wallMountAngle, 0, 0]);
@@ -241,4 +261,30 @@ export function buildWallMount(M, p) {
 
     const wallClip = M.cube([220, 220, 220], true).translate([0, 0, 110]);
     return mount.intersect(wallClip);
+}
+
+/**
+ * Stepped Bore Size Tester (10 hollow rings, narrow bottom -> wider top)
+ * Drop narrow end into any spool center cylinder and count rings sticking out at top.
+ */
+export function buildSizeTester(M, p) {
+    const numRings = 10;
+    const ringH = 5.0;
+    const step = p.testerStep || 0.5;
+    const wall = 2.4;
+    const startDia = p.spoolBoreDia - 4 * step; // Centered around spoolBoreDia
+
+    const minR = startDia / 2;
+    const holeR = Math.max(10, minR - wall);
+    let gauge = null;
+
+    for (let i = 0; i < numRings; i++) {
+        const dia = startDia + i * step;
+        const r = dia / 2;
+        const ring = M.cylinder(ringH, r, r, 64).translate([0, 0, i * ringH]);
+        gauge = gauge ? gauge.add(ring) : ring;
+    }
+
+    const bore = M.cylinder(numRings * ringH + 2, holeR, holeR, 56).translate([0, 0, -1]);
+    return gauge.subtract(bore);
 }

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ember Studio Manual</title>
+<style>
+:root {
+    --bg: #0d1017; --panel: #151923; --panel-2: #1c2230; --border: #252c3c;
+    --text: #e6ebf4; --muted: #8a94a8; --accent: #7c9cff; --accent-2: #5de4c7;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; line-height: 1.55; }
+header {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; gap: 12px; padding: 12px 18px;
+    background: var(--panel); border-bottom: 1px solid var(--border);
+}
+.logo { font-weight: 700; letter-spacing: 0.14em; font-size: 13px; color: var(--accent); }
+.spacer { flex: 1; }
+a.btn, button.btn {
+    padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--panel-2); color: var(--text); text-decoration: none;
+    font: inherit; font-size: 12px; cursor: pointer;
+}
+a.btn.primary, button.btn.primary { background: var(--accent); color: #0a0d14; border-color: var(--accent); font-weight: 600; }
+.wrap { max-width: 880px; margin: 0 auto; padding: 18px 16px 48px; }
+h1 { font-size: 20px; margin: 4px 0 8px; }
+h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-2); margin: 24px 0 10px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+h3 { font-size: 13px; color: var(--text); margin: 14px 0 6px; }
+p, li { color: var(--muted); margin: 6px 0; }
+strong, b { color: var(--text); }
+code { font-family: var(--mono); font-size: 12px; color: var(--accent); background: rgba(124,156,255,0.08); padding: 1px 4px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 12px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--text); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+.ex-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.ex-title { font-weight: 600; color: var(--text); font-size: 13px; }
+.ex-note { font-size: 12px; color: var(--muted); }
+pre {
+    margin: 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; font-family: var(--mono); font-size: 12px; line-height: 1.5;
+    overflow-x: auto; color: #dbe3f3;
+}
+.toc { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 18px; }
+.toc a { font-size: 12px; color: var(--accent); text-decoration: none; padding: 4px 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 999px; }
+</style>
+</head>
+<body>
+<header>
+    <div class="logo">EMBER MANUAL</div>
+    <div class="spacer"></div>
+    <a class="btn primary" href="/">&larr; Back to Studio</a>
+</header>
+
+<div class="wrap">
+    <h1>Ember Studio Reference &amp; Examples</h1>
+    <p>Guide to the dashboard controls, bytecode expression language, audio engine, and hardware settings.</p>
+    <div class="toc">
+        <a href="#studio">Studio Tabs</a>
+        <a href="#language">Language &amp; Limits</a>
+        <a href="#functions">Functions</a>
+        <a href="#examples">Examples</a>
+        <a href="#tips">Tips &amp; Troubleshooting</a>
+    </div>
+
+    <h2 id="studio">1. Studio Tabs &amp; Features</h2>
+    <div class="grid">
+        <div class="card">
+            <h3>Ambient Tab</h3>
+            <p>Shows a live 50 Hz strip preview, real-time <b>Audio Sensitivity Gate</b> bar, threshold slider <code>X</code> (with 85% hysteresis <code>Y</code>), <b>Audio Gate Fade</b> toggle (2.0 s S-curve attack, 400 ms hold, 3.5 s release), <b>Auto Cycle</b> (default <code>5 s</code>), and animated pattern cards. Clicking a card runs it immediately and disables Auto Cycle.</p>
+        </div>
+        <div class="card">
+            <h3>Settings Tab</h3>
+            <p><b>Strip:</b> Live Brightness slider (<code>0..255</code>), <b>Pixel Count</b> (<code>1..600</code>, applies live with <b>zero reboot</b>), and Data Pin (<code>GPIO 0..10</code>, reboots RMT).</p>
+            <p><b>Audio:</b> Choose Off, <code>INMP441</code> (I2S MEMS), or <code>MAX4466</code> (ADC1 GPIO <code>0..4</code> + Soft GND), plus Gain, FFT Smoothing, and 8-band spectrum meter.</p>
+            <p><b>Network &amp; OTA:</b> SoftAP password is <code>ember123</code> (portal <code>192.168.4.1</code>). Customize AP Name/Hostname, OTA update via <code>/update</code>, or Reset Settings.</p>
+        </div>
+        <div class="card">
+            <h3>Advanced · Pattern Studio</h3>
+            <p>Write pattern expressions with live syntax highlighting, <code>Tab</code> indentation, and <code>Ctrl/Cmd+S</code> save. Edits compile locally first (enforcing exact firmware VM limits) and push live to the strip after 300 ms. Use <b>Common Coding Examples</b> chips to jump-start patterns, or manage LittleFS <code>/patterns/</code> files under <b>Saved</b>.</p>
+        </div>
+    </div>
+
+    <h2 id="language">2. Language &amp; VM Limits</h2>
+    <div class="card">
+        <p>Your code runs once for every pixel <code>i</code> (<code>0 .. n-1</code>) on every frame at ~50 FPS. Every number is a 32-bit float; end each pixel pass with <code>hsv(h, s, v)</code> or <code>rgb(r, g, b)</code>.</p>
+        <table>
+            <tr><th>Category</th><th>Details</th></tr>
+            <tr><td>Built-in vars</td><td><code>i</code> / <code>index</code> (pixel 0..n-1), <code>n</code> / <code>pixelCount</code>, <code>t</code> / <code>time</code> (seconds since boot), <code>gate</code> / <code>fade</code> (0..1 gate envelope), <code>PI</code>, <code>TAU</code> (2&pi;)</td></tr>
+            <tr><td>Conditionals</td><td><code>if (cond) stmt;</code>, <code>if (cond) a; else b;</code>, <code>{ s1; s2; }</code> multi-statement blocks, ternary <code>cond ? a : b</code></td></tr>
+            <tr><td>Operators</td><td><code>+ - * / %</code>, comparisons <code>&lt; &lt;= &gt; &gt;= == !=</code> (returns <code>1</code>/<code>0</code>). Division or modulo by zero safely returns <code>0</code>.</td></tr>
+            <tr><td>Comments</td><td>Single-line <code>// comment</code> and block <code>/* comment */</code></td></tr>
+            <tr><td>VM Limits</td><td>Up to <b>21 user variables</b> (32 total slots), <b>255 unique constants</b>, max nesting depth <b>32</b>, max WS message <b>4 KB</b>.</td></tr>
+        </table>
+    </div>
+
+    <h2 id="functions">3. Function Reference</h2>
+    <div class="card">
+        <table>
+            <tr><th>Group</th><th>Functions</th></tr>
+            <tr><td>Waves &amp; Time</td><td><code>time(sec)</code> sawtooth 0&rarr;1 every <code>sec</code> s &middot; <code>wave(v)</code> 0&rarr;1 sine &middot; <code>triangle(v)</code> 0&rarr;1&rarr;0 &middot; <code>square(v[, duty=0.5])</code> 1 when frac(v)&lt;duty</td></tr>
+            <tr><td>Noise &amp; Hash</td><td><code>perlin1D(x)</code> / <code>noise(x)</code> 0&rarr;1 &middot; <code>perlin2D(x,y)</code> / <code>noise2(x,y)</code> 0&rarr;1 &middot; <code>hash(x)</code> deterministic 0..1 &middot; <code>random()</code></td></tr>
+            <tr><td>Interpolation</td><td><code>mix(a,b,u)</code> / <code>lerp(a,b,u)</code> &middot; <code>clamp(x,lo,hi)</code> &middot; <code>step(edge,x)</code> &middot; <code>smoothstep(e0,e1,x)</code></td></tr>
+            <tr><td>Math</td><td><code>sin cos tan abs sqrt pow floor ceil round frac min max</code></td></tr>
+            <tr><td>Audio &amp; Gate</td><td><code>vu()</code> overall level &middot; <code>peak()</code> slow-decay peak &middot; <code>pitch()</code> dominant freq 0..1 &middot; <code>beat()</code> attack pulse &middot; <code>band(0..7)</code> &middot; <code>bass()</code> <code>mid()</code> <code>treble()</code> &middot; <code>mad()</code> &middot; <code>gate()</code>/<code>fade()</code></td></tr>
+        </table>
+    </div>
+
+    <h2 id="examples">4. Studio Pattern Examples</h2>
+    <p>Click <b>Open in Studio</b> on any example to load it straight into the live editor and push it to your LEDs.</p>
+    <div id="examplesList"></div>
+
+    <h2 id="tips">5. Tips &amp; Hardware Notes</h2>
+    <div class="card">
+        <ul>
+            <li><b>Color output:</b> Call <code>hsv(h, s, v)</code> for FastLED rainbow gradients (<code>h</code> wraps seamlessly cleanly around 0..1), or <code>rgb(r, g, b)</code> for linear RGB blends. Only the last color call per pixel is drawn.</li>
+            <li><b>Pin rules (ESP32-C3):</b> MAX4466 ADC input must use ADC1 (<code>GPIO 0..4</code>). Keep LED Data Pin (default <code>GPIO 5</code>) separate from mic pins and avoid strapping pins (<code>GPIO 8/9</code>) for output.</li>
+            <li><b>Captive portal:</b> Connecting to <code>Ember-XXXX</code> or <code>Ember-Audio-XXXX</code> (password <code>ember123</code>) automatically opens <code>http://192.168.4.1</code>.</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+const EXAMPLES = [
+    {
+        name: "Mirror Pulse",
+        note: "Symmetrical outward wave from the strip center using abs(x - 0.5).",
+        code: "// Symmetric pulse from center\nd = abs(i/n - 0.5) * 2;\nv = pow(wave(d * 1.5 - time(3)), 3);\nhsv(0.55 + d * 0.15, 0.9, v);"
+    },
+    {
+        name: "RGB Heat Mix",
+        note: "Smooth linear RGB crossfade between deep ember orange and cool ice blue.",
+        code: "// Two-color RGB blend\nu = wave(i/n + time(6));\nr = mix(0.05, 1.0, u);\ng = mix(0.35, 0.22, u);\nb = mix(0.95, 0.02, u);\nrgb(r, g, b);"
+    },
+    {
+        name: "Dual Comet",
+        note: "Two oppositely moving comets that wrap seamlessly at strip ends.",
+        code: "// Opposite wrapping comets\nh1 = time(3.5) * n;\nh2 = (1 - time(2.5)) * n;\nd1 = min(abs(i - h1), min(abs(i - h1 - n), abs(i - h1 + n)));\nd2 = min(abs(i - h2), min(abs(i - h2 - n), abs(i - h2 + n)));\nv1 = pow(clamp(1 - d1 / 7, 0, 1), 2);\nv2 = pow(clamp(1 - d2 / 7, 0, 1), 2);\nh = v1 > v2 ? 0.06 : 0.62;\nhsv(h, 0.95, clamp(v1 + v2, 0, 1));"
+    },
+    {
+        name: "Block Split",
+        note: "Demonstrates multi-statement { ... } blocks inside if/else.",
+        code: "// Multi-statement if / else blocks\nx = i / n;\nif (x < 0.5) {\n  h = 0.02 + time(10);\n  s = 1;\n  v = square(x * 8 + time(2), 0.5);\n} else {\n  h = 0.52 + time(10);\n  s = 0.85;\n  v = triangle(x * 4 - time(3));\n}\nhsv(h, s, v);"
+    },
+    {
+        name: "Lava Blobs",
+        note: "Sharpens smooth 2D Perlin clouds with smoothstep() for lava-lamp pools.",
+        code: "// Smoothstepped Perlin blobs\nb = perlin2D(i/n * 3, t * 0.45);\nb = smoothstep(0.42, 0.62, b);\nh = mix(0.01, 0.13, b);\nhsv(h, 1, b * 0.9 + 0.1);"
+    },
+    {
+        name: "Candy Stripes",
+        note: "Hard stripes with floor() and modulo wrapping.",
+        code: "// Drifting segmented stripes\nidx = floor(frac(i/n * 3 + time(6)) * 2);\nh = idx == 0 ? 0.0 : 0.55;\nhsv(h, 0.95, 1);"
+    },
+    {
+        name: "Twinkle Stars",
+        note: "Per-pixel phase offset via hash(i) so pixels shimmer independently.",
+        code: "// Independent twinkling stars\nphase = hash(i) * 12;\nspark = pow(wave(t * 1.1 + phase), 10);\nhsv(0.62 + hash(i + 3) * 0.12, 0.35, spark);"
+    },
+    {
+        name: "Spectrum Glide",
+        note: "Interpolates adjacent FFT frequency bands across the entire strip.",
+        code: "// Smooth 8-band FFT equalizer (mic on)\nx = i / n;\nb = x * 7;\nb0 = floor(b);\nlev = mix(band(b0), band(b0 + 1), b - b0);\nhsv(x * 0.83, 1, clamp(lev * 1.3, 0, 1));"
+    },
+    {
+        name: "Beat Burst",
+        note: "Flashes warm gold on beat attack and cools to ambient embers.",
+        code: "// Beat reactive burst + ambient base\nb = beat();\nshimmer = perlin2D(i * 0.1, t * 1.2) * 0.25;\nh = mix(0.02, 0.12, b);\nhsv(h, 1 - b * 0.3, clamp(b + shimmer, 0, 1));"
+    },
+    {
+        name: "Gate Dimmer",
+        note: "Uses gate() directly alongside ambient wave sparkle.",
+        code: "// Ambient shimmer scaled cleanly with gate()\ng = gate();\nspark = pow(wave(t * 0.9 + hash(i) * 8), 5);\nhsv(0.08 + perlin1D(i * 0.05) * 0.08, 0.9, (0.25 + spark * 0.75) * g);"
+    }
+];
+
+function escHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+const list = document.getElementById("examplesList");
+EXAMPLES.forEach(ex => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML =
+        `<div class="ex-head"><span class="ex-title">${escHtml(ex.name)}</span>` +
+        `<span class="ex-note">${escHtml(ex.note)}</span>` +
+        `<span class="spacer"></span>` +
+        `<button class="btn copy-btn">Copy</button>` +
+        `<button class="btn primary try-btn">Open in Studio</button></div>` +
+        `<pre>${escHtml(ex.code)}</pre>`;
+    card.querySelector(".copy-btn").addEventListener("click", ev => {
+        const btn = ev.currentTarget;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(ex.code).then(() => {
+                btn.textContent = "Copied";
+                setTimeout(() => btn.textContent = "Copy", 1200);
+            }).catch(() => {});
+        }
+    });
+    card.querySelector(".try-btn").addEventListener("click", () => {
+        try {
+            sessionStorage.setItem("ember_load_example", JSON.stringify({ name: ex.name, code: ex.code }));
+        } catch {}
+        window.location.href = "/";
+    });
+    list.appendChild(card);
+});
+</script>
+</body>
+</html>

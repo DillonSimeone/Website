@@ -10,6 +10,7 @@ struct RuntimeSnapshot {
     bool        mute = false;
     float       intensity = 0.6f;
     float       speed = 1.0f;
+    float       freq = 150.0f;
     float       startupFloor = 0.35f;
     bool        audioReactive = false;
     char        patternId[32] = "Breath";
@@ -22,5 +23,6 @@ bool loadRuntime(RuntimeSnapshot& out);
 bool saveRuntime(const RuntimeSnapshot& in);
 void markRuntimeDirty(const StagedState& s);
 void flushRuntimeIfDirty();
+void flushRuntimeNow();
 
 } // namespace haxel::core

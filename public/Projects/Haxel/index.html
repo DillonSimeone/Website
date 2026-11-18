@@ -145,15 +145,15 @@
                     <tbody>
                         <tr>
                             <td><strong>ESP32-C3 SuperMini</strong> (Default)</td>
-                            <td><code>c3WIFILED</code></td>
+                            <td><code>c3WIFI</code></td>
                             <td><strong>GPIO 6</strong> (MOSFET PWM)</td>
                             <td><strong>GPIO 5</strong> (Data IN, 20 LEDs)</td>
                             <td>GPIO 8</td>
-                            <td>Wi-Fi SoftAP <code>Haxel-XXXX</code></td>
+                            <td>Wi-Fi SoftAP <code>Haxel-XXXX</code> + ESP-NOW Mesh</td>
                         </tr>
                         <tr>
                             <td><strong>ESP32-C3 SuperMini BLE</strong></td>
-                            <td><code>c3BLULED</code></td>
+                            <td><code>c3BLU</code></td>
                             <td><strong>GPIO 6</strong> (MOSFET PWM)</td>
                             <td><strong>GPIO 5</strong> (Data IN)</td>
                             <td>GPIO 8</td>
@@ -161,35 +161,35 @@
                         </tr>
                         <tr>
                             <td><strong>FireBeetle 2 ESP32-C6</strong> (Mini L298N)</td>
-                            <td><code>c6WIFILED</code></td>
-                            <td><strong>GPIO 16, 17, 19, 20</strong> (3 Motors)</td>
-                            <td><strong>GPIO 17</strong></td>
+                            <td><code>c6WIFI</code></td>
+                            <td><strong>GPIO 16, 17, 19, 20</strong> (Dual H-Bridge)</td>
+                            <td>Disabled by default (e.g. <strong>GPIO 4</strong>)</td>
                             <td>GPIO 8</td>
-                            <td>Wi-Fi SoftAP <code>Haxel-XXXX</code></td>
+                            <td>Wi-Fi SoftAP <code>Haxel-XXXX</code> + ESP-NOW Mesh</td>
                         </tr>
                         <tr>
                             <td><strong>FireBeetle 2 ESP32-C6 BLE</strong></td>
-                            <td><code>c6BLULED</code></td>
+                            <td><code>c6BLU</code></td>
                             <td><strong>GPIO 16, 17, 19, 20</strong></td>
-                            <td><strong>GPIO 17</strong></td>
+                            <td>Disabled by default (e.g. <strong>GPIO 4</strong>)</td>
                             <td>GPIO 8</td>
                             <td>Chrome Web Bluetooth</td>
                         </tr>
                         <tr>
-                            <td><strong>FireBeetle 2 ESP32-C6 Fleet</strong></td>
-                            <td><code>c6WIFILED_FOLLOWER</code></td>
-                            <td><strong>GPIO 16, 17, 19, 20</strong></td>
-                            <td><strong>GPIO 17</strong></td>
-                            <td>GPIO 8</td>
-                            <td>ESP-NOW Mesh Slave (&lt; 5 ms)</td>
+                            <td><strong>ESP32-S3 DevKit / N16R8</strong></td>
+                            <td><code>s3WIFI</code> / <code>s3BLU</code></td>
+                            <td><strong>GPIO 6</strong> (MOSFET PWM)</td>
+                            <td><strong>GPIO 5</strong> (Data IN)</td>
+                            <td>GPIO 2</td>
+                            <td>Wi-Fi SoftAP / ESP-NOW or Web BLE</td>
                         </tr>
                         <tr>
                             <td><strong>ESP32 DevKit v1 / Classic</strong></td>
-                            <td><code>devWIFILED</code></td>
-                            <td><strong>GPIO 18 / 19</strong></td>
-                            <td><strong>GPIO 2</strong></td>
+                            <td><code>devWIFI</code> / <code>devBLU</code></td>
+                            <td><strong>GPIO 4</strong> (MOSFET PWM)</td>
+                            <td><strong>GPIO 5</strong> (Data IN)</td>
                             <td>GPIO 2</td>
-                            <td>Wi-Fi SoftAP <code>Haxel-XXXX</code></td>
+                            <td>Wi-Fi SoftAP / ESP-NOW or Web BLE</td>
                         </tr>
                     </tbody>
                 </table>
@@ -407,7 +407,9 @@
                                         <span class="chip" data-tag="rhythm">Rhythm</span>
                                         <span class="chip" data-tag="alert">Alert</span>
                                         <span class="chip" data-tag="music">Audio</span>
+                                        <span class="chip" data-tag="ambient">Ambient</span>
                                         <span class="chip" data-tag="time">Time</span>
+                                        <span class="chip" data-tag="reactive">Reactive</span>
                                         <span class="chip" data-tag="custom">Custom</span>
                                     </div>
                                     <div class="cards" id="libCards"></div>
@@ -512,6 +514,14 @@ wave(t * (freq * 0.05))
                                         <div class="row">
                                             <label>WiFi / BLE Name</label>
                                             <input type="text" id="deviceSsid" maxlength="31" value="Haxel" placeholder="Haxel-MyDevice">
+                                        </div>
+                                        <div class="row">
+                                            <label>Mesh Role (WiFi)</label>
+                                            <select id="meshRole">
+                                                <option value="0" selected>Standalone (Default)</option>
+                                                <option value="1">Mesh Master (SoftAP + Fleet Host)</option>
+                                                <option value="2">Mesh Follower (ESP-NOW Slave)</option>
+                                            </select>
                                         </div>
                                         <p class="hint" style="font-size: 10px; color: #555; margin-top: 5px;">
                                             Used for both the WiFi SSID and Bluetooth device name after saving and rebooting. Names are kept under the Haxel prefix for browser discovery.

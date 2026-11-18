@@ -2,7 +2,7 @@
 import { modelToSTL } from '../../00-CommonParts/Exporter/stl.js';
 import { context, params } from './state.js';
 import { buildHubPlug, buildWaveHalf } from './geometry.js';
-import { buildParametricCasing, buildCasingLid, buildShadeAdapter, buildWallMount } from './casingGeometry.js';
+import { buildParametricCasing, buildCasingLid, buildShadeAdapter, buildWallMount, buildSizeTester } from './casingGeometry.js';
 
 function downloadSTL(stlText, filename) {
     const blob = new Blob([stlText], { type: 'text/plain' });
@@ -19,7 +19,7 @@ export function triggerExport(target) {
 
     if (target === 'hub') {
         const hub = buildHubPlug(M, params);
-        downloadSTL(modelToSTL(hub, 'SpoolLamp_HubPlug_54_5mm'), 'SpoolLamp_54_5mm_Mic_Hub.stl');
+        downloadSTL(modelToSTL(hub, 'SpoolLamp_Center_Mic_Hub'), 'SpoolLamp_Center_Mic_Hub.stl');
         hub.delete();
         return;
     }
@@ -57,6 +57,13 @@ export function triggerExport(target) {
         const mount = buildWallMount(M, params);
         downloadSTL(modelToSTL(mount, 'SpoolLamp_Angled_WallMount'), 'SpoolLamp_Angled_WallMount.stl');
         mount.delete();
+        return;
+    }
+
+    if (target === 'size_tester') {
+        const tester = buildSizeTester(M, params);
+        downloadSTL(modelToSTL(tester, `SpoolLamp_BoreSizeTester_${params.testerStep}mm`), `SpoolLamp_BoreSizeTester_${params.testerStep}mm.stl`);
+        tester.delete();
         return;
     }
 

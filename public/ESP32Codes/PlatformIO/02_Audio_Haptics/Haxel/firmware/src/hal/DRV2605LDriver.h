@@ -21,6 +21,7 @@ public:
 private:
     bool selectMode(uint8_t mode);
     bool writeReg(uint8_t reg, uint8_t val);
+    bool readReg(uint8_t reg, uint8_t& val);
 
     DriverConfig cfg_{};
     bool   ready_ = false;

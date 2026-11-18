@@ -1,5 +1,6 @@
 #include "StateApi.h"
 #include "../core/Engine.h"
+#include "../core/AudioAnalyzer.h"
 #include "../core/Config.h"
 #include "../core/PatternRegistry.h"
 #include "../core/RuntimeStore.h"
@@ -44,15 +45,25 @@ bool upsertCustomPattern(const char* id, const char* name, const char* code, Str
         return false;
     }
 
-    if (engine) engine->detachPatternById(id);
-    PatternRegistry::instance().unregisterPattern(id);
+    auto& reg = PatternRegistry::instance();
+    reg.lockEval();
+    IPattern* existing = reg.find(id);
+    if (existing && strcmp(existing->meta().category, "custom") != 0) {
+        reg.unlockEval();
+        errOut = "cannot overwrite built-in pattern";
+        Serial.printf("[CTRL] custom-pattern '%s' blocked (built-in)\n", id);
+        return false;
+    }
     patterns::CustomPattern* cp = new patterns::CustomPattern(
         id, name ? name : "", code);
-    PatternRegistry::instance().registerCustomPattern(cp);
+    if (engine) engine->replacePatternById(id, cp);
+    reg.unregisterPattern(id);
+    reg.registerCustomPattern(cp);
+    reg.unlockEval();
 
     const bool draft = (strncmp(id, "studio_draft", 12) == 0);
     if (!draft) {
-        patterns::saveCustomPatterns(PatternRegistry::instance());
+        patterns::saveCustomPatterns(reg);
     }
     Serial.printf("[CTRL] custom-pattern registered id='%s' name='%s' draft=%d len=%u\n",
                   id, name ? name : "", (int)draft, (unsigned)strlen(code));
@@ -65,9 +76,18 @@ bool deleteCustomPattern(const char* id, String& errOut, Engine* engine) {
         errOut = "id is required";
         return false;
     }
+    auto& reg = PatternRegistry::instance();
+    reg.lockEval();
+    IPattern* existing = reg.find(id);
+    if (existing && strcmp(existing->meta().category, "custom") != 0) {
+        reg.unlockEval();
+        errOut = "cannot delete built-in pattern";
+        return false;
+    }
     if (engine) engine->detachPatternById(id);
-    PatternRegistry::instance().unregisterPattern(id);
-    patterns::saveCustomPatterns(PatternRegistry::instance());
+    reg.unregisterPattern(id);
+    reg.unlockEval();
+    patterns::saveCustomPatterns(reg);
     Serial.printf("[CTRL] custom-pattern deleted id='%s'\n", id);
     return true;
 }
@@ -87,7 +107,10 @@ bool configPatchNeedsReboot(JsonObjectConst patch) {
         || patch["led"].is<JsonObjectConst>()
         || patch["oled"].is<JsonObjectConst>()
         || patch["knobs"].is<JsonArrayConst>()
-        || patch["apSsid"].is<const char*>();
+        || patch["apSsid"].is<const char*>()
+        || patch["staEnabled"].is<bool>()
+        || patch["staSsid"].is<const char*>()
+        || patch["meshRole"].is<int>();
 }
 
 void serializeState(JsonObject root, Engine* engine) {
@@ -97,18 +120,22 @@ void serializeState(JsonObject root, Engine* engine) {
     root["mute"] = s.mute;
     root["intensity"] = s.intensity;
     root["speed"] = s.speed;
-    root["pattern"] = s.pattern ? s.pattern->id() : "";
+    root["freq"] = s.freq;
+    char patId[32] = "";
+    PatternRegistry::instance().copyIdIfValid(s.pattern, patId, sizeof(patId));
+    root["pattern"] = patId;
     root["startupFloor"] = s.startupFloor;
     root["audioReactive"] = s.audioReactive;
-    root["numBins"] = s.numBins;
+    uint8_t nb = (s.numBins < 1) ? 1 : (s.numBins > 5 ? 5 : s.numBins);
+    root["numBins"] = nb;
 
     auto divs = root["dividers"].to<JsonArray>();
-    for (int i = 0; i < s.numBins - 1 && i < 4; ++i) {
+    for (int i = 0; i < nb - 1 && i < 4; ++i) {
         divs.add(s.dividers[i]);
     }
 
     auto binPats = root["binPatterns"].to<JsonArray>();
-    for (int i = 0; i < s.numBins && i < 5; ++i) {
+    for (int i = 0; i < nb && i < 5; ++i) {
         binPats.add(s.binPatterns[i]);
     }
 
@@ -174,19 +201,48 @@ void applyStatePatch(JsonObjectConst patch, Engine* engine, Config* config) {
 
     StagedState s;
     engine->copyState(s);
-    if (patch["on"].is<bool>())        s.on        = patch["on"].as<bool>();
+    if (patch["on"].is<bool>()) {
+        s.on = patch["on"].as<bool>();
+        if (s.on && !(patch["mute"].is<bool>() && patch["mute"].as<bool>())) {
+            s.mute = false;
+            s.clearFault = true;
+        }
+    }
     if (patch["mute"].is<bool>())      s.mute      = patch["mute"].as<bool>();
     if (patch["intensity"].is<float>())s.intensity = patch["intensity"].as<float>();
     if (patch["speed"].is<float>())    s.speed     = patch["speed"].as<float>();
+    if (patch["freq"].is<float>()) {
+        float f = patch["freq"].as<float>();
+        if (f < 10.0f) f = 10.0f;
+        if (f > 500.0f) f = 500.0f;
+        s.freq = f;
+    }
+    if (patch["audioGain"].is<float>()) {
+        float g = patch["audioGain"].as<float>();
+        if (g < 0.1f) g = 0.1f;
+        if (g > 10.0f) g = 10.0f;
+        if (config) config->setAudioGain(g);
+        if (engine->attachedAudio()) engine->attachedAudio()->setGain(g);
+    }
     if (patch["clear"].is<bool>())     s.clearFault = patch["clear"].as<bool>();
 
     if (patch["startupFloor"].is<float>()) s.startupFloor = patch["startupFloor"].as<float>();
     if (patch["audioReactive"].is<bool>()) s.audioReactive = patch["audioReactive"].as<bool>();
-    if (patch["numBins"].is<int>())        s.numBins      = patch["numBins"].as<int>();
+    if (patch["numBins"].is<int>()) {
+        int nb = patch["numBins"].as<int>();
+        if (nb < 1) nb = 1;
+        if (nb > 5) nb = 5;
+        s.numBins = (uint8_t)nb;
+    }
     if (patch["dividers"].is<JsonArrayConst>()) {
         int i = 0;
         for (JsonVariantConst v : patch["dividers"].as<JsonArrayConst>()) {
-            if (i < 4) s.dividers[i++] = v.as<int>();
+            if (i < 4) {
+                int d = v.as<int>();
+                if (d < 1) d = 1;
+                if (d > 31) d = 31;
+                s.dividers[i++] = (uint8_t)d;
+            }
         }
     }
     if (patch["binPatterns"].is<JsonArrayConst>()) {
@@ -218,10 +274,12 @@ void applyStatePatch(JsonObjectConst patch, Engine* engine, Config* config) {
         }
         if (p) {
             s.pattern = p;
-            Serial.printf("[CTRL] pattern '%s' -> loaded '%s'\n", pid, p->id());
+            Serial.printf("[CTRL] pattern '%s' -> loaded '%s'\n", pid, pid);
         } else {
+            char curId[32] = "";
+            PatternRegistry::instance().copyIdIfValid(s.pattern, curId, sizeof(curId));
             Serial.printf("[CTRL] pattern '%s' -> NOT FOUND (keeping '%s')\n",
-                          pid, s.pattern ? s.pattern->id() : "(none)");
+                          pid, curId[0] ? curId : "(none)");
         }
     }
     if (patch["seg"][0]["fx"].is<int>()) {
@@ -233,10 +291,14 @@ void applyStatePatch(JsonObjectConst patch, Engine* engine, Config* config) {
         }
     }
     if (patch["params"].is<JsonObjectConst>() && s.pattern) {
-        for (auto kv : patch["params"].as<JsonObjectConst>()) {
-            s.pattern->setParam(kv.key().c_str(), kv.value().as<float>());
-            Serial.printf("[CTRL] param %s=%g\n", kv.key().c_str(), kv.value().as<float>());
+        PatternRegistry::instance().lockEval();
+        if (PatternRegistry::instance().contains(s.pattern)) {
+            for (auto kv : patch["params"].as<JsonObjectConst>()) {
+                s.pattern->setParam(kv.key().c_str(), kv.value().as<float>());
+                Serial.printf("[CTRL] param %s=%g\n", kv.key().c_str(), kv.value().as<float>());
+            }
         }
+        PatternRegistry::instance().unlockEval();
     }
 
     if (patch["channels"].is<JsonArrayConst>()) {
@@ -255,9 +317,11 @@ void applyStatePatch(JsonObjectConst patch, Engine* engine, Config* config) {
     }
 
     engine->stageState(s);
+    char stagedPatId[32] = "";
+    PatternRegistry::instance().copyIdIfValid(s.pattern, stagedPatId, sizeof(stagedPatId));
     Serial.printf("[CTRL] staged on=%d intensity=%.2f speed=%.2f pattern=%s\n",
                   (int)s.on, s.intensity, s.speed,
-                  s.pattern ? s.pattern->id() : "(none)");
+                  stagedPatId[0] ? stagedPatId : "(none)");
     if (config && patch["channels"].is<JsonArrayConst>()) {
         syncChannelEnablesToConfig_(config, s);
         config->markDirty();
@@ -292,6 +356,14 @@ void applyConfigPatch(JsonObjectConst patch, Config* config, Engine* engine, boo
     if (patch["apSsid"].is<const char*>()) {
         config->setApSsid(patch["apSsid"].as<const char*>());
     }
+    if (patch["staEnabled"].is<bool>()) {
+        config->setStaEnabled(patch["staEnabled"].as<bool>());
+    }
+    if (patch["staSsid"].is<const char*>() || patch["staPass"].is<const char*>()) {
+        String ssid = patch["staSsid"].is<const char*>() ? String(patch["staSsid"].as<const char*>()) : config->staSsid();
+        String pass = patch["staPass"].is<const char*>() ? String(patch["staPass"].as<const char*>()) : config->staPass();
+        config->setStaCredentials(ssid, pass);
+    }
     if (patch["knobs"].is<JsonArrayConst>()) {
         KnobConfig knobs[Config::kMaxKnobs];
         size_t count = 0;
@@ -317,6 +389,12 @@ void applyConfigPatch(JsonObjectConst patch, Config* config, Engine* engine, boo
     }
     if (patch["eStopPin"].is<int>()) {
         config->setEStopPin((int8_t)patch["eStopPin"].as<int>());
+    }
+    if (patch["meshRole"].is<int>()) {
+        int mr = patch["meshRole"].as<int>();
+        if (mr >= 0 && mr <= 2) {
+            config->setMeshRole((MeshRole)mr);
+        }
     }
     if (patch["channelEnabled"].is<JsonArrayConst>()) {
         bool en[Config::kMaxChannels];
@@ -355,11 +433,18 @@ void applyConfigPatch(JsonObjectConst patch, Config* config, Engine* engine, boo
         if (a["ws"].is<int>())       ac.i2sWs   = a["ws"];
         if (a["sd"].is<int>())       ac.i2sSd   = a["sd"];
         if (a["adc"].is<int>())      ac.adcPin  = a["adc"];
+        if (a["gain"].is<float>()) {
+            float g = a["gain"].as<float>();
+            if (g < 0.1f) g = 0.1f;
+            if (g > 10.0f) g = 10.0f;
+            ac.gain = g;
+            if (engine && engine->attachedAudio()) engine->attachedAudio()->setGain(g);
+        }
         config->setAudioConfig(ac);
     }
     if (persist) {
         config->setFirstRunComplete();
-        config->markDirty();
+        config->save();
     }
 }
 

@@ -312,8 +312,8 @@
                     <strong style="color: var(--text-main); display: block; margin-bottom: 4px;">Option A: Web Uploader (Visual UI)</strong>
                     1. Launch <code style="color: var(--accent-orange);">start-uploader.bat</code> in the repository.<br>
                     2. Open <strong>http://localhost:3567</strong> in Chrome.<br>
-                    3. Flash 1 board as <code style="color: var(--accent-blue);">c6WIFILED_MASTER</code>.<br>
-                    4. Flash remaining boards as <code style="color: var(--accent-blue);">c6WIFILED_FOLLOWER</code>.
+                    3. Flash 1 board with <code style="color: var(--accent-blue);">c6WIFI</code> (or <code style="color: var(--accent-blue);">c3WIFI</code>) and set Device Role = <strong>Master</strong>.<br>
+                    4. Flash remaining boards with <code style="color: var(--accent-blue);">c6WIFI</code> (or <code style="color: var(--accent-blue);">c3WIFI</code>) and set Device Role = <strong>Follower</strong>.
                 </div>
                 <div style="background: #0d0f12; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
                     <strong style="color: var(--text-main); display: block; margin-bottom: 4px;">Option B: One-Click Batch Scripts</strong>
@@ -337,7 +337,7 @@
                         <option value="Rumble">Rumble</option>
                         <option value="Breath">Breath</option>
                         <option value="Click">Click</option>
-                        <option value="Tick">Tick</option>
+                        <option value="Tap">Tap</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -491,7 +491,7 @@
 
                 const macStr = n.mac || 'Node';
                 const nodeName = n.name || macStr;
-                const dutyHist = n.ampHistory || [n.duty || 0, n.duty || 0, n.duty || 0];
+                const dutyHist = n.waveHistory || [n.duty || 0, n.duty || 0, n.duty || 0];
 
                 card.innerHTML = `
                     <div class="fleet-card-head">
@@ -616,8 +616,13 @@
                     // Update UI VU Meter
                     vuFill.style.width = Math.round(smoothIntensity * 100) + '%';
 
-                    // Broadcast smoothed audio intensity to Master Node
-                    broadcastState(smoothIntensity);
+                    // Broadcast smoothed audio intensity to Master Node (with in-flight guard)
+                    if (!window._fleetAudioInFlight) {
+                        window._fleetAudioInFlight = true;
+                        broadcastState(smoothIntensity).finally(() => {
+                            window._fleetAudioInFlight = false;
+                        });
+                    }
                 }, 40);
 
             } catch (err) {

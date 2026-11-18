@@ -20,11 +20,11 @@ This document is a high-level overview for agents. Prefer the live firmware tree
 
 ## 2. Transport modes (compile-time)
 
-Flash a PlatformIO env with either `-DHAXEL_WIFI` or `-DHAXEL_BLU` (mutually exclusive). Default: `c3WIFILED`.
+Flash a PlatformIO env with either `-DHAXEL_WIFI` or `-DHAXEL_BLU` (mutually exclusive). Default: `c3WIFI` (all 8 simplified profiles: `c3WIFI`, `c3BLU`, `c6WIFI`, `c6BLU`, `s3WIFI`, `s3BLU`, `devWIFI`, `devBLU`).
 
 - **WiFi:** open SoftAP `Haxel-XXXX` (MAC suffix), captive DNS → `192.168.4.1`, LittleFS UI.
 - **BLE:** advertises the **same** `Haxel-XXXX` name as the SoftAP SSID; control from this site’s `bluetooth.html` + `bluetooth.js`. Standalone BLE units are **not** part of a Command Mode fleet.
-- **Command Mode:** flash `c3WIFILED_MASTER` (SoftAP portal + ESP-NOW leader) and `c3WIFILED_FOLLOWER` (ESP-NOW only). Master **Fleet** tab claims followers, syncs state/audio, and can push config epochs. Details in firmware [AGENTS.md](../../ESP32Codes/PlatformIO/02_Audio_Haptics/Haxel/AGENTS.md).
+- **Command Mode:** flash `c3WIFI`/`c6WIFI` and set `Device -> Mesh Role` to Master (SoftAP portal + ESP-NOW leader) or Follower (ESP-NOW only). `fleet.html` claims followers, syncs state/audio, and can push config epochs. Details in firmware [AGENTS.md](../../ESP32Codes/PlatformIO/02_Audio_Haptics/Haxel/AGENTS.md).
 - **Rename:** Device menu changes the shared WiFi/BLE name, then saves and reboots.
 - **Safe BLE hydration:** the BLE portal remains locked until `sync-request` returns both current runtime state and multipart hardware config. Browser defaults must never be written during connection.
 

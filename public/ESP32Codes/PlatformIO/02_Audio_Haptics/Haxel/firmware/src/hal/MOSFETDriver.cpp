@@ -29,6 +29,9 @@ bool MOSFETDriver::begin(const DriverConfig& cfg) {
     for (int i = 0; i < 4; ++i) {
         if (cfg_.pins[i] < 0) continue;
         if (alloc.allocate(cfg_.pins[i], cfg_.pwmHz ? cfg_.pwmHz : 20000, cfg_.pwmBits) < 0) {
+            for (uint8_t j = 0; j < channelCount_; ++j) alloc.release(chPins_[j]);
+            for (int j = 0; j < 4; ++j) chPins_[j] = -1;
+            channelCount_ = 0;
             return false;
         }
         chPins_[channelCount_++] = cfg_.pins[i];

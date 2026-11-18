@@ -1,12 +1,18 @@
 @echo off
 setlocal
 echo ========================================================
-echo HAXEL — Flashing ESP32-C6 MESH FOLLOWER
+echo HAXEL — Flashing ESP32-C6 (Set Mesh Role = Follower in UI)
 echo ========================================================
-echo Environment: c6WIFILED_FOLLOWER
+echo Environment: c6WIFI
 echo.
-cd /d "%~dp0"
-call pio run -e c6WIFILED_FOLLOWER -t upload
+cd /d "%~dp0firmware"
+call pio run -e c6WIFI -t upload
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] Firmware upload failed!
+    pause
+    exit /b %ERRORLEVEL%
+)
+call pio run -e c6WIFI -t uploadfs
 if %ERRORLEVEL% NEQ 0 (
     echo [ERROR] Firmware upload failed!
     pause

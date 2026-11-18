@@ -3,6 +3,7 @@
 #include "../core/Engine.h"
 #include "../core/PatternRegistry.h"
 #include "../core/RuntimeStore.h"
+#include "../core/StatusLed.h"
 #include <ArduinoJson.h>
 
 namespace haxel::web {
@@ -16,9 +17,10 @@ static const char* HAXEL_SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
 static const char* RX_CHAR_UUID       = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
 static const char* TX_CHAR_UUID       = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 
-bool BleServer::begin(core::Engine* engine, Config* config) {
+bool BleServer::begin(core::Engine* engine, Config* config, StatusLed* statusLed) {
     engine_ = engine;
     config_ = config;
+    statusLed_ = statusLed;
 
     // Same identity as the WiFi SoftAP SSID (Config::generateApSsid_ / apSsid).
     String devName = config->apSsid();
@@ -70,6 +72,7 @@ bool BleServer::begin(core::Engine* engine, Config* config) {
     pAdvertising->setMinPreferred(0x06);  // helper for iPhone connections
     pAdvertising->setMinPreferred(0x12);
     BLEDevice::startAdvertising();
+    if (statusLed_) statusLed_->apMode();
 
     log_i("BLE Server started. Advertising as '%s'", devName.c_str());
     return true;
@@ -94,8 +97,9 @@ void BleServer::stop() {
 void BleServer::onConnect(BLEServer* pServer) {
     deviceConnected_ = true;
     stateSyncPending_ = true;
+    binsSyncPending_ = true;
+    disconnectCleanupPending_ = false;
     log_i("BLE client connected");
-    // Broadcast initial state on connection
     // Deferred to housekeepingTask via pump() — never notify() inside Bluedroid callback!
 }
 
@@ -103,13 +107,12 @@ void BleServer::onDisconnect(BLEServer* pServer) {
     deviceConnected_ = false;
     configSyncPending_ = false;
     stateSyncPending_ = false;
+    binsSyncPending_ = false;
+    disconnectCleanupPending_ = true;
     advRestartAtMs_ = millis() + 250;
     advRestartPending_ = true;
     log_i("BLE client disconnected");
-    // Restart advertising so client can reconnect
-    // Deferred to housekeepingTask via pump()
-
-
+    // Restart advertising & reset upload state via housekeepingTask pump().
 }
 
 void BleServer::onWrite(BLECharacteristic* pCharacteristic) {
@@ -146,15 +149,24 @@ void BleServer::processWrite_(const char* data, size_t len) {
         Serial.println("[CTRL] BLE sync requested (config + state)");
         configSyncPending_ = true;
         stateSyncPending_ = true;
+        binsSyncPending_ = true;
         // Deferred to housekeepingTask via pump() — never notify() inside Bluedroid callback!
         return;
     } else if (strcmp(type, "config-start") == 0) {
         configWriteInProgress_ = true;
         configWriteNeedsReboot_ = false;
+        pendingKnobCount_ = 0;
+        pendingKnobsUpdated_ = false;
         Serial.println("[CTRL] BLE config upload started");
         return;
     } else if (strcmp(type, "config-complete") == 0) {
         if (configWriteInProgress_) {
+            if (pendingKnobsUpdated_) {
+                config_->setKnobs(pendingKnobs_, pendingKnobCount_);
+                configWriteNeedsReboot_ = true;
+                pendingKnobCount_ = 0;
+                pendingKnobsUpdated_ = false;
+            }
             config_->setFirstRunComplete();
             config_->save();
             Serial.println("[CTRL] BLE config upload complete");
@@ -174,6 +186,7 @@ void BleServer::processWrite_(const char* data, size_t len) {
             JsonObjectConst data = doc["data"].as<JsonObjectConst>();
             if (data["apSsid"].is<const char*>()) patch["apSsid"] = data["apSsid"];
             if (data["hostname"].is<const char*>()) patch["hostname"] = data["hostname"];
+            if (data["meshRole"].is<int>()) patch["meshRole"] = data["meshRole"];
         } else if (strcmp(section, "driver") == 0 && doc["data"].is<JsonObjectConst>()) {
             JsonObjectConst data = doc["data"].as<JsonObjectConst>();
             JsonObject d = patch["driver"].to<JsonObject>();
@@ -182,11 +195,34 @@ void BleServer::processWrite_(const char* data, size_t len) {
             if (data["sda"].is<int>()) d["sda"] = data["sda"];
             if (data["scl"].is<int>()) d["scl"] = data["scl"];
             if (data["pwmHz"].is<int>()) d["pwmHz"] = data["pwmHz"];
+            if (data["flags"].is<uint32_t>()) d["flags"] = data["flags"];
             if (data["channelEnabled"].is<JsonArrayConst>()) {
                 patch["channelEnabled"] = data["channelEnabled"];
             }
         } else if (strcmp(section, "knobs") == 0 && doc["data"].is<JsonArrayConst>()) {
             patch["knobs"] = doc["data"];
+            pendingKnobCount_ = 0;
+            pendingKnobsUpdated_ = false;
+        } else if (strcmp(section, "knob") == 0 && doc["data"].is<JsonObjectConst>()) {
+            JsonObjectConst k = doc["data"].as<JsonObjectConst>();
+            if (configWriteInProgress_) {
+                if (pendingKnobCount_ < Config::kMaxKnobs) {
+                    pendingKnobs_[pendingKnobCount_].enabled = k["enabled"] | true;
+                    pendingKnobs_[pendingKnobCount_].pin     = k["pin"]     | -1;
+                    pendingKnobs_[pendingKnobCount_].param   = (const char*)(k["param"] | "none");
+                    pendingKnobCount_++;
+                    pendingKnobsUpdated_ = true;
+                }
+                return;
+            }
+            JsonArray ka = patch["knobs"].to<JsonArray>();
+            ka.add(k);
+        } else if (strcmp(section, "oled") == 0 && doc["data"].is<JsonObjectConst>()) {
+            JsonObjectConst data = doc["data"].as<JsonObjectConst>();
+            patch["oled"] = data;
+            if (data["eStopPin"].is<int>()) {
+                patch["eStopPin"] = data["eStopPin"];
+            }
         } else if (doc["data"].is<JsonObjectConst>()) {
             patch[section] = doc["data"];
         } else {
@@ -211,19 +247,13 @@ void BleServer::processWrite_(const char* data, size_t len) {
             JsonObjectConst patch = doc["patch"].as<JsonObjectConst>();
             applyConfigPatch(patch, config_, engine_, true);
             if (configPatchNeedsReboot(patch)) {
+                config_->save();
                 requestDeferredReboot(300);
-
             }
         }
     } else if (strcmp(type, "custom-pattern") == 0) {
         // Supports single-shot or chunked uploads:
         // {type,id,name,code,seq,total}  seq=0..total-1
-        static String cpId;
-        static String cpName;
-        static String cpCode;
-        static int cpTotal = 0;
-        static int cpNext = 0;
-
         const char* id = doc["id"] | "";
         const char* name = doc["name"] | "";
         const char* codeChunk = doc["code"] | "";
@@ -236,51 +266,52 @@ void BleServer::processWrite_(const char* data, size_t len) {
         }
 
         if (seq == 0) {
-            cpId = id;
-            cpName = name;
-            cpCode = codeChunk;
-            cpTotal = total;
-            cpNext = 1;
-        } else if (seq == cpNext && cpId == id) {
-            cpCode += codeChunk;
-            cpNext++;
+            cpId_ = id;
+            cpName_ = name;
+            cpCode_ = codeChunk;
+            cpTotal_ = total;
+            cpNext_ = 1;
+        } else if (seq == cpNext_ && cpId_ == id) {
+            cpCode_ += codeChunk;
+            cpNext_++;
         } else {
             Serial.printf("[CTRL] BLE custom-pattern chunk desync (got seq=%d expect=%d)\n",
-                          seq, cpNext);
-            cpId = "";
-            cpCode = "";
-            cpTotal = 0;
-            cpNext = 0;
+                          seq, cpNext_);
+            cpId_ = "";
+            cpName_ = "";
+            cpCode_ = "";
+            cpTotal_ = 0;
+            cpNext_ = 0;
             return;
         }
 
-        if (cpNext < cpTotal) {
+        if (cpNext_ < cpTotal_) {
             Serial.printf("[CTRL] BLE custom-pattern chunk %d/%d (%u chars so far)\n",
-                          cpNext, cpTotal, (unsigned)cpCode.length());
+                          cpNext_, cpTotal_, (unsigned)cpCode_.length());
             return; // wait for remaining chunks before broadcasting
         }
 
         String upsertErr;
-        if (!upsertCustomPattern(cpId.c_str(), cpName.c_str(), cpCode.c_str(), upsertErr, engine_)) {
+        if (!upsertCustomPattern(cpId_.c_str(), cpName_.c_str(), cpCode_.c_str(), upsertErr, engine_)) {
             Serial.printf("[CTRL] BLE custom-pattern failed: %s\n", upsertErr.c_str());
         } else if (engine_) {
             // Activate the pattern we just uploaded (studio draft or saved custom_*).
             core::StagedState s;
             engine_->copyState(s);
-            core::IPattern* p = core::PatternRegistry::instance().find(cpId.c_str());
+            core::IPattern* p = core::PatternRegistry::instance().find(cpId_.c_str());
             if (p) {
                 s.pattern = p;
                 s.on = true;
                 engine_->stageState(s);
                 core::markRuntimeDirty(s);
-                Serial.printf("[CTRL] BLE auto-selected pattern '%s'\n", cpId.c_str());
+                Serial.printf("[CTRL] BLE auto-selected pattern '%s'\n", cpId_.c_str());
             }
         }
-        cpId = "";
-        cpName = "";
-        cpCode = "";
-        cpTotal = 0;
-        cpNext = 0;
+        cpId_ = "";
+        cpName_ = "";
+        cpCode_ = "";
+        cpTotal_ = 0;
+        cpNext_ = 0;
     } else if (strcmp(type, "custom-pattern-delete") == 0) {
         const char* id = doc["id"] | "";
         String delErr;
@@ -295,6 +326,19 @@ void BleServer::processWrite_(const char* data, size_t len) {
 }
 
 void BleServer::pump() {
+    if (disconnectCleanupPending_) {
+        disconnectCleanupPending_ = false;
+        configWriteInProgress_ = false;
+        configWriteNeedsReboot_ = false;
+        pendingKnobCount_ = 0;
+        pendingKnobsUpdated_ = false;
+        cpId_ = "";
+        cpName_ = "";
+        cpCode_ = "";
+        cpTotal_ = 0;
+        cpNext_ = 0;
+        if (statusLed_) statusLed_->apMode();
+    }
     if (advRestartPending_ && (int32_t)(millis() - advRestartAtMs_) >= 0) {
         advRestartPending_ = false;
         if (rxQueue_) {
@@ -306,6 +350,9 @@ void BleServer::pump() {
         }
     }
     if (!deviceConnected_) return;
+    if (statusLed_ && stateSyncPending_) {
+        statusLed_->connected();
+    }
     if (rxQueue_) {
         BleRxPacket pkt;
         while (xQueueReceive(rxQueue_, &pkt, 0) == pdTRUE) {
@@ -316,6 +363,10 @@ void BleServer::pump() {
         configSyncPending_ = false;
         broadcastConfig();
     }
+    if (binsSyncPending_) {
+        binsSyncPending_ = false;
+        broadcastBins();
+    }
     if (stateSyncPending_) {
         stateSyncPending_ = false;
         broadcastState();
@@ -325,11 +376,55 @@ void BleServer::pump() {
 void BleServer::broadcastState() {
     if (!deviceConnected_ || !pTxCharacteristic_ || !engine_ || configSyncInProgress_) return;
 
+    core::StagedState s;
+    engine_->copyState(s);
+
+    auto round3 = [](float v) -> double {
+        return round((double)v * 1000.0) / 1000.0;
+    };
+
     JsonDocument doc;
     doc["type"] = "state";
     auto data = doc["data"].to<JsonObject>();
-    serializeState(data, engine_);
-    data.remove("info"); // Remove verbose info structure to stay under 253 bytes
+    data["on"] = s.on;
+    data["mute"] = s.mute;
+    data["intensity"] = round3(s.intensity);
+    data["speed"] = round3(s.speed);
+    data["freq"] = round((double)s.freq * 10.0) / 10.0;
+    char patId[32] = "";
+    core::PatternRegistry::instance().copyIdIfValid(s.pattern, patId, sizeof(patId));
+    data["pattern"] = patId;
+    data["startupFloor"] = round3(s.startupFloor);
+    data["audioReactive"] = s.audioReactive;
+    uint8_t nb = (s.numBins < 1) ? 1 : (s.numBins > 5 ? 5 : s.numBins);
+    data["numBins"] = nb;
+    auto ch = data["channels"].to<JsonArray>();
+    for (int i = 0; i < s.channelCount && i < 8; ++i) {
+        ch.add(s.channels[i].on);
+    }
+
+    notifyJson_(doc);
+}
+
+void BleServer::broadcastBins() {
+    if (!deviceConnected_ || !pTxCharacteristic_ || !engine_ || configSyncInProgress_) return;
+
+    core::StagedState s;
+    engine_->copyState(s);
+
+    JsonDocument doc;
+    doc["type"] = "bins";
+    auto data = doc["data"].to<JsonObject>();
+    uint8_t nb = (s.numBins < 1) ? 1 : (s.numBins > 5 ? 5 : s.numBins);
+    data["numBins"] = nb;
+    auto divs = data["dividers"].to<JsonArray>();
+    for (int i = 0; i < nb - 1 && i < 4; ++i) {
+        divs.add(s.dividers[i]);
+    }
+    auto binPats = data["binPatterns"].to<JsonArray>();
+    for (int i = 0; i < nb && i < 5; ++i) {
+        binPats.add(s.binPatterns[i]);
+    }
 
     notifyJson_(doc);
 }
@@ -344,6 +439,8 @@ void BleServer::notifyJson_(JsonDocument& doc) {
     const char* type = doc["type"] | "";
     if (strncmp(type, "config", 6) == 0) {
         delay(60); // Keep the multi-part config burst from overrunning BLE queues.
+    } else if (strcmp(type, "bins") == 0) {
+        delay(25);
     }
 }
 
@@ -363,6 +460,7 @@ void BleServer::broadcastConfig() {
         auto data = doc["data"].to<JsonObject>();
         data["apSsid"] = config_->apSsid();
         data["hostname"] = config_->hostname();
+        data["meshRole"] = (int)config_->meshRole();
         notifyJson_(doc);
     }
     {
@@ -389,16 +487,24 @@ void BleServer::broadcastConfig() {
         config_->ledToJson(doc["data"].to<JsonObject>());
         notifyJson_(doc);
     }
-    for (size_t i = 0; i < config_->knobCount(); ++i) {
+    if (config_->knobCount() == 0) {
         JsonDocument doc;
         doc["type"] = "config";
-        doc["section"] = "knob";
-        auto data = doc["data"].to<JsonObject>();
-        const auto& knob = config_->knob(i);
-        data["enabled"] = knob.enabled;
-        data["pin"] = knob.pin;
-        data["param"] = knob.param;
+        doc["section"] = "knobs";
+        doc["data"].to<JsonArray>();
         notifyJson_(doc);
+    } else {
+        for (size_t i = 0; i < config_->knobCount(); ++i) {
+            JsonDocument doc;
+            doc["type"] = "config";
+            doc["section"] = "knob";
+            auto data = doc["data"].to<JsonObject>();
+            const auto& knob = config_->knob(i);
+            data["enabled"] = knob.enabled;
+            data["pin"] = knob.pin;
+            data["param"] = knob.param;
+            notifyJson_(doc);
+        }
     }
     {
         JsonDocument doc;

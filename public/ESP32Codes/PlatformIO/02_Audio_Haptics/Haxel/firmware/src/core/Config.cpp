@@ -2,11 +2,39 @@
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 #include <WiFi.h>
+#ifndef HAXEL_HOST_TEST
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
+#endif
 
 namespace haxel {
 
 static constexpr const char* kPath    = "/config.json";
 static constexpr const char* kTmpPath = "/config.json.tmp";
+
+Config::Config() {
+#ifndef HAXEL_HOST_TEST
+    mux_ = xSemaphoreCreateRecursiveMutex();
+#endif
+}
+
+void Config::lock_() const {
+#ifndef HAXEL_HOST_TEST
+    if (!mux_) {
+        static portMUX_TYPE initMux = portMUX_INITIALIZER_UNLOCKED;
+        portENTER_CRITICAL(&initMux);
+        if (!mux_) mux_ = xSemaphoreCreateRecursiveMutex();
+        portEXIT_CRITICAL(&initMux);
+    }
+    if (mux_) xSemaphoreTakeRecursive(static_cast<SemaphoreHandle_t>(mux_), portMAX_DELAY);
+#endif
+}
+
+void Config::unlock_() const {
+#ifndef HAXEL_HOST_TEST
+    if (mux_) xSemaphoreGiveRecursive(static_cast<SemaphoreHandle_t>(mux_));
+#endif
+}
 
 void Config::applyDefaults_() {
     firstRun_ = true;
@@ -33,6 +61,8 @@ void Config::applyDefaults_() {
     driverConfig_.pins[5] = 20;   // INT4  → MOTOR-B (M1N10FB11G)
 #elif defined(HAXEL_DEFAULT_MOTOR_PIN)
     driverConfig_.pins[0] = HAXEL_DEFAULT_MOTOR_PIN;
+#elif defined(HAXEL_TARGET_CLASSIC) || (defined(CONFIG_IDF_TARGET_ESP32) && !defined(HAXEL_TARGET_S3))
+    driverConfig_.pins[0] = 4;  // Safe PWM pin on Classic ESP32 (GPIO 6..11 are SPI flash)
 #else
     driverConfig_.pins[0] = 6;  // MOSFET Motor Pin (ESP32-C3 SuperMini default)
 #endif
@@ -66,6 +96,9 @@ void Config::applyDefaults_() {
 #ifdef HAXEL_TARGET_C6
     oled_.sda = -1;
     oled_.scl = -1;
+#elif defined(HAXEL_TARGET_CLASSIC) || (defined(CONFIG_IDF_TARGET_ESP32) && !defined(HAXEL_TARGET_S3))
+    oled_.sda = 21;
+    oled_.scl = 22;
 #else
     oled_.sda = 8;
     oled_.scl = 9;
@@ -75,16 +108,25 @@ void Config::applyDefaults_() {
     oled_.height = 64;
 
     eStopPin_ = -1;
+#if HAXEL_FEATURE_MESH_MASTER
+    meshRole_ = MeshRole::MASTER;
+#elif HAXEL_FEATURE_MESH_FOLLOWER
+    meshRole_ = MeshRole::FOLLOWER;
+#else
+    meshRole_ = MeshRole::STANDALONE;
+#endif
 }
 
 void Config::setChannelEnabled(const bool* enabled, size_t count) {
     if (!enabled) return;
+    Lock lk(this);
     size_t n = count > kMaxChannels ? kMaxChannels : count;
     for (size_t i = 0; i < n; ++i) channelEnabled_[i] = enabled[i];
     markDirty();
 }
 
 void Config::setKnobs(const KnobConfig* knobs, size_t count) {
+    Lock lk(this);
     knobCount_ = count > kMaxKnobs ? kMaxKnobs : count;
     for (size_t i = 0; i < knobCount_; ++i) knobs_[i] = knobs[i];
     for (size_t i = knobCount_; i < kMaxKnobs; ++i) {
@@ -115,11 +157,13 @@ void Config::setApSsid(const String& requested) {
     if (value.isEmpty()) value = generateApSsid_();
     if (!value.startsWith("Haxel")) value = "Haxel-" + value;
     if (value.length() > 31) value.remove(31);
+    Lock lk(this);
     apSsid_ = value;
     markDirty();
 }
 
 bool Config::load() {
+    Lock lk(this);
     applyDefaults_();
     File f = LittleFS.open(kPath, "r");
     if (!f) {
@@ -166,9 +210,13 @@ bool Config::load() {
             driverConfig_.pins[i] = pins[i] | -1;
         }
     }
-    // If pins were omitted, keep applyDefaults_() pin map (MOSFET GPIO 6).
+    // If pins were omitted, keep target-safe MOSFET pin.
     if (driverKind_ == hal::DriverKind::MOSFET && driverConfig_.pins[0] < 0) {
+#if defined(HAXEL_TARGET_CLASSIC) || (defined(CONFIG_IDF_TARGET_ESP32) && !defined(HAXEL_TARGET_S3))
+        driverConfig_.pins[0] = 4;
+#else
         driverConfig_.pins[0] = 6;
+#endif
         migrated = true;
     }
     // Migrate boards that inherited the old L298N fallback with a single
@@ -191,6 +239,7 @@ bool Config::load() {
     driverConfig_.i2cAddr = doc["driver"]["i2cAddr"] | 0x5A;
     driverConfig_.pwmHz   = doc["driver"]["pwmHz"]   | 20000;
     driverConfig_.pwmBits = doc["driver"]["pwmBits"] | 10;
+    driverConfig_.flags   = doc["driver"]["flags"]   | 0u;
 
     if (doc["audio"].is<JsonObjectConst>()) {
         audio_.enabled = doc["audio"]["enabled"] | false;
@@ -203,11 +252,13 @@ bool Config::load() {
     }
 
     if (doc["led"].is<JsonObjectConst>()) {
-        led_.enabled = doc["led"]["enabled"] | true;
-        led_.pin     = doc["led"]["pin"]     | 5;
-        led_.count   = doc["led"]["count"]   | 20;
-        if (led_.pin < 0) { led_.pin = 5; migrated = true; }
-        if (led_.count == 0) { led_.count = 20; migrated = true; }
+        led_.enabled = doc["led"]["enabled"] | led_.enabled;
+        if (doc["led"]["pin"].is<int>())   led_.pin   = doc["led"]["pin"].as<int>();
+        if (doc["led"]["count"].is<int>()) led_.count = doc["led"]["count"].as<int>();
+        if (led_.enabled) {
+            if (led_.pin < 0) { led_.pin = 5; migrated = true; }
+            if (led_.count == 0) { led_.count = 20; migrated = true; }
+        }
     }
     // else keep applyDefaults_() (enabled, pin 5, count 20)
 
@@ -225,8 +276,13 @@ bool Config::load() {
 
     if (doc["oled"].is<JsonObjectConst>()) {
         oled_.enabled  = doc["oled"]["enabled"]  | false;
+#if defined(HAXEL_TARGET_CLASSIC) || (defined(CONFIG_IDF_TARGET_ESP32) && !defined(HAXEL_TARGET_S3))
+        oled_.sda      = doc["oled"]["sda"]      | 21;
+        oled_.scl      = doc["oled"]["scl"]      | 22;
+#else
         oled_.sda      = doc["oled"]["sda"]      | 8;
         oled_.scl      = doc["oled"]["scl"]      | 9;
+#endif
         oled_.i2cAddr  = doc["oled"]["i2cAddr"]  | 0x3C;
         oled_.width    = doc["oled"]["width"]    | 128;
         oled_.height   = doc["oled"]["height"]   | 64;
@@ -234,6 +290,10 @@ bool Config::load() {
     // else keep applyDefaults_() (oled disabled)
 
     eStopPin_ = (int8_t)(doc["eStopPin"] | -1);
+    if (doc["meshRole"].is<int>()) {
+        int mr = doc["meshRole"].as<int>();
+        if (mr >= 0 && mr <= 2) meshRole_ = (MeshRole)mr;
+    }
 
     if (JsonArrayConst chEn = doc["channelEnabled"].as<JsonArrayConst>()) {
         for (size_t i = 0; i < kMaxChannels; ++i) channelEnabled_[i] = true;
@@ -250,6 +310,7 @@ bool Config::load() {
 }
 
 void Config::driverToJson(JsonObject drv, bool includeDriverExtra) const {
+    Lock lk(this);
     drv["kind"] = (int)driverKind_;
     auto pins = drv["pins"].to<JsonArray>();
     for (int i = 0; i < 8; ++i) pins.add(driverConfig_.pins[i]);
@@ -260,9 +321,11 @@ void Config::driverToJson(JsonObject drv, bool includeDriverExtra) const {
         drv["pwmBits"] = driverConfig_.pwmBits;
     }
     drv["pwmHz"] = driverConfig_.pwmHz;
+    drv["flags"] = driverConfig_.flags;
 }
 
 void Config::audioToJson(JsonObject au) const {
+    Lock lk(this);
     au["enabled"] = audio_.enabled;
     au["source"]  = (int)audio_.source;
     au["bclk"]    = audio_.i2sBclk;
@@ -273,12 +336,14 @@ void Config::audioToJson(JsonObject au) const {
 }
 
 void Config::ledToJson(JsonObject ld) const {
+    Lock lk(this);
     ld["enabled"] = led_.enabled;
     ld["pin"]     = led_.pin;
     ld["count"]   = led_.count;
 }
 
 void Config::oledToJson(JsonObject ol) const {
+    Lock lk(this);
     ol["enabled"] = oled_.enabled;
     ol["sda"]     = oled_.sda;
     ol["scl"]     = oled_.scl;
@@ -288,6 +353,7 @@ void Config::oledToJson(JsonObject ol) const {
 }
 
 void Config::toJson(JsonObject root, bool includeSecrets) const {
+    Lock lk(this);
     root["firstRun"] = firstRun_;
     if (includeSecrets) {
         root["staEnabled"] = staEnabled_;
@@ -311,12 +377,14 @@ void Config::toJson(JsonObject root, bool includeSecrets) const {
 
     oledToJson(root["oled"].to<JsonObject>());
     root["eStopPin"] = eStopPin_;
+    root["meshRole"] = (int)meshRole_;
 
     auto chEn = root["channelEnabled"].to<JsonArray>();
     for (size_t i = 0; i < kMaxChannels; ++i) chEn.add(channelEnabled_[i]);
 }
 
 bool Config::save() {
+    Lock lk(this);
     JsonDocument doc;
     toJson(doc.to<JsonObject>(), true);
 
@@ -324,6 +392,7 @@ bool Config::save() {
     serializeJson(doc, serialized);
     if (serialized == lastSavedJson_) {
         dirty_ = false;
+        lastDirtyMs_ = 0;
         return true; // Dedup identical writes to spare flash.
     }
 
@@ -335,10 +404,12 @@ bool Config::save() {
     LittleFS.rename(kTmpPath, kPath);
     lastSavedJson_ = serialized;
     dirty_ = false;
+    lastDirtyMs_ = 0;
     return true;
 }
 
 void Config::flushIfDirty() {
+    Lock lk(this);
     if (!dirty_) return;
     // Debounce writes to spare flash. Hold for 1 s of quiet first.
     if (lastDirtyMs_ == 0) { lastDirtyMs_ = millis(); return; }

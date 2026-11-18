@@ -7,7 +7,7 @@ namespace haxel::hal {
 
 DriverCaps L298NDriver::capabilities() const {
     return DriverCaps{
-        /* channels */ 2,
+        /* channels */ channelCount_ ? channelCount_ : (uint8_t)2,
         /* bidirectional */ true,
         /* brake */ true,
         /* onChipLibrary */ false,
@@ -40,7 +40,14 @@ bool L298NDriver::begin(const DriverConfig& cfg) {
     }
     auto& alloc = LedcAllocator::instance();
     channelCount_ = 0;
+    chMap_[0] = 0;
+    chMap_[1] = 1;
     const uint32_t hz = cfg_.pwmHz ? cfg_.pwmHz : 20000;
+
+    auto rollbackPins = [&]() {
+        for (int i = 0; i < 6; ++i) alloc.release(cfg_.pins[i]);
+        channelCount_ = 0;
+    };
 
     for (uint8_t ch = 0; ch < 2; ++ch) {
         int8_t ena = (ch == 0) ? cfg_.pins[0] : cfg_.pins[3];
@@ -52,17 +59,17 @@ bool L298NDriver::begin(const DriverConfig& cfg) {
 
         if (ena >= 0) {
             // Separate-PWM mode: ENA = PWM, direction pins = digital.
-            if (alloc.allocate(ena, hz, cfg_.pwmBits) < 0) return false;
+            if (alloc.allocate(ena, hz, cfg_.pwmBits) < 0) { rollbackPins(); return false; }
             if (inA >= 0) { pinMode(inA, OUTPUT); digitalWrite(inA, LOW); }
             if (inB >= 0) { pinMode(inB, OUTPUT); digitalWrite(inB, LOW); }
         } else {
             // Sign-magnitude mode: PWM both direction pins. The unused side is
             // driven to duty 0 (slow-decay-equivalent on L298N with ENA tied
             // high externally).
-            if (inA >= 0 && alloc.allocate(inA, hz, cfg_.pwmBits) < 0) return false;
-            if (inB >= 0 && alloc.allocate(inB, hz, cfg_.pwmBits) < 0) return false;
+            if (inA >= 0 && alloc.allocate(inA, hz, cfg_.pwmBits) < 0) { rollbackPins(); return false; }
+            if (inB >= 0 && alloc.allocate(inB, hz, cfg_.pwmBits) < 0) { rollbackPins(); return false; }
         }
-        channelCount_++;
+        chMap_[channelCount_++] = ch;
     }
 
     if (channelCount_ == 0) {
@@ -100,10 +107,11 @@ void L298NDriver::write(uint8_t ch, float duty01) {
 }
 
 void L298NDriver::writeSigned(uint8_t ch, float v) {
-    if (!ready_ || ch > 1) return;
-    int8_t ena = (ch == 0) ? cfg_.pins[0] : cfg_.pins[3];
-    int8_t inA = (ch == 0) ? cfg_.pins[1] : cfg_.pins[4];
-    int8_t inB = (ch == 0) ? cfg_.pins[2] : cfg_.pins[5];
+    if (!ready_ || ch >= channelCount_) return;
+    const uint8_t phys = chMap_[ch];
+    int8_t ena = (phys == 0) ? cfg_.pins[0] : cfg_.pins[3];
+    int8_t inA = (phys == 0) ? cfg_.pins[1] : cfg_.pins[4];
+    int8_t inB = (phys == 0) ? cfg_.pins[2] : cfg_.pins[5];
 
     if (v >  1.0f) v =  1.0f;
     if (v < -1.0f) v = -1.0f;

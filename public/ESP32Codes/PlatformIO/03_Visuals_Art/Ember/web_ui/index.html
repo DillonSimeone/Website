@@ -105,10 +105,11 @@ main {
     background: var(--panel-2);
     color: var(--muted);
     font-family: var(--mono);
-    font-size: 12px;
+    font-size: 13px;
     text-align: right;
     padding: 12px 8px 12px 0;
     line-height: 1.55;
+    white-space: pre;
     user-select: none;
     overflow: hidden;
     pointer-events: none;
@@ -174,7 +175,7 @@ main {
     display: block;
 }
 
-/* — Bathroom Audio Trigger Threshold Panel (DeafDoorbell Style) — */
+/* — Audio Trigger Threshold Panel (DeafDoorbell Style) — */
 .gate-panel {
     margin: 0 0 16px 0;
     padding: 12px 14px;
@@ -375,6 +376,10 @@ aside {
     display: flex; flex-direction: column; gap: 6px;
 }
 .card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.card.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px rgba(124,156,255,0.35);
+}
 .card .name { font-weight: 500; font-size: 13px; }
 .card .strip {
     height: 6px; border-radius: 3px;
@@ -417,11 +422,19 @@ aside {
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 4px 10px;
+    font: inherit;
     font-size: 12px;
+    color: var(--text);
     cursor: pointer;
     display: inline-flex; align-items: center; gap: 6px;
+    transition: border-color .15s, background .15s, color .15s;
 }
 .chip:hover { border-color: var(--accent); }
+button.chip:hover, button.chip.active {
+    background: rgba(124,156,255,0.16);
+    border-color: var(--accent);
+    color: #fff;
+}
 .chip .x {
     color: var(--muted); cursor: pointer;
     width: 14px; height: 14px;
@@ -438,7 +451,7 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
 <div class="app">
     <header>
         <div class="logo">EMBER-AUDIO</div>
-        <div class="crumb">Pattern: <b id="patternName">Breathing Aurora</b></div>
+        <div class="crumb">Pattern: <b id="patternName">Shifting Rainbow</b></div>
         <div class="spacer"></div>
         <div class="status">
             <span class="dot" id="dot"></span>
@@ -448,17 +461,18 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
     </header>
 
     <div class="container">
-        <div class="tabbar" style="margin-bottom:16px">
+        <div class="tabbar" style="margin-bottom:12px">
             <button class="tab active" data-tab="lib">Ambient</button>
             <button class="tab" data-tab="set">Settings</button>
             <button class="tab" data-tab="advanced">Advanced</button>
         </div>
+        <div class="err" id="deviceBanner" style="display:none;margin:0 0 12px 0"></div>
 
         <div class="section" id="tab-lib">
             <div class="preview">
                 <div class="label">
                     <span>Live preview · <span id="prevCount">100</span> pixels</span>
-                    <span style="font-family:var(--mono);color:var(--accent)">Envelope: <span id="envPct">0%</span></span>
+                    <span style="font-family:var(--mono);color:var(--accent)">Envelope: <span id="envPct">100%</span></span>
                 </div>
                 <canvas id="prev" width="300" height="32"></canvas>
             </div>
@@ -468,7 +482,7 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
                 <div class="gate-header">
                     <div class="gate-title">
                         <span>Audio Sensitivity Gate</span>
-                        <span class="gate-badge" id="gateStateBadge">Faded Out (0%)</span>
+                        <span class="gate-badge active" id="gateStateBadge">Active (100%)</span>
                     </div>
                     <div class="gate-metrics">
                         <span id="liveMicVal" style="color:#00e5ff;font-weight:600">Mic: 0 MAD</span>
@@ -483,7 +497,7 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
                 </div>
                 <input type="range" id="threshRange" min="200" max="30000" step="100" value="2500" style="width:100%;accent-color:#eab308;cursor:pointer">
                 <div class="gate-toggles">
-                    <label title="When enabled, lights smoothly fade in over 2s above X and fade out over 2s below Y">
+                    <label title="When enabled, lights smoothly fade in (~2s) above X and fade out (~3.5s after 400ms hold) below Y">
                         <input type="checkbox" id="gateEnableChk" checked>
                         <span>Audio Gate Fade (2.0s S-Curve)</span>
                     </label>
@@ -493,8 +507,9 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
                             <span>Auto Cycle</span>
                         </label>
                         <div style="display:inline-flex;align-items:center;gap:4px">
-                            <input type="number" id="cycleSec" min="5" max="600" value="30" style="width:52px;padding:3px 6px;text-align:center;background:var(--panel-2);border:1px solid var(--border);color:#00e5ff;border-radius:4px;font-family:var(--mono);font-size:13px;font-weight:600">
+                            <input type="number" id="cycleSec" min="5" max="600" value="5" style="width:52px;padding:3px 6px;text-align:center;background:var(--panel-2);border:1px solid var(--border);color:#00e5ff;border-radius:4px;font-family:var(--mono);font-size:13px;font-weight:600">
                             <span style="color:var(--muted);font-size:12px">sec</span>
+                            <span id="cycleNextVal" style="color:var(--muted);font-size:11px;font-family:var(--mono);margin-left:4px"></span>
                         </div>
                     </div>
                 </div>
@@ -533,7 +548,7 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
                 <input type="number" id="count" min="1" max="600" value="100" style="width:80px">
                 <button class="btn" id="countApply">Apply</button>
             </div>
-            <p class="hint">Changing the data pin or pixel count reboots the device — FastLED's pin is compiled in, so a clean rebuild of its controller list is required.</p>
+            <p class="hint">Pixel count applies live without rebooting (up to 600 LEDs). Changing the data pin reboots the device to re-initialize the RMT channel.</p>
 
             <h3 style="margin-top:16px">Audio &amp; Microphone</h3>
             <div class="row">
@@ -579,8 +594,11 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
                         <option value="2">GPIO 2</option>
                         <option value="3">GPIO 3</option>
                         <option value="4" selected>GPIO 4 (Driven LOW)</option>
+                        <option value="5">GPIO 5</option>
                         <option value="6">GPIO 6</option>
                         <option value="7">GPIO 7</option>
+                        <option value="8">GPIO 8</option>
+                        <option value="9">GPIO 9</option>
                         <option value="10">GPIO 10</option>
                     </select>
                 </div>
@@ -615,16 +633,45 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
                 </div>
             </div>
 
-            <h3 style="margin-top:16px">Access Point</h3>
-            <p class="hint" style="margin-bottom:12px;line-height:1.6">
-                Network: <strong style="color:var(--text)">Ember-Audio</strong><br>
+            <h3 style="margin-top:16px">Network &amp; Access Point</h3>
+            <p class="hint" style="margin-bottom:10px;line-height:1.6">
+                Network: <strong id="apSsidVal" style="color:var(--text)">Ember-Audio</strong><br>
                 Password: <strong style="color:var(--text)">ember123</strong><br>
                 Portal URL: <a href="http://192.168.4.1" style="color:var(--accent);text-decoration:underline">http://192.168.4.1</a>
             </p>
+            <div class="row">
+                <label>AP Name</label>
+                <input type="text" id="apSsidInput" maxlength="32" placeholder="Ember-Audio-XXXX" style="flex:1">
+            </div>
+            <div class="row">
+                <label>Hostname</label>
+                <input type="text" id="hostnameInput" maxlength="31" placeholder="ember-audio-xxxx" style="flex:1">
+            </div>
+            <div id="staWifiWrap" style="display:none">
+                <div class="row">
+                    <label>Home Wi-Fi</label>
+                    <input type="text" id="staSsidInput" maxlength="63" placeholder="SSID (leave blank for AP mode)" style="flex:1">
+                </div>
+                <div class="row">
+                    <label>Wi-Fi Pass</label>
+                    <input type="password" id="staPassInput" maxlength="63" placeholder="Password (blank = keep existing / open on new SSID)" style="flex:1">
+                </div>
+                <div class="row">
+                    <label></label>
+                    <label style="display:inline-flex;align-items:center;gap:6px;flex:1;color:var(--muted);cursor:pointer;text-transform:none;font-size:12px">
+                        <input type="checkbox" id="staOpenChk">
+                        <span>Clear saved password (connect to open network)</span>
+                    </label>
+                </div>
+            </div>
+            <div style="margin-bottom:12px">
+                <button class="btn" id="wifiApply">Apply network &amp; reboot</button>
+            </div>
 
             <h3 style="margin-top:16px">System &amp; OTA Update</h3>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
                 <a class="btn primary" href="/update">OTA Firmware Update (/update)</a>
+                <button class="btn" id="resetSettings">Reset Settings to Defaults</button>
                 <button class="btn danger" id="reboot">Reboot Device</button>
             </div>
         </div>
@@ -648,10 +695,15 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
                               autocorrect="off" autocapitalize="off"></textarea>
                 </div>
                 <div class="toolbar" style="margin:0 0 8px 0;display:flex;gap:8px;">
-                    <input type="text" id="saveName" placeholder="Pattern name" style="flex:1;min-width:140px">
+                    <input type="text" id="saveName" maxlength="17" placeholder="Pattern name (max 17 chars)" style="flex:1;min-width:140px">
                     <button class="btn primary" id="saveBtn">Save</button>
                     <button class="btn" id="newBtn">New</button>
                 </div>
+                <div style="margin:10px 0 4px 0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+                    <span class="hint" style="font-weight:600;color:var(--text)">Common Coding Examples</span>
+                    <a href="/manual.html" class="hint" style="color:var(--accent);text-decoration:underline;font-weight:500">Full Studio Manual &amp; More Examples &rarr;</a>
+                </div>
+                <div class="saved" id="studioExamples" style="margin-bottom:8px"></div>
             </div>
 
             <div class="subcontent" id="sub-saved" style="display:none">
@@ -664,9 +716,12 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
                 <div style="background: rgba(124, 156, 255, 0.08); border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 16px;" id="ember-credits">
                     <span style="font-weight: 600; font-size: 13px; display: block; margin-bottom: 4px; color: var(--accent);">Ember Project</span>
                     <span class="hint">Created by <a href="https://dillonsimeone.com" target="_blank" style="color: var(--accent-2); text-decoration: none; font-weight: 500;" id="credit-link">Dillon Simeone</a>.</span>
-                    <span class="hint" style="display: block; margin-top: 4px;">Licensed under <a href="/LICENSE" target="_blank" style="color: var(--muted); text-decoration: underline;">MIT License</a>.</span>
+                    <span class="hint" style="display: block; margin-top: 4px;">Licensed under <a href="https://opensource.org/license/mit" target="_blank" rel="noopener" style="color: var(--muted); text-decoration: underline;">MIT License</a>.</span>
                 </div>
-                <h3>Language Reference</h3>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+                    <h3>Language Reference</h3>
+                    <a href="/manual.html" class="btn" style="text-decoration:none;font-size:12px;padding:6px 10px">Open Full Manual &amp; Examples</a>
+                </div>
                 <p class="hint">Ember patterns run once per pixel per frame. Set the output with <code>hsv(h,s,v)</code> or <code>rgb(r,g,b)</code> at the end.</p>
                 <h3 style="margin-top:14px">Built-in variables</h3>
                 <p class="hint">
@@ -690,8 +745,8 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
                     <code>square(v, duty)</code> — square wave, duty defaults to 0.5<br>
                     <code>perlin1D(x)</code>, <code>perlin2D(x,y)</code> — organic noise<br>
                     <code>hash(x)</code> — stable per-pixel random<br>
-                    <code>sin cos abs sqrt pow floor ceil round frac</code><br>
-                    <code>min max clamp mix step smoothstep</code>
+                    <code>sin cos tan abs sqrt pow floor ceil round frac</code><br>
+                    <code>min max clamp mix lerp step smoothstep random noise noise2</code>
                 </p>
                 <h3 style="margin-top:14px">Audio &amp; Gate</h3>
                 <p class="hint">
@@ -702,8 +757,7 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
                     <code>pitch()</code> — dominant frequency, 0=low … 1=high<br>
                     <code>beat()</code> — 1 on attack, decays fast<br>
                     <code>band(n)</code> — band n (0..7), low→high<br>
-                    <code>bass()</code>, <code>mid()</code>, <code>treble()</code> — band shortcuts<br>
-                    <code>motion()</code> / <code>motion</code> — ESP-NOW motion intensity 0→1
+                    <code>bass()</code>, <code>mid()</code>, <code>treble()</code> — band shortcuts
                 </p>
             </div>
         </div>
@@ -744,7 +798,7 @@ document.querySelectorAll(".subtab").forEach(s => s.addEventListener("click", ()
 }));
 
 // ─── Syntax highlighter ─────────────────────────────────────────────────────
-const KW   = ["if","else","return"];
+const KW   = ["if","else"];
 const FNS  = ["sin","cos","tan","abs","sqrt","pow","floor","ceil","round","frac",
               "min","max","clamp","mix","lerp","step","smoothstep",
               "wave","triangle","square","time","perlin1D","perlin1d",
@@ -808,14 +862,33 @@ function syncHL() {
     const lines = v.split("\n").length;
     let g = ""; for (let i = 1; i <= lines; i++) g += i + "\n";
     gutter.textContent = g;
-    hl.scrollTop  = ta.scrollTop;
-    hl.scrollLeft = ta.scrollLeft;
+    hl.scrollTop     = ta.scrollTop;
+    hl.scrollLeft    = ta.scrollLeft;
+    gutter.scrollTop = ta.scrollTop;
 }
-ta.addEventListener("input", () => { syncHL(); scheduleCompile(); });
-ta.addEventListener("scroll", () => { hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft; });
+let lastTaEditMs = 0;
+ta.addEventListener("input", () => {
+    lastTaEditMs = Date.now();
+    if (autoCycleChk.checked) {
+        autoCycleChk.checked = false;
+        sendGateSettings(true);
+    }
+    syncHL();
+    scheduleCompile();
+});
+ta.addEventListener("scroll", () => {
+    hl.scrollTop = ta.scrollTop;
+    hl.scrollLeft = ta.scrollLeft;
+    gutter.scrollTop = ta.scrollTop;
+});
 ta.addEventListener("keydown", (e) => {
     if (e.key === "Tab") {
         e.preventDefault();
+        lastTaEditMs = Date.now();
+        if (autoCycleChk.checked) {
+            autoCycleChk.checked = false;
+            sendGateSettings(true);
+        }
         const s = ta.selectionStart, en = ta.selectionEnd;
         ta.value = ta.value.slice(0, s) + "    " + ta.value.slice(en);
         ta.selectionStart = ta.selectionEnd = s + 4;
@@ -850,16 +923,21 @@ function tokenize(src) {
         const two = src.slice(i, i+2);
         if (two === "<=" || two === ">=" || two === "==" || two === "!=") { tks.push({t:two}); i += 2; continue; }
         if ("+-*/%<>=?:(),;{}".indexOf(c) >= 0) { tks.push({t:c}); i++; continue; }
-        i++;
+        throw new Error("unexpected token '" + c + "'");
     }
     tks.push({t:"eof"});
     return tks;
 }
 
 class Parser {
-    constructor(tks) { this.tks = tks; this.p = 0; }
+    constructor(tks) { this.tks = tks; this.p = 0; this.depth = 0; this.MAX_DEPTH = 32; }
     peek(o = 0) { return this.tks[this.p + o]; }
     eat() { return this.tks[this.p++]; }
+    withDepth(fn) {
+        if (this.depth >= this.MAX_DEPTH) throw new Error("expression too deep");
+        this.depth++;
+        try { return fn(); } finally { this.depth--; }
+    }
     parseProgram() {
         const stmts = [];
         while (this.peek().t !== "eof") {
@@ -871,37 +949,62 @@ class Parser {
         return {kind:"prog", stmts};
     }
     parseStmt() {
-        if (this.peek().t === "id" && this.peek().v === "if" && this.peek(1).t === "(") {
-            this.eat(); this.eat();
-            const cond = this.parseTern();
-            if (this.peek().t !== ")") throw new Error("expected ')'");
-            this.eat();
-            const thenStmt = this.parseStmt();
-            let elseStmt = null;
-            if (this.peek().t === "id" && this.peek().v === "else") {
+        return this.withDepth(() => {
+            if (this.peek().t === ";") { this.eat(); return {kind:"block", stmts:[]}; }
+            if (this.peek().t === "{") {
                 this.eat();
-                elseStmt = this.parseStmt();
+                const stmts = [];
+                while (this.peek().t !== "}" && this.peek().t !== "eof") {
+                    while (this.peek().t === ";") this.eat();
+                    if (this.peek().t === "}" || this.peek().t === "eof") break;
+                    stmts.push(this.parseStmt());
+                }
+                if (this.peek().t !== "}") throw new Error("expected '}'");
+                this.eat();
+                while (this.peek().t === ";") this.eat();
+                return {kind:"block", stmts};
             }
-            return {kind:"if", cond, thenStmt, elseStmt};
-        }
-        if (this.peek().t === "id" && this.peek(1).t === "=") {
-            const name = this.eat().v; this.eat();
-            const val = this.parseTern();
-            return {kind:"asn", name, val};
-        }
-        return {kind:"exp", e:this.parseTern()};
+            if (this.peek().t === "id" && this.peek().v === "if") {
+                this.eat();
+                if (this.peek().t !== "(") throw new Error("expected '(' after if");
+                this.eat();
+                const cond = this.parseTern();
+                if (this.peek().t !== ")") throw new Error("expected ')'");
+                this.eat();
+                const thenStmt = this.parseStmt();
+                while (this.peek().t === ";") this.eat();
+                let elseStmt = null;
+                if (this.peek().t === "id" && this.peek().v === "else") {
+                    this.eat();
+                    elseStmt = this.parseStmt();
+                }
+                while (this.peek().t === ";") this.eat();
+                return {kind:"if", cond, thenStmt, elseStmt};
+            }
+            if (this.peek().t === "id" && this.peek(1).t === "=") {
+                const name = this.eat().v; this.eat();
+                const val = this.parseTern();
+                while (this.peek().t === ";") this.eat();
+                return {kind:"asn", name, val};
+            }
+            const exprStmt = {kind:"exp", e:this.parseTern()};
+            while (this.peek().t === ";") this.eat();
+            return exprStmt;
+        });
     }
     parseTern() {
-        const c = this.parseCmp();
-        if (this.peek().t === "?") {
-            this.eat();
-            const a = this.parseTern();
-            if (this.peek().t !== ":") throw new Error("expected ':'");
-            this.eat();
-            const b = this.parseTern();
-            return {kind:"tern", c, a, b};
-        }
-        return c;
+        return this.withDepth(() => {
+            const c = this.parseCmp();
+            if (this.peek().t === "?") {
+                this.eat();
+                const a = this.parseTern();
+                if (this.peek().t !== ":") throw new Error("expected ':'");
+                this.eat();
+                const b = this.parseTern();
+                return {kind:"tern", c, a, b};
+            }
+            return c;
+        });
     }
     parseCmp() {
         let l = this.parseAdd();
@@ -931,36 +1034,40 @@ class Parser {
         return l;
     }
     parseUn() {
-        if (this.peek().t === "-") { this.eat(); return {kind:"neg", e:this.parseUn()}; }
-        if (this.peek().t === "+") { this.eat(); return this.parseUn(); }
-        return this.parsePri();
+        return this.withDepth(() => {
+            if (this.peek().t === "-") { this.eat(); return {kind:"neg", e:this.parseUn()}; }
+            if (this.peek().t === "+") { this.eat(); return this.parseUn(); }
+            return this.parsePri();
+        });
     }
     parsePri() {
-        const t = this.peek();
-        if (t.t === "num") { this.eat(); return {kind:"num", v:t.v}; }
-        if (t.t === "(") {
-            this.eat();
-            const e = this.parseTern();
-            if (this.peek().t !== ")") throw new Error("expected ')'");
-            this.eat();
-            return e;
-        }
-        if (t.t === "id") {
-            this.eat();
-            if (this.peek().t === "(") {
+        return this.withDepth(() => {
+            const t = this.peek();
+            if (t.t === "num") { this.eat(); return {kind:"num", v:t.v}; }
+            if (t.t === "(") {
                 this.eat();
-                const args = [];
-                if (this.peek().t !== ")") {
-                    args.push(this.parseTern());
-                    while (this.peek().t === ",") { this.eat(); args.push(this.parseTern()); }
-                }
+                const e = this.parseTern();
                 if (this.peek().t !== ")") throw new Error("expected ')'");
                 this.eat();
-                return {kind:"call", name:t.v, args};
+                return e;
             }
-            return {kind:"var", name:t.v};
-        }
-        throw new Error("unexpected " + t.t);
+            if (t.t === "id") {
+                this.eat();
+                if (this.peek().t === "(") {
+                    this.eat();
+                    const args = [];
+                    if (this.peek().t !== ")") {
+                        args.push(this.parseTern());
+                        while (this.peek().t === ",") { this.eat(); args.push(this.parseTern()); }
+                    }
+                    if (this.peek().t !== ")") throw new Error("expected ')'");
+                    this.eat();
+                    return {kind:"call", name:t.v, args};
+                }
+                return {kind:"var", name:t.v};
+            }
+            throw new Error("unexpected " + t.t);
+        });
     }
 }
 
@@ -983,7 +1090,7 @@ const grad1 = (h, x) => (h & 1) ? -x : x;
 const grad2 = (h, x, y) => {
     const u = (h & 1) ? x : -x;
     const v = (h & 2) ? y : -y;
-    return u + v;
+    return (u + v) * 0.5;
 };
 function pnoise1(x) {
     const X = Math.floor(x) & 255;
@@ -1028,7 +1135,7 @@ const FNS_IMPL = {
     mix:   a => a[0] + (a[1] - a[0]) * a[2],
     lerp:  a => a[0] + (a[1] - a[0]) * a[2],
     step:  a => a[1] < a[0] ? 0 : 1,
-    smoothstep: a => { let t = (a[2] - a[0]) / (a[1] - a[0]); t = Math.max(0, Math.min(1, t)); return t*t*(3-2*t); },
+    smoothstep: a => { const d = a[1] - a[0]; if (Math.abs(d) < 1e-9) return a[2] >= a[0] ? 1 : 0; let t = (a[2] - a[0]) / d; t = Math.max(0, Math.min(1, t)); return t*t*(3-2*t); },
     wave:     a => (Math.sin(a[0] * 2 * Math.PI) + 1) * 0.5,
     triangle: a => { const f = a[0] - Math.floor(a[0]); return f < 0.5 ? f*2 : 2 - f*2; },
     square:   a => { const f = a[0] - Math.floor(a[0]); return f < (a[1] !== undefined ? a[1] : 0.5) ? 1 : 0; },
@@ -1053,12 +1160,27 @@ const FNS_IMPL = {
     mid:    () => (LIVE_SENSORS.bands[3] + LIVE_SENSORS.bands[4]) * 0.5,
     treble: () => (LIVE_SENSORS.bands[6] + LIVE_SENSORS.bands[7]) * 0.5,
     motion: () => LIVE_SENSORS.motion,
-    gate:   () => LIVE_SENSORS.gate,
-    fade:   () => LIVE_SENSORS.gate,
+    gate:   () => effectiveGate(),
+    fade:   () => effectiveGate(),
     mad:    () => LIVE_SENSORS.mad / 30000.0,
 };
+const FN_ARITY = {
+    sin:[1,1], cos:[1,1], tan:[1,1], abs:[1,1], sqrt:[1,1], pow:[2,2],
+    floor:[1,1], ceil:[1,1], round:[1,1], frac:[1,1],
+    min:[2,2], max:[2,2], clamp:[3,3], mix:[3,3], lerp:[3,3], step:[2,2], smoothstep:[3,3],
+    wave:[1,1], triangle:[1,1], square:[1,2], time:[1,1],
+    perlin1D:[1,1], perlin1d:[1,1], perlin2D:[2,2], perlin2d:[2,2],
+    noise:[1,1], noise2:[2,2], random:[0,0], hash:[1,1],
+    hsv:[3,3], rgb:[3,3],
+    bass:[0,0], mid:[0,0], treble:[0,0], motion:[0,0], gate:[0,0], fade:[0,0], mad:[0,0],
+    vu:[0,0], peak:[0,0], pitch:[0,0], beat:[0,0], band:[1,1]
+};
 let RUN_T = 0;
-const LIVE_SENSORS = { vu: 0, peak: 0, pitch: 0, beat: 0, bands: [0,0,0,0,0,0,0,0], motion: 0.0, gate: 1.0, mad: 0 };
+const LIVE_SENSORS = { vu: 0, peak: 0, pitch: 0, beat: 0, bands: [0,0,0,0,0,0,0,0], motion: 0.0, gate: 1.0, gateActive: true, mad: 0 };
+function effectiveGate() {
+    const chk = document.getElementById("gateEnableChk");
+    return (chk && !chk.checked) ? 1.0 : LIVE_SENSORS.gate;
+}
 
 class Evaluator {
     constructor(ast) { this.ast = ast; this.reset(); }
@@ -1072,13 +1194,17 @@ class Evaluator {
         this.vars.n = n; this.vars.pixelCount = n;
         this.vars.t = t; this.vars.time = t;
         this.vars.motion = LIVE_SENSORS.motion;
-        this.vars.gate = LIVE_SENSORS.gate;
-        this.vars.fade = LIVE_SENSORS.gate;
+        this.vars.gate = effectiveGate();
+        this.vars.fade = this.vars.gate;
         RUN_T = t;
         for (const s of this.ast.stmts) this.evalStmt(s);
         return this.out;
     }
     evalStmt(s) {
+        if (s.kind === "block") {
+            for (const sub of s.stmts) this.evalStmt(sub);
+            return;
+        }
         if (s.kind === "if") {
             if (this.evalExpr(s.cond) !== 0) this.evalStmt(s.thenStmt);
             else if (s.elseStmt) this.evalStmt(s.elseStmt);
@@ -1111,37 +1237,88 @@ class Evaluator {
             }
             case "tern": return this.evalExpr(e.c) !== 0 ? this.evalExpr(e.a) : this.evalExpr(e.b);
             case "call": {
+                const ar = FN_ARITY[e.name];
+                if (!ar) throw new Error("unknown function: " + e.name);
+                if (e.args.length < ar[0]) throw new Error(e.name + " needs " + ar[0] + " args");
+                if (e.args.length > ar[1]) throw new Error(e.name + " too many args");
                 const a = e.args.map(x => this.evalExpr(x));
+                if (e.name === "square" && a.length === 1) a.push(0.5);
                 if (e.name === "hsv") { this.out.useRGB = false; this.out.h = a[0]; this.out.s = a[1]; this.out.v = a[2]; return 0; }
                 if (e.name === "rgb") { this.out.useRGB = true;  this.out.r = a[0]; this.out.g = a[1]; this.out.b = a[2]; return 0; }
-                const fn = FNS_IMPL[e.name];
-                if (!fn) throw new Error("unknown function: " + e.name);
-                return fn(a);
+                return FNS_IMPL[e.name](a);
             }
         }
         return 0;
     }
 }
 
+// FastLED-compatible rainbow HSV -> RGB so preview hues match CHSV() on hardware.
 function hsv2rgb(h, s, v) {
+    if (!Number.isFinite(h)) h = 0;
+    if (!Number.isFinite(s)) s = 0;
+    if (!Number.isFinite(v)) v = 0;
     h = ((h % 1) + 1) % 1;
     s = Math.max(0, Math.min(1, s));
     v = Math.max(0, Math.min(1, v));
-    const i = Math.floor(h * 6);
-    const f = h * 6 - i;
-    const p = v * (1 - s);
-    const q = v * (1 - f * s);
-    const t = v * (1 - (1 - f) * s);
-    let r, g, b;
-    switch (i % 6) {
-        case 0: r=v; g=t; b=p; break;
-        case 1: r=q; g=v; b=p; break;
-        case 2: r=p; g=v; b=t; break;
-        case 3: r=p; g=q; b=v; break;
-        case 4: r=t; g=p; b=v; break;
-        case 5: r=v; g=p; b=q; break;
+    const hue = Math.floor(h * 255) & 0xFF;
+    const sat = Math.round(s * 255);
+    const val = Math.round(v * 255);
+
+    const offset = hue & 0x1F;
+    const offset8 = (offset << 3) & 0xFF;
+    const third = Math.floor(offset8 * 85 / 256);
+    let r = 0, g = 0, b = 0;
+
+    if ((hue & 0x80) === 0) {
+        if ((hue & 0x40) === 0) {
+            if ((hue & 0x20) === 0) {
+                r = 255 - third; g = third; b = 0;
+            } else {
+                r = 171; g = 85 + third; b = 0;
+            }
+        } else {
+            if ((hue & 0x20) === 0) {
+                const twothirds = Math.floor(offset8 * 171 / 256);
+                r = 171 - twothirds; g = 170 + third; b = 0;
+            } else {
+                r = 0; g = 255 - third; b = third;
+            }
+        }
+    } else {
+        if ((hue & 0x40) === 0) {
+            if ((hue & 0x20) === 0) {
+                const twothirds = Math.floor(offset8 * 171 / 256);
+                r = 0; g = 171 - twothirds; b = 85 + twothirds;
+            } else {
+                r = third; g = 0; b = 255 - third;
+            }
+        } else {
+            if ((hue & 0x20) === 0) {
+                r = 85 + third; g = 0; b = 171 - third;
+            } else {
+                r = 170 + third; g = 0; b = 85 - third;
+            }
+        }
     }
-    return [Math.round(r*255), Math.round(g*255), Math.round(b*255)];
+
+    if (sat !== 255) {
+        const desat = 255 - sat;
+        const brighten = Math.floor((desat * desat) / 256);
+        r = ((r * sat) >> 8) + brighten;
+        g = ((g * sat) >> 8) + brighten;
+        b = ((b * sat) >> 8) + brighten;
+        if (r > 255) r = 255;
+        if (g > 255) g = 255;
+        if (b > 255) b = 255;
+    }
+
+    if (val !== 255) {
+        const v2 = (val * val) >> 8;
+        r = (r * v2) >> 8;
+        g = (g * v2) >> 8;
+        b = (b * v2) >> 8;
+    }
+    return [r, g, b];
 }
 
 // ─── Preview loop ───────────────────────────────────────────────────────────
@@ -1149,23 +1326,70 @@ const prev   = document.getElementById("prev");
 const pctx   = prev.getContext("2d");
 let   evalr  = null;
 let   compileError = "";
-let   pixelCount = 500;
+let   pixelCount = 100;
+
+function checkVmLimits(ast) {
+    const reserved = new Set(["i","index","n","pixelCount","t","time","PI","TAU","motion","gate","fade"]);
+    const userVars = new Set();
+    const consts = new Set();
+    function addConst(v) {
+        const f = Math.fround(v);
+        consts.add(Object.is(f, -0) ? 0 : f);
+        if (consts.size > 255) throw new Error("too many constants (max 255)");
+    }
+    function addVar(name) {
+        if (reserved.has(name)) return;
+        userVars.add(name);
+        if (userVars.size > 21) throw new Error("too many variables (max 21 user vars)");
+    }
+    function walkExpr(e) {
+        if (!e) return;
+        switch (e.kind) {
+            case "num": addConst(e.v); break;
+            case "var": addVar(e.name); break;
+            case "neg": walkExpr(e.e); break;
+            case "bin": walkExpr(e.l); walkExpr(e.r); break;
+            case "tern": walkExpr(e.c); walkExpr(e.a); walkExpr(e.b); break;
+            case "call": {
+                const ar = FN_ARITY[e.name];
+                if (!ar) throw new Error("unknown function: " + e.name);
+                if (e.args.length < ar[0]) throw new Error(e.name + " needs " + ar[0] + " args");
+                if (e.args.length > ar[1]) throw new Error(e.name + " too many args");
+                for (const a of e.args) walkExpr(a);
+                if (e.name === "square" && e.args.length === 1) addConst(0.5);
+                if (e.name === "hsv" || e.name === "rgb") addConst(0);
+                break;
+            }
+        }
+    }
+    function walkStmt(s) {
+        if (!s) return;
+        if (s.kind === "block") { for (const sub of s.stmts) walkStmt(sub); }
+        else if (s.kind === "if") { walkExpr(s.cond); walkStmt(s.thenStmt); walkStmt(s.elseStmt); }
+        else if (s.kind === "asn") { addVar(s.name); walkExpr(s.val); }
+        else walkExpr(s.e);
+    }
+    walkStmt({kind:"block", stmts: ast.stmts});
+}
 
 function recompileLocal() {
     const src = ta.value;
     try {
         const ast = new Parser(tokenize(src)).parseProgram();
+        checkVmLimits(ast);
         evalr = new Evaluator(ast);
-        showError("", true);
+        compileError = "";
+        showEditorStatus("", true);
     } catch (e) {
         compileError = e.message;
-        showError("local: " + e.message, false);
+        showEditorStatus("local: " + e.message, false);
         evalr = null;
     }
 }
 
-function showError(msg, ok) {
+function showEditorStatus(msg, ok) {
     const el = document.getElementById("err");
+    if (!el) return;
     if (!msg) {
         el.textContent = "ready";
         el.classList.add("ok");
@@ -1173,6 +1397,54 @@ function showError(msg, ok) {
         el.textContent = msg;
         el.classList.toggle("ok", !!ok);
     }
+}
+
+function showBanner(msg, ok) {
+    const banner = document.getElementById("deviceBanner");
+    if (!banner) return;
+    if (!msg) {
+        banner.style.display = "none";
+        banner.textContent = "";
+    } else {
+        banner.style.display = "";
+        banner.textContent = msg;
+        banner.classList.toggle("ok", !!ok);
+    }
+}
+
+function showError(msg, ok) {
+    showEditorStatus(msg, ok);
+    if (!msg) {
+        showBanner("", true);
+    } else {
+        showBanner(msg, ok);
+    }
+}
+
+const LIB_PREVIEWS = [];
+let prevImg = null;
+let lastLibCardTs = 0;
+
+function renderPreviewEval(ctx, img, ev, n, canvasW, t) {
+    for (let i = 0; i < canvasW; i++) {
+        const pxIdx = (canvasW === n) ? i : Math.floor((i * n) / canvasW);
+        let r = 0, g = 0, b = 0;
+        try {
+            const o = ev.run(pxIdx, n, t);
+            if (o.useRGB) {
+                r = Math.max(0, Math.min(255, Math.round(o.r * 255) || 0));
+                g = Math.max(0, Math.min(255, Math.round(o.g * 255) || 0));
+                b = Math.max(0, Math.min(255, Math.round(o.b * 255) || 0));
+            } else {
+                [r, g, b] = hsv2rgb(o.h, o.s, o.v);
+            }
+        } catch {}
+        img.data[i * 4]     = r;
+        img.data[i * 4 + 1] = g;
+        img.data[i * 4 + 2] = b;
+        img.data[i * 4 + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
 }
 
 function tick(ts) {
@@ -1186,29 +1458,22 @@ function tick(ts) {
     }
     const t = ts * 0.001;
     if (evalr) {
-        const n = Math.min(pixelCount, 300); // Cap preview canvas width for smooth browser rendering
-        if (prev.width !== n) prev.width = n;
+        const n = Math.max(1, pixelCount | 0);
+        const canvasW = Math.min(n, 300); // Cap preview canvas width while keeping logical n intact
+        if (prev.width !== canvasW) prev.width = canvasW;
         if (prev.height !== 1) prev.height = 1;
-        const img = pctx.createImageData(n, 1);
-        const env = document.getElementById("gateEnableChk").checked ? LIVE_SENSORS.gate : 1.0;
-        for (let i = 0; i < n; i++) {
-            let r, g, b;
-            try {
-                const o = evalr.run(i, n, t);
-                if (o.useRGB) {
-                    r = Math.max(0, Math.min(255, Math.round(o.r * env * 255)));
-                    g = Math.max(0, Math.min(255, Math.round(o.g * env * 255)));
-                    b = Math.max(0, Math.min(255, Math.round(o.b * env * 255)));
-                } else {
-                    [r, g, b] = hsv2rgb(o.h, o.s, o.v * env);
-                }
-            } catch { r = g = b = 0; }
-            img.data[i*4]     = r;
-            img.data[i*4 + 1] = g;
-            img.data[i*4 + 2] = b;
-            img.data[i*4 + 3] = 255;
+        if (!prevImg || prevImg.width !== canvasW) prevImg = pctx.createImageData(canvasW, 1);
+        renderPreviewEval(pctx, prevImg, evalr, n, canvasW, t);
+    }
+    const tabLib = document.getElementById("tab-lib");
+    if (tabLib && tabLib.style.display !== "none" && LIB_PREVIEWS.length > 0 && (ts - lastLibCardTs >= 50)) {
+        lastLibCardTs = ts;
+        const vh = window.innerHeight || 900;
+        for (const item of LIB_PREVIEWS) {
+            const rect = item.canvas.getBoundingClientRect();
+            if (rect.bottom < -80 || rect.top > vh + 80) continue;
+            renderPreviewEval(item.ctx, item.img, item.evalr, item.n, item.n, t);
         }
-        pctx.putImageData(img, 0, 0);
     }
     requestAnimationFrame(tick);
 }
@@ -1234,11 +1499,14 @@ function updateThresholdMarkerUI(val) {
 }
 
 let gateSendTimer = 0;
-function sendGateSettings() {
+let lastGateCmdMs = 0;
+function sendGateSettings(immediate) {
     clearTimeout(gateSendTimer);
-    gateSendTimer = setTimeout(() => {
-        if (ws && ws.readyState === 1) {
-            const sec = cycleSecInput ? Math.max(5, Math.min(600, parseInt(cycleSecInput.value) || 30)) : 30;
+    lastGateCmdMs = Date.now();
+    const dispatch = () => {
+        const sec = cycleSecInput ? Math.max(5, Math.min(600, parseInt(cycleSecInput.value) || 5)) : 5;
+        if (cycleSecInput && document.activeElement !== cycleSecInput) cycleSecInput.value = sec;
+        if (ws && ws.readyState === 1 && (Date.now() - lastWsSensorRx < 500)) {
             ws.send(JSON.stringify({
                 action: "gateSet",
                 enabled: gateEnableChk.checked,
@@ -1246,93 +1514,302 @@ function sendGateSettings() {
                 autoCycle: autoCycleChk.checked,
                 cycleSec: sec
             }));
+        } else {
+            const q = `enabled=${gateEnableChk.checked ? 1 : 0}&thresh=${encodeURIComponent(+threshRange.value)}&autoCycle=${autoCycleChk.checked ? 1 : 0}&cycleSec=${sec}`;
+            fetch(`/api/gate?${q}`, {cache: "no-store"})
+                .then(r => { if (!r.ok) throw new Error(); lastHttpOkMs = Date.now(); updateConnUI(); })
+                .catch(() => { if (immediate) showError("offline — not connected", false); });
         }
-    }, 80);
+    };
+    if (immediate) dispatch();
+    else gateSendTimer = setTimeout(dispatch, 80);
+}
+
+function setActivePatternUI(name) {
+    document.querySelectorAll("#libCards .card").forEach(c => {
+        c.classList.toggle("active", c.dataset.pattern === name);
+    });
+    document.querySelectorAll("#studioExamples .chip").forEach(b => {
+        b.classList.toggle("active", b.textContent === name);
+    });
+}
+
+function renderGateBadge(env, gateActive) {
+    const pct = Math.round(env * 100);
+    const envEl = document.getElementById("envPct");
+    if (envEl) envEl.textContent = pct + "%";
+    const badge = document.getElementById("gateStateBadge");
+    if (!badge) return;
+    if (!gateEnableChk.checked) {
+        badge.textContent = "Always On (100%)";
+        badge.classList.add("active");
+    } else if (gateActive) {
+        badge.textContent = pct >= 99 ? "Active (100%)" : `Fading In (${pct}%)`;
+        badge.classList.add("active");
+    } else {
+        badge.textContent = pct <= 1 ? "Faded Out (0%)" : `Fading Out (${pct}%)`;
+        badge.classList.remove("active");
+    }
 }
 
 threshRange.addEventListener("input", () => {
     updateThresholdMarkerUI(threshRange.value);
     sendGateSettings();
 });
-gateEnableChk.addEventListener("change", sendGateSettings);
-autoCycleChk.addEventListener("change", sendGateSettings);
+threshRange.addEventListener("change", () => {
+    updateThresholdMarkerUI(threshRange.value);
+    sendGateSettings(true);
+});
+gateEnableChk.addEventListener("change", () => {
+    renderGateBadge(effectiveGate(), LIVE_SENSORS.gateActive);
+    sendGateSettings(true);
+});
+autoCycleChk.addEventListener("change", () => sendGateSettings(true));
 if (cycleSecInput) {
-    cycleSecInput.addEventListener("change", sendGateSettings);
-    cycleSecInput.addEventListener("input", sendGateSettings);
+    let cycleSecInputTimer = 0;
+    cycleSecInput.addEventListener("input", () => {
+        clearTimeout(cycleSecInputTimer);
+        lastGateCmdMs = Date.now();
+        cycleSecInputTimer = setTimeout(() => sendGateSettings(false), 350);
+    });
+    cycleSecInput.addEventListener("change", () => {
+        clearTimeout(cycleSecInputTimer);
+        sendGateSettings(true);
+    });
 }
 updateThresholdMarkerUI(2500);
+renderGateBadge(effectiveGate(), LIVE_SENSORS.gateActive);
+
+// Track unsaved edits on reboot-requiring Settings fields so background status pushes don't clobber them.
+const DIRTY_SETTINGS_IDS = ["count","pin","micSrc","micBCLK","micWS","micData","micADC","micGnd","apSsidInput","hostnameInput","staSsidInput"];
+DIRTY_SETTINGS_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const mark = () => { el.dataset.dirty = "1"; };
+    el.addEventListener("change", mark);
+    el.addEventListener("input", mark);
+});
+function clearDirtySettings() {
+    DIRTY_SETTINGS_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) delete el.dataset.dirty;
+    });
+}
 
 // ─── WebSocket — talks to firmware ──────────────────────────────────────────
 let ws;
 let compileTimer = 0;
-function scheduleCompile() {
+function wsSend(obj) {
+    if (ws && ws.readyState === 1) {
+        ws.send(JSON.stringify(obj));
+        return true;
+    }
+    showError("offline — not connected", false);
+    return false;
+}
+function scheduleCompile(patternName, immediate) {
     recompileLocal();
     clearTimeout(compileTimer);
-    compileTimer = setTimeout(() => {
+    const sendLive = () => {
         if (compileError) return;
-        if (ws && ws.readyState === 1 && ws.bufferedAmount === 0) {
-            ws.send(JSON.stringify({action: "live", code: ta.value}));
+        if (ws && ws.readyState === 1) {
+            if (!immediate && ws.bufferedAmount > 0) {
+                compileTimer = setTimeout(sendLive, 80);
+                return;
+            }
+            const payload = {action: "live", code: ta.value};
+            if (patternName) payload.name = patternName;
+            ws.send(JSON.stringify(payload));
+        } else {
+            const params = new URLSearchParams();
+            params.set("code", ta.value);
+            if (patternName) params.set("name", patternName);
+            fetch("/api/live", {method: "POST", body: params, cache: "no-store"})
+                .then(r => r.json())
+                .then(d => {
+                    lastHttpOkMs = Date.now();
+                    updateConnUI();
+                    if (d.name) {
+                        lastSyncedName = d.name;
+                        document.getElementById("patternName").textContent = d.name;
+                        setActivePatternUI(d.name);
+                    }
+                    if (d.ok) {
+                        showEditorStatus("compiled ✓", true);
+                        showBanner("", true);
+                    } else {
+                        showError("device: " + (d.error || "compile failed"), false);
+                    }
+                })
+                .catch(() => {});
         }
-    }, 300);
+    };
+    if (immediate) sendLive();
+    else compileTimer = setTimeout(sendLive, 300);
+}
+
+let wsConnected = false;
+let lastHttpOkMs = 0;
+let lastWsSensorRx = 0;
+let lastSyncedName = document.getElementById("patternName").textContent;
+let lastSyncedCodeName = lastSyncedName;
+let lastLoadedRxMs = 0;
+let fetchingActive = false;
+
+function updateConnUI() {
+    const httpAlive = (Date.now() - lastHttpOkMs) < 1500;
+    const on = wsConnected || httpAlive;
+    document.getElementById("dot").classList.toggle("ok", on);
+    document.getElementById("connText").textContent = wsConnected ? "connected" : (httpAlive ? "connected (http)" : "offline");
+}
+
+function applyLoadedPattern(m) {
+    if (!m) return;
+    lastLoadedRxMs = Date.now();
+    if (m.name) {
+        lastSyncedName = m.name;
+        lastSyncedCodeName = m.name;
+    }
+    ta.value = m.code || "";
+    document.getElementById("patternName").textContent = m.name || "Untitled";
+    document.getElementById("saveName").value = m.name || "";
+    setActivePatternUI(m.name || "");
+    syncHL();
+    recompileLocal();
+    if (m.error) showError("device: " + m.error, false);
+}
+
+function applyStatusFields(m) {
+    if (m.fps !== undefined) document.getElementById("fps").textContent = (m.fps || 0).toFixed(0) + " fps";
+    if (m.name) {
+        lastSyncedName = m.name;
+        document.getElementById("patternName").textContent = m.name;
+        setActivePatternUI(m.name);
+    }
+    if (m.count !== undefined) {
+        pixelCount = m.count || 100;
+        document.getElementById("prevCount").textContent = pixelCount;
+        const countEl = document.getElementById("count");
+        if (countEl && document.activeElement !== countEl && !countEl.dataset.dirty) countEl.value = pixelCount;
+    }
+    const brightEl = document.getElementById("bright");
+    if (m.bright !== undefined && brightEl && document.activeElement !== brightEl) {
+        brightEl.value = m.bright;
+        document.getElementById("brightVal").textContent = m.bright;
+    }
+    const pinEl = document.getElementById("pin");
+    if (m.pin !== undefined && pinEl && document.activeElement !== pinEl && !pinEl.dataset.dirty) pinEl.value = m.pin;
+    const micSrcEl = document.getElementById("micSrc");
+    if (m.micSrc !== undefined && micSrcEl && document.activeElement !== micSrcEl && !micSrcEl.dataset.dirty) {
+        micSrcEl.value = m.micSrc;
+        applyMicSrcVisibility(+m.micSrc);
+    }
+    const syncPin = (id, val) => {
+        const el = document.getElementById(id);
+        if (val !== undefined && el && document.activeElement !== el && !el.dataset.dirty) el.value = val;
+    };
+    syncPin("micBCLK", m.micBCLK);
+    syncPin("micWS",   m.micWS);
+    syncPin("micData", m.micData);
+    syncPin("micADC",  m.micADC);
+    syncPin("micGnd",  m.micGnd);
+    const micGainEl = document.getElementById("micGain");
+    if (m.micGain !== undefined && micGainEl && document.activeElement !== micGainEl) {
+        micGainEl.value = Math.round(m.micGain * 100);
+        document.getElementById("micGainVal").textContent = (+m.micGain).toFixed(2) + "×";
+    }
+    const micSmoothEl = document.getElementById("micSmooth");
+    if (m.micSmooth !== undefined && micSmoothEl && document.activeElement !== micSmoothEl) {
+        micSmoothEl.value = Math.round(m.micSmooth * 100);
+        document.getElementById("micSmoothVal").textContent = (+m.micSmooth).toFixed(2);
+    }
+    if (Date.now() - lastGateCmdMs >= 1200) {
+        if (m.gateEn !== undefined) {
+            gateEnableChk.checked = !!m.gateEn;
+            renderGateBadge(effectiveGate(), LIVE_SENSORS.gateActive);
+        }
+        if (m.gateThresh !== undefined && document.activeElement !== threshRange) {
+            threshRange.value = m.gateThresh;
+            updateThresholdMarkerUI(m.gateThresh);
+        }
+        if (m.autoCycle !== undefined) autoCycleChk.checked = !!m.autoCycle;
+        if (m.cycleSec !== undefined && cycleSecInput && document.activeElement !== cycleSecInput) {
+            cycleSecInput.value = m.cycleSec;
+        }
+    }
+    if (m.audioBuild !== undefined) {
+        const label = m.audioBuild ? "Ember-Audio" : "Ember";
+        document.title = label;
+        const logoEl = document.querySelector(".logo");
+        if (logoEl) logoEl.textContent = label.toUpperCase();
+        const staWrap = document.getElementById("staWifiWrap");
+        if (staWrap) staWrap.style.display = m.audioBuild ? "none" : "";
+    }
 }
 
 function connect() {
     const proto = location.protocol === "https:" ? "wss:" : "ws:";
     const host  = location.host || "192.168.4.1";
     ws = new WebSocket(`${proto}//${host}/ws`);
-    ws.addEventListener("open",  () => setConn(true));
-    ws.addEventListener("close", () => { setConn(false); setTimeout(connect, 1500); });
+    ws.addEventListener("open", () => {
+        wsConnected = true;
+        clearDirtySettings();
+        showBanner("", true);
+        updateConnUI();
+    });
+    ws.addEventListener("close", () => {
+        wsConnected = false;
+        updateConnUI();
+        setTimeout(connect, 1500);
+    });
     ws.addEventListener("error", () => ws.close());
     ws.addEventListener("message", ev => {
         let m; try { m = JSON.parse(ev.data); } catch { return; }
         if (m.type === "status") {
-            document.getElementById("fps").textContent = (m.fps || 0).toFixed(0) + " fps";
-            document.getElementById("patternName").textContent = m.name || "Untitled";
-            pixelCount = m.count || 100;
-            document.getElementById("prevCount").textContent = pixelCount;
-            document.getElementById("count").value = pixelCount;
-            document.getElementById("bright").value = m.bright;
-            document.getElementById("brightVal").textContent = m.bright;
-            if (m.pin !== undefined) document.getElementById("pin").value = m.pin;
-            if (m.micSrc !== undefined) {
-                document.getElementById("micSrc").value = m.micSrc;
-                applyMicSrcVisibility(+m.micSrc);
-            }
-            if (m.micBCLK !== undefined) document.getElementById("micBCLK").value = m.micBCLK;
-            if (m.micWS   !== undefined) document.getElementById("micWS").value   = m.micWS;
-            if (m.micData !== undefined) document.getElementById("micData").value = m.micData;
-            if (m.micADC  !== undefined) document.getElementById("micADC").value  = m.micADC;
-            if (m.micGnd  !== undefined) document.getElementById("micGnd").value  = m.micGnd;
-            if (m.micGain !== undefined) {
-                document.getElementById("micGain").value = Math.round(m.micGain * 100);
-                document.getElementById("micGainVal").textContent = (+m.micGain).toFixed(2) + "×";
-            }
-            if (m.micSmooth !== undefined) {
-                document.getElementById("micSmooth").value = Math.round(m.micSmooth * 100);
-                document.getElementById("micSmoothVal").textContent = (+m.micSmooth).toFixed(2);
-            }
-            if (m.gateEn !== undefined) gateEnableChk.checked = !!m.gateEn;
-            if (m.gateThresh !== undefined) {
-                threshRange.value = m.gateThresh;
-                updateThresholdMarkerUI(m.gateThresh);
-            }
-            if (m.autoCycle !== undefined) autoCycleChk.checked = !!m.autoCycle;
-            if (m.cycleSec !== undefined && cycleSecInput) cycleSecInput.value = m.cycleSec;
+            applyStatusFields(m);
             if (m.mad !== undefined || m.gate !== undefined) {
+                lastWsSensorRx = Date.now();
                 updateSensorViz(m);
             }
-            if (m.error) showError("device: " + m.error, false);
+            if (m.apSSID) {
+                const apEl = document.getElementById("apSsidVal");
+                if (apEl) apEl.textContent = m.apSSID;
+                const apIn = document.getElementById("apSsidInput");
+                if (apIn && document.activeElement !== apIn && !apIn.dataset.dirty) apIn.value = m.apSSID;
+            }
+            if (m.hostname !== undefined) {
+                const hnIn = document.getElementById("hostnameInput");
+                if (hnIn && document.activeElement !== hnIn && !hnIn.dataset.dirty) hnIn.value = m.hostname;
+            }
+            if (m.wifiSSID !== undefined) {
+                const sIn = document.getElementById("staSsidInput");
+                if (sIn && document.activeElement !== sIn && !sIn.dataset.dirty) sIn.value = m.wifiSSID;
+            }
+            showBanner(m.error ? ("device: " + m.error) : "", !m.error);
+            if (m.error) showEditorStatus("device: " + m.error, false);
         }
         else if (m.type === "compile") {
-            if (m.success) showError("compiled ✓", true);
-            else showError("device: " + (m.error || "compile failed"), false);
+            if (m.name) {
+                lastSyncedName = m.name;
+                document.getElementById("patternName").textContent = m.name;
+                setActivePatternUI(m.name);
+            }
+            if (m.success) {
+                showEditorStatus("compiled ✓", true);
+                showBanner("", true);
+            } else {
+                showError("device: " + (m.error || "compile failed"), false);
+            }
         }
         else if (m.type === "loaded") {
-            ta.value = m.code || "";
-            document.getElementById("patternName").textContent = m.name;
-            document.getElementById("saveName").value = m.name;
-            syncHL();
-            recompileLocal();
+            if (pendingManualExample && !m.auto) {
+                const ex = pendingManualExample;
+                pendingManualExample = null;
+                loadStudioExample(ex.name, ex.code);
+                return;
+            }
+            if (m.auto && (Date.now() - lastTaEditMs < 1500)) return;
+            applyLoadedPattern(m);
         }
         else if (m.type === "patterns") {
             renderSaved(m.list || []);
@@ -1341,13 +1818,14 @@ function connect() {
             showError("device rebooting…", true);
         }
         else if (m.type === "audio" || m.type === "sensors") {
+            lastWsSensorRx = Date.now();
             updateSensorViz(m);
         }
     });
 }
 function setConn(on) {
-    document.getElementById("dot").classList.toggle("ok", on);
-    document.getElementById("connText").textContent = on ? "connected" : "offline";
+    wsConnected = !!on;
+    updateConnUI();
 }
 connect();
 
@@ -1364,47 +1842,37 @@ async function loadLibrary() {
 function renderLib(patterns) {
     const root = document.getElementById("libCards");
     root.innerHTML = "";
+    LIB_PREVIEWS.length = 0;
     patterns.forEach(p => {
         const card = document.createElement("div");
         card.className = "card";
+        card.dataset.pattern = p.name;
         card.innerHTML = `
             <div class="name">${esc(p.name)}</div>
-            <canvas width="60" height="6" style="width:100%;height:6px;border-radius:3px"></canvas>
+            <canvas width="60" height="1" style="width:100%;height:6px;border-radius:3px;image-rendering:pixelated"></canvas>
             <div class="tags">${(p.tags||[]).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>`;
-        renderCardPreview(card.querySelector("canvas"), p.code);
+        initCardPreview(card.querySelector("canvas"), p.code);
         card.addEventListener("click", () => {
             ta.value = p.code;
             document.getElementById("saveName").value = p.name;
             document.getElementById("patternName").textContent = p.name;
-            // Selecting a pattern manually locks onto it (turns off auto-cycle)
-            if (autoCycleChk.checked) {
-                autoCycleChk.checked = false;
-                sendGateSettings();
-            }
+            setActivePatternUI(p.name);
             syncHL();
-            scheduleCompile();
+            scheduleCompile(p.name, true);
         });
         root.appendChild(card);
     });
+    setActivePatternUI(document.getElementById("patternName").textContent);
 }
-function renderCardPreview(canvas, code) {
+function initCardPreview(canvas, code) {
     try {
         const ast = new Parser(tokenize(code)).parseProgram();
         const ev = new Evaluator(ast);
         const ctx = canvas.getContext("2d");
         const n = canvas.width;
         const img = ctx.createImageData(n, 1);
-        for (let i = 0; i < n; i++) {
-            const o = ev.run(i, n, 0.7);
-            let r, g, b;
-            if (o.useRGB) { r = Math.round(o.r*255); g = Math.round(o.g*255); b = Math.round(o.b*255); }
-            else          { [r,g,b] = hsv2rgb(o.h, o.s, o.v); }
-            img.data[i*4]   = Math.max(0, Math.min(255, r));
-            img.data[i*4+1] = Math.max(0, Math.min(255, g));
-            img.data[i*4+2] = Math.max(0, Math.min(255, b));
-            img.data[i*4+3] = 255;
-        }
-        ctx.putImageData(img, 0, 0);
+        renderPreviewEval(ctx, img, ev, n, n, 0.7);
+        LIB_PREVIEWS.push({ canvas, ctx, img, evalr: ev, n });
     } catch {}
 }
 loadLibrary();
@@ -1421,17 +1889,17 @@ function renderSaved(list) {
         const chip = document.createElement("div");
         chip.className = "chip";
         chip.innerHTML = `<span>${esc(name)}</span><span class="x" title="Delete">×</span>`;
-        chip.firstChild.addEventListener("click", () => {
+        chip.addEventListener("click", () => {
             if (autoCycleChk.checked) {
                 autoCycleChk.checked = false;
-                sendGateSettings();
+                sendGateSettings(true);
             }
-            ws.send(JSON.stringify({action:"load", name}));
+            wsSend({action:"load", name});
         });
         chip.lastChild.addEventListener("click", e => {
             e.stopPropagation();
             if (!confirm(`Delete "${name}"?`)) return;
-            ws.send(JSON.stringify({action:"delete", name}));
+            wsSend({action:"delete", name});
         });
         root.appendChild(chip);
     });
@@ -1441,30 +1909,81 @@ fetch("/api/patterns").then(r => r.json()).then(renderSaved).catch(() => renderS
 // ─── Toolbar wiring ─────────────────────────────────────────────────────────
 document.getElementById("saveBtn").addEventListener("click", () => {
     const name = document.getElementById("saveName").value.trim() || "Untitled";
-    ws.send(JSON.stringify({action:"save", name, code: ta.value}));
+    if (name.length > 17 || name.includes("/") || name.includes("\\") || name.includes("..")) {
+        showError("name must be 1..17 chars without / or ..", false);
+        return;
+    }
+    if (compileError) {
+        showError("fix syntax error before saving: " + compileError, false);
+        return;
+    }
+    wsSend({action:"save", name, code: ta.value});
 });
 document.getElementById("newBtn").addEventListener("click", () => {
     ta.value = "// new pattern\nh = i/n;\nhsv(h, 1, 1);\n";
     document.getElementById("saveName").value = "";
+    document.getElementById("patternName").textContent = "Untitled";
+    setActivePatternUI("Untitled");
+    if (autoCycleChk.checked) {
+        autoCycleChk.checked = false;
+        sendGateSettings(true);
+    }
     syncHL();
-    scheduleCompile();
+    scheduleCompile("Untitled", true);
 });
 const bright = document.getElementById("bright");
 bright.addEventListener("input", () => {
     document.getElementById("brightVal").textContent = bright.value;
 });
 bright.addEventListener("change", () => {
-    ws.send(JSON.stringify({action:"brightness", value: +bright.value}));
+    if (ws && ws.readyState === 1) wsSend({action:"brightness", value: +bright.value});
+    else fetch(`/api/set?bright=${+bright.value}`, {cache: "no-store"}).catch(() => {});
 });
-document.getElementById("countApply").addEventListener("click", () => {
-    const n = +document.getElementById("count").value;
-    if (!confirm(`Apply pixel count = ${n}? Device will reboot.`)) return;
-    ws.send(JSON.stringify({action:"count", value: n}));
+function applyPixelCount() {
+    const countEl = document.getElementById("count");
+    const n = Math.max(1, Math.min(600, Math.round(+countEl.value) || 30));
+    countEl.value = n;
+    delete countEl.dataset.dirty;
+    if (ws && ws.readyState === 1) {
+        if (wsSend({action:"count", value: n})) {
+            pixelCount = n;
+            document.getElementById("prevCount").textContent = n;
+            showBanner(`pixel count set to ${n}`, true);
+        }
+    } else {
+        fetch(`/api/set?count=${n}`, {cache: "no-store"})
+            .then(r => {
+                if (!r.ok) throw new Error();
+                pixelCount = n;
+                document.getElementById("prevCount").textContent = n;
+                showBanner(`pixel count set to ${n}`, true);
+            })
+            .catch(() => showError("offline — not connected", false));
+    }
+}
+document.getElementById("countApply").addEventListener("click", applyPixelCount);
+document.getElementById("count").addEventListener("keydown", e => {
+    if (e.key === "Enter") applyPixelCount();
 });
 document.getElementById("pinApply").addEventListener("click", () => {
     const p = +document.getElementById("pin").value;
+    const src = +document.getElementById("micSrc").value;
+    if (src === 1) {
+        const b = +document.getElementById("micBCLK").value;
+        const w = +document.getElementById("micWS").value;
+        const d = +document.getElementById("micData").value;
+        if (p === b || p === w || p === d) {
+            if (!confirm(`GPIO ${p} collides with an I2S mic pin. Continue anyway?`)) return;
+        }
+    } else if (src === 2) {
+        const a = +document.getElementById("micADC").value;
+        const g = +document.getElementById("micGnd").value;
+        if (p === a || p === g) {
+            if (!confirm(`GPIO ${p} collides with a MAX4466 mic pin. Continue anyway?`)) return;
+        }
+    }
     if (!confirm(`Apply data pin = GPIO ${p}? Device will reboot.`)) return;
-    ws.send(JSON.stringify({action:"pin", value: p}));
+    wsSend({action:"pin", value: p});
 });
 
 // ─── Audio settings wiring ──────────────────────────────────────────────────
@@ -1482,65 +2001,88 @@ document.getElementById("micSrc").addEventListener("change", e => {
 document.getElementById("micSrcApply").addEventListener("click", () => {
     const v = +document.getElementById("micSrc").value;
     if (!confirm(`Apply mic source = ${["off","INMP441","MAX4466"][v]}? Device will reboot.`)) return;
-    ws.send(JSON.stringify({action:"micSrc", value: v}));
+    wsSend({action:"micSrc", value: v});
 });
 document.getElementById("micPinsApply").addEventListener("click", () => {
     const src = +document.getElementById("micSrc").value;
-    const payload = {action:"micPins"};
+    const payload = {action:"micPins", src};
+    const ledPin = +document.getElementById("pin").value;
     if (src === 1) {
-        payload.bclk = +document.getElementById("micBCLK").value;
-        payload.ws   = +document.getElementById("micWS").value;
-        payload.data = +document.getElementById("micData").value;
+        const bEl = document.getElementById("micBCLK");
+        const wEl = document.getElementById("micWS");
+        const dEl = document.getElementById("micData");
+        const b = Math.round(+bEl.value), w = Math.round(+wEl.value), d = Math.round(+dEl.value);
+        if (!Number.isFinite(b) || !Number.isFinite(w) || !Number.isFinite(d) ||
+            b < 0 || b > 10 || w < 0 || w > 10 || d < 0 || d > 10) {
+            showError("I2S pins must be valid GPIOs 0..10", false);
+            return;
+        }
+        payload.bclk = b;
+        payload.ws   = w;
+        payload.data = d;
+        if (payload.bclk === payload.ws || payload.bclk === payload.data || payload.ws === payload.data) {
+            showError("I2S pins (BCLK, WS, DATA) must be distinct", false);
+            return;
+        }
+        if (payload.bclk === ledPin || payload.ws === ledPin || payload.data === ledPin) {
+            if (!confirm(`Selected I2S pin collides with LED data pin (GPIO ${ledPin}). Continue anyway?`)) return;
+        }
     } else if (src === 2) {
-        payload.adc  = +document.getElementById("micADC").value;
-        payload.gnd  = +document.getElementById("micGnd").value;
-        const ledPin = +document.getElementById("pin").value;
+        const a = Math.round(+document.getElementById("micADC").value);
+        const g = Math.round(+document.getElementById("micGnd").value);
+        if (!Number.isFinite(a) || a < 0 || a > 4 || !Number.isFinite(g) || g < -1 || g > 10) {
+            showError("Invalid ADC (0..4) or Soft GND (-1..10) GPIO", false);
+            return;
+        }
+        payload.adc  = a;
+        payload.gnd  = g;
+        if (payload.adc === payload.gnd) {
+            showError("ADC pin and Soft GND pin cannot be the same GPIO", false);
+            return;
+        }
         if (payload.adc === ledPin || payload.gnd === ledPin) {
             if (!confirm(`Selected mic pin collides with LED data pin (GPIO ${ledPin}). Continue anyway?`)) return;
         }
     }
     if (!confirm("Apply pins? Device will reboot.")) return;
-    ws.send(JSON.stringify(payload));
+    wsSend(payload);
 });
 const micGainSlider = document.getElementById("micGain");
 micGainSlider.addEventListener("input", () => {
     document.getElementById("micGainVal").textContent = (micGainSlider.value/100).toFixed(2) + "×";
 });
 micGainSlider.addEventListener("change", () => {
-    ws.send(JSON.stringify({action:"micGain", value: micGainSlider.value/100}));
+    wsSend({action:"micGain", value: micGainSlider.value/100});
 });
 const micSmoothSlider = document.getElementById("micSmooth");
 micSmoothSlider.addEventListener("input", () => {
     document.getElementById("micSmoothVal").textContent = (micSmoothSlider.value/100).toFixed(2);
 });
 micSmoothSlider.addEventListener("change", () => {
-    ws.send(JSON.stringify({action:"micSmooth", value: micSmoothSlider.value/100}));
+    wsSend({action:"micSmooth", value: micSmoothSlider.value/100});
 });
 
 let lastSensorRx = Date.now();
+let lastCycleCount = null;
 function updateSensorViz(m) {
     lastSensorRx = Date.now();
     if (m.fps !== undefined) {
         document.getElementById("fps").textContent = (m.fps || 0).toFixed(0) + " fps";
     }
+    if (m.cycleRem !== undefined) {
+        const cn = document.getElementById("cycleNextVal");
+        if (cn) cn.textContent = (m.cycleRem >= 0) ? `(next ${Math.ceil(m.cycleRem / 1000)}s)` : "(off)";
+    }
+    if (m.cycleCount !== undefined) {
+        if (lastCycleCount !== null && m.cycleCount !== lastCycleCount && (Date.now() - lastLoadedRxMs) > 400) {
+            syncActivePatternFromHttp();
+        }
+        lastCycleCount = m.cycleCount;
+    }
     if (m.gate !== undefined) {
         LIVE_SENSORS.gate = m.gate;
-        const pct = Math.round(m.gate * 100);
-        const envEl = document.getElementById("envPct");
-        if (envEl) envEl.textContent = pct + "%";
-        const badge = document.getElementById("gateStateBadge");
-        if (badge) {
-            if (!gateEnableChk.checked) {
-                badge.textContent = "Always On (100%)";
-                badge.classList.add("active");
-            } else if (m.gateActive) {
-                badge.textContent = pct >= 99 ? "Active (100%)" : `Fading In (${pct}%)`;
-                badge.classList.add("active");
-            } else {
-                badge.textContent = pct <= 1 ? "Faded Out (0%)" : `Fading Out (${pct}%)`;
-                badge.classList.remove("active");
-            }
-        }
+        if (m.gateActive !== undefined) LIVE_SENSORS.gateActive = !!m.gateActive;
+        renderGateBadge(effectiveGate(), LIVE_SENSORS.gateActive);
     }
     if (m.mad !== undefined) {
         LIVE_SENSORS.mad = m.mad || 0;
@@ -1558,8 +2100,7 @@ function updateSensorViz(m) {
         LIVE_SENSORS.beat  = m.beat  || 0;
         if (m.bands) {
             for (let i = 0; i < 8; i++) {
-                let b = m.bands[i] || 0;
-                LIVE_SENSORS.bands[i] = b > 1.0 ? (b / 100.0) : b;
+                LIVE_SENSORS.bands[i] = (m.bands[i] || 0) / 100.0;
             }
         }
 
@@ -1573,35 +2114,175 @@ function updateSensorViz(m) {
     }
 }
 
-// Client watchdog: keep live mic/envelope streaming in real-time if background pushes idle or drop
+// DeafDoorbell-style HTTP polling fallback + WS watchdog: guarantees live mic & auto-cycle sync inside CaptivePortalLogin WebViews.
+function syncActivePatternFromHttp() {
+    if (fetchingActive || Date.now() - lastTaEditMs < 1500) return;
+    fetchingActive = true;
+    fetch("/api/active", {cache: "no-store"})
+        .then(r => r.json())
+        .then(d => {
+            if (!pendingManualExample && d && d.code !== undefined) applyLoadedPattern(d);
+        })
+        .catch(() => {})
+        .finally(() => { fetchingActive = false; });
+}
+
+let initialHttpPoll = true;
+function pollSensorsHttp() {
+    const wsQuiet = !ws || ws.readyState !== 1 || (Date.now() - lastWsSensorRx >= 280);
+    if (!initialHttpPoll && !wsQuiet) {
+        setTimeout(pollSensorsHttp, 180);
+        return;
+    }
+    initialHttpPoll = false;
+    fetch("/api/sensors", {cache: "no-store"})
+        .then(r => r.json())
+        .then(d => {
+            lastHttpOkMs = Date.now();
+            updateConnUI();
+            applyStatusFields(d);
+            updateSensorViz(d);
+            if (d.name && d.name !== lastSyncedCodeName) {
+                syncActivePatternFromHttp();
+            }
+            if (d.error) showBanner("device: " + d.error, false);
+        })
+        .catch(() => { updateConnUI(); })
+        .finally(() => { setTimeout(pollSensorsHttp, 180); });
+}
+setTimeout(pollSensorsHttp, 50);
+
 setInterval(() => {
     if (ws && ws.readyState === 1 && Date.now() - lastSensorRx >= 400) {
         ws.send(JSON.stringify({action: "poll"}));
     }
 }, 250);
+document.getElementById("wifiApply").addEventListener("click", () => {
+    const payload = {
+        action: "wifiSet",
+        apSSID: document.getElementById("apSsidInput").value.trim(),
+        hostname: document.getElementById("hostnameInput").value.trim()
+    };
+    const staWrap = document.getElementById("staWifiWrap");
+    if (staWrap && staWrap.style.display !== "none") {
+        payload.ssid = document.getElementById("staSsidInput").value.trim();
+        payload.pass = document.getElementById("staPassInput").value;
+        const openChk = document.getElementById("staOpenChk");
+        if (openChk && openChk.checked) payload.clearPass = true;
+    }
+    if (!confirm("Apply network settings and reboot?")) return;
+    wsSend(payload);
+});
+document.getElementById("resetSettings").addEventListener("click", () => {
+    if (!confirm("Reset all settings to defaults (LED pin GPIO 5, default pixel count, mic settings, etc.) and reboot?")) return;
+    wsSend({action: "resetSettings"});
+});
 document.getElementById("reboot").addEventListener("click", () => {
     if (!confirm("Reboot the device?")) return;
-    fetch("/api/reboot", {method:"POST"});
+    fetch("/api/reboot", {method:"POST"})
+        .then(r => {
+            if (!r.ok) throw new Error("HTTP " + r.status);
+            showError("device rebooting…", true);
+        })
+        .catch(() => showError("offline — could not reach device", false));
 });
 
+// ─── Studio coding examples ─────────────────────────────────────────────────
+const STUDIO_EXAMPLES = [
+    { name: "Rainbow", code: "// Smooth shifting rainbow across strip\nh = i/n + time(8);\nhsv(h, 1, 1);" },
+    { name: "Wave Pulse", code: "// Travelling brightness waves\nx = i/n;\nv = pow(wave(x*2 - time(3)), 3);\nhsv(0.58, 0.85, v);" },
+    { name: "Scanner", code: "// Bouncing scanner dot with soft tail\npos = triangle(time(3)) * (n - 1);\nv = clamp(1 - abs(i - pos) / 5, 0, 1);\nhsv(0.0, 1, v * v);" },
+    { name: "Strobe", code: "// Square wave flash with 20% duty cycle\non = square(time(0.4), 0.2);\nhsv(time(12), 1, on);" },
+    { name: "Sparkle", code: "// Deterministic per-pixel starfield\nphase = hash(i) * 10;\nflash = pow(wave(t * 1.4 + phase), 8);\nhsv(0.62, 0.25, flash);" },
+    { name: "Perlin Glow", code: "// Smoothstep blobs driven by 2D noise\nb = smoothstep(0.35, 0.7, perlin2D(i * 0.08, t * 0.5));\nhsv(mix(0.02, 0.12, b), 1, b * 0.9 + 0.1);" },
+    { name: "If / Else", code: "// Split strip into two animated halves\nx = i/n;\nif (x < 0.5) {\n  h = 0.05;\n  v = wave(t*0.6 + x*4);\n} else {\n  h = 0.55;\n  v = wave(t*0.6 - x*4);\n}\nhsv(h, 1, v);" },
+    { name: "RGB Mix", code: "// Blend linear RGB gradients with mix()\nu = wave(i/n * 2 + time(4));\nr = mix(0.1, 1.0, u);\ng = mix(0.3, 0.2, u);\nb = mix(0.9, 0.05, u);\nrgb(r, g, b);" },
+    { name: "Audio VU", code: "// Audio VU bar graph (requires mic enabled)\nlevel = clamp(vu() * 1.4, 0, 1);\nx = i/n;\non = x < level ? 1 : 0;\nhsv((1 - x) * 0.33, 1, on);" },
+    { name: "Bass Beat", code: "// Bass brightness + beat flash\npulse = clamp(bass() * 1.3 + beat() * 0.6, 0, 1);\nhsv(0.75 + time(15), 0.9, pulse);" }
+];
+
+function loadStudioExample(name, code) {
+    ta.value = code;
+    document.getElementById("saveName").value = name;
+    document.getElementById("patternName").textContent = name;
+    setActivePatternUI(name);
+    if (autoCycleChk.checked) {
+        autoCycleChk.checked = false;
+        sendGateSettings(true);
+    }
+    syncHL();
+    scheduleCompile(name, true);
+}
+
+(function initStudioExamples() {
+    const root = document.getElementById("studioExamples");
+    if (!root) return;
+    STUDIO_EXAMPLES.forEach(ex => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "chip";
+        chip.textContent = ex.name;
+        chip.addEventListener("click", () => loadStudioExample(ex.name, ex.code));
+        root.appendChild(chip);
+    });
+})();
+
+let pendingManualExample = null;
+(function checkIncomingExample() {
+    try {
+        const raw = sessionStorage.getItem("ember_load_example");
+        if (!raw) return;
+        sessionStorage.removeItem("ember_load_example");
+        const ex = JSON.parse(raw);
+        if (!ex || !ex.code) return;
+        pendingManualExample = ex;
+        document.querySelector('.tab[data-tab="advanced"]')?.click();
+        document.querySelector('.subtab[data-sub="editor"]')?.click();
+        ta.value = ex.code;
+        document.getElementById("saveName").value = ex.name || "Example";
+        document.getElementById("patternName").textContent = ex.name || "Example";
+        syncHL();
+        recompileLocal();
+    } catch {}
+})();
+
 // ─── Initial pattern ────────────────────────────────────────────────────────
-ta.value = "// Smooth shifting rainbow across strip.\nh = i/n + time(8);\nhsv(h, 1, 1);\n";
-syncHL();
-recompileLocal();
+if (!pendingManualExample) {
+    ta.value = "// Smooth shifting rainbow across strip.\nh = i/n + time(8);\nhsv(h, 1, 1);\n";
+    syncHL();
+    recompileLocal();
+}
 
 // ─── Fallback library (mirrors DEMO_PATTERNS.json) ──────────────────────────
 const FALLBACK_LIB = [
     {name:"Shifting Rainbow",tags:["rainbow","smooth"],code:"// Smooth shifting rainbow across strip.\nh = i/n + time(8);\nhsv(h, 1, 1);"},
     {name:"Breathing Aurora",tags:["calm","perlin"],code:"// Slow organic colour wash, breathes in brightness.\nh = perlin1D(i*0.05 + t*0.1)*0.4 + 0.5;\nb = wave(time(6));\nhsv(h, 1, b*0.9 + 0.1);"},
-    {name:"Ocean Swell",   tags:["ocean","perlin"], code:"x = i/n;\nswell = perlin2D(x*2, t*0.4);\nh = 0.5 + swell*0.1;\ns = 1 - swell*0.3;\nv = wave(x + t*0.1);\nhsv(h, s, v);"},
-    {name:"Lava Lamp",     tags:["warm"],    code:"x = i/n;\nblob = perlin2D(x*2.5, t*0.5);\nblob = smoothstep(0.45, 0.6, blob);\nh = mix(0.02, 0.12, blob);\nhsv(h, 1, blob*0.9 + 0.1);"},
-    {name:"Perlin Painter",tags:["perlin","calm"], code:"// Slow drifting hue painted by 2D noise.\nh = perlin2D(i*0.04, t*0.15);\ns = 0.6 + perlin1D(i*0.1 + 100)*0.4;\nhsv(h, s, 1);"},
-    {name:"Galaxy",        tags:["calm","perlin"], code:"// Deep blues and purples with bright stars.\nstar = pow(wave(t*0.7 + hash(i)*9), 8);\ndust = perlin2D(i*0.1, t*0.2)*0.3;\nh = 0.72 + dust*0.1;\nv = star + dust*0.4;\nhsv(h, 1 - star*0.3, v);"},
-    {name:"Rainbow Drift", tags:["classic"], code:"h = i/n + time(8);\nhsv(h, 1, 1);"},
-    {name:"Plasma Field",  tags:["plasma"],  code:"x=i/n;p=perlin2D(x*4+t*0.3,t*0.2);hsv(p+time(20),1,1);"},
-    {name:"Comet Trail",   tags:["motion"],  code:"head=time(4)*n;d=abs(i-head);d=min(d,abs(i-head-n));v=clamp(1-d/8,0,1);hsv(0.6,0.4,v*v);"},
-    {name:"Heartbeat",     tags:["pulse"],   code:"p=frac(time(1.2));b=pow(wave(p*2),8)+pow(wave(p*2+0.3),8)*0.7;hsv(0,1,clamp(b,0,1));"},
-    {name:"Fire Breath",   tags:["flame"],   code:"noiseVal = perlin2D(i/n * 3, t * 1.5);\nv = pow(noiseVal, 2.5) * 0.8 + 0.2;\nh = 0.02 + noiseVal * 0.06;\nhsv(h, 0.95, v);"}
+    {name:"Fire Lick",tags:["fire","hot"],code:"// Hot core, cooler tips, animated with perlin.\ny = i/n;\nflame = perlin2D(y*3, t*1.4);\nh = 0.05 - flame*0.05;\nv = clamp(flame*1.5 - y*0.4, 0, 1);\nhsv(h, 1, v);"},
+    {name:"Ocean Swell",tags:["ocean","perlin"],code:"x = i/n;\nswell = perlin2D(x*2, t*0.4);\nh = 0.5 + swell*0.1;\ns = 1 - swell*0.3;\nv = wave(x + t*0.1);\nhsv(h, s, v);"},
+    {name:"Comet Trail",tags:["motion","trail"],code:"// Bright head, decaying tail.\nhead = time(4)*n;\nd = abs(i - head);\nd = min(d, abs(i - head - n));\nv = clamp(1 - d/8, 0, 1);\nv = v*v;\nhsv(0.6, 0.4, v);"},
+    {name:"KITT Scanner",tags:["motion","scan"],code:"// Knight-Rider sweep with falloff.\npos = (triangle(time(3)))*n;\nd = abs(i - pos);\nv = clamp(1 - d/4, 0, 1);\nhsv(0, 1, v*v);"},
+    {name:"Sparkle Snow",tags:["sparkle","random"],code:"// Twinkling stars, hash for stable per-pixel phase.\nphase = hash(i)*10;\nblink = wave(t*1.5 + phase);\nblink = pow(blink, 6);\nhsv(0.6, 0.2, blink);"},
+    {name:"Plasma Field",tags:["plasma","perlin"],code:"x = i/n;\np = perlin2D(x*4 + t*0.3, t*0.2);\nh = p + time(20);\nhsv(h, 1, 1);"},
+    {name:"Square Pulse",tags:["square","geometric"],code:"// Hard-edged moving bars with adjustable duty.\nbar = square(i*0.1 + time(2), 0.4);\nhsv(time(15), 1, bar);"},
+    {name:"Triangle Chase",tags:["triangle","rainbow"],code:"x = i/n;\nb = triangle(x*3 + time(4));\nhsv(x + time(10), 1, b);"},
+    {name:"Lava Lamp",tags:["lava","perlin"],code:"x = i/n;\nblob = perlin2D(x*2.5, t*0.5);\nblob = smoothstep(0.45, 0.6, blob);\nh = mix(0.02, 0.12, blob);\nhsv(h, 1, blob*0.9 + 0.1);"},
+    {name:"Heartbeat",tags:["pulse","calm"],code:"// Two-beat heartbeat envelope.\np = frac(time(1.2));\nbeat = pow(wave(p*2), 8) + pow(wave(p*2 + 0.3), 8)*0.7;\nhsv(0, 1, clamp(beat, 0, 1));"},
+    {name:"Cylon Rainbow",tags:["motion","rainbow"],code:"pos = triangle(time(5))*n;\nd = abs(i - pos);\nv = clamp(1 - d/6, 0, 1);\nhsv(i/n + time(8), 1, v);"},
+    {name:"Twinkle Forest",tags:["sparkle","green"],code:"// Random forest of greens, occasional warm flicker.\nphase = hash(i)*7;\nbrt = pow(wave(t*0.8 + phase), 4);\nh = 0.33 + hash(i+1)*0.06;\nif (hash(i+5) > 0.92) h = 0.07;\nhsv(h, 0.9, brt);"},
+    {name:"Stripes",tags:["geometric"],code:"// Four colour stripes, slow drift.\nstripe = floor(frac(i/n + time(8))*4);\nhsv(stripe*0.25, 1, 1);"},
+    {name:"Bouncing Dot",tags:["motion"],code:"pos = triangle(time(2))*(n-1);\nv = i==floor(pos+0.5) ? 1 : 0;\nhsv(0.83, 1, v);"},
+    {name:"Perlin Painter",tags:["perlin","calm"],code:"// Slow drifting hue painted by 2D noise.\nh = perlin2D(i*0.04, t*0.15);\ns = 0.6 + perlin1D(i*0.1 + 100)*0.4;\nhsv(h, s, 1);"},
+    {name:"Strobe",tags:["energy"],code:"// Hard strobe at ~5 Hz, hue drifts.\nflash = square(time(0.2), 0.15);\nhsv(time(6), 1, flash);"},
+    {name:"Pendulum",tags:["motion","wave"],code:"// Smooth pendulum sweep using sine.\ns = wave(time(3));\npos = s*(n-1);\nd = abs(i - pos);\nv = clamp(1 - d/3, 0, 1);\nhsv(0.55, 1, v*v);"},
+    {name:"Galaxy",tags:["calm","perlin"],code:"// Deep blues and purples with bright stars.\nstar = pow(wave(t*0.7 + hash(i)*9), 8);\ndust = perlin2D(i*0.1, t*0.2)*0.3;\nh = 0.72 + dust*0.1;\nv = star + dust*0.4;\nhsv(h, 1 - star*0.3, v);"},
+    {name:"Frequency Rainbow",tags:["audio","frequency"],code:"// Bass=red, mids=green, highs=purple. Strip is divided\n// into 8 bands; each pixel's hue = its band index → hue\n// (mapped 0..0.83 so the high end lands on magenta/purple).\nb = floor(i / n * 8);\nlev = band(b);\nhsv(b/8 * 0.83, 1, lev);"},
+    {name:"Spectrum Bars",tags:["audio","bars"],code:"// Each pixel maps to a band, lights up if level > threshold.\nb = floor(i / n * 8);\nthresh = (i/n - floor(i/n*8)/8) * 8;\nlev = band(b);\nh = b/8 * 0.83;\non = lev > thresh ? 1 : 0;\nhsv(h, 1, on * lev);"},
+    {name:"VU Meter",tags:["audio","meter"],code:"// Pixels light up to the current VU level.\n// Green low, yellow mid, red top.\nlevel = vu();\nx = i/n;\nlit = x < level ? 1 : 0;\nh = (1 - x) * 0.33;\nhsv(h, 1, lit);"},
+    {name:"Beat Pulse",tags:["audio","beat"],code:"// Whole strip flashes on each beat.\nb = beat();\nhsv(time(20), 1, b);"},
+    {name:"Bass Bloom",tags:["audio","bass"],code:"// Bass drives brightness, ambient drift drives hue.\nh = perlin1D(i*0.05 + t*0.2);\nv = bass()*1.3 + 0.05;\nhsv(h, 1, clamp(v, 0, 1));"},
+    {name:"Pitch Painter",tags:["audio","pitch"],code:"// Dominant pitch sets a moving point of colour.\np = pitch();\nd = abs(i/n - p);\nv = clamp(1 - d*4, 0, 1) * (vu() + 0.1);\nhsv(p * 0.83, 1, v);"},
+    {name:"Treble Sparkle",tags:["audio","treble"],code:"// High frequencies trigger sparkles on random pixels.\nphase = hash(i)*7;\nflicker = wave(t*4 + phase);\nlevel = treble();\nv = pow(flicker, 8) * level * 4;\nhsv(0.7 + hash(i)*0.15, 0.3, clamp(v, 0, 1));"},
+    {name:"Equalizer",tags:["audio","spectrum"],code:"// Continuous spectrum across the strip — no hard band edges.\nx = i/n;\nbIdx = x * 7;\nb1 = floor(bIdx);\nb2 = b1 + 1;\nfrac = bIdx - b1;\nlev = mix(band(b1), band(b2), frac);\nhsv(x * 0.83, 1, lev);"}
 ];
 // ─── Integrity Check ────────────────────────────────────────────────────────
 (function() {

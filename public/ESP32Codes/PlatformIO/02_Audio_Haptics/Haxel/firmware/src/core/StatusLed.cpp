@@ -1,6 +1,6 @@
 #include "StatusLed.h"
 #include "Engine.h"
-#include <esp32-hal-ledc.h>
+#include "../hal/LedcAllocator.h"
 #include <math.h>
 
 namespace haxel {
@@ -11,18 +11,19 @@ static constexpr uint8_t  kLedPwmBits = 8;
 bool StatusLed::begin(uint8_t pin, uint8_t ledcChannel) {
     pin_     = pin;
     channel_ = ledcChannel;
+    ready_   = false;
 
-    // Arduino-ESP32 3.x API: attach pin directly
-    #if !defined(ESP_ARDUINO_VERSION) || ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3, 0, 0)
-    ledcSetup(channel_, kLedPwmHz, kLedPwmBits);
-    ledcAttachPin(pin_, channel_);
-#else
-    ledcAttach(pin_, kLedPwmHz, kLedPwmBits);
-#endif
+    int8_t slot = hal::LedcAllocator::instance().allocate((int8_t)pin_, kLedPwmHz, kLedPwmBits);
+    if (slot < 0) {
+        log_w("StatusLed: no LEDC slot available for GPIO %u", pin_);
+        return false;
+    }
+    channel_ = (uint8_t)slot;
+    ready_   = true;
 
     mode_ = Mode::OFF;
     setDuty_(0.0f);
-    log_i("StatusLed: initialized on GPIO %u", pin_);
+    log_i("StatusLed: initialized on GPIO %u (LEDC slot %u)", pin_, channel_);
     return true;
 }
 
@@ -68,7 +69,7 @@ void StatusLed::tick() {
         }
 
         case Mode::AP_FLASH: {
-            // 4 Hz square wave at 10 Hz tick: 2.5 ticks high, 2.5 ticks low → use bit 1 of tick/2
+            // 4 Hz square wave at 10 Hz tick: 2.5 ticks high, 2.5 ticks low -> use bit 1 of tick/2
             bool on = ((tickCount_ / 2) & 1) == 0;
             setDuty_(on ? 0.5f : 0.0f);
             break;
@@ -92,14 +93,10 @@ void StatusLed::apMode() {
 }
 
 void StatusLed::setDuty_(float duty01) {
+    if (!ready_) return;
     if (duty01 < 0.0f) duty01 = 0.0f;
     if (duty01 > 1.0f) duty01 = 1.0f;
-    uint32_t val = (uint32_t)(duty01 * ((1 << kLedPwmBits) - 1));
-    #if !defined(ESP_ARDUINO_VERSION) || ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3, 0, 0)
-    ledcWrite(channel_, val);
-#else
-    ledcWrite(pin_, val);
-#endif
+    hal::LedcAllocator::instance().write((int8_t)pin_, duty01);
 }
 
 } // namespace haxel

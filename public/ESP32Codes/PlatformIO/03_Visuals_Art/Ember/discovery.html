@@ -187,7 +187,7 @@ const emptyMsg = document.getElementById("emptyMsg");
 let scanning = false;
 
 function setStatus(msg, showSpinner) {
-    statusBar.innerHTML = (showSpinner ? '<div class="spinner"></div>' : '') + '<span>' + msg + '</span>';
+    statusBar.innerHTML = (showSpinner ? '<div class="spinner"></div>' : '') + '<span>' + esc(String(msg)) + '</span>';
 }
 
 function clearStatus() { statusBar.innerHTML = ""; }
@@ -221,37 +221,34 @@ function esc(s) {
     return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
-async function probe(addr) {
+async function probe(addr, timeoutMs = 1500) {
     const host = addr.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-    if (host.endsWith(".local")) {
-        // Browsers may upgrade .local to HTTPS; skip in automated scans.
-        return false;
-    }
     const url = "http://" + host;
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 1500);
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
     try {
         const r = await fetch(url + "/api/discover", { signal: ctrl.signal, mode: "cors" });
         clearTimeout(timer);
         if (r.ok) {
             const data = await r.json();
-            if (data.device !== "ember") return false;
-            const key = host;
+            if (data.device !== "ember") return null;
+            const ip = data.ip || host;
+            const key = ip;
             const label = data.hostname ? data.hostname + ".local" : host;
             if (!found.has(key)) {
                 found.set(key, {
                     name: "Ember — " + label,
-                    addr: host + (data.hostname ? " (" + label + ")" : ""),
-                    url
+                    addr: ip + (data.hostname ? " (" + label + ")" : ""),
+                    url: "http://" + ip
                 });
                 renderResults();
             }
-            return true;
+            return { ip, label };
         }
     } catch {
         clearTimeout(timer);
     }
-    return false;
+    return null;
 }
 
 async function quickScan() {
@@ -265,10 +262,9 @@ async function quickScan() {
         "192.168.1.1",
         "192.168.0.1",
         "10.0.0.1",
+        "ember.local",
+        "ember-audio.local",
     ];
-    // Add mDNS hostnames ember0..ember9 and common names
-    for (let i = 0; i <= 9; i++) targets.push("ember" + i + ".local");
-    targets.push("ember.local");
 
     const promises = targets.map(t => probe(t));
     await Promise.allSettled(promises);
@@ -314,37 +310,17 @@ async function sweepSubnet() {
 
 async function manualCheck() {
     const addr = document.getElementById("manualInput").value.trim();
-    if (!addr) return;
+    if (!addr || scanning) return;
+    scanning = true;
     document.getElementById("manualBtn").disabled = true;
     setStatus("Checking " + addr + "…", true);
-    const host = addr.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-    const url = "http://" + host;
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 3000);
-    try {
-        const r = await fetch(url + "/api/discover", { signal: ctrl.signal, mode: "cors" });
-        clearTimeout(timer);
-        if (r.ok) {
-            const data = await r.json();
-            if (data.device === "ember") {
-                const label = data.hostname ? data.hostname + ".local" : host;
-                if (!found.has(host)) {
-                    found.set(host, {
-                        name: "Ember — " + label,
-                        addr: host + (data.hostname ? " (" + label + ")" : ""),
-                        url
-                    });
-                    renderResults();
-                }
-                setStatus("Found Ember at " + host + "!", false);
-                document.getElementById("manualBtn").disabled = false;
-                return;
-            }
-        }
-    } catch (e) {
-        clearTimeout(timer);
+    const res = await probe(addr, 3000);
+    if (res) {
+        setStatus("Found Ember at " + res.ip + "!", false);
+    } else {
+        setStatus(addr + " — no Ember found (check IP, firmware version, or HTTPS-Only mode for .local).", false);
     }
-    setStatus(addr + " — no Ember found (check IP, firmware version, or HTTPS-Only mode for .local).", false);
+    scanning = false;
     document.getElementById("manualBtn").disabled = false;
 }
 

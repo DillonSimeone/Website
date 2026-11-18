@@ -5,7 +5,7 @@ setlocal enabledelayedexpansion
 cd /d "%~dp0"
 
 :: Default environment (override by passing env name as first arg, e.g. upload.bat esp32c3)
-set "PIO_ENV=bathroom"
+set "PIO_ENV=audio"
 if not "%~1"=="" set "PIO_ENV=%~1"
 
 :: Explorer double-clicks often miss Python / PlatformIO on PATH -- prepend common locations
@@ -54,8 +54,12 @@ if not defined PORTS (
     call "%PIO%" run -e %PIO_ENV% --target upload
     if !ERRORLEVEL! equ 0 (
         call "%PIO%" run -e %PIO_ENV% --target uploadfs
-        timeout /t 2 /nobreak >nul
-        call "%PIO%" device monitor
+        if !ERRORLEVEL! equ 0 (
+            timeout /t 2 /nobreak >nul
+            call "%PIO%" device monitor -e %PIO_ENV%
+        ) else (
+            echo [WARN] Filesystem upload failed.
+        )
     )
     goto end
 )
@@ -109,7 +113,7 @@ if defined LAST_PORT (
         echo.
         echo Starting device monitor on !LAST_PORT! in 2 seconds...
         timeout /t 2 /nobreak >nul
-        call "%PIO%" device monitor --port !LAST_PORT!
+        call "%PIO%" device monitor -e %PIO_ENV% --port !LAST_PORT!
     ) else (
         echo.
         echo Multiple boards uploaded successfully. Monitor not started.

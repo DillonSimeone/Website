@@ -133,8 +133,8 @@ if "%CHOICE%"=="1" (
     set "TARGET_ENV=c6BLU"
     set "NEEDS_FS=0"
 ) else if "%CHOICE%"=="5" (
-    set "TARGET_ENV=c6WIFILED_FOLLOWER"
-    set "NEEDS_FS=0"
+    set "TARGET_ENV=c6WIFI"
+    set "NEEDS_FS=1"
 ) else if "%CHOICE%"=="6" (
     set "TARGET_ENV=devWIFI"
     set "NEEDS_FS=1"

@@ -507,45 +507,45 @@
                     <tbody>
                         <tr>
                             <td><strong>ESP32-C3 SuperMini</strong> (Default)</td>
-                            <td><code>c3WIFILED</code></td>
+                            <td><code>c3WIFI</code></td>
                             <td>GPIO 6 (MOSFET)</td>
                             <td>GPIO 5 (20 LEDs default)</td>
-                            <td>WiFi SoftAP <code>Haxel-XXXX</code></td>
+                            <td>WiFi SoftAP <code>Haxel-XXXX</code> + ESP-NOW Mesh</td>
                         </tr>
                         <tr>
                             <td><strong>ESP32-C3 SuperMini BLE</strong></td>
-                            <td><code>c3BLULED</code></td>
+                            <td><code>c3BLU</code></td>
                             <td>GPIO 6 (MOSFET)</td>
                             <td>GPIO 5</td>
                             <td>Chrome Web Bluetooth</td>
                         </tr>
                         <tr>
                             <td><strong>FireBeetle 2 ESP32-C6 Mini</strong></td>
-                            <td><code>c6WIFILED</code></td>
+                            <td><code>c6WIFI</code></td>
                             <td>GPIO 16, 17, 19, 20 (Mini L298N)</td>
-                            <td>GPIO 17</td>
-                            <td>WiFi SoftAP <code>Haxel-XXXX</code></td>
+                            <td>Disabled by default (e.g. GPIO 4)</td>
+                            <td>WiFi SoftAP <code>Haxel-XXXX</code> + ESP-NOW Mesh</td>
                         </tr>
                         <tr>
                             <td><strong>FireBeetle 2 ESP32-C6 BLE</strong></td>
-                            <td><code>c6BLULED</code></td>
+                            <td><code>c6BLU</code></td>
                             <td>GPIO 16, 17, 19, 20</td>
-                            <td>GPIO 17</td>
+                            <td>Disabled by default (e.g. GPIO 4)</td>
                             <td>Chrome Web Bluetooth</td>
                         </tr>
                         <tr>
-                            <td><strong>FireBeetle 2 ESP32-C6 Fleet</strong></td>
-                            <td><code>c6WIFILED_FOLLOWER</code></td>
-                            <td>GPIO 16, 17, 19, 20</td>
-                            <td>GPIO 17</td>
-                            <td>ESP-NOW Mesh Slave (&lt; 5 ms)</td>
+                            <td><strong>ESP32-S3 DevKit / N16R8</strong></td>
+                            <td><code>s3WIFI</code> / <code>s3BLU</code></td>
+                            <td>GPIO 6 (MOSFET)</td>
+                            <td>GPIO 5</td>
+                            <td>WiFi SoftAP / ESP-NOW or Web BLE</td>
                         </tr>
                         <tr>
                             <td><strong>ESP32 DevKit v1 / Classic</strong></td>
-                            <td><code>devWIFILED</code></td>
-                            <td>GPIO 18 / 19</td>
-                            <td>GPIO 2</td>
-                            <td>WiFi SoftAP <code>Haxel-XXXX</code></td>
+                            <td><code>devWIFI</code> / <code>devBLU</code></td>
+                            <td>GPIO 4 (MOSFET)</td>
+                            <td>GPIO 5</td>
+                            <td>WiFi SoftAP / ESP-NOW or Web BLE</td>
                         </tr>
                     </tbody>
                 </table>
@@ -557,11 +557,11 @@
                     For Wi-Fi portal environments, you MUST flash both the firmware code AND the LittleFS filesystem partition. The filesystem contains the HTML, JavaScript, and CSS that the ESP32 serves to your phone:
                 </p>
                 <div class="code-block" style="margin: 0; background: #000; padding: 12px; font-size: 12px;">
-# 1. Compile & flash firmware
-pio run -e c3WIFILED -t upload
+# 1. Compile &amp; flash firmware
+pio run -e c3WIFI -t upload
 
 # 2. Upload LittleFS web portal files (REQUIRED for WiFi captive portal)
-pio run -e c3WIFILED -t uploadfs
+pio run -e c3WIFI -t uploadfs
                 </div>
             </div>
         </section>

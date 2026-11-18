@@ -24,7 +24,7 @@ You can build a complete Haxel haptic node for under $10:
 
 ## 2. Hardware Wiring & Default Pinouts
 
-### A. ESP32-C3 SuperMini (Default — Environment `c3WIFILED`)
+### A. ESP32-C3 SuperMini (Default — Environment `c3WIFI` / `c3BLU`)
 - **Motor Driver (MOSFET)**:
   - Gate / PWM Control $\rightarrow$ **GPIO 6**
   - Driver GND $\rightarrow$ ESP32 **GND**
@@ -37,13 +37,13 @@ You can build a complete Haxel haptic node for under $10:
 - **Optional I2S Microphone (INMP441)**:
   - SCK $\rightarrow$ GPIO 2, WS $\rightarrow$ GPIO 3, SD $\rightarrow$ GPIO 4, L/R $\rightarrow$ GND
 
-### B. DFRobot FireBeetle 2 ESP32-C6 Mini (Mini L298N — Environment `c6WIFILED` or `c6WIFILED_FOLLOWER`)
+### B. DFRobot FireBeetle 2 ESP32-C6 Mini (Mini L298N — Environment `c6WIFI` / `c6BLU`)
 - **L298N INT1** $\rightarrow$ **GPIO 16** (MOTOR-A Coin motor 1 & 2 in parallel)
 - **L298N INT2** $\rightarrow$ **GPIO 17**
 - **L298N INT3** $\rightarrow$ **GPIO 19** (MOTOR-B NMB M1N10 5V brushed motor)
 - **L298N INT4** $\rightarrow$ **GPIO 20**
 - **L298N ENA / ENB** $\rightarrow$ Jumpered to +5V on module
-- **FastLED Light Strip**: GPIO 17 (or onboard status LED on GPIO 8)
+- **FastLED Light Strip**: Disabled by default on C6 (if enabled, assign an unused GPIO such as **GPIO 4** — avoid GPIO 17 which is L298N INT2; onboard status LED is on GPIO 8)
 
 ---
 
@@ -65,8 +65,8 @@ You can build a complete Haxel haptic node for under $10:
 2. In VS Code, choose **File $\rightarrow$ Open Folder...** and select this `firmware` directory.
 3. Plug in your ESP32.
 4. Open the PlatformIO alien icon on the left sidebar:
-   - Under `c3WIFILED` (or your board of choice), click **Upload** to flash the code.
-   - Under `c3WIFILED` $\rightarrow$ **Platform**, click **Upload Filesystem Image** (`uploadfs`).
+   - Under `c3WIFI` (or your board of choice), click **Upload** to flash the code.
+   - Under `c3WIFI` $\rightarrow$ **Platform**, click **Upload Filesystem Image** (`uploadfs`).
      *(Note: This uploads `data/index.html`, `main.js`, and `styles.css` into the ESP32's LittleFS memory so it can serve the web portal!)*
 
 ---
@@ -74,10 +74,10 @@ You can build a complete Haxel haptic node for under $10:
 ### Option 3: Command Line (CLI)
 ```bash
 # Upload firmware binary
-pio run -e c3WIFILED -t upload
+pio run -e c3WIFI -t upload
 
 # Upload LittleFS web portal filesystem (REQUIRED for WiFi portal)
-pio run -e c3WIFILED -t uploadfs
+pio run -e c3WIFI -t uploadfs
 
 # Optional: Monitor serial output @ 115200 baud
 pio device monitor
@@ -85,7 +85,7 @@ pio device monitor
 
 *For Bluetooth-only builds (no WiFi portal required):*
 ```bash
-pio run -e c3BLULED -t upload
+pio run -e c3BLU -t upload
 ```
 
 ---
@@ -98,7 +98,7 @@ pio run -e c3BLULED -t upload
    - Connect to the open network **`Haxel-XXXX`** (where `XXXX` is your board's unique MAC suffix).
    - The **Bauhaus captive portal** will open automatically!
    - If it doesn't open automatically, navigate to `http://192.168.4.1` in any browser.
-3. **Web Bluetooth Mode** (if flashed with `c3BLULED` or `c6BLULED`):
+3. **Web Bluetooth Mode** (if flashed with `c3BLU`, `c6BLU`, `s3BLU`, or `devBLU`):
    - Open Chrome or Edge on PC/Mac/Android.
    - Navigate to [bluetooth.html](https://dillonsimeone.com/Projects/Haxel/bluetooth.html).
    - Click **CONNECT BLE** and select your `Haxel-XXXX` device.

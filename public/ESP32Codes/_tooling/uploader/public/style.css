@@ -386,6 +386,7 @@ body {
 .neo-btn-cyan { background-color: var(--secondary-cyan); }
 .neo-btn-yellow { background-color: var(--tertiary-yellow); }
 .neo-btn-green { background-color: var(--success-green); }
+.neo-btn-stale { background-color: #ff8700; color: #000; }
 
 .port-details {
   margin-top: 15px;

@@ -12,15 +12,15 @@ export const context = {
 
 export const params = {
     // Bambu A1 Reusable Spool Dimensions
-    spoolBoreDia: 54.5,       // Center cylinder inner diameter (mm)
+    spoolBoreDia: 57.0,       // Measured friction-fit center cylinder diameter (mm)
     spoolCoreOD: 82.0,        // Core outer diameter where filament/waves glue (mm)
     spoolInnerWidth: 60.0,    // Cavity width between flanges (mm)
     spoolMaxOD: 195.0,        // Max outer diameter for internal waves (mm)
 
-    // 54.5mm Front Center Hub Plug (ESP32-C3 SuperMini + MAX4466) - Flush, NO lip
-    plugDepth: 26.0,          // Barrel depth into 54.5mm bore
+    // 57.0mm Front Center Hub Plug (ESP32-C3 SuperMini + MAX4466) - Flush, NO lip
+    plugDepth: 26.0,          // Barrel depth into 57.0mm bore
     plugWall: 2.2,            // Barrel & face wall thickness
-    plugClearance: 0.20,      // Friction fit diameter clearance
+    plugClearance: 0.00,      // 0.00 = exact 57.0mm friction fit from bore tester
     micHoleDia: 10.2,         // MAX4466 electret capsule pass-through
     micProtrusion: 1.0,       // Capsule proudness past front face (reference)
     max4466Width: 14.4,       // MAX4466 PCB width + clearance
@@ -47,8 +47,10 @@ export const params = {
     lidHubCutout: true,            // true = 54.5mm hub cutout, false = solid thin lid
     wallMountAngle: 5.0,           // 5 deg upward tilt keeps lamp locked on wall
     wallMountGrooveW: 12.0,        // 12mm cable relief groove for JST + USB-C
+    collarWall: 3.0,               // Shade/adapter centering collar wall (48.1mm ID)
     shadeHoleDia: 156.0,           // Measured Shade.stl bottom opening ID
     shadeBoltR: 91.35,             // Measured Shade.stl 6-hole bolt radius
+    testerStep: 0.5,               // Ring gauge step size (mm)
 
     // Viewport Controls
     showSpoolGhost: true,
@@ -75,6 +77,10 @@ export const PRESETS = {
     },
     wall_mount: {
         label: 'Wall Mount Only',
+        changes: {}
+    },
+    size_tester: {
+        label: 'Bore Size Tester',
         changes: {}
     },
     wave_sinusoidal: {

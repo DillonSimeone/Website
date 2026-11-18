@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { context, params, PRESETS, updateParam } from './state.js';
 import { buildHubPlug, buildWaveHalf, buildSpoolGhost } from './geometry.js';
-import { buildParametricCasing, buildCasingLid, buildShadeAdapter, buildWallMount } from './casingGeometry.js';
+import { buildParametricCasing, buildCasingLid, buildShadeAdapter, buildWallMount, buildSizeTester } from './casingGeometry.js';
 import { manifoldToThreeGeometry, updateSceneMesh } from './viewport.js';
 import { triggerExport } from './exporter.js';
 
@@ -154,6 +154,18 @@ export function rebuildActiveGeometry() {
         return;
     }
 
+    if (context.activePreset === 'size_tester') {
+        const testerM = buildSizeTester(M, params);
+        items.push({
+            geometry: manifoldToThreeGeometry(testerM),
+            material: matHub,
+            edgeColor: 0x003344
+        });
+        testerM.delete();
+        updateSceneMesh(items);
+        return;
+    }
+
     // Assembly / Wave view: mount hub into front of spool (+Z) and 2 wave halves onto core
     const hubManifold = buildHubPlug(M, params);
     const hubZ = (params.spoolInnerWidth / 2) + 2.5 + explode;
@@ -247,7 +259,17 @@ function updatePowerHUD(waveCm) {
     `;
 
     if (noteEl) {
-        noteEl.textContent = `Amps = Reactive (~25mA/LED) to 100% White (60mA/LED). Wave 7× gives ${mult7}× the light of 7 core wraps (use a dedicated 5V PSU for 7×).`;
+        if (context.activePreset === 'size_tester') {
+            const step = params.testerStep || 0.5;
+            const startDia = params.spoolBoreDia - 4 * step;
+            const rings = [];
+            for (let i = 9; i >= 0; i--) {
+                rings.push(`#${10 - i}: ${(startDia + i * step).toFixed(2)}mm`);
+            }
+            noteEl.innerHTML = `<strong>Ring Gauge (Top → Bottom):</strong><br>${rings.slice(0, 5).join(' · ')}<br>${rings.slice(5).join(' · ')}`;
+        } else {
+            noteEl.textContent = `Amps = Reactive (~25mA/LED) to 100% White (60mA/LED). Wave 7× gives ${mult7}× the light of 7 core wraps (use a dedicated 5V PSU for 7×).`;
+        }
     }
 }
 
@@ -260,7 +282,7 @@ function syncUIValues() {
             else input.value = params[key];
         }
         if (readout) {
-            const twoDec = key === 'plugClearance' || key === 'explodedView' || key === 'petalSharpness' || key === 'casingWall';
+            const twoDec = key === 'plugClearance' || key === 'explodedView' || key === 'petalSharpness' || key === 'casingWall' || key === 'testerStep';
             readout.textContent = typeof params[key] === 'number'
                 ? params[key].toFixed(key === 'waveCount' ? 0 : (twoDec ? 2 : 1))
                 : params[key];

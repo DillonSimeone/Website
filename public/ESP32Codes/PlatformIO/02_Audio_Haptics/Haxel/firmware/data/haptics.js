@@ -35,7 +35,7 @@ export const PATTERNS = [
     {
         id: "Heartbeat",
         name: "Heartbeat",
-        category: "rhythm",
+        category: "pulse",
         desc: "Biometric lub-dub double pulse.",
         code: "p = t % 0.833;\nlub = pow(2.718, -p / 0.062);\ndub = p < 0.25 ? 0 : 0.85 * pow(2.718, -(p - 0.25) / 0.05);\nv = max(lub, dub);\nv < 0.05 ? 0 : v",
         func: (t) => {
@@ -49,7 +49,7 @@ export const PATTERNS = [
     {
         id: "Rumble",
         name: "Rumble",
-        category: "alert",
+        category: "pulse",
         desc: "High-frequency warning vibration.",
         code: "0.55 + 0.45 * sin(t * 45)",
         func: (t) => 0.55 + 0.45 * Math.sin(t * 45)
@@ -65,7 +65,7 @@ export const PATTERNS = [
     {
         id: "Ramp",
         name: "Ramp",
-        category: "rhythm",
+        category: "pulse",
         desc: "Linear rise then drop.",
         code: "frac(t / 1.5)",
         func: (t) => (t / 1.5) % 1.0
@@ -81,7 +81,7 @@ export const PATTERNS = [
     {
         id: "Ocean",
         name: "Ocean",
-        category: "music",
+        category: "pulse",
         desc: "Gentle rolling waves.",
         code: "0.35 + 0.25 * sin(t * 1.2) + 0.15 * sin(t * 0.4)",
         func: (t) => Math.max(0, Math.min(1, 0.35 + 0.25 * Math.sin(t * 1.2) + 0.15 * Math.sin(t * 0.4)))
@@ -223,7 +223,7 @@ export const PATTERNS = [
     {
         id: "External",
         name: "External",
-        category: "alert",
+        category: "reactive",
         desc: "External sample injection path.",
         code: "0.5",
         func: () => 0.5
@@ -233,6 +233,7 @@ export const PATTERNS = [
 export function loadCustomPatterns(frequencyShift, playbackSpeed, masterIntensity, startupFloor) {
     const raw = localStorage.getItem("HAXEL_CUSTOM_PATTERNS");
     if (!raw) return;
+    const normIntensity = masterIntensity > 1 ? (masterIntensity / 255) : masterIntensity;
     try {
         const list = JSON.parse(raw);
         list.forEach(p => {
@@ -246,7 +247,7 @@ export function loadCustomPatterns(frequencyShift, playbackSpeed, masterIntensit
                     desc: "User defined JavaScript math pattern.",
                     isCustom: true,
                     code: p.code,
-                    func: (t) => evalr.run(t, frequencyShift, playbackSpeed, masterIntensity, startupFloor)
+                    func: (t) => evalr.run(t, frequencyShift, playbackSpeed, normIntensity, startupFloor)
                 });
             } catch (err) {
                 console.error("Failed to load saved pattern:", err);
@@ -300,7 +301,15 @@ export function initPhoneHaptics(addLog) {
     }
 
     if (hapticsModal) {
-        hapticsModal.addEventListener("click", () => {
+        hapticsModal.addEventListener("click", (e) => {
+            if (e.target === hapticsModal) {
+                hapticsModal.classList.remove("active");
+            }
+        });
+        document.getElementById("modal-close-btn")?.addEventListener("click", () => {
+            hapticsModal.classList.remove("active");
+        });
+        document.getElementById("modal-dismiss-btn")?.addEventListener("click", () => {
             hapticsModal.classList.remove("active");
         });
     }

@@ -77,7 +77,9 @@ export function tokenize(src) {
             tks.push({t:"id", v:src.slice(i,j)}); i = j; continue;
         }
         const two = src.slice(i, i+2);
-        if (two === "<=" || two === ">=" || two === "==" || two === "!=") { tks.push({t:two}); i += 2; continue; }
+        if (two === "<=" || two === ">=" || two === "==" || two === "!=" || two === "&&" || two === "||") {
+            tks.push({t:two}); i += 2; continue;
+        }
         if ("+-*/%<>=?:(),;{}".indexOf(c) >= 0) { tks.push({t:c}); i++; continue; }
         i++;
     }
@@ -108,7 +110,7 @@ export class Parser {
         return {kind:"exp", e:this.parseTern()};
     }
     parseTern() {
-        const c = this.parseCmp();
+        const c = this.parseOr();
         if (this.peek().t === "?") {
             this.eat();
             const a = this.parseTern();
@@ -118,6 +120,24 @@ export class Parser {
             return {kind:"tern", c, a, b};
         }
         return c;
+    }
+    parseOr() {
+        let l = this.parseAnd();
+        while (this.peek().t === "||") {
+            const op = this.eat().t;
+            const r = this.parseAnd();
+            l = {kind:"bin", op, l, r};
+        }
+        return l;
+    }
+    parseAnd() {
+        let l = this.parseCmp();
+        while (this.peek().t === "&&") {
+            const op = this.eat().t;
+            const r = this.parseCmp();
+            l = {kind:"bin", op, l, r};
+        }
+        return l;
     }
     parseCmp() {
         let l = this.parseAdd();
@@ -230,13 +250,19 @@ const FNS_IMPL = {
     mix:   a => a[0] + (a[1] - a[0]) * a[2],
     lerp:  a => a[0] + (a[1] - a[0]) * a[2],
     step:  a => a[1] < a[0] ? 0 : 1,
-    smoothstep: a => { let t = (a[2] - a[0]) / (a[1] - a[0]); t = Math.max(0, Math.min(1, t)); return t*t*(3-2*t); },
+    smoothstep: a => {
+        const denom = a[1] - a[0];
+        if (Math.abs(denom) < 1e-6) return a[2] >= a[1] ? 1 : 0;
+        let t = (a[2] - a[0]) / denom;
+        t = Math.max(0, Math.min(1, t));
+        return t * t * (3 - 2 * t);
+    },
     wave:     a => (Math.sin(a[0] * 2 * Math.PI) + 1) * 0.5,
     triangle: a => { const f = a[0] - Math.floor(a[0]); return f < 0.5 ? f*2 : 2 - f*2; },
     square:   a => { const f = a[0] - Math.floor(a[0]); return f < (a[1] !== undefined ? a[1] : 0.5) ? 1 : 0; },
     time:     a => a[0] > 0 ? (RUN_T / a[0]) - Math.floor(RUN_T / a[0]) : 0,
     random:   () => Math.random(),
-    hash:     a => (Math.sin(a[0] * 12.9898 + 78.233) * 43758.5453) % 1,
+    hash:     a => Math.abs(Math.sin(a[0] * 12.9898 + 78.233) * 43758.5453) % 1,
     noise:    a => pnoise1(a[0]),
     perlin1d: a => pnoise1(a[0]),
     
@@ -277,11 +303,13 @@ export class Evaluator {
         let lastVal = 0;
         for (const s of this.ast.stmts) {
             if (s.kind === "asn") {
-                this.vars[s.name] = this.evalExpr(s.val);
+                const v = this.evalExpr(s.val);
+                this.vars[s.name] = Number.isFinite(v) ? v : 0;
             } else {
                 lastVal = this.evalExpr(s.e);
             }
         }
+        if (!Number.isFinite(lastVal)) return 0;
         return Math.max(0, Math.min(1.0, lastVal));
     }
     evalExpr(e) {
@@ -290,6 +318,8 @@ export class Evaluator {
             case "var": return this.vars[e.name] ?? 0;
             case "neg": return -this.evalExpr(e.e);
             case "bin": {
+                if (e.op === "&&") return (this.evalExpr(e.l) !== 0 && this.evalExpr(e.r) !== 0) ? 1 : 0;
+                if (e.op === "||") return (this.evalExpr(e.l) !== 0 || this.evalExpr(e.r) !== 0) ? 1 : 0;
                 const l = this.evalExpr(e.l), r = this.evalExpr(e.r);
                 switch (e.op) {
                     case "+": return l + r;

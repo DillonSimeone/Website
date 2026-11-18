@@ -6,7 +6,7 @@ ESP32 haptic pattern engine: HAL drivers, declarative patterns, captive-portal (
 |--|--|
 | **Firmware** | [`firmware/`](firmware/) — PlatformIO (modular envs) |
 | **Website / BLE portal** | [`public/Projects/Haxel/`](../../../../Projects/Haxel/) |
-| **Default flash profile** | `c3WIFILED` (ESP32-C3 + WiFi + FastLED) |
+| **Default flash profile** | `c3WIFI` (ESP32-C3 + WiFi + FastLED + Audio + Knobs + OLED + ESP-NOW Mesh) |
 
 ## Flash firmware
 
@@ -16,7 +16,7 @@ The ESP32Codes visual flasher builds firmware **and** LittleFS UI in one click.
 
 1. Run [`firmware/upload.bat`](firmware/upload.bat), **or** start [`_tooling/uploader/start-uploader.bat`](../../../_tooling/uploader/start-uploader.bat).
 2. Open **http://localhost:3567**.
-3. Select **Haxel/firmware** → COM port → ENV (e.g. `c3WIFILED` or `c3BLULED`).
+3. Select **Haxel/firmware** → COM port → ENV (e.g. `c3WIFI`, `c3BLU`, `c6WIFI`, `c6BLU`, `s3WIFI`, `s3BLU`, `devWIFI`, `devBLU`).
 4. Click **BUILD & FLASH DEVICE**.
 
 Full uploader docs: [`_tooling/uploader/README.md`](../../../_tooling/uploader/README.md).
@@ -25,15 +25,15 @@ Full uploader docs: [`_tooling/uploader/README.md`](../../../_tooling/uploader/R
 
 ```bat
 cd firmware
-pio run -e c3WIFILED -t upload
-pio run -e c3WIFILED -t uploadfs
+pio run -e c3WIFI -t upload
+pio run -e c3WIFI -t uploadfs
 pio device monitor
 ```
 
-BLE + LED profile:
+BLE profile:
 
 ```bat
-pio run -e c3BLULED -t upload
+pio run -e c3BLU -t upload
 ```
 
 (BLE builds skip the WiFi portal filesystem; `uploadfs` is optional for that env.)

@@ -11,6 +11,18 @@ static bool isInputOnly(int8_t pin) {
 #endif
 }
 
+static bool isSpiFlashPin(int8_t pin) {
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+    return pin >= 12 && pin <= 17;
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+    return pin >= 24 && pin <= 26;
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    return pin >= 26 && pin <= 32;
+#else
+    return pin >= 6 && pin <= 11;
+#endif
+}
+
 static bool isStrappingPin(int8_t pin) {
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
     return pin == 2 || pin == 8 || pin == 9;
@@ -39,15 +51,18 @@ bool validate(const DriverConfig& cfg, PinIssue* firstIssue) {
         }
     }
 
-    // 2. Input-only pins (34-39) cannot drive outputs.
+    // 2. SPI flash and input-only pins cannot drive outputs.
     for (int i = 0; i < 8; ++i) {
+        if (cfg.pins[i] >= 0 && isSpiFlashPin(cfg.pins[i])) {
+            return fail(cfg.pins[i], "GPIO is reserved for SPI flash");
+        }
         if (cfg.pins[i] >= 0 && isInputOnly(cfg.pins[i])) {
             return fail(cfg.pins[i], "GPIO is input-only");
         }
     }
 
     // 3. Strapping pins are flagged unless explicitly allowed.
-    bool allowStrap = (cfg.flags & 0x1) != 0;
+    bool allowStrap = (cfg.flags & kFlagAllowStrappingPins) != 0;
     if (!allowStrap) {
         for (int i = 0; i < 8; ++i) {
             if (cfg.pins[i] >= 0 && isStrappingPin(cfg.pins[i])) {

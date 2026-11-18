@@ -20,6 +20,7 @@ private:
 
     DriverConfig cfg_{};
     uint8_t channelCount_ = 0;
+    uint8_t chMap_[2] = {0, 1};
     bool ready_ = false;
 };
 

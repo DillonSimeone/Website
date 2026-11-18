@@ -100,7 +100,10 @@ void MeshFollower::sendTelemetry_() {
     engine_->copyState(s);
     TelemetryPayload p{};
     copyName(p.name, sizeof(p.name), config_->apSsid().c_str());
-    if (s.pattern) copyName(p.patternId, sizeof(p.patternId), s.pattern->id());
+    char patId[kPatternIdLen] = "";
+    if (PatternRegistry::instance().copyIdIfValid(s.pattern, patId, sizeof(patId))) {
+        copyName(p.patternId, sizeof(p.patternId), patId);
+    }
     p.configEpoch = configEpoch_;
     p.stateEpoch = stateEpoch_;
     p.intensity = s.intensity;
@@ -138,6 +141,9 @@ void MeshFollower::onRecv_(const uint8_t* mac, const uint8_t* data, int len) {
     if (h->magic != kMagic || h->version != kVersion) return;
     if (len < (int)(sizeof(Header) + h->payloadLen)) return;
     const uint8_t* payload = data + sizeof(Header);
+    if (claimed_ && macEqual(mac, masterMac_)) {
+        lastMasterMs_ = millis();
+    }
 
     switch ((MsgType)h->type) {
         case MsgType::Claim:
@@ -210,9 +216,9 @@ bool MeshFollower::isForMe_(const uint8_t* targetMac) const {
 
 void MeshFollower::handleState_(const StatePayload& p) {
     if (!claimed_ || !engine_) return;
+    lastMasterMs_ = millis();
     if (!isForMe_(p.targetMac)) return;
 
-    lastMasterMs_ = millis();
     ++stateEpoch_;
 
     StagedState s;
@@ -225,6 +231,8 @@ void MeshFollower::handleState_(const StatePayload& p) {
     if (p.flags & kFlagZero) {
         s.on = false;
         s.mute = true;
+    } else if (s.on && !s.mute) {
+        s.clearFault = true;
     }
     if (p.patternId[0]) {
         IPattern* pat = PatternRegistry::instance().find(p.patternId);
@@ -249,16 +257,19 @@ void MeshFollower::handleEstop_(const EstopPayload&) {
     if (!engine_) return;
     lastMasterMs_ = millis();
     engine_->requestEStop();
-    StagedState s;
-    engine_->copyState(s);
-    s.on = false;
-    s.mute = true;
-    engine_->stageState(s);
 }
 
 void MeshFollower::handleConfigChunk_(const uint8_t* mac, const ConfigChunkPayload& p) {
     if (!claimed_ || !macEqual(mac, masterMac_)) return;
     lastMasterMs_ = millis();
+
+    if (p.total == 0 || p.total > 32 || p.seq >= p.total || p.dataLen > sizeof(p.data)) {
+        cfgAccum_ = "";
+        cfgGot_ = 0;
+        cfgEpoch_ = 0;
+        sendConfigAck_(p.epoch, false);
+        return;
+    }
 
     if (p.seq == 0 || cfgEpoch_ != p.epoch) {
         cfgEpoch_ = p.epoch;
@@ -274,7 +285,10 @@ void MeshFollower::handleConfigChunk_(const uint8_t* mac, const ConfigChunkPaylo
         sendConfigAck_(p.epoch, false);
         return;
     }
-    cfgAccum_ += String(p.data).substring(0, p.dataLen);
+    char tmp[sizeof(p.data) + 1];
+    memcpy(tmp, p.data, p.dataLen);
+    tmp[p.dataLen] = '\0';
+    cfgAccum_ += tmp;
     cfgGot_++;
 
     if (cfgGot_ < cfgTotal_) return;
@@ -298,8 +312,9 @@ void MeshFollower::handleConfigChunk_(const uint8_t* mac, const ConfigChunkPaylo
 
 void MeshFollower::failsafeIfNeeded_() {
     if (!claimed_ || !engine_) return;
-    if (millis() - lastMasterMs_ < kLinkFailsafeMs) return;
-    // Link lost — stop motors, unclaim, resume HELLO advertising.
+    const uint32_t ageMs = millis() - lastMasterMs_;
+    if (ageMs < kLinkFailsafeMs) return;
+    // Link lost — stop motors immediately, keep claim warm until lease timeout.
     StagedState s;
     engine_->copyState(s);
     if (s.on || !s.mute) {
@@ -308,8 +323,11 @@ void MeshFollower::failsafeIfNeeded_() {
         engine_->stageState(s);
         Serial.println("[MESH] link failsafe — motors off");
     }
-    claimed_ = false;
-    memset(masterMac_, 0, 6);
+    if (ageMs >= kLeaseTimeoutMs) {
+        claimed_ = false;
+        memset(masterMac_, 0, 6);
+        Serial.println("[MESH] master lease expired — resuming public HELLO");
+    }
 }
 
 } // namespace haxel::mesh

@@ -32,6 +32,7 @@ private:
 
     uint8_t pin_        = 255;
     uint8_t channel_    = 5;
+    bool    ready_      = false;
     Mode    mode_       = Mode::OFF;
     uint32_t tickCount_ = 0;
     core::Engine* engine_ = nullptr;

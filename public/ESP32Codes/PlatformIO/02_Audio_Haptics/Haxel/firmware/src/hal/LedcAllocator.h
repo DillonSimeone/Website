@@ -24,12 +24,12 @@ public:
 
 private:
     struct Slot {
-        int8_t  pin = -1;
-        uint8_t bits = 0;
+        int8_t   pin = -1;
+        uint8_t  bits = 0;
+        uint32_t hz = 0;
     };
-    // C3 has 6 LEDC channels; classic ESP32/S3 have more. We size for the
-    // worst case so the array works on every target.
-    Slot slots_[16];
+    static constexpr int8_t kMaxSlots = 16;
+    Slot slots_[kMaxSlots];
 };
 
 } // namespace haxel::hal

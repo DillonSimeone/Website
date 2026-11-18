@@ -4,7 +4,7 @@ Board: **DFRobot FireBeetle 2 ESP32-C6** (`esp32-c6-devkitm-1` in PlatformIO).
 
 Fleet default: **mini L298N** driving **3 motors as 2 haptic channels** (Haxel `L298N` driver, sign-magnitude mode).
 
-**All C6 PlatformIO envs** (`c6WIFILED`, `c6BLULED`, `c6WIFILED_FOLLOWER`) share this pin map via `HAXEL_TARGET_C6` in firmware defaults.
+**All C6 PlatformIO envs** (`c6WIFI`, `c6BLU`) share this pin map via `HAXEL_TARGET_C6` in firmware defaults.
 
 ## ESP32 ↔ mini L298N
 
@@ -44,13 +44,12 @@ Flyback / snub diodes across each motor if the module does not include them. The
 
 | Env | Use |
 | :--- | :--- |
-| **`c6BLULED`** | Normal standalone Haxel — Chrome Web Bluetooth |
-| **`c6WIFILED`** | WiFi captive portal (same hardware / motor pins) |
-| **`c6WIFILED_FOLLOWER`** | ESP-NOW Command Mode fleet node (22× batch flash) |
+| **`c6BLU`** | Normal standalone Haxel — Chrome Web Bluetooth |
+| **`c6WIFI`** | WiFi captive portal or ESP-NOW Mesh (`Mesh Role` in Device settings) |
 
-Flash: Web Uploader → **Haxel/firmware** → **`c6WIFILED_FOLLOWER — Mesh Follower · ESP32-C6`**
+Flash: Web Uploader → **Haxel/firmware** → **`c6WIFI`** (set **Mesh Role = Follower** in Device settings for fleet nodes).
 
-Master: **`c3WIFILED_MASTER`** (unchanged).
+Master: **`c3WIFI`** or **`c6WIFI`** (set **Mesh Role = Master** in Device settings).
 
 ## Fleet tab behavior
 

@@ -40,7 +40,7 @@
             <div class="hud-left">
                 <div class="hud-title">Hardware &amp; Power Specs</div>
                 <div class="hud-hw-box">
-                    <span class="hud-hw-badge">54.5mm FLUSH INSERT</span>
+                    <span class="hud-hw-badge">FLUSH CENTER INSERT</span>
                     <p>Houses <strong>ESP32-C3 SuperMini</strong> + <strong>MAX4466 Mic</strong> inside the cylinder bore (10mm capsule pokes through front center).</p>
                 </div>
                 <div class="hud-subtitle">WS2812B Strip Comparison (60 LEDs/m @ 5V)</div>
@@ -71,7 +71,8 @@
                     <button class="preset-btn" data-preset="casing_mount">Casing + Wall Mount</button>
                     <button class="preset-btn" data-preset="shade_adapter">Shade.stl Adapter</button>
                     <button class="preset-btn" data-preset="wall_mount">Wall Mount Only</button>
-                    <button class="preset-btn" data-preset="hub_only">54.5mm Mic Hub</button>
+                    <button class="preset-btn" data-preset="size_tester">Bore Size Tester</button>
+                    <button class="preset-btn" data-preset="hub_only">Center Mic Hub</button>
                     <button class="preset-btn" data-preset="wave_sinusoidal">Sinusoidal Wave</button>
                     <button class="preset-btn" data-preset="wave_spiral">Serpentine Spiral</button>
                     <button class="preset-btn" data-preset="wave_zigzag">Star Zig-Zag</button>
@@ -155,13 +156,13 @@
 
             <!-- Section 3: Spool & Center Mic Hub -->
             <div class="sidebar-section">
-                <div class="section-title">3. Spool & 54.5mm Mic Hub</div>
+                <div class="section-title">3. Spool &amp; Center Mic Hub</div>
                 <div class="control-group">
                     <div class="control-label">
                         <span>Spool Bore ID (mm)</span>
-                        <span class="control-val" id="val-spoolBoreDia">54.5</span>
+                        <span class="control-val" id="val-spoolBoreDia">57.0</span>
                     </div>
-                    <input type="range" id="spoolBoreDia" min="48" max="60" step="0.1" value="54.5">
+                    <input type="range" id="spoolBoreDia" min="48" max="62" step="0.1" value="57.0">
                 </div>
                 <div class="control-group">
                     <div class="control-label">
@@ -201,9 +202,9 @@
                 <div class="control-group">
                     <div class="control-label">
                         <span>Friction Fit Clearance (mm)</span>
-                        <span class="control-val" id="val-plugClearance">0.20</span>
+                        <span class="control-val" id="val-plugClearance">0.00</span>
                     </div>
-                    <input type="range" id="plugClearance" min="0.0" max="0.6" step="0.05" value="0.20">
+                    <input type="range" id="plugClearance" min="0.0" max="0.6" step="0.05" value="0.00">
                 </div>
             </div>
 
@@ -267,6 +268,13 @@
                     </div>
                     <input type="range" id="wallMountGrooveW" min="6" max="20" step="1" value="12">
                 </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Tester Ring Step (mm)</span>
+                        <span class="control-val" id="val-testerStep">0.50</span>
+                    </div>
+                    <input type="range" id="testerStep" min="0.25" max="1.0" step="0.25" value="0.5">
+                </div>
                 <div class="toggle-row" style="margin-top: 8px;">
                     <label class="toggle-label">
                         <input type="checkbox" id="lidHubCutout" checked>
@@ -279,12 +287,13 @@
             <div class="sidebar-section">
                 <div class="section-title">4. Export 3D Print STLs</div>
                 <div class="export-grid">
-                    <button class="export-btn primary" data-export="hub">Export 54.5mm Mic Hub (.stl)</button>
+                    <button class="export-btn primary" data-export="hub">Export Center Mic Hub (.stl)</button>
                     <button class="export-btn" data-export="wave_half">Export Wave Half (Print ×2) (.stl)</button>
                     <button class="export-btn" data-export="casing">Export Parametric Casing (.stl)</button>
                     <button class="export-btn" data-export="lid">Export Thin Lid (.stl)</button>
                     <button class="export-btn" data-export="shade_adapter">Export Shade.stl Adapter (.stl)</button>
                     <button class="export-btn" data-export="wall_mount">Export Angled Wall Mount (.stl)</button>
+                    <button class="export-btn" data-export="size_tester">Export Bore Size Tester (.stl)</button>
                     <button class="export-btn" data-export="all_plate">Export Hub + Waves Plate (.stl)</button>
                 </div>
             </div>

@@ -28,6 +28,15 @@ struct FleetNode {
     uint32_t lastSeenMs = 0;
     float    waveHistory[32]{};
     uint8_t  waveIdx = 0;
+
+    // Per-node target override (used when targeted individually via /json/fleet).
+    bool     hasOverride = false;
+    bool     targetOn = true;
+    bool     targetMute = false;
+    float    targetIntensity = 0.6f;
+    float    targetSpeed = 1.0f;
+    float    targetFloor = 0.15f;
+    char     targetPattern[kPatternIdLen] = "Breath";
 };
 
 class MeshMaster {
@@ -53,8 +62,8 @@ public:
     bool sendEstop();
     bool applyFleetStatePatch(ArduinoJson::JsonObjectConst patch, const uint8_t* targetMac = nullptr);
 
-    // Push a compact config section to one follower (JSON string chunked).
-    bool pushConfigToNode(const uint8_t* mac);
+    // Push an explicit config patch object to one follower (JSON string chunked).
+    bool pushConfigToNode(const uint8_t* mac, ArduinoJson::JsonObjectConst cfg);
 
     uint32_t stateEpoch() const { return stateEpoch_; }
     uint32_t configEpoch() const { return configEpoch_; }
@@ -72,6 +81,7 @@ private:
     bool sendPacket_(MsgType type, const uint8_t* mac, const void* payload, size_t payloadLen);
     FleetNode* upsertNode_(const uint8_t* mac);
     void expireLeases_();
+    void syncFromEngineIfChanged_();
     void broadcastAudioIfDue_();
     void broadcastStateIfDue_();
 
@@ -88,6 +98,15 @@ private:
     uint32_t lastStateMs_ = 0;
     uint32_t lastAudioMs_ = 0;
     uint32_t lastZeroMs_ = 0;
+
+    bool     lastEngineOn_ = false;
+    bool     lastEngineMute_ = false;
+    bool     lastEngineFaulted_ = false;
+    float    lastEngineIntensity_ = 0.0f;
+    float    lastEngineSpeed_ = 1.0f;
+    float    lastEngineFloor_ = 0.35f;
+    char     lastEnginePattern_[kPatternIdLen]{};
+    uint32_t engineSyncHoldUntilMs_ = 0;
 
     // Pending fleet override (what Master wants followers to play).
     bool  fleetOn_ = true;

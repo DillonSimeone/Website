@@ -45,6 +45,14 @@ const btnClearConsole = document.getElementById('btn-clear-console');
 let isEditingReadme = false;
 let readmeCache = '';
 
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 // Connect to WebSockets
 function connectWS() {
   const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -52,11 +60,20 @@ function connectWS() {
 
   ws.onopen = () => {
     console.log('[WS] Connected to backend');
-    logBuildOutputEl.textContent = '[System] WebSocket connection established.\n';
+    if (!logBuildOutputEl.textContent || logBuildOutputEl.textContent.startsWith('No logs yet.')) {
+      logBuildOutputEl.textContent = '[System] WebSocket connection established.\n';
+    } else {
+      logBuildOutputEl.textContent += '[System] WebSocket connection established.\n';
+    }
   };
 
   ws.onmessage = (event) => {
-    const msg = JSON.parse(event.data);
+    let msg;
+    try {
+      msg = JSON.parse(event.data);
+    } catch {
+      return;
+    }
 
     if (msg.type === 'log') {
       if (msg.stream === 'build') {
@@ -73,6 +90,12 @@ function connectWS() {
 
   ws.onclose = () => {
     console.warn('[WS] Connection lost. Reconnecting in 3s...');
+    if (isFlashing) {
+      finishFlash();
+      btnBuildFlash.textContent = 'BUILD & FLASH DEVICE';
+      updateQuickFlashState();
+      logBuildOutputEl.textContent += '\n[System] WebSocket disconnected — UI unlocked. Reconnecting...\n';
+    }
     setTimeout(connectWS, 3000);
   };
 }
@@ -107,34 +130,46 @@ function updateProcessStatus(type, isActive) {
   if (type === 'monitor') {
     // Monitor status tracking
   } else if (type === 'build') {
-    btnBuildFlash.disabled = isActive;
-    btnQuickFlash.disabled = isActive;
+    btnBuildFlash.disabled = isActive || (selectedProject && !selectedProject.isPlatformIO);
     if (isActive) {
+      btnQuickFlash.disabled = true;
       btnBuildFlash.textContent = 'FLASHING...';
       prepareForFlash();
     } else {
       btnBuildFlash.textContent = 'BUILD & FLASH DEVICE';
       finishFlash();
-      loadProjects();
+      loadProjects({ silent: true });
     }
   }
 }
 
-// Load project catalog
-async function loadProjects() {
+// Load project catalog (preserving active selection & refreshing staleness state)
+async function loadProjects(options = {}) {
+  const { silent = false } = options;
   try {
-    const res = await fetch('/api/projects');
+    const res = await fetch('/api/projects', { cache: 'no-store' });
     projects = await res.json();
-    
+
     // Automatically open the first folder if none is open
     if (openFolders.size === 0 && projects.length > 0) {
       const firstFolder = projects[0].folder || '.';
       openFolders.add(firstFolder);
     }
-    
+
+    if (selectedProject) {
+      const updated = projects.find(p => p.path === selectedProject.path);
+      if (updated) {
+        const prevEnv = envSelectEl.value;
+        selectedProject = updated;
+        syncWorkspaceFromSelectedProject(prevEnv, { refreshReadme: !silent && !isEditingReadme });
+      }
+    }
+
     renderProjects();
   } catch (err) {
-    projectListEl.innerHTML = `<p class="loading-text" style="color: var(--primary-pink);">Error: ${err.message}</p>`;
+    if (!silent) {
+      projectListEl.innerHTML = `<p class="loading-text" style="color: var(--primary-pink);">Error: ${escapeHtml(err.message)}</p>`;
+    }
   }
 }
 
@@ -181,7 +216,7 @@ function renderProjects() {
     header.innerHTML = `
       <span style="display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden;">
         ${iconHtml}
-        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cleanFolderName} (${groups[folderName].length})</span>
+        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(cleanFolderName)} (${groups[folderName].length})</span>
       </span>
       <span class="folder-icon" style="flex-shrink: 0;">▶</span>
     `;
@@ -218,9 +253,9 @@ function renderProjects() {
       const envsDisplay = visibleEnvs.join(', ') + (extraCount > 0 ? `, ... (${extraCount} more envs)` : '');
 
       card.innerHTML = `
-        <h3>${displayName}</h3>
-        <span class="board-tag">${project.board}</span>
-        <p style="margin-top: 8px; opacity: 0.8; font-size: 0.8rem;">Envs: ${envsDisplay}</p>
+        <h3>${escapeHtml(displayName)}</h3>
+        <span class="board-tag">${escapeHtml(project.board)}</span>
+        <p style="margin-top: 8px; opacity: 0.8; font-size: 0.8rem;">Envs: ${escapeHtml(envsDisplay)}</p>
       `;
 
       card.addEventListener('click', (e) => {
@@ -251,36 +286,48 @@ function renderProjects() {
   });
 }
 
-// Select active project
-function selectProject(project) {
-  selectedProject = project;
+function syncWorkspaceFromSelectedProject(preferredEnv, { refreshReadme = true } = {}) {
+  if (!selectedProject) return;
   workspaceCardEl.style.display = 'block';
-  activeProjectNameEl.innerHTML = `<span class="title-text">${project.name.split('/').pop().toUpperCase()}</span>`;
-  activeProjectNameEl.setAttribute('data-tooltip', project.name);
-  
-  // Reset Add Env dropdown
-  addEnvSelectEl.value = "";
+  const shortTitle = selectedProject.name.split('/').pop().toUpperCase();
+  activeProjectNameEl.innerHTML = `<span class="title-text">${escapeHtml(shortTitle)}</span>`;
+  activeProjectNameEl.setAttribute('data-tooltip', selectedProject.name);
 
-  // Populate Environments (with Haxel flag labels when available)
   envSelectEl.innerHTML = '';
-  project.envs.forEach(env => {
+  (selectedProject.envs || []).forEach(env => {
     const opt = document.createElement('option');
     opt.value = env;
-    const meta = project.envMeta && project.envMeta[env];
+    const meta = selectedProject.envMeta && selectedProject.envMeta[env];
     opt.textContent = meta && meta.label ? meta.label : env;
     envSelectEl.appendChild(opt);
   });
+  if (preferredEnv && (selectedProject.envs || []).includes(preferredEnv)) {
+    envSelectEl.value = preferredEnv;
+  }
 
-  // Verify firmware bin availability + show feature flags
+  btnBuildFlash.disabled = isFlashing || !selectedProject.isPlatformIO;
+  if (!selectedProject.isPlatformIO) {
+    btnBuildFlash.title = 'Not a PlatformIO project (missing platformio.ini)';
+  } else {
+    btnBuildFlash.title = '';
+  }
+
   updateQuickFlashState();
   updateEnvFlags();
   renderLibraries();
-  envSelectEl.removeEventListener('change', onEnvChanged);
-  envSelectEl.addEventListener('change', onEnvChanged);
 
-  // Load README
-  loadReadme(project);
+  if (refreshReadme) {
+    loadReadme(selectedProject);
+  }
 }
+
+// Select active project
+function selectProject(project) {
+  selectedProject = project;
+  addEnvSelectEl.value = "";
+  syncWorkspaceFromSelectedProject(null, { refreshReadme: true });
+}
+envSelectEl.addEventListener('change', onEnvChanged);
 
 // Render resolved library tags for the active env
 function renderLibraries() {
@@ -334,15 +381,30 @@ function updateEnvFlags() {
 
 function updateQuickFlashState() {
   if (!selectedProject) return;
+  if (!selectedProject.isPlatformIO) {
+    btnQuickFlash.disabled = true;
+    btnQuickFlash.classList.remove('neo-btn-stale');
+    btnQuickFlash.title = 'Quick Flash is only available for PlatformIO projects.';
+    btnQuickFlash.textContent = 'QUICK FLASH (N/A)';
+    return;
+  }
   const env = envSelectEl.value;
-  const status = selectedProject.firmwareStatus[env];
+  const status = selectedProject.firmwareStatus && selectedProject.firmwareStatus[env];
 
   if (status && status.exists) {
-    btnQuickFlash.disabled = false;
-    btnQuickFlash.title = `Flash pre-compiled firmware.bin from ${new Date(status.mtime).toLocaleString()}`;
-    btnQuickFlash.textContent = `QUICK FLASH (${env})`;
+    btnQuickFlash.disabled = isFlashing;
+    if (status.stale) {
+      btnQuickFlash.classList.add('neo-btn-stale');
+      btnQuickFlash.title = `Source modified (${status.staleFile}) after firmware.bin was built on ${new Date(status.mtime).toLocaleString()}. Clicking Quick Flash will rebuild first.`;
+      btnQuickFlash.textContent = `QUICK FLASH (${env} · STALE)`;
+    } else {
+      btnQuickFlash.classList.remove('neo-btn-stale');
+      btnQuickFlash.title = `Flash up-to-date firmware.bin built on ${new Date(status.mtime).toLocaleString()}`;
+      btnQuickFlash.textContent = `QUICK FLASH (${env})`;
+    }
   } else {
     btnQuickFlash.disabled = true;
+    btnQuickFlash.classList.remove('neo-btn-stale');
     btnQuickFlash.title = 'No compiled firmware.bin found. Run Build & Flash first.';
     btnQuickFlash.textContent = 'QUICK FLASH (NO BIN)';
   }
@@ -658,7 +720,7 @@ btnRefreshProjects.addEventListener('click', loadProjects);
 btnRefreshPorts.addEventListener('click', loadPorts);
 
 btnBuildFlash.addEventListener('click', () => {
-  if (!selectedProject) return;
+  if (!selectedProject || !selectedProject.isPlatformIO) return;
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({
       type: 'run-upload',
@@ -669,28 +731,49 @@ btnBuildFlash.addEventListener('click', () => {
         quick: false
       }
     }));
+  } else {
+    logBuildOutputEl.textContent += '\n[System] WebSocket not connected.\n';
   }
 });
 
-btnQuickFlash.addEventListener('click', () => {
-  if (!selectedProject) return;
+btnQuickFlash.addEventListener('click', async () => {
+  if (!selectedProject || !selectedProject.isPlatformIO) return;
+  const env = envSelectEl.value;
+  // Re-check disk freshness right before flashing so edits made while server was open are caught immediately.
+  await loadProjects({ silent: true });
+  const status = selectedProject.firmwareStatus && selectedProject.firmwareStatus[env];
+  if (!status || !status.exists) {
+    logBuildOutputEl.textContent += `\n[System] No firmware.bin found for "${env}". Run BUILD & FLASH first.\n`;
+    return;
+  }
+  let useQuick = true;
+  if (status.stale) {
+    const ok = confirm(
+      `Source file "${status.staleFile}" changed after firmware.bin was built (${new Date(status.mtime).toLocaleTimeString()}).\n\n` +
+      `Click OK to run BUILD & FLASH (recommended) so you flash the latest code, or Cancel to abort.`
+    );
+    if (!ok) return;
+    useQuick = false;
+  }
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({
       type: 'run-upload',
       payload: {
         projectDir: selectedProject.path,
-        env: envSelectEl.value,
+        env,
         port: portSelectEl.value,
-        quick: true
+        quick: useQuick
       }
     }));
+  } else {
+    logBuildOutputEl.textContent += '\n[System] WebSocket not connected.\n';
   }
 });
 
 btnKillActive.addEventListener('click', () => {
   if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: 'stop-monitor' }));
-    logBuildOutputEl.textContent += '\n[System] Terminating running operations...\n';
+    ws.send(JSON.stringify({ type: 'kill-build' }));
+    logBuildOutputEl.textContent += '\n[System] Terminating running build/monitor operations...\n';
   }
 });
 
@@ -701,6 +784,16 @@ btnClearConsole.addEventListener('click', () => {
     logMonitorOutputEl.textContent = '';
   }
 });
+
+// Auto-refresh project build freshness when returning to this browser tab or periodically while idle
+window.addEventListener('focus', () => {
+  if (!isFlashing) loadProjects({ silent: true });
+});
+setInterval(() => {
+  if (!isFlashing && document.visibilityState === 'visible') {
+    loadProjects({ silent: true });
+  }
+}, 5000);
 
 // Initialization
 connectWS();

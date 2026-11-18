@@ -1,8 +1,8 @@
 [
   {
-    "name": "Rainbow Drift",
-    "tags": ["classic", "smooth"],
-    "code": "h = i/n + time(8);\nhsv(h, 1, 1);"
+    "name": "Shifting Rainbow",
+    "tags": ["rainbow", "smooth"],
+    "code": "// Smooth shifting rainbow across strip.\nh = i/n + time(8);\nhsv(h, 1, 1);"
   },
   {
     "name": "Breathing Aurora",

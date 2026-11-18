@@ -1,8 +1,11 @@
 #include "LedController.h"
+#include "PatternRegistry.h"
 
 #if HAXEL_FEATURE_LED
 
 #include <FastLED.h>
+#include <algorithm>
+#include <cstring>
 #include <math.h>
 
 namespace haxel::core {
@@ -26,7 +29,7 @@ bool LedController::begin(Config* config, Engine* engine) {
     }
 
     CRGB* crgbLeds = new CRGB[count_];
-    memset(crgbLeds, 0, count_ * sizeof(CRGB));
+    std::fill_n(crgbLeds, count_, CRGB::Black);
     leds_ = (void*)crgbLeds;
     smoothIntensity_ = 0.0f;
 
@@ -45,12 +48,22 @@ bool LedController::begin(Config* config, Engine* engine) {
         case 19: FastLED.addLeds<WS2812B, 19, GRB>(crgbLeds, count_); break;
         case 21: FastLED.addLeds<WS2812B, 21, GRB>(crgbLeds, count_); break;
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
-        // FireBeetle 2 ESP32-C6 — avoid flash/UART pins (24–26 per FastLED mask)
+        // FireBeetle 2 ESP32-C6 — safe user GPIOs (avoid flash/UART pins 24–26)
+        case 4:  FastLED.addLeds<WS2812B, 4,  GRB>(crgbLeds, count_); break;
+        case 5:  FastLED.addLeds<WS2812B, 5,  GRB>(crgbLeds, count_); break;
+        case 6:  FastLED.addLeds<WS2812B, 6,  GRB>(crgbLeds, count_); break;
+        case 7:  FastLED.addLeds<WS2812B, 7,  GRB>(crgbLeds, count_); break;
         case 8:  FastLED.addLeds<WS2812B, 8,  GRB>(crgbLeds, count_); break;
+        case 14: FastLED.addLeds<WS2812B, 14, GRB>(crgbLeds, count_); break;
+        case 15: FastLED.addLeds<WS2812B, 15, GRB>(crgbLeds, count_); break;
         case 16: FastLED.addLeds<WS2812B, 16, GRB>(crgbLeds, count_); break;
         case 17: FastLED.addLeds<WS2812B, 17, GRB>(crgbLeds, count_); break;
+        case 18: FastLED.addLeds<WS2812B, 18, GRB>(crgbLeds, count_); break;
         case 19: FastLED.addLeds<WS2812B, 19, GRB>(crgbLeds, count_); break;
         case 20: FastLED.addLeds<WS2812B, 20, GRB>(crgbLeds, count_); break;
+        case 21: FastLED.addLeds<WS2812B, 21, GRB>(crgbLeds, count_); break;
+        case 22: FastLED.addLeds<WS2812B, 22, GRB>(crgbLeds, count_); break;
+        case 23: FastLED.addLeds<WS2812B, 23, GRB>(crgbLeds, count_); break;
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
         case 1:  FastLED.addLeds<WS2812B, 1,  GRB>(crgbLeds, count_); break;
         case 2:  FastLED.addLeds<WS2812B, 2,  GRB>(crgbLeds, count_); break;
@@ -95,17 +108,11 @@ bool LedController::begin(Config* config, Engine* engine) {
         case 33: FastLED.addLeds<WS2812B, 33, GRB>(crgbLeds, count_); break;
 #endif
         default:
-#if defined(CONFIG_IDF_TARGET_ESP32C6)
-            FastLED.addLeds<WS2812B, 17, GRB>(crgbLeds, count_);
-            pin_ = 17;
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
-            FastLED.addLeds<WS2812B, 5, GRB>(crgbLeds, count_);
-            pin_ = 5;
-#else
-            FastLED.addLeds<WS2812B, 2, GRB>(crgbLeds, count_);
-            pin_ = 2;
-#endif
-            break;
+            log_e("LedController: unsupported LED GPIO %d for this target; LED strip disabled", (int)pin_);
+            delete[] crgbLeds;
+            leds_ = nullptr;
+            enabled_ = false;
+            return false;
     }
 
     FastLED.show();
@@ -115,7 +122,7 @@ bool LedController::begin(Config* config, Engine* engine) {
 void LedController::end() {
     if (leds_) {
         CRGB* crgbLeds = (CRGB*)leds_;
-        memset(crgbLeds, 0, count_ * sizeof(CRGB));
+        std::fill_n(crgbLeds, count_, CRGB::Black);
         FastLED.show();
         delete[] crgbLeds;
         leds_ = nullptr;
@@ -133,22 +140,29 @@ void LedController::tick() {
     engine_->copyState(s);
 
     IPattern* currentPattern = s.pattern;
-    if (currentPattern != lastPattern_) {
-        lastPattern_ = currentPattern;
-        if (currentPattern) {
-            if (!currentPattern->getColor(r_, g_, b_)) {
-                CHSV randomHsv(random8(), 255, 255);
-                CRGB randomRgb;
-                hsv2rgb_rainbow(randomHsv, randomRgb);
-                r_ = randomRgb.r;
-                g_ = randomRgb.g;
-                b_ = randomRgb.b;
+    if (currentPattern) {
+        PatternRegistry::instance().lockEval();
+        if (PatternRegistry::instance().contains(currentPattern)) {
+            const char* pid = currentPattern->id() ? currentPattern->id() : "";
+            if (strcmp(pid, lastPatternId_) != 0) {
+                strncpy(lastPatternId_, pid, sizeof(lastPatternId_) - 1);
+                lastPatternId_[sizeof(lastPatternId_) - 1] = '\0';
+                if (!currentPattern->getColor(r_, g_, b_)) {
+                    CHSV randomHsv(random8(), 255, 255);
+                    CRGB randomRgb;
+                    hsv2rgb_rainbow(randomHsv, randomRgb);
+                    r_ = randomRgb.r;
+                    g_ = randomRgb.g;
+                    b_ = randomRgb.b;
+                }
             }
-        } else {
-            r_ = 255;
-            g_ = 106;
-            b_ = 61;
         }
+        PatternRegistry::instance().unlockEval();
+    } else if (lastPatternId_[0] != '\0') {
+        lastPatternId_[0] = '\0';
+        r_ = 255;
+        g_ = 106;
+        b_ = 61;
     }
 
     // Pattern envelope BEFORE motor floor / soft-start.
@@ -156,9 +170,11 @@ void LedController::tick() {
     if (s.on && !s.mute) {
         for (uint8_t i = 0; i < s.channelCount; ++i) {
             float val = engine_->getPatternValue(i);
-            if (val > target) target = val;
+            if (isfinite(val) && val > target) target = val;
         }
     }
+    if (!isfinite(target)) target = 0.0f;
+    if (!isfinite(smoothIntensity_)) smoothIntensity_ = 0.0f;
 
     if (target > smoothIntensity_) {
         smoothIntensity_ += (target - smoothIntensity_) * kAttack;

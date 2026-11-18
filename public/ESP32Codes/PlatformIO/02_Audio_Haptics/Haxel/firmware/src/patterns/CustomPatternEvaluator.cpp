@@ -94,7 +94,8 @@ std::vector<Token> CustomPatternEvaluator::tokenize(const std::string& source) {
         // Operators & punctuation
         if (i + 1 < len) {
             std::string two = source.substr(i, 2);
-            if (two == "<=" || two == ">=" || two == "==" || two == "!=") {
+            if (two == "<=" || two == ">=" || two == "==" || two == "!=" ||
+                two == "&&" || two == "||") {
                 Token t;
                 t.type = TokenType::OP;
                 t.value = two;
@@ -170,7 +171,7 @@ std::shared_ptr<ASTNode> CustomPatternEvaluator::parseStmt(const std::vector<Tok
 }
 
 std::shared_ptr<ASTNode> CustomPatternEvaluator::parseTern(const std::vector<Token>& tokens, size_t& p) {
-    auto c = parseCmp(tokens, p);
+    auto c = parseOr(tokens, p);
     if (tokens[p].type == TokenType::QUESTION) {
         p++; // eat ?
         auto a = parseTern(tokens, p);
@@ -186,6 +187,36 @@ std::shared_ptr<ASTNode> CustomPatternEvaluator::parseTern(const std::vector<Tok
         return node;
     }
     return c;
+}
+
+std::shared_ptr<ASTNode> CustomPatternEvaluator::parseOr(const std::vector<Token>& tokens, size_t& p) {
+    auto l = parseAnd(tokens, p);
+    while (tokens[p].type == TokenType::OP && tokens[p].value == "||") {
+        std::string op = tokens[p].value;
+        p++;
+        auto r = parseAnd(tokens, p);
+        auto node = std::make_shared<ASTNode>(ASTNodeKind::BIN_OP);
+        node->op = op;
+        node->args.push_back(l);
+        node->args.push_back(r);
+        l = node;
+    }
+    return l;
+}
+
+std::shared_ptr<ASTNode> CustomPatternEvaluator::parseAnd(const std::vector<Token>& tokens, size_t& p) {
+    auto l = parseCmp(tokens, p);
+    while (tokens[p].type == TokenType::OP && tokens[p].value == "&&") {
+        std::string op = tokens[p].value;
+        p++;
+        auto r = parseCmp(tokens, p);
+        auto node = std::make_shared<ASTNode>(ASTNodeKind::BIN_OP);
+        node->op = op;
+        node->args.push_back(l);
+        node->args.push_back(r);
+        l = node;
+    }
+    return l;
 }
 
 std::shared_ptr<ASTNode> CustomPatternEvaluator::parseCmp(const std::vector<Token>& tokens, size_t& p) {
@@ -298,15 +329,25 @@ std::shared_ptr<ASTNode> CustomPatternEvaluator::parsePri(const std::vector<Toke
 float CustomPatternEvaluator::evaluate(const haxel::core::PatternContext& ctx, float speed, float floorVal) {
     if (!root_) return 0.0f;
 
-    float t = ctx.tMs / 1000.0f; // convert to seconds
-    float dt = lastT_ == 0.0f ? 0.016f : (t - lastT_);
-    lastT_ = t;
+    float t = (float)(ctx.tMs / 1000.0); // convert to seconds
+    if (lastEvalMs_ < 0.0) {
+        cachedDt_ = 0.016f;
+        lastEvalMs_ = ctx.tMs;
+        lastT_ = t;
+    } else if (ctx.tMs != lastEvalMs_) {
+        float dt = t - lastT_;
+        if (dt < 0.0001f || dt > 0.25f) dt = 0.016f;
+        cachedDt_ = dt;
+        lastEvalMs_ = ctx.tMs;
+        lastT_ = t;
+    }
+    float dt = cachedDt_;
 
     vars_["t"] = t;
     vars_["time"] = t;
     vars_["dt"] = dt;
     vars_["delta"] = dt;
-    vars_["freq"] = 150.0f; // default frequency shift parameter
+    vars_["freq"] = ctx.freq;
     vars_["speed"] = speed;
     vars_["intensity"] = ctx.intensityMaster;
     vars_["floor"] = floorVal;
@@ -315,11 +356,13 @@ float CustomPatternEvaluator::evaluate(const haxel::core::PatternContext& ctx, f
     float lastVal = 0.0f;
     for (const auto& s : root_->args) {
         if (s->kind == ASTNodeKind::ASN) {
-            vars_[s->name] = evalNode(s->args[0], ctx, speed, floorVal);
+            float v = evalNode(s->args[0], ctx, speed, floorVal);
+            vars_[s->name] = std::isfinite(v) ? v : 0.0f;
         } else if (s->kind == ASTNodeKind::EXP) {
             lastVal = evalNode(s->args[0], ctx, speed, floorVal);
         }
     }
+    if (!std::isfinite(lastVal)) return 0.0f;
     // Clamp output to 0.0..1.0
     return lastVal < 0.0f ? 0.0f : (lastVal > 1.0f ? 1.0f : lastVal);
 }
@@ -338,6 +381,14 @@ float CustomPatternEvaluator::evalNode(const std::shared_ptr<ASTNode>& node, con
         case ASTNodeKind::NEG:
             return -evalNode(node->args[0], ctx, speed, floorVal);
         case ASTNodeKind::BIN_OP: {
+            if (node->op == "&&") {
+                return (evalNode(node->args[0], ctx, speed, floorVal) != 0.0f &&
+                        evalNode(node->args[1], ctx, speed, floorVal) != 0.0f) ? 1.0f : 0.0f;
+            }
+            if (node->op == "||") {
+                return (evalNode(node->args[0], ctx, speed, floorVal) != 0.0f ||
+                        evalNode(node->args[1], ctx, speed, floorVal) != 0.0f) ? 1.0f : 0.0f;
+            }
             float l = evalNode(node->args[0], ctx, speed, floorVal);
             float r = evalNode(node->args[1], ctx, speed, floorVal);
             if (node->op == "+") return l + r;
@@ -382,7 +433,11 @@ float CustomPatternEvaluator::evalNode(const std::shared_ptr<ASTNode>& node, con
             if (node->name == "step") return args.size() > 1 ? (args[1] < args[0] ? 0.0f : 1.0f) : 0.0f;
             if (node->name == "smoothstep") {
                 if (args.size() < 3) return 0.0f;
-                float t = (args[2] - args[0]) / (args[1] - args[0]);
+                float denom = args[1] - args[0];
+                if (fabsf(denom) < 1e-6f) {
+                    return args[2] >= args[1] ? 1.0f : 0.0f;
+                }
+                float t = (args[2] - args[0]) / denom;
                 t = std::max(0.0f, std::min(1.0f, t));
                 return t * t * (3.0f - 2.0f * t);
             }

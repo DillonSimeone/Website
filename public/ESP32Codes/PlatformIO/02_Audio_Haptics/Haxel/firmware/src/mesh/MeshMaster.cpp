@@ -45,6 +45,15 @@ bool MeshMaster::begin(Engine* engine, Config* config, AudioAnalyzer* audio) {
     fleetFloor_ = s.startupFloor;
     if (s.pattern) copyName(fleetPattern_, sizeof(fleetPattern_), s.pattern->id());
 
+    lastEngineOn_ = fleetOn_;
+    lastEngineMute_ = fleetMute_;
+    lastEngineFaulted_ = (engine_->state() == EngineState::FAULT);
+    lastEngineIntensity_ = fleetIntensity_;
+    lastEngineSpeed_ = fleetSpeed_;
+    lastEngineFloor_ = fleetFloor_;
+    copyName(lastEnginePattern_, sizeof(lastEnginePattern_), fleetPattern_);
+    engineSyncHoldUntilMs_ = 0;
+
     Serial.println("[MESH] Master role active");
     return true;
 }
@@ -52,8 +61,58 @@ bool MeshMaster::begin(Engine* engine, Config* config, AudioAnalyzer* audio) {
 void MeshMaster::tick() {
     EspNowTransport::instance().pump();
     expireLeases_();
+    syncFromEngineIfChanged_();
     broadcastAudioIfDue_();
     broadcastStateIfDue_();
+}
+
+void MeshMaster::syncFromEngineIfChanged_() {
+    if (!engine_) return;
+    const uint32_t now = millis();
+    if ((int32_t)(now - engineSyncHoldUntilMs_) < 0) return;
+
+    const bool faulted = (engine_->state() == EngineState::FAULT);
+    if (faulted && !lastEngineFaulted_) {
+        lastEngineFaulted_ = true;
+        sendEstop();
+        return;
+    }
+    if (!faulted) {
+        lastEngineFaulted_ = false;
+    }
+
+    StagedState s;
+    engine_->copyState(s);
+    char pid[kPatternIdLen] = "";
+    PatternRegistry::instance().copyIdIfValid(s.pattern, pid, sizeof(pid));
+    const bool changed =
+        (s.on != lastEngineOn_) ||
+        (s.mute != lastEngineMute_) ||
+        fabsf(s.intensity - lastEngineIntensity_) > 0.001f ||
+        fabsf(s.speed - lastEngineSpeed_) > 0.001f ||
+        fabsf(s.startupFloor - lastEngineFloor_) > 0.001f ||
+        strcmp(pid, lastEnginePattern_) != 0;
+
+    if (!changed) return;
+
+    lastEngineOn_ = s.on;
+    lastEngineMute_ = s.mute;
+    lastEngineIntensity_ = s.intensity;
+    lastEngineSpeed_ = s.speed;
+    lastEngineFloor_ = s.startupFloor;
+    copyName(lastEnginePattern_, sizeof(lastEnginePattern_), pid);
+
+    fleetOn_ = s.on;
+    fleetMute_ = s.mute;
+    fleetIntensity_ = s.intensity;
+    fleetSpeed_ = s.speed;
+    fleetFloor_ = s.startupFloor;
+    if (pid[0]) copyName(fleetPattern_, sizeof(fleetPattern_), pid);
+    for (size_t i = 0; i < nodeCount_; ++i) {
+        nodes_[i].hasOverride = false;
+    }
+    ++stateEpoch_;
+    sendStateToFleet(nullptr);
 }
 
 size_t MeshMaster::nodeCount() const { return nodeCount_; }
@@ -75,7 +134,7 @@ FleetNode* MeshMaster::upsertNode_(const uint8_t* mac) {
     if (n) return n;
     if (nodeCount_ >= kMaxFleet) return nullptr;
     n = &nodes_[nodeCount_++];
-    memset(n, 0, sizeof(*n));
+    *n = FleetNode{};
     macCopy(n->mac, mac);
     return n;
 }
@@ -252,23 +311,46 @@ bool MeshMaster::releaseAll() {
 }
 
 bool MeshMaster::sendStateToFleet(const uint8_t* targetMac) {
+    const bool isBroadcast = (!targetMac || macIsBroadcast(targetMac));
+    FleetNode* node = isBroadcast ? nullptr : findNode(targetMac);
+
+    bool  useOn        = fleetOn_;
+    bool  useMute      = fleetMute_;
+    float useIntensity = fleetIntensity_;
+    float useSpeed     = fleetSpeed_;
+    float useFloor     = fleetFloor_;
+    const char* usePat = fleetPattern_;
+
+    if (node && node->hasOverride) {
+        useOn        = node->targetOn;
+        useMute      = node->targetMute;
+        useIntensity = node->targetIntensity;
+        useSpeed     = node->targetSpeed;
+        useFloor     = node->targetFloor;
+        usePat       = node->targetPattern;
+    }
+
     StatePayload p{};
     p.flags = 0;
-    if (fleetOn_) p.flags |= kFlagOn;
-    if (fleetMute_) p.flags |= kFlagMute;
-    if (!fleetOn_ || fleetMute_ || fleetIntensity_ <= 0.001f) p.flags |= kFlagZero;
+    if (useOn) p.flags |= kFlagOn;
+    if (useMute) p.flags |= kFlagMute;
+    if (!useOn || useMute || useIntensity <= 0.001f) p.flags |= kFlagZero;
     p.stateEpochLo = (uint16_t)(stateEpoch_ & 0xFFFF);
-    p.intensity = fleetIntensity_;
-    p.speed = fleetSpeed_;
-    p.startupFloor = fleetFloor_;
-    copyName(p.patternId, sizeof(p.patternId), fleetPattern_);
-    if (targetMac) macCopy(p.targetMac, targetMac);
+    p.intensity = useIntensity;
+    p.speed = useSpeed;
+    p.startupFloor = useFloor;
+    copyName(p.patternId, sizeof(p.patternId), usePat);
+    if (!isBroadcast) macCopy(p.targetMac, targetMac);
     else macSetBroadcast(p.targetMac);
-    lastStateMs_ = millis();
+
+    if (isBroadcast) {
+        lastStateMs_ = millis();
+    }
     return sendPacket_(MsgType::State, nullptr, &p, sizeof(p));
 }
 
 bool MeshMaster::sendEstop() {
+    lastEngineFaulted_ = true;
     EstopPayload p{};
     p.reason = 0;
     bool ok = true;
@@ -277,12 +359,53 @@ bool MeshMaster::sendEstop() {
         delay(5);
     }
     fleetOn_ = false;
-    fleetMute_ = true;
+    fleetMute_ = false;
+    lastEngineOn_ = false;
+    lastEngineMute_ = false;
+    for (size_t i = 0; i < nodeCount_; ++i) {
+        if (nodes_[i].hasOverride) {
+            nodes_[i].targetOn = false;
+            nodes_[i].targetMute = false;
+        }
+    }
+    if (engine_) {
+        StagedState s;
+        engine_->copyState(s);
+        s.on = false;
+        s.mute = false;
+        engine_->stageState(s);
+        engineSyncHoldUntilMs_ = millis() + 40;
+    }
     ++stateEpoch_;
     return ok;
 }
 
 bool MeshMaster::applyFleetStatePatch(JsonObjectConst patch, const uint8_t* targetMac) {
+    const bool isTargeted = (targetMac && !macIsBroadcast(targetMac));
+    if (isTargeted) {
+        FleetNode* n = findNode(targetMac);
+        if (!n) return false;
+        if (!n->hasOverride) {
+            n->targetOn = fleetOn_;
+            n->targetMute = fleetMute_;
+            n->targetIntensity = fleetIntensity_;
+            n->targetSpeed = fleetSpeed_;
+            n->targetFloor = fleetFloor_;
+            copyName(n->targetPattern, sizeof(n->targetPattern), fleetPattern_);
+            n->hasOverride = true;
+        }
+        if (patch["on"].is<bool>()) n->targetOn = patch["on"].as<bool>();
+        if (patch["mute"].is<bool>()) n->targetMute = patch["mute"].as<bool>();
+        if (patch["intensity"].is<float>()) n->targetIntensity = patch["intensity"].as<float>();
+        if (patch["speed"].is<float>()) n->targetSpeed = patch["speed"].as<float>();
+        if (patch["startupFloor"].is<float>()) n->targetFloor = patch["startupFloor"].as<float>();
+        if (patch["pattern"].is<const char*>()) {
+            copyName(n->targetPattern, sizeof(n->targetPattern), patch["pattern"].as<const char*>());
+        }
+        ++stateEpoch_;
+        return sendStateToFleet(targetMac);
+    }
+
     if (patch["on"].is<bool>()) fleetOn_ = patch["on"].as<bool>();
     if (patch["mute"].is<bool>()) fleetMute_ = patch["mute"].as<bool>();
     if (patch["intensity"].is<float>()) fleetIntensity_ = patch["intensity"].as<float>();
@@ -291,34 +414,68 @@ bool MeshMaster::applyFleetStatePatch(JsonObjectConst patch, const uint8_t* targ
     if (patch["pattern"].is<const char*>()) {
         copyName(fleetPattern_, sizeof(fleetPattern_), patch["pattern"].as<const char*>());
     }
+    for (size_t i = 0; i < nodeCount_; ++i) {
+        nodes_[i].hasOverride = false;
+    }
     ++stateEpoch_;
 
     // Mirror onto Master locally so the portal and fleet stay aligned.
     if (engine_) {
+        lastEngineOn_ = fleetOn_;
+        lastEngineMute_ = fleetMute_;
+        lastEngineIntensity_ = fleetIntensity_;
+        lastEngineSpeed_ = fleetSpeed_;
+        lastEngineFloor_ = fleetFloor_;
+        copyName(lastEnginePattern_, sizeof(lastEnginePattern_), fleetPattern_);
+        engineSyncHoldUntilMs_ = millis() + 40;
         web::applyStatePatch(patch, engine_);
     }
-    return sendStateToFleet(targetMac);
+    return sendStateToFleet(nullptr);
 }
 
 void MeshMaster::broadcastStateIfDue_() {
     const uint32_t now = millis();
     if (now - lastStateMs_ < kStateBroadcastMs) return;
-    // Keep followers alive with periodic STATE (and explicit zeros).
-    sendStateToFleet(nullptr);
+
+    bool anyOverride = false;
+    for (size_t i = 0; i < nodeCount_; ++i) {
+        if ((nodes_[i].online || nodes_[i].claimed) && nodes_[i].hasOverride) {
+            anyOverride = true;
+            break;
+        }
+    }
+
+    if (!anyOverride) {
+        // Keep followers alive with periodic broadcast STATE.
+        sendStateToFleet(nullptr);
+    } else {
+        lastStateMs_ = now;
+        for (size_t i = 0; i < nodeCount_; ++i) {
+            if (nodes_[i].online || nodes_[i].claimed) {
+                sendStateToFleet(nodes_[i].mac);
+            }
+        }
+    }
     if ((fleetMute_ || !fleetOn_) && (now - lastZeroMs_ > 200)) {
         lastZeroMs_ = now;
     }
 }
 
 void MeshMaster::broadcastAudioIfDue_() {
-#if HAXEL_FEATURE_AUDIO
-    if (!audio_ || !audio_->ready()) return;
     const uint32_t now = millis();
     if (now - lastAudioMs_ < kAudioBroadcastMs) return;
-    lastAudioMs_ = now;
 
-    AudioFrame frame = audio_->latest();
-    if (!frame.valid) return;
+    AudioFrame frame{};
+    bool haveAudio = false;
+    if (audio_ && audio_->ready()) {
+        frame = audio_->latest();
+        haveAudio = frame.valid;
+    }
+    if (!haveAudio && engine_) {
+        haveAudio = engine_->copyRemoteAudio(frame, 400);
+    }
+    if (!haveAudio || !frame.valid) return;
+    lastAudioMs_ = now;
 
     AudioPayload p{};
     p.valid = 1;
@@ -327,27 +484,15 @@ void MeshMaster::broadcastAudioIfDue_() {
     p.peakDb = frame.peakDb;
     for (int i = 0; i < 32; ++i) p.mags[i] = quantize01(frame.mags[i]);
     sendPacket_(MsgType::Audio, nullptr, &p, sizeof(p));
-#else
-    (void)0;
-#endif
 }
 
-bool MeshMaster::pushConfigToNode(const uint8_t* mac) {
-    if (!mac || !config_) return false;
+bool MeshMaster::pushConfigToNode(const uint8_t* mac, JsonObjectConst cfg) {
+    if (!mac || !config_ || cfg.isNull() || cfg.size() == 0) return false;
     JsonDocument doc;
-    doc["apSsid"] = config_->apSsid();
-    auto drv = doc["driver"].to<JsonObject>();
-    drv["kind"] = (int)config_->driverKind();
-    const auto& dc = config_->driverConfig();
-    auto pins = drv["pins"].to<JsonArray>();
-    for (int i = 0; i < 8; ++i) pins.add(dc.pins[i]);
-    drv["sda"] = dc.sda;
-    drv["scl"] = dc.scl;
-    drv["pwmHz"] = dc.pwmHz;
-    auto ld = doc["led"].to<JsonObject>();
-    ld["enabled"] = config_->ledEnabled();
-    ld["pin"] = config_->ledConfig().pin;
-    ld["count"] = config_->ledConfig().count;
+    JsonObject dst = doc.to<JsonObject>();
+    for (JsonPairConst kv : cfg) {
+        dst[kv.key()] = kv.value();
+    }
 
     String body;
     serializeJson(doc, body);

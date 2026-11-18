@@ -5,6 +5,7 @@
 // core 1; web stack lives on core 0. See ARCHITECTURE.md §2.
 
 #include <Arduino.h>
+#include <esp_idf_version.h>
 #include <esp_system.h>
 #include <esp_task_wdt.h>
 #include <esp_wifi.h>
@@ -30,11 +31,8 @@
 #ifdef HAXEL_BLU
 #include "web/BleServer.h"
 #endif
-#if HAXEL_FEATURE_MESH_MASTER
+#if HAXEL_FEATURE_MESH || HAXEL_FEATURE_MESH_MASTER || HAXEL_FEATURE_MESH_FOLLOWER
 #include "mesh/MeshMaster.h"
-#include "mesh/MeshProtocol.h"
-#endif
-#if HAXEL_FEATURE_MESH_FOLLOWER
 #include "mesh/MeshFollower.h"
 #include "mesh/MeshProtocol.h"
 #endif
@@ -120,106 +118,117 @@ void audioTask(void*) {
 #endif
 
 void housekeepingTask(void*) {
-    const TickType_t period = pdMS_TO_TICKS(100);
+    const TickType_t period = pdMS_TO_TICKS(20); // 50 Hz for responsive mesh + BLE/HTTP
     TickType_t last = xTaskGetTickCount();
+    uint8_t slowDiv = 0;
     uint8_t broadcastDiv = 0;
 #ifdef HAXEL_WIFI
-#if !HAXEL_FEATURE_MESH_MASTER
     uint32_t lastStaRetryMs = millis();
-#endif
+    uint16_t radioLockDiv = 0;
 #endif
     bool eStopLatched = false;
     esp_task_wdt_add(NULL);
-#ifdef HAXEL_WIFI
-    uint16_t radioLockDiv = 0;
-#endif
+
     for (;;) {
         esp_task_wdt_reset();
         if (web::isDeferredRebootDue()) {
+            gConfig.save();
+            core::flushRuntimeNow();
             ESP.restart();
-        }
-        gStatusLed.tick();
-#if HAXEL_FEATURE_KNOBS
-        gKnobs.tick();
-#endif
-#if HAXEL_FEATURE_OLED
-        static uint8_t oledDiv = 0;
-        if (++oledDiv >= 2) {
-            oledDiv = 0;
-            gOled.tick();
-        }
-#endif
-        gConfig.flushIfDirty();
-        core::flushRuntimeIfDirty();
-
-        // Optional active-low E-stop GPIO (config.eStopPin, -1 = off).
-        if (gConfig.eStopPin() >= 0) {
-
-            const bool pressed = digitalRead(gConfig.eStopPin()) == LOW;
-            if (pressed && !eStopLatched) {
-                gEngine.requestEStop();
-                eStopLatched = true;
-                log_w("E-stop GPIO %d asserted", (int)gConfig.eStopPin());
-            } else if (!pressed) {
-                eStopLatched = false;
-            }
         }
 
 #ifdef HAXEL_WIFI
-        gPortal.pump();
-        if (++radioLockDiv >= 300) {
-            radioLockDiv = 0;
-            wifi_ps_type_t ps = WIFI_PS_NONE;
-            if (esp_wifi_get_ps(&ps) == ESP_OK && ps != WIFI_PS_NONE) {
-                esp_wifi_set_ps(WIFI_PS_NONE);
-            }
+        if (gConfig.meshRole() != MeshRole::FOLLOWER) {
+            gPortal.pump();
         }
-#if !HAXEL_FEATURE_MESH_MASTER
-        if (WiFi.getMode() == WIFI_STA && WiFi.status() != WL_CONNECTED) {
-            // STA dropped — raise AP fallback alongside.
-            WiFi.mode(WIFI_AP_STA);
-            IPAddress apIP(192, 168, 4, 1);
-            WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-            WiFi.softAP(gConfig.apSsid().c_str());
-            gStatusLed.apMode();
-            gPortal.begin(WiFi.softAPIP());
-            lastStaRetryMs = millis();
-        } else if (WiFi.getMode() == WIFI_AP_STA) {
-            if (WiFi.status() == WL_CONNECTED) {
-                // Successfully reconnected! Go back to pure STA mode.
-                WiFi.mode(WIFI_STA);
-                WiFi.softAPdisconnect(true);
-                gStatusLed.connected();
-                gPortal.end();
-            } else if (millis() - lastStaRetryMs > 15000 && WiFi.softAPgetStationNum() == 0) {
-                // Retry connecting to STA every 15 seconds
-                lastStaRetryMs = millis();
-                if (gConfig.staEnabled() && !gConfig.staSsid().isEmpty()) {
-                    log_i("Watchdog: Retrying WiFi STA connection...");
-                    WiFi.begin(gConfig.staSsid().c_str(), gConfig.staPass().c_str());
-                }
-            }
-        }
-#endif
 #endif
 #ifdef HAXEL_BLU
         gBle.pump();
 #endif
-#if HAXEL_FEATURE_MESH_MASTER
-        mesh::MeshMaster::instance().tick();
+#if HAXEL_FEATURE_MESH || HAXEL_FEATURE_MESH_MASTER || HAXEL_FEATURE_MESH_FOLLOWER
+        if (gConfig.meshRole() == MeshRole::MASTER) {
+            mesh::MeshMaster::instance().tick();
+        } else if (gConfig.meshRole() == MeshRole::FOLLOWER) {
+            mesh::MeshFollower::instance().tick();
+        }
 #endif
-#if HAXEL_FEATURE_MESH_FOLLOWER
-        mesh::MeshFollower::instance().tick();
+
+        if (++slowDiv >= 5) { // 100 ms (10 Hz)
+            slowDiv = 0;
+            gStatusLed.tick();
+#if HAXEL_FEATURE_KNOBS
+            gKnobs.tick();
 #endif
-        // Broadcast engine state to WebSocket/BLE clients every ~200ms (every 2nd tick).
-        if (++broadcastDiv >= 2) {
-            broadcastDiv = 0;
+#if HAXEL_FEATURE_OLED
+            static uint8_t oledDiv = 0;
+            if (++oledDiv >= 2) {
+                oledDiv = 0;
+                gOled.tick();
+            }
+#endif
+            gConfig.flushIfDirty();
+            core::flushRuntimeIfDirty();
+
+            // Optional active-low E-stop GPIO (config.eStopPin, -1 = off).
+            if (gConfig.eStopPin() >= 0) {
+                const bool pressed = digitalRead(gConfig.eStopPin()) == LOW;
+                if (pressed && !eStopLatched) {
+                    gEngine.requestEStop();
+                    eStopLatched = true;
+                    log_w("E-stop GPIO %d asserted", (int)gConfig.eStopPin());
+                } else if (!pressed) {
+                    eStopLatched = false;
+                }
+            }
+
 #ifdef HAXEL_WIFI
-            gWeb.broadcastState();
+            if (++radioLockDiv >= 300) {
+                radioLockDiv = 0;
+                wifi_ps_type_t ps = WIFI_PS_NONE;
+                if (esp_wifi_get_ps(&ps) == ESP_OK && ps != WIFI_PS_NONE) {
+                    esp_wifi_set_ps(WIFI_PS_NONE);
+                }
+            }
+            if (gConfig.meshRole() == MeshRole::STANDALONE) {
+                if (WiFi.getMode() == WIFI_STA && WiFi.status() != WL_CONNECTED) {
+                    // STA dropped — raise AP fallback alongside.
+                    WiFi.mode(WIFI_AP_STA);
+                    IPAddress apIP(192, 168, 4, 1);
+                    WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+                    WiFi.softAP(gConfig.apSsid().c_str());
+                    gStatusLed.apMode();
+                    gPortal.begin(WiFi.softAPIP());
+                    lastStaRetryMs = millis();
+                } else if (WiFi.getMode() == WIFI_AP_STA) {
+                    if (WiFi.status() == WL_CONNECTED) {
+                        // Successfully reconnected! Go back to pure STA mode.
+                        WiFi.mode(WIFI_STA);
+                        WiFi.softAPdisconnect(true);
+                        gStatusLed.connected();
+                        gPortal.end();
+                    } else if (millis() - lastStaRetryMs > 15000 && WiFi.softAPgetStationNum() == 0) {
+                        // Retry connecting to STA every 15 seconds
+                        lastStaRetryMs = millis();
+                        if (gConfig.staEnabled() && !gConfig.staSsid().isEmpty()) {
+                            log_i("Watchdog: Retrying WiFi STA connection...");
+                            WiFi.begin(gConfig.staSsid().c_str(), gConfig.staPass().c_str());
+                        }
+                    }
+                }
+            }
+#endif
+            // Broadcast engine state to WebSocket/BLE clients every ~200ms (every 2nd 10 Hz tick).
+            if (++broadcastDiv >= 2) {
+                broadcastDiv = 0;
+#ifdef HAXEL_WIFI
+                if (gConfig.meshRole() != MeshRole::FOLLOWER) {
+                    gWeb.broadcastState();
+                }
 #endif
 #ifdef HAXEL_BLU
-            gBle.broadcastState();
+                gBle.broadcastState();
 #endif
+            }
         }
         vTaskDelayUntil(&last, period);
     }
@@ -254,11 +263,16 @@ bool bringUpWifi() {
     WiFi.setTxPower(WIFI_POWER_19_5dBm); // Restoring standard Tx Power so the AP signal is strong/visible
     IPAddress apIP(192, 168, 4, 1);
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-#if HAXEL_FEATURE_MESH_MASTER
-    // Lock SoftAP to the mesh channel so ESP-NOW peers stay aligned.
-    WiFi.softAP(gConfig.apSsid().c_str(), nullptr, mesh::kMeshChannel);
-    Serial.printf("\n\n>>> MESH MASTER AP on channel %u. SSID: '%s' <<<\n\n",
-                  mesh::kMeshChannel, gConfig.apSsid().c_str());
+#if HAXEL_FEATURE_MESH || HAXEL_FEATURE_MESH_MASTER
+    if (gConfig.meshRole() == MeshRole::MASTER) {
+        // Lock SoftAP to the mesh channel so ESP-NOW peers stay aligned.
+        WiFi.softAP(gConfig.apSsid().c_str(), nullptr, mesh::kMeshChannel);
+        Serial.printf("\n\n>>> MESH MASTER AP on channel %u. SSID: '%s' <<<\n\n",
+                      mesh::kMeshChannel, gConfig.apSsid().c_str());
+    } else {
+        WiFi.softAP(gConfig.apSsid().c_str());
+        Serial.printf("\n\n>>> Running in AP Mode. SSID: '%s', softAP IP: %s <<<\n\n", gConfig.apSsid().c_str(), WiFi.softAPIP().toString().c_str());
+    }
 #else
     WiFi.softAP(gConfig.apSsid().c_str());
     Serial.printf("\n\n>>> Running in AP Mode. SSID: '%s', softAP IP: %s <<<\n\n", gConfig.apSsid().c_str(), WiFi.softAPIP().toString().c_str());
@@ -267,6 +281,30 @@ bool bringUpWifi() {
     return false;
 }
 #endif
+
+static bool isPinUsedInConfig(const Config& cfg, int8_t pin) {
+    if (pin < 0) return false;
+    const auto dc = cfg.driverConfig();
+    for (int i = 0; i < 8; ++i) {
+        if (dc.pins[i] == pin) return true;
+    }
+    if (cfg.driverKind() == hal::DriverKind::DRV2605L && (dc.sda == pin || dc.scl == pin)) return true;
+    if (cfg.ledEnabled() && cfg.ledConfig().pin == pin) return true;
+    if (cfg.oledEnabled()) {
+        const auto oc = cfg.oledConfig();
+        if (oc.sda == pin || oc.scl == pin) return true;
+    }
+    if (cfg.audioEnabled()) {
+        const auto ac = cfg.audioConfig();
+        if (ac.adcPin == pin || ac.i2sBclk == pin || ac.i2sWs == pin || ac.i2sSd == pin) return true;
+    }
+    for (size_t i = 0; i < cfg.knobCount(); ++i) {
+        const auto k = cfg.knob(i);
+        if (k.enabled && k.pin == pin) return true;
+    }
+    if (cfg.eStopPin() == pin) return true;
+    return false;
+}
 
 } // namespace
 
@@ -282,7 +320,19 @@ void setup() {
             log_w("Previous boot reset was caused by Watchdog Timer!");
         }
     }
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+    {
+        esp_task_wdt_config_t twdtCfg = {};
+        twdtCfg.timeout_ms = 5000;
+        twdtCfg.idle_core_mask = 0;
+        twdtCfg.trigger_panic = true;
+        if (esp_task_wdt_init(&twdtCfg) == ESP_ERR_INVALID_STATE) {
+            esp_task_wdt_reconfigure(&twdtCfg);
+        }
+    }
+#else
     esp_task_wdt_init(5, true);
+#endif
     log_i("Haxel %s — booting", kVersion);
 
     if (!LittleFS.begin(true)) {
@@ -338,6 +388,7 @@ void setup() {
             boot.mute = rt.mute;
             boot.intensity = rt.intensity;
             boot.speed = rt.speed;
+            boot.freq = rt.freq;
             boot.startupFloor = rt.startupFloor;
             boot.audioReactive = rt.audioReactive;
             boot.numBins = rt.numBins;
@@ -382,54 +433,75 @@ void setup() {
 #endif
 
     // Onboard status LED (C3/C6 FireBeetle: GPIO8, Classic/S3: GPIO2/GPIO8), LEDC channel 5.
+    const int8_t statusPin =
 #ifdef HAXEL_DEFAULT_STATUS_LED_PIN
-    gStatusLed.begin(HAXEL_DEFAULT_STATUS_LED_PIN, 5);
+        HAXEL_DEFAULT_STATUS_LED_PIN;
 #elif defined(HAXEL_TARGET_C3) || defined(HAXEL_TARGET_C6)
-    gStatusLed.begin(8, 5);
+        8;
 #else
-    gStatusLed.begin(2, 5);
+        2;
 #endif
-    gStatusLed.attachEngine(&gEngine);
+    if (!isPinUsedInConfig(gConfig, statusPin)) {
+        gStatusLed.begin(statusPin, 5);
+        gStatusLed.attachEngine(&gEngine);
+    } else {
+        log_w("Skipping onboard StatusLed on GPIO %d (conflicts with configured pin)", (int)statusPin);
+    }
 
 #ifdef HAXEL_BLU
-    gBle.begin(&gEngine, &gConfig);
+    gBle.begin(&gEngine, &gConfig, &gStatusLed);
 #endif
 #ifdef HAXEL_WIFI
-    bool staConnected = bringUpWifi();
-#if HAXEL_FEATURE_MESH_MASTER
-    // Command Mode Master must stay on SoftAP channel — skip STA for mesh.
-    if (staConnected) {
-        Serial.println("[MESH] STA connected; forcing SoftAP mesh channel for ESP-NOW");
-        WiFi.disconnect(true, true);
-        WiFi.mode(WIFI_AP);
-        IPAddress apIP(192, 168, 4, 1);
-        WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-        WiFi.softAP(gConfig.apSsid().c_str(), nullptr, mesh::kMeshChannel);
-        staConnected = false;
-        gStatusLed.apMode();
-    }
-    mesh::MeshMaster::instance().begin(&gEngine, &gConfig,
-                                       gConfig.audioEnabled() ? &gAudio : nullptr);
+#if HAXEL_FEATURE_MESH || HAXEL_FEATURE_MESH_FOLLOWER
+    if (gConfig.meshRole() == MeshRole::FOLLOWER) {
+        mesh::MeshFollower::instance().begin(&gEngine, &gConfig);
+    } else
 #endif
-    gWeb.begin(&gEngine, &gConfig, &gAudio);
-    if (!staConnected) {
-        gPortal.begin(WiFi.softAPIP());
-    }
+    {
+        bool staConnected = false;
+        if (gConfig.meshRole() == MeshRole::MASTER) {
+            // Command Mode Master stays on SoftAP mesh channel (no STA).
+            WiFi.persistent(false);
+            WiFi.setHostname(gConfig.hostname().c_str());
+            WiFi.disconnect(true, true);
+            WiFi.mode(WIFI_OFF);
+            delay(100);
+            WiFi.mode(WIFI_AP);
+            esp_wifi_set_ps(WIFI_PS_NONE);
+            WiFi.setTxPower(WIFI_POWER_19_5dBm);
+            IPAddress apIP(192, 168, 4, 1);
+            WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+#if HAXEL_FEATURE_MESH || HAXEL_FEATURE_MESH_MASTER
+            WiFi.softAP(gConfig.apSsid().c_str(), nullptr, mesh::kMeshChannel);
+            Serial.printf("\n\n>>> MESH MASTER AP on channel %u. SSID: '%s' <<<\n\n",
+                          mesh::kMeshChannel, gConfig.apSsid().c_str());
+#endif
+            gStatusLed.apMode();
+        } else {
+            staConnected = bringUpWifi();
+        }
+#if HAXEL_FEATURE_MESH || HAXEL_FEATURE_MESH_MASTER
+        if (gConfig.meshRole() == MeshRole::MASTER) {
+            mesh::MeshMaster::instance().begin(&gEngine, &gConfig,
+                                               gConfig.audioEnabled() ? &gAudio : nullptr);
+        }
+#endif
+        gWeb.begin(&gEngine, &gConfig, &gAudio);
+        if (!staConnected) {
+            gPortal.begin(WiFi.softAPIP());
+        }
 
-    if (MDNS.begin(gConfig.hostname().c_str())) {
-        MDNS.addService("haxel", "tcp", 80);
-        MDNS.addService("wled", "tcp", 80);        // WLED-compat discovery
-        MDNS.addServiceTxt("haxel", "tcp", "version", kVersion);
-        MDNS.addServiceTxt("haxel", "tcp", "driver",
-                           gDriver ? gDriver->name() : "none");
-#if HAXEL_FEATURE_MESH_MASTER
-        MDNS.addServiceTxt("haxel", "tcp", "role", "master");
-#endif
+        if (MDNS.begin(gConfig.hostname().c_str())) {
+            MDNS.addService("haxel", "tcp", 80);
+            MDNS.addService("wled", "tcp", 80);        // WLED-compat discovery
+            MDNS.addServiceTxt("haxel", "tcp", "version", kVersion);
+            MDNS.addServiceTxt("haxel", "tcp", "driver",
+                               gDriver ? gDriver->name() : "none");
+            if (gConfig.meshRole() == MeshRole::MASTER) {
+                MDNS.addServiceTxt("haxel", "tcp", "role", "master");
+            }
+        }
     }
-#endif
-
-#if HAXEL_FEATURE_MESH_FOLLOWER
-    mesh::MeshFollower::instance().begin(&gEngine, &gConfig);
 #endif
 
     if (gConfig.eStopPin() >= 0) {
@@ -460,9 +532,9 @@ void setup() {
     }
 #endif
 
-    log_i("Boot complete; features LED=%d AUDIO=%d KNOBS=%d OLED=%d MESH_M=%d MESH_F=%d",
+    log_i("Boot complete; features LED=%d AUDIO=%d KNOBS=%d OLED=%d MESH=%d meshRole=%d",
           HAXEL_FEATURE_LED, HAXEL_FEATURE_AUDIO, HAXEL_FEATURE_KNOBS, HAXEL_FEATURE_OLED,
-          HAXEL_FEATURE_MESH_MASTER, HAXEL_FEATURE_MESH_FOLLOWER);
+          HAXEL_FEATURE_MESH, (int)gConfig.meshRole());
 }
 
 void loop() {

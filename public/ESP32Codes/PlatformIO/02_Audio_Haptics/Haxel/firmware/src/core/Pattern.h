@@ -13,9 +13,10 @@ struct AudioFrame {
 };
 
 struct PatternContext {
-    float  tMs = 0.0f;
+    double tMs = 0.0;
     float  intensityMaster = 1.0f;
     float  speed = 1.0f;
+    float  freq = 150.0f;
     float  startupFloor = 0.35f;
     uint8_t channelIndex = 0;
     AudioFrame audio;

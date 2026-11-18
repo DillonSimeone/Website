@@ -27,7 +27,7 @@ private:
     uint16_t count_ = 0;
 
     void* leds_ = nullptr; // CRGB array
-    IPattern* lastPattern_ = nullptr;
+    char lastPatternId_[32] = "";
     uint8_t r_ = 255;
     uint8_t g_ = 106;
     uint8_t b_ = 61; // Default accent color: #ff6a3d

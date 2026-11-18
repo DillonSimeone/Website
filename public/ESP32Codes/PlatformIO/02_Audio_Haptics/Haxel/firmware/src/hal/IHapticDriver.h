@@ -24,6 +24,12 @@ struct DriverCaps {
     float    maxRecommendedDuty;
 };
 
+enum DriverFlags : uint32_t {
+    kFlagAllowStrappingPins = 1u << 0,
+    kFlagDrv8833FastDecay   = 1u << 1,
+    kFlagDrv2605Lra         = 1u << 2,
+};
+
 struct DriverConfig {
     DriverKind kind = DriverKind::NONE;
     int8_t  pins[8] = {-1,-1,-1,-1,-1,-1,-1,-1};
@@ -31,8 +37,7 @@ struct DriverConfig {
     uint8_t i2cAddr = 0x5A;
     uint32_t pwmHz = 20000;
     uint8_t pwmBits = 10;
-    // Driver-specific scratch flags (e.g., DRV8833 decay mode, DRV2605L
-    // actuator type). Drivers ignore unknown bits.
+    // Driver-specific scratch flags (see DriverFlags). Drivers ignore unknown bits.
     uint32_t flags = 0;
 };
 

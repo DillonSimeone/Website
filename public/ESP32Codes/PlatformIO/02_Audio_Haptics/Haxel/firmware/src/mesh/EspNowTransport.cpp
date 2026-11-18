@@ -1,16 +1,24 @@
 #include "EspNowTransport.h"
 
 #include <WiFi.h>
+#include <esp_idf_version.h>
 #include <esp_now.h>
 #include <esp_wifi.h>
 
 namespace haxel::mesh {
 
 namespace {
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
 void onDataRecv(const esp_now_recv_info_t* info, const uint8_t* data, int len) {
     if (!info || !data || len <= 0) return;
     EspNowTransport::instance().onRawRecv(info->src_addr, data, len);
 }
+#else
+void onDataRecv(const uint8_t* mac, const uint8_t* data, int len) {
+    if (!mac || !data || len <= 0) return;
+    EspNowTransport::instance().onRawRecv(mac, data, len);
+}
+#endif
 } // namespace
 
 EspNowTransport& EspNowTransport::instance() {

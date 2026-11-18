@@ -21,6 +21,19 @@ namespace {
 
 inline float clamp01(float v) { return v < 0 ? 0 : (v > 1 ? 1 : v); }
 
+inline float clampToMeta(const PatternMeta& meta, const char* id, float v) {
+    if (!id) return v;
+    for (uint8_t i = 0; i < meta.paramCount; ++i) {
+        if (!strcmp(meta.params[i].id, id)) {
+            if (!isfinite(v)) return meta.params[i].defaultV;
+            if (v < meta.params[i].minV) return meta.params[i].minV;
+            if (v > meta.params[i].maxV) return meta.params[i].maxV;
+            return v;
+        }
+    }
+    return v;
+}
+
 // ---------- 1. Pulse / shape patterns ----------
 
 class Sine : public IPattern {
@@ -37,6 +50,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"period_ms")) { period_ = v; return true; }
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
@@ -65,13 +79,14 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"period_ms")) { period_ = v; return true; }
         if (!strcmp(id,"duty"))      { duty_ = v;   return true; }
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
     }
     float sample(const PatternContext& ctx) override {
-        float ph = fmodf(ctx.tMs, period_) / period_;
+        float ph = (float)fmod(ctx.tMs, (double)period_) / period_;
         return ph < duty_ ? intensity_ : 0.0f;
     }
 private:
@@ -94,12 +109,13 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"period_ms")) { period_ = v; return true; }
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
     }
     float sample(const PatternContext& ctx) override {
-        float ph = fmodf(ctx.tMs, period_) / period_;
+        float ph = (float)fmod(ctx.tMs, (double)period_) / period_;
         // Eased half-sine, fuller exhale than inhale for that "letting go" feel.
         float v = ph < 0.5f
                       ? 0.5f - 0.5f * cosf(ph * 2.0f * (float)M_PI)
@@ -124,13 +140,14 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"bpm")) { bpm_ = v; return true; }
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
     }
     float sample(const PatternContext& ctx) override {
         float period = 60000.0f / bpm_;
-        float t = fmodf(ctx.tMs, period);
+        float t = (float)fmod(ctx.tMs, (double)period);
         // Instant attack + exponential decay per beat (like Tap). The old
         // 80 ms haversine bumps ramped too gently for ERM rotors to spin up,
         // so the pattern produced output the motor never turned into motion.
@@ -166,6 +183,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"gain")) { gain_ = v; return true; }
         if (!strcmp(id,"gate")) { gate_ = v; return true; }
         return false;
@@ -195,25 +213,31 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"gain")) { gain_ = v; return true; }
         if (!strcmp(id,"release_ms")) { release_ = v; return true; }
         return false;
     }
     float sample(const PatternContext& ctx) override {
         if (!ctx.audio.valid) return 0.0f;
-        float bass = 0;
-        for (int i = 0; i < 4; ++i) bass += ctx.audio.mags[i];
-        bass *= gain_ * 0.25f;
-        // Cheap decaying peak hold.
-        const float decay = 1.0f / release_;
-        peak_ -= decay;
-        if (bass > peak_) peak_ = bass;
+        if (ctx.tMs != lastSampleMs_) {
+            lastSampleMs_ = ctx.tMs;
+            float bass = 0;
+            for (int i = 0; i < 4; ++i) bass += ctx.audio.mags[i];
+            bass *= gain_ * 0.25f;
+            // Cheap decaying peak hold.
+            const float decay = 1.0f / release_;
+            peak_ -= decay;
+            if (bass > peak_) peak_ = bass;
+            if (peak_ < 0.0f) peak_ = 0.0f;
+        }
         return clamp01(peak_);
     }
 private:
     float gain_ = 4.0f;
     float release_ = 180.0f;
     float peak_ = 0;
+    double lastSampleMs_ = -1.0;
 };
 
 // ---------- 3. New standard patterns ----------
@@ -232,15 +256,19 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         if (!strcmp(id,"smoothing")) { smoothing_ = v; return true; }
         return false;
     }
     float sample(const PatternContext& ctx) override {
-        // Simple LFSR pseudo-random, smoothed for low-freq rumble feel.
-        lfsr_ ^= lfsr_ << 13; lfsr_ ^= lfsr_ >> 17; lfsr_ ^= lfsr_ << 5;
-        float raw = (float)(lfsr_ & 0xFFFF) / 65535.0f;
-        smoothed_ = smoothing_ * smoothed_ + (1.0f - smoothing_) * raw;
+        if (ctx.tMs != lastSampleMs_) {
+            lastSampleMs_ = ctx.tMs;
+            // Simple LFSR pseudo-random, smoothed for low-freq rumble feel.
+            lfsr_ ^= lfsr_ << 13; lfsr_ ^= lfsr_ >> 17; lfsr_ ^= lfsr_ << 5;
+            float raw = (float)(lfsr_ & 0xFFFF) / 65535.0f;
+            smoothed_ = smoothing_ * smoothed_ + (1.0f - smoothing_) * raw;
+        }
         return clamp01(smoothed_ * intensity_);
     }
 private:
@@ -248,6 +276,7 @@ private:
     float smoothing_ = 0.85f;
     uint32_t lfsr_ = 0xACE1u;
     float smoothed_ = 0.0f;
+    double lastSampleMs_ = -1.0;
 };
 
 class Tap : public IPattern {
@@ -266,6 +295,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"period_ms")) { period_ = v; return true; }
         if (!strcmp(id,"attack_ms")) { attack_ = v; return true; }
         if (!strcmp(id,"decay_ms"))  { decay_ = v;  return true; }
@@ -273,7 +303,7 @@ public:
         return false;
     }
     float sample(const PatternContext& ctx) override {
-        float t = fmodf(ctx.tMs, period_);
+        float t = (float)fmod(ctx.tMs, (double)period_);
         if (t < attack_) return intensity_ * (t / attack_);
         float elapsed = t - attack_;
         if (elapsed < decay_ * 5.0f) {
@@ -302,12 +332,13 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"period_ms")) { period_ = v; return true; }
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
     }
     float sample(const PatternContext& ctx) override {
-        float ph = fmodf(ctx.tMs, period_) / period_;
+        float ph = (float)fmod(ctx.tMs, (double)period_) / period_;
         return clamp01(intensity_ * ph);
     }
 private:
@@ -332,6 +363,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"hits"))     { hits_ = (int)v; return true; }
         if (!strcmp(id,"gap_ms"))   { gap_ = v;  return true; }
         if (!strcmp(id,"hit_ms"))   { hit_ = v;  return true; }
@@ -342,7 +374,7 @@ public:
     float sample(const PatternContext& ctx) override {
         float burstLen = hits_ * hit_ + (hits_ - 1) * gap_;
         float totalPeriod = burstLen + pause_;
-        float t = fmodf(ctx.tMs, totalPeriod);
+        float t = (float)fmod(ctx.tMs, (double)totalPeriod);
         if (t >= burstLen) return 0.0f;
         // Which hit are we in?
         float slot = hit_ + gap_;
@@ -375,6 +407,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         if (!strcmp(id,"speed"))     { speed_ = v;     return true; }
         return false;
@@ -409,6 +442,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"gain")) { gain_ = v; return true; }
         if (!strcmp(id,"bass_weight")) { bassW_ = v; return true; }
         return false;
@@ -445,6 +479,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"threshold"))  { threshold_ = v;  return true; }
         if (!strcmp(id,"decay_ms"))   { decay_ = v;      return true; }
         if (!strcmp(id,"intensity"))  { intensity_ = v;   return true; }
@@ -452,14 +487,17 @@ public:
     }
     float sample(const PatternContext& ctx) override {
         if (!ctx.audio.valid) return 0.0f;
-        // Use onset flag from the audio analyzer, or fall back to RMS spike.
-        bool beat = ctx.audio.onset || (ctx.audio.rms > threshold_ && ctx.audio.rms > lastRms_ * 1.5f);
-        lastRms_ = ctx.audio.rms;
-        if (beat) envelope_ = intensity_;
-        // Exponential decay.
-        float decayFactor = 1.0f / (decay_ * 0.001f);
-        envelope_ -= envelope_ * decayFactor * 0.001f; // per-ms tick approx
-        if (envelope_ < 0.001f) envelope_ = 0.0f;
+        if (ctx.tMs != lastSampleMs_) {
+            lastSampleMs_ = ctx.tMs;
+            // Use onset flag from the audio analyzer, or fall back to RMS spike.
+            bool beat = ctx.audio.onset || (ctx.audio.rms > threshold_ && ctx.audio.rms > lastRms_ * 1.5f);
+            lastRms_ = ctx.audio.rms;
+            if (beat) envelope_ = intensity_;
+            // Exponential decay.
+            float decayFactor = 1.0f / (decay_ * 0.001f);
+            envelope_ -= envelope_ * decayFactor * 0.001f; // per-ms tick approx
+            if (envelope_ < 0.001f) envelope_ = 0.0f;
+        }
         return clamp01(envelope_);
     }
 private:
@@ -468,6 +506,7 @@ private:
     float intensity_ = 1.0f;
     float lastRms_ = 0.0f;
     float envelope_ = 0.0f;
+    double lastSampleMs_ = -1.0;
 };
 
 // ---------- 4. More built-in pulse / alert / multi-channel patterns ----------
@@ -486,12 +525,13 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"period_ms")) { period_ = v; return true; }
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
     }
     float sample(const PatternContext& ctx) override {
-        float ph = fmodf(ctx.tMs, period_) / period_;
+        float ph = (float)fmod(ctx.tMs, (double)period_) / period_;
         float tri = ph < 0.5f ? (ph * 2.0f) : (2.0f - ph * 2.0f);
         return clamp01(intensity_ * tri);
     }
@@ -513,6 +553,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
     }
@@ -541,13 +582,14 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"period_ms")) { period_ = v; return true; }
         if (!strcmp(id,"width_ms"))  { width_ = v;  return true; }
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
     }
     float sample(const PatternContext& ctx) override {
-        float t = fmodf(ctx.tMs, period_);
+        float t = (float)fmod(ctx.tMs, (double)period_);
         return t < width_ ? intensity_ : 0.0f;
     }
 private:
@@ -570,12 +612,13 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"period_ms")) { period_ = v; return true; }
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
     }
     float sample(const PatternContext& ctx) override {
-        float t = fmodf(ctx.tMs, period_);
+        float t = (float)fmod(ctx.tMs, (double)period_);
         if (t < 80.0f || (t > 160.0f && t < 240.0f)) return intensity_;
         return 0.0f;
     }
@@ -597,6 +640,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
     }
@@ -625,6 +669,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
     }
@@ -652,12 +697,13 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"period_ms")) { period_ = v; return true; }
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
     }
     float sample(const PatternContext& ctx) override {
-        float ph = fmodf(ctx.tMs, period_) / period_;
+        float ph = (float)fmod(ctx.tMs, (double)period_) / period_;
         return clamp01(intensity_ * ph);
     }
 private:
@@ -679,12 +725,13 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"period_ms")) { period_ = v; return true; }
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
     }
     float sample(const PatternContext& ctx) override {
-        float ph = fmodf(ctx.tMs, period_) / period_;
+        float ph = (float)fmod(ctx.tMs, (double)period_) / period_;
         float s = sinf(ph * 2.0f * (float)M_PI);
         if (s < 0) s = 0;
         float peak = powf(s, 6.0f);
@@ -708,6 +755,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
     }
@@ -732,6 +780,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
     }
@@ -759,6 +808,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         if (!strcmp(id,"density"))   { density_ = v;   return true; }
         return false;
@@ -792,6 +842,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"bpm")) { bpm_ = v; return true; }
         if (!strcmp(id,"width_ms")) { width_ = v; return true; }
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
@@ -799,7 +850,7 @@ public:
     }
     float sample(const PatternContext& ctx) override {
         float period = 60000.0f / bpm_;
-        float t = fmodf(ctx.tMs, period);
+        float t = (float)fmod(ctx.tMs, (double)period);
         return t < width_ ? intensity_ : 0.0f;
     }
 private:
@@ -822,13 +873,14 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"period_ms")) { period_ = v; return true; }
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
     }
     float sample(const PatternContext& ctx) override {
         float phase = (float)ctx.channelIndex * 0.25f; // 90° steps for up to 4 ch
-        float ph = fmodf(ctx.tMs / period_ + phase, 1.0f);
+        float ph = (float)fmod(ctx.tMs / (double)period_ + (double)phase, 1.0);
         float v = 0.5f + 0.5f * sinf(ph * 2.0f * (float)M_PI);
         return clamp01(intensity_ * v);
     }
@@ -851,6 +903,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"gain")) { gain_ = v; return true; }
         if (!strcmp(id,"gate")) { gate_ = v; return true; }
         return false;
@@ -882,6 +935,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"gain")) { gain_ = v; return true; }
         if (!strcmp(id,"gate")) { gate_ = v; return true; }
         return false;
@@ -915,6 +969,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"cycle_s")) { cycle_ = v; return true; }
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
@@ -944,6 +999,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"cycle_s")) { cycle_ = v; return true; }
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
@@ -974,6 +1030,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"period_s")) { period_ = v; return true; }
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
@@ -1004,6 +1061,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"fade_s")) { fade_ = v; return true; }
         if (!strcmp(id,"carrier_hz")) { carrier_ = v; return true; }
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
@@ -1036,6 +1094,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"cycle_s")) { cycle_ = v; return true; }
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
@@ -1065,6 +1124,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"cycle_s")) { cycle_ = v; return true; }
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
         return false;
@@ -1098,6 +1158,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"cycle_s")) { cycle_ = v; return true; }
         if (!strcmp(id,"hit_s")) { hit_ = v; return true; }
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
@@ -1135,6 +1196,7 @@ public:
         return m;
     }
     bool setParam(const char* id, float v) override {
+        v = clampToMeta(meta(), id, v);
         if (!strcmp(id,"carrier_hz")) { carrier_ = v; return true; }
         if (!strcmp(id,"mod_s")) { mod_ = v; return true; }
         if (!strcmp(id,"intensity")) { intensity_ = v; return true; }
@@ -1273,6 +1335,12 @@ void loadCustomPatterns(core::PatternRegistry& reg) {
         std::string name = obj["name"] | "";
         std::string code = obj["code"] | "";
         if (!id.empty() && !code.empty()) {
+            core::IPattern* existing = reg.find(id.c_str());
+            if (existing && strcmp(existing->meta().category, "custom") != 0) {
+                log_w("Ignoring custom pattern '%s' that conflicts with built-in", id.c_str());
+                continue;
+            }
+            if (existing) reg.unregisterPattern(id.c_str());
             CustomPattern* cp = new CustomPattern(id, name, code);
             reg.registerCustomPattern(cp);
         }
@@ -1282,7 +1350,7 @@ void loadCustomPatterns(core::PatternRegistry& reg) {
 void saveCustomPatterns(const core::PatternRegistry& reg) {
     JsonDocument doc;
     JsonArray arr = doc.to<JsonArray>();
-    for (auto* p : reg.all()) {
+    for (auto* p : reg.snapshot()) {
         if (strcmp(p->meta().category, "custom") == 0) {
             CustomPattern* cp = static_cast<CustomPattern*>(p);
             if (cp) {
