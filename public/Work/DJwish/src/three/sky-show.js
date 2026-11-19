@@ -1,10 +1,11 @@
 import * as THREE from 'three';
-import { APEX, STREET, SHARED, AUDIO_PARS, HUE_UNIFORMS, OUTPUT_CHUNK, HUE_MAX, setAudioColor } from './world.js';
+import { APEX, PYRAMID, STREET, SHARED, AUDIO_PARS, HUE_UNIFORMS, OUTPUT_CHUNK, HUE_MAX, setAudioColor } from './world.js';
 
 // Sky shows live in the laser fan's plane (origin = apex, leaning toward the city).
 const SPEC = { bars: 48, width: 1500, base: 150, maxH: 430 };
 const SCOPE = { samples: 128, width: 1500, base: 360, amp: 240, beams: 24 };
 const TUNNEL = { far: STREET.far, near: STREET.near - 20, height: 42, spacing: 9 };
+const CYMATIC = { rings: 10, segs: 128 };
 
 const HUE = HUE_MAX.toFixed(2);
 
@@ -51,10 +52,11 @@ void main() {
   float rim = max(1.0 - smoothstep(fw.x, fw.x * 2.5, e.x), 1.0 - smoothstep(fw.y, fw.y * 3.0, e.y));
   float fill = 0.18 + 0.4 * vCorner.y;
   vec3 c = hueColor(vU * ${HUE});
-  vec3 col = c * (fill + rim * 2.4) * (0.3 + vLevel * 1.6);
-  col += vec3(1.0) * rim * smoothstep(0.55, 1.0, vLevel) * 0.8;
-  col *= 1.0 + uBeat * 0.6;
-  gl_FragColor = vec4(col * uMix, 1.0);
+  vec3 col = c * (fill + rim * 2.1) * (0.28 + vLevel * 1.35);
+  col += vec3(1.0) * rim * smoothstep(0.65, 1.0, vLevel) * 0.55;
+  col *= 1.0 + uBeat * 0.45;
+  col = softHDR(col * uMix, 1.75);
+  gl_FragColor = vec4(col, 1.0);
   ${OUTPUT_CHUNK}
 }
 `;
@@ -89,8 +91,9 @@ varying float vEnd;
 varying float vLevel;
 void main() {
   vec3 c = mix(hueColor(vU * ${HUE}), hueColor(uHue), uUseHue);
-  vec3 col = c * (0.25 + vLevel * 1.8) * mix(2.2, 0.8, vEnd) * (1.0 + uBeat * 0.8);
-  gl_FragColor = vec4(col * uMix, 1.0);
+  vec3 col = c * (0.22 + vLevel * 1.45) * mix(1.85, 0.75, vEnd) * (1.0 + uBeat * 0.55);
+  col = softHDR(col * uMix, 1.75);
+  gl_FragColor = vec4(col, 1.0);
   ${OUTPUT_CHUNK}
 }
 `;
@@ -133,10 +136,11 @@ varying float vU;
 void main() {
   float core = 1.0 - abs(vSide);
   vec3 c = hueColor(clamp(uHue + (vU - 0.5) * 0.12, 0.0, ${HUE}));
-  vec3 col = c * pow(core, 1.6) * (1.6 + uEnergy * 2.0 + uBeat * 1.5);
-  col += vec3(1.0) * pow(core, 10.0) * 1.4;
+  vec3 col = c * pow(core, 1.6) * (1.35 + uEnergy * 1.55 + uBeat * 1.05);
+  col += vec3(1.0) * pow(core, 10.0) * 1.0;
   float edgeFade = smoothstep(0.0, 0.04, vU) * smoothstep(1.0, 0.96, vU);
-  gl_FragColor = vec4(col * edgeFade * uMix, 1.0);
+  col = softHDR(col * edgeFade * uMix, 1.75);
+  gl_FragColor = vec4(col, 1.0);
   ${OUTPUT_CHUNK}
 }
 `;
@@ -198,22 +202,87 @@ void main() {
   float ring = 1.0 - smoothstep(hw, hw + px * 1.5, d);
   float dense = smoothstep(0.12, 0.45, fwidth(ph));
   ring = mix(ring, 0.35 * hw / uSpacing, dense);
-  vec3 col = bandColor(band) * ring * (0.45 + level * 3.2);
+  vec3 col = bandColor(band) * ring * (0.4 + level * 2.3);
 
   if (vSurf < 1.5) {
     // Laser rails along the floor and up the walls.
     float coord = vSurf < 0.5 ? vWorld.x : vWorld.y;
     float rc = abs(fract(coord / 4.0) - 0.5) * 4.0;
     float rail = 1.0 - smoothstep(0.06, 0.06 + fwidth(coord) * 1.5, rc);
-    col += hueColor(uHue) * rail * (0.3 + uMid * 1.2);
+    col += hueColor(uHue) * rail * (0.28 + uMid * 0.9);
     col *= 1.0 - smoothstep(uNear - 40.0, uNear, vWorld.z);
   } else {
     // Projection frustum from the apex: fainter, fades in away from the capstone.
-    col *= 0.55 * (1.0 - smoothstep(uApexY - 120.0, uApexY, vWorld.y));
+    col *= 0.45 * (1.0 - smoothstep(uApexY - 120.0, uApexY, vWorld.y));
   }
 
-  col *= 1.0 + uBeat * 0.9;
-  gl_FragColor = vec4(col * uMix, 1.0);
+  col *= 1.0 + uBeat * 0.55;
+  col = softHDR(col * uMix, 1.65);
+  gl_FragColor = vec4(col, 1.0);
+  ${OUTPUT_CHUNK}
+}
+`;
+
+/* ---------- cymatic rings (scene 6) ---------- */
+
+const CYMATIC_VERT = /* glsl */ `
+${AUDIO_SAMPLE}
+${AUDIO_PARS}
+uniform float uTime;
+uniform float uBass;
+uniform float uBeat;
+uniform vec2 uCenter;
+attribute float aAngle;
+attribute float aRing;
+attribute float aRadius;
+attribute float aHeight;
+attribute float aSide;
+varying float vSide;
+varying float vRing;
+varying float vAngle;
+varying float vLevel;
+void main() {
+  float u = aAngle / 6.2831853;
+  float band = mod(aRing, 7.0);
+  float level = clamp(bandLevel(band), 0.0, 1.4);
+  float wave = waveAt(fract(u * 2.0));
+  float lobes = 3.0 + floor(aRing);
+  float dir = mod(aRing, 2.0) < 0.5 ? 1.0 : -1.0;
+  float harm = sin(aAngle * lobes + uTime * (1.2 + aRing * 0.14) * dir);
+
+  float r = aRadius + (wave * 75.0 + harm * (14.0 + level * 42.0)) * (0.35 + uActive * 0.9) + uBeat * 18.0;
+  float y = aHeight + harm * (6.0 + level * 26.0) * (0.3 + uActive) + uBass * 18.0;
+
+  float thick = 3.5 + level * 4.5 + uBeat * 3.0;
+  float rOff = r + aSide * thick;
+  vec3 wp = vec3(uCenter.x + cos(aAngle) * rOff, y, uCenter.y + sin(aAngle) * rOff);
+
+  vSide = aSide;
+  vRing = aRing;
+  vAngle = u;
+  vLevel = level;
+  gl_Position = projectionMatrix * viewMatrix * vec4(wp, 1.0);
+}
+`;
+
+const CYMATIC_FRAG = /* glsl */ `
+${AUDIO_PARS}
+uniform float uMix;
+uniform float uBeat;
+uniform float uPeakFreqHue;
+uniform float uPeakFlash;
+varying float vSide;
+varying float vRing;
+varying float vAngle;
+varying float vLevel;
+void main() {
+  float core = max(0.0, 1.0 - abs(vSide));
+  float band = mod(vRing, 7.0);
+  vec3 c = mix(bandColor(band), rawHueColor(uPeakFreqHue), uPeakFlash * 0.55 * uActive);
+  vec3 col = c * pow(core, 1.55) * (0.68 + vLevel * 1.7 + uBeat * 0.8);
+  col += vec3(1.0) * pow(core, 7.0) * (0.35 + uBeat * 0.55);
+  col = softHDR(col * uMix, 1.75);
+  gl_FragColor = vec4(col, 1.0);
   ${OUTPUT_CHUNK}
 }
 `;
@@ -262,6 +331,7 @@ export class SkyShow {
     this.shows[1] = this.buildSpectrum(fanGroup);
     this.shows[2] = this.buildScope(fanGroup);
     this.shows[3] = this.buildTunnel(scene);
+    this.shows[4] = this.buildCymaticRings(scene);
     for (const s of this.shows) if (s) this.setVisible(s, false);
   }
 
@@ -405,6 +475,69 @@ export class SkyShow {
     return this.attach(scene, [edges, mesh], mix);
   }
 
+  buildCymaticRings(scene) {
+    const rings = CYMATIC.rings;
+    const segs = CYMATIC.segs;
+    const vertsPerRing = (segs + 1) * 2;
+    const totalVerts = rings * vertsPerRing;
+
+    const pos = new Float32Array(totalVerts * 3);
+    const angle = new Float32Array(totalVerts);
+    const ringAttr = new Float32Array(totalVerts);
+    const radiusAttr = new Float32Array(totalVerts);
+    const heightAttr = new Float32Array(totalVerts);
+    const sideAttr = new Float32Array(totalVerts);
+    const index = [];
+
+    for (let r = 0; r < rings; r++) {
+      const t = r / (rings - 1);
+      const rad = 140 + t * 580;
+      const h = 485 - t * 440;
+      const baseV = r * vertsPerRing;
+      for (let s = 0; s <= segs; s++) {
+        const ang = (s / segs) * Math.PI * 2;
+        const v = baseV + s * 2;
+        angle[v] = angle[v + 1] = ang;
+        ringAttr[v] = ringAttr[v + 1] = r;
+        radiusAttr[v] = radiusAttr[v + 1] = rad;
+        heightAttr[v] = heightAttr[v + 1] = h;
+        sideAttr[v] = -1;
+        sideAttr[v + 1] = 1;
+        if (s < segs) {
+          index.push(v, v + 1, v + 3, v, v + 3, v + 2);
+        }
+      }
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('aAngle', new THREE.BufferAttribute(angle, 1));
+    geo.setAttribute('aRing', new THREE.BufferAttribute(ringAttr, 1));
+    geo.setAttribute('aRadius', new THREE.BufferAttribute(radiusAttr, 1));
+    geo.setAttribute('aHeight', new THREE.BufferAttribute(heightAttr, 1));
+    geo.setAttribute('aSide', new THREE.BufferAttribute(sideAttr, 1));
+    geo.setIndex(index);
+
+    const mix = { value: 0 };
+    const mat = additive({
+      uAudioTex: SHARED.uAudioTex,
+      uTime: SHARED.uTime,
+      uBass: SHARED.uBass,
+      uBeat: SHARED.uBeat,
+      uHue: SHARED.uHue,
+      ...HUE_UNIFORMS,
+      uActive: SHARED.uActive,
+      uBands: SHARED.uBands,
+      uPeakFreqHue: SHARED.uPeakFreqHue,
+      uPeakFlash: SHARED.uPeakFlash,
+      uMix: mix,
+      uCenter: { value: new THREE.Vector2(PYRAMID.x, PYRAMID.z) }
+    }, CYMATIC_VERT, CYMATIC_FRAG);
+
+    const mesh = new THREE.Mesh(geo, mat);
+    return this.attach(scene, [mesh], mix);
+  }
+
   attach(parent, objects, mix) {
     objects.forEach((o, i) => {
       o.frustumCulled = false;
@@ -418,7 +551,7 @@ export class SkyShow {
     for (const o of show.objects) o.visible = on;
   }
 
-  /** 0 = off, 1 = sky spectrum, 2 = sky scope, 3 = street tunnel. */
+  /** 0 = off, 1 = sky spectrum, 2 = sky scope, 3 = street tunnel, 4 = cymatic rings. */
   setScene(n) {
     this.scene = n;
   }

@@ -66,7 +66,8 @@ void main() {
   // Ignition front glows as it travels out.
   col += vec3(1.0, 0.6, 1.4) * exp(-pow((uIgnite - v) * 18.0, 2.0)) * step(uIgnite, 0.999);
 
-  gl_FragColor = vec4(col * uSheet * uFanGain, 1.0);
+  col = softHDR(col * uSheet * uFanGain, 1.75);
+  gl_FragColor = vec4(col, 1.0);
   ${OUTPUT_CHUNK}
 }
 `;
@@ -90,9 +91,9 @@ uniform float uFanGain;
 varying float vV;
 void main() {
   if (vV > uIgnite) discard;
-  vec3 base = mix(vec3(2.2, 0.12, 0.3), hueColor(uHue) * 2.2, uActive);
-  vec3 col = base * (0.8 + uHigh * 0.8 + uBeat * 1.6);
-  gl_FragColor = vec4(col * uSheet * uFanGain, 1.0);
+  vec3 base = mix(vec3(2.0, 0.12, 0.3), hueColor(uHue) * 1.9, uActive);
+  vec3 col = softHDR(base * (0.75 + uHigh * 0.65 + uBeat * 1.1) * uSheet * uFanGain, 1.75);
+  gl_FragColor = vec4(col, 1.0);
   ${OUTPUT_CHUNK}
 }
 `;

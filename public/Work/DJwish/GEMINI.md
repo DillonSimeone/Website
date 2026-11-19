@@ -11,13 +11,14 @@ Please read and follow [AGENTS.md](AGENTS.md) for full architectural guidelines,
 1. **Camera-Based "Pages"**:
    - There are no separate HTML subpages for content sections.
    - All "pages" are **3D camera waypoints (`STOPS`)** defined in [`src/three/world.js`](src/three/world.js).
-   - Adding a new page requires registering a stop in `STOPS`, adding a dot to `index.html`, and connecting the modal card or 3D geometry in `src/app.js` and `src/data/gigs.js`.
-2. **Vanilla ES Modules (Zero Build Step)**:
+   - Adding a new page requires registering a stop in `STOPS`, adding a dot to `index.html`, and connecting the modal card or 3D geometry in `src/ui/navigation-controller.js` and `src/data/gigs.js`.
+2. **Vanilla ES Modules & Modular CSS (Zero Build Step)**:
    - Do NOT run `npm build` or install bundlers.
    - Three.js is loaded natively via standard browser `importmap` in `index.html`.
-   - All files use relative ES Module imports.
+   - Stylesheets are modularized under `src/styles/` (`base.css`, `hud.css`, `panels.css`, `stage.css`, `settings-disc.css`, `cards-modals.css`, `mobile.css`).
+   - All JS files use relative ES Module imports.
 3. **Local Testing**:
-   - Test locally using any static web server: `npx serve .` or `python -m http.server 8000`.
+   - Test locally using any static web server: `npx serve .` or `python -m http.server 8000` and open `?dev` (redirect is bypassed when `?dev`, `?redirect=no`, or `localhost` is used).
    - Never spawn headless browser subagents for visual checks without user consent; provide clear numbered testing instructions.
 4. **Coordinate Integrity**:
    - 1 unit = 1 meter.

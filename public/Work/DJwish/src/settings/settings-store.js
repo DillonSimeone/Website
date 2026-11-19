@@ -1,4 +1,5 @@
-const STORAGE_KEY = 'djwish.settings.v1';
+const STORAGE_KEY = 'djwish.settings.v2';
+const LEGACY_STORAGE_KEY = 'djwish.settings.v1';
 
 /**
  * Every user-tunable setting, grouped into the sections printed around the settings disc.
@@ -23,6 +24,7 @@ export const SETTINGS_SCHEMA = [
     label: 'COLOUR',
     color: '#ff2a7a',
     items: [
+      { key: 'visualMode', label: 'Visual theme', type: 'select', def: 'noir', options: [['noir', 'Cyber Noir'], ['synthwave', 'Synthwave Grid'], ['thermal', 'Thermal'], ['uv_acid', 'UV Acid'], ['monochrome', 'Monochrome'], ['solar', 'Solar Temple'], ['void', 'Abyssal Void']] },
       { key: 'hueShift', label: 'Colour shift', type: 'range', min: 0, max: 360, step: 1, def: 0, fmt: 'deg' },
       { key: 'hueSpan', label: 'Wheel span', type: 'range', min: 0.1, max: 1, step: 0.01, def: 0.78, fmt: 'span' },
       { key: 'hueReverse', label: 'Reverse wheel', type: 'toggle', def: false },
@@ -36,10 +38,10 @@ export const SETTINGS_SCHEMA = [
     label: 'LIGHT',
     color: '#ffb000',
     items: [
-      { key: 'exposure', label: 'Exposure', type: 'range', min: 0.5, max: 2, step: 0.01, def: 1.1, fmt: '2' },
-      { key: 'bloomStrength', label: 'Bloom strength', type: 'range', min: 0, max: 2.5, step: 0.05, def: 0.85, fmt: '2' },
-      { key: 'bloomRadius', label: 'Bloom radius', type: 'range', min: 0, max: 1, step: 0.01, def: 0.5, fmt: '2' },
-      { key: 'bloomThreshold', label: 'Bloom threshold', type: 'range', min: 0.5, max: 2, step: 0.01, def: 1, fmt: '2' },
+      { key: 'exposure', label: 'Exposure', type: 'range', min: 0.5, max: 2, step: 0.01, def: 1.05, fmt: '2' },
+      { key: 'bloomStrength', label: 'Bloom strength', type: 'range', min: 0, max: 1.8, step: 0.02, def: 0.48, fmt: '2' },
+      { key: 'bloomRadius', label: 'Bloom radius', type: 'range', min: 0, max: 0.85, step: 0.01, def: 0.34, fmt: '2' },
+      { key: 'bloomThreshold', label: 'Bloom threshold', type: 'range', min: 0.65, max: 2.2, step: 0.01, def: 1.18, fmt: '2' },
       { key: 'grain', label: 'Film grain', type: 'range', min: 0, max: 0.1, step: 0.002, def: 0.02, fmt: '%' },
       { key: 'vignette', label: 'Vignette', type: 'range', min: 0, max: 2, step: 0.01, def: 0.85, fmt: '2' }
     ]
@@ -64,10 +66,12 @@ export const SETTINGS_SCHEMA = [
     items: [
       { key: 'windowGlow', label: 'Window lights', type: 'range', min: 0, max: 2, step: 0.01, def: 1, fmt: '%' },
       { key: 'vuBuildings', label: 'VU-meter buildings', type: 'toggle', def: true },
+      { key: 'buildingMotion', label: 'Stage bldg motion', type: 'range', min: 0, max: 2, step: 0.05, def: 1, fmt: 'x' },
       { key: 'signGlow', label: 'Sign brightness', type: 'range', min: 0, max: 2, step: 0.01, def: 1, fmt: '%' },
       { key: 'reflections', label: 'Street reflections', type: 'range', min: 0, max: 2, step: 0.01, def: 1, fmt: '%' },
       { key: 'fogDistance', label: 'Fog distance', type: 'range', min: 300, max: 1600, step: 10, def: 760, fmt: 'm' },
-      { key: 'stars', label: 'Stars', type: 'range', min: 0, max: 2, step: 0.01, def: 1, fmt: '%' }
+      { key: 'stars', label: 'Stars', type: 'range', min: 0, max: 2, step: 0.01, def: 1, fmt: '%' },
+      { key: 'starRain', label: 'Starfall rain', type: 'toggle', def: false }
     ]
   },
   {
@@ -79,6 +83,9 @@ export const SETTINGS_SCHEMA = [
       { key: 'fovOffset', label: 'Field of view', type: 'range', min: -15, max: 20, step: 1, def: 0, fmt: 'fov' },
       { key: 'parallax', label: 'Mouse parallax', type: 'range', min: 0, max: 3, step: 0.05, def: 1, fmt: 'x' },
       { key: 'scrollEase', label: 'Scroll glide speed', type: 'range', min: 1, max: 10, step: 0.1, def: 3.5, fmt: '1' },
+      { key: 'autoPilot', label: 'Stage auto-pilot', type: 'toggle', def: false },
+      { key: 'autoPilotSpeed', label: 'Auto-pilot speed', type: 'select', def: 'normal', options: [['slow', 'Slow (24s)'], ['normal', 'Normal (12s)'], ['fast', 'Fast (6s)'], ['hyper', 'Hyper (3s)']] },
+      { key: 'autoCycleThemes', label: 'Auto-cycle themes', type: 'toggle', def: true },
       { key: 'playIntro', label: 'Play intro on load', type: 'toggle', def: true },
       { key: 'haptics', label: 'Phone haptics', type: 'toggle', def: true },
       { key: 'showFps', label: 'FPS readout', type: 'toggle', def: false }
@@ -111,9 +118,16 @@ export class SettingsStore {
     this.values = { ...SETTINGS_DEFAULTS };
     this.listeners = new Set();
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      const rawV2 = localStorage.getItem(STORAGE_KEY);
+      const saved = JSON.parse(rawV2 || localStorage.getItem(LEGACY_STORAGE_KEY) || '{}');
       for (const k of Object.keys(saved)) {
         if (k in SETTINGS_DEFAULTS && typeof saved[k] === typeof SETTINGS_DEFAULTS[k]) this.values[k] = saved[k];
+      }
+      if (!rawV2 && saved.bloomStrength === 0.85 && saved.bloomRadius === 0.5 && saved.bloomThreshold === 1) {
+        this.values.bloomStrength = SETTINGS_DEFAULTS.bloomStrength;
+        this.values.bloomRadius = SETTINGS_DEFAULTS.bloomRadius;
+        this.values.bloomThreshold = SETTINGS_DEFAULTS.bloomThreshold;
+        if (saved.exposure === 1.1) this.values.exposure = SETTINGS_DEFAULTS.exposure;
       }
     } catch (_) {
       // Corrupt or blocked storage: run on defaults.

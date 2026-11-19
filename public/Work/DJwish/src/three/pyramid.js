@@ -22,40 +22,42 @@ uniform float uPyrMode;
 uniform float uFxMix;
 uniform float uFlow;
 uniform vec4 uScanAge;
+uniform vec3 uMortarTint;
 vec3 pyramidFx(vec3 wp, vec3 tex) {
-  if (uPyrMode < 0.5 || uFxMix < 0.001) return vec3(0.0);
   float H = ${PYRAMID.height.toFixed(1)};
   float h = clamp(wp.y / H, 0.0, 1.0);
   float brick = smoothstep(0.2, 0.55, dot(tex, vec3(0.3, 0.59, 0.11)));
+  vec3 mortarGlow = (1.0 - brick) * uMortarTint * 0.55;
+  if (uPyrMode < 0.5 || uFxMix < 0.001) return mortarGlow;
   vec3 fx = vec3(0.0);
   if (uPyrMode < 1.5) {
     float band = min(6.0, floor(h * 7.0));
     float level = bandLevel(band);
-    fx = bandColor(band) * level * level * 2.4;
+    fx = bandColor(band) * level * level * 1.9;
   } else if (uPyrMode < 2.5) {
     for (int i = 0; i < 4; i++) {
       float age = uScanAge[i];
       float d = wp.y - age * 300.0;
       float ring = exp(-d * d / 60.0) * (1.0 - smoothstep(0.8, 1.6, age));
-      fx += hueColor(uHue) * ring * 3.5;
+      fx += hueColor(uHue) * ring * 2.4;
     }
-    fx += hueColor(uHue) * uBeat * 0.25;
+    fx += hueColor(uHue) * uBeat * 0.2;
   } else if (uPyrMode < 3.5) {
     float s = (H - wp.y) / 46.0 - uFlow;
     float band = mod(floor(s), 7.0);
     float level = bandLevel(band);
-    fx = bandColor(band) * pow(fract(s), 6.0) * (0.5 + level * 3.0);
+    fx = bandColor(band) * pow(fract(s), 6.0) * (0.4 + level * 2.2);
   } else if (uPyrMode < 4.5) {
     float fill = 1.0 - smoothstep(uLevel - 0.004, uLevel + 0.004, h);
     float top = exp(-pow((h - uLevel) * H / 5.0, 2.0)) * step(0.01, uLevel);
-    fx = hueColor(h * ${HUE_MAX.toFixed(2)}) * (fill * 1.1 + top * 3.0) * (0.7 + uBeat * 0.6);
+    fx = hueColor(h * ${HUE_MAX.toFixed(2)}) * (fill * 0.9 + top * 2.1) * (0.65 + uBeat * 0.45);
   } else {
     vec2 p = wp.xz - vec2(${PYRAMID.x.toFixed(1)}, ${PYRAMID.z.toFixed(1)});
     float band = p.x < 0.0 ? (p.y > 0.0 ? 0.0 : 2.0) : (p.y > 0.0 ? 5.0 : 3.0);
     float level = bandLevel(band);
-    fx = bandColor(band) * level * level * 2.2;
+    fx = bandColor(band) * level * level * 1.8;
   }
-  return fx * brick * uFxMix * uActive;
+  return softHDR(mortarGlow + fx * brick * uFxMix * uActive, 1.65);
 }
 `;
 
@@ -167,6 +169,7 @@ export class Pyramid {
     this.fxMix = { value: 0 };
     this.flow = { value: 0 };
     this.scanAge = { value: new THREE.Vector4(9, 9, 9, 9) };
+    this.mortarTint = { value: new THREE.Vector3(0.05, 0.03, 0.0) };
     this.scanNext = 0;
     this.lastBeat = 0;
     this.mode = 0;
@@ -309,7 +312,8 @@ export class Pyramid {
         uPyrMode: SHARED.uPyrMode,
         uFxMix: this.fxMix,
         uFlow: this.flow,
-        uScanAge: this.scanAge
+        uScanAge: this.scanAge,
+        uMortarTint: this.mortarTint
       });
       shader.vertexShader = shader.vertexShader
         .replace('#include <common>', '#include <common>\nvarying vec3 vPyrWorld;')
@@ -384,6 +388,16 @@ export class Pyramid {
     this.stage = on;
   }
 
+  applyVisualMode(mode) {
+    if (!mode) return;
+    if (this.faceMaterial) {
+      this.faceMaterial.color.setHex(mode.pyrColor);
+      this.faceMaterial.emissive.setHex(mode.pyrEmissive);
+    }
+    this.capGold.setHex(mode.pyrCapColor);
+    this.mortarTint.value.set(...mode.pyrMortarTint);
+  }
+
   update(dt) {
     this.updateFx(dt);
     this.updateSearchlights(dt);
@@ -401,19 +415,21 @@ export class Pyramid {
     const flare = this.flare;
 
     this.capMaterial.emissive.copy(this.capGold).lerp(this.hueColor, active * 0.85);
-    this.capMaterial.emissiveIntensity = (1.4 + bass * 5.0 + beat * 4.0 + flare * 6) * Math.max(0.2, this.capGlow);
-    this.glow.scale.setScalar((150 + bass * 120 + beat * 80 + flare * 160) * this.capGlow);
+    const rawCapInt = (1.3 + bass * 2.1 + beat * 1.8 + flare * 5.0) * Math.max(0.2, this.capGlow);
+    this.capMaterial.emissiveIntensity = Math.min(4.2, rawCapInt);
+    const rawGlowScale = (135 + bass * 70 + beat * 50 + flare * 130) * this.capGlow;
+    this.glow.scale.setScalar(Math.min(240, rawGlowScale));
     this.glow.visible = this.capGlow > 0.01;
-    this.glowTint.setRGB(1.6, 1.2, 0.7).lerp(this.edgeColor.copy(this.hueColor).multiplyScalar(2.0), active * 0.8);
+    this.glowTint.setRGB(1.3, 1.0, 0.6).lerp(this.edgeColor.copy(this.hueColor).multiplyScalar(1.6), active * 0.8);
     this.glow.material.color.copy(this.glowTint);
-    this.glow.material.opacity = Math.min(1, 0.7 + bass * 0.3);
+    this.glow.material.opacity = Math.min(0.9, 0.55 + bass * 0.25);
 
-    const brickPulse = this.stage ? 1.2 : 0.35;
-    this.faceMaterial.emissiveIntensity = (0.35 + bass * brickPulse * active + beat * 0.25 * active) * this.brickGlow;
+    const brickPulse = this.stage ? 0.85 : 0.35;
+    this.faceMaterial.emissiveIntensity = (0.35 + bass * brickPulse * active + beat * 0.2 * active) * this.brickGlow;
 
-    const strobe = this.mode === 5 ? 4.5 : 2.2;
-    this.edgeColor.setRGB(1.6, 1.3, 0.7).lerp(this.hueColor, active * 0.9)
-      .multiplyScalar((1 + active * 0.8) * (1 + beat * strobe * active) * this.edgeGlow);
+    const strobe = this.mode === 5 ? 3.0 : 1.6;
+    this.edgeColor.setRGB(1.4, 1.15, 0.65).lerp(this.hueColor, active * 0.9)
+      .multiplyScalar((1 + active * 0.6) * (1 + beat * strobe * active) * this.edgeGlow);
     this.edgeMaterial.color.copy(this.edgeColor);
     this.edges.visible = this.edgeGlow > 0.01;
   }

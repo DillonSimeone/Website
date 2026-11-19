@@ -2,13 +2,22 @@ import * as THREE from 'three';
 import { getTerrainHeight } from './terrain.js';
 import { VehicleStats } from './vehicle_stats.js';
 import { ModelLoader, COLORS, PATTERNS } from './model_loader.js';
-import { TrackGen } from './track_gen.js';
 import { RoadStreamer } from './road_streamer.js';
 import { WorldView } from './world.js';
 import { Vehicle } from './vehicle.js';
 import { RivalManager } from './rivals.js';
 import { AudioSynth } from './audio.js';
 import { RaceHud } from './hud.js';
+import { detectHardwareProfile, PerformanceGovernor } from '../../shared/grass/perf_governor.js';
+import {
+    VISUAL_MODE_ORDER,
+    VISUAL_MODES,
+    getVisualMode,
+    getNextVisualModeId,
+    loadSavedVisualMode,
+    saveVisualMode
+} from '../../shared/visual_modes.js';
+import { AudioBeatAnalyser } from '../../shared/audio_reactive.js';
 
 class GameApp {
     constructor() {
@@ -17,11 +26,11 @@ class GameApp {
             canvas: this.canvas,
             antialias: true,
             alpha: true,
-            preserveDrawingBuffer: true,
             powerPreference: 'high-performance'
         });
+        this.hardwareProfile = detectHardwareProfile(this.renderer);
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.setPixelRatio(this.hardwareProfile.maxDpr);
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.0;
         this.renderer.shadowMap.enabled = true;
@@ -34,7 +43,15 @@ class GameApp {
 
         // Core Systems
         this.audio = new AudioSynth();
+        this.audioBeat = new AudioBeatAnalyser();
         this.hud = new RaceHud();
+        this.visualModeId = loadSavedVisualMode();
+        this.perfGovernor = new PerformanceGovernor({
+            renderer: this.renderer,
+            hardwareProfile: this.hardwareProfile,
+            targetFps: 60,
+            onQualityChange: (status) => this.hud.setPerfModeDisplay(status)
+        });
 
         // Game Configuration
         this.state = 'MENU'; // MENU, GARAGE, RACE, PAUSED
@@ -89,9 +106,13 @@ class GameApp {
         this.compFrameDir = 1;
         this.currentFps = 60;
 
-        // In-Race Background Performance Benchmark
-        this.perfBenchmarkSamples = [];
-        this.perfBenchmarkDone = false;
+        // Pre-allocated camera, respawn & HUD scratch objects
+        this._camIdeal = new THREE.Vector3();
+        this._camLook = new THREE.Vector3();
+        this._camSurfTmp = {};
+        this._respawnPos = new THREE.Vector3();
+        this._respawnDir = new THREE.Vector3();
+        this._rivalPositionsScratch = [];
 
         // Input Tracking
         this.keys = {};
@@ -413,6 +434,14 @@ class GameApp {
             if (e.code === 'KeyR' && this.state === 'RACE') {
                 this._respawnPlayer();
             }
+            if (e.code === 'KeyV' && (this.state === 'RACE' || this.state === 'GARAGE')) {
+                if (!document.activeElement || !['INPUT', 'SELECT'].includes(document.activeElement.tagName)) {
+                    this.setVisualMode(getNextVisualModeId(this.visualModeId));
+                }
+            }
+            if (e.code === 'KeyQ' && this.state === 'RACE') {
+                this.perfGovernor.cycleMode();
+            }
             if (e.code === 'Escape') {
                 if (this.state === 'RACE') {
                     this.switchState('GARAGE');
@@ -613,6 +642,34 @@ class GameApp {
                 patternGrid.appendChild(btn);
             });
         }
+
+        // Visual Mode Selector (Garage & In-Race HUD Pill)
+        const garageModeSel = document.getElementById('garage-visual-mode');
+        if (garageModeSel) {
+            garageModeSel.innerHTML = '';
+            for (const id of VISUAL_MODE_ORDER) {
+                const m = VISUAL_MODES[id];
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = `${m.icon} ${m.name}`;
+                garageModeSel.appendChild(opt);
+            }
+            garageModeSel.value = this.visualModeId;
+            garageModeSel.onchange = (e) => this.setVisualMode(e.target.value);
+        }
+
+        const hudModeBtn = document.getElementById('hud-visual-mode-btn');
+        if (hudModeBtn) {
+            hudModeBtn.onclick = () => this.setVisualMode(getNextVisualModeId(this.visualModeId));
+        }
+
+        const hudPerfBtn = document.getElementById('hud-perf-mode-btn');
+        if (hudPerfBtn) {
+            hudPerfBtn.onclick = () => this.perfGovernor.cycleMode();
+        }
+
+        this.hud.setVisualModeDisplay(getVisualMode(this.visualModeId));
+        this.hud.setPerfModeDisplay(this.perfGovernor.getStatus());
     }
 
     _updateStatsUI() {
@@ -985,13 +1042,20 @@ class GameApp {
                 this.hud.initTrack(this.trackData);
             },
             // Step 2: Build World, sky, sun, ground mesh, trees & props with deferred grass (26%)
-            () => {
+            async () => {
                 this._updateLoadingProgress(26, 'CONSTRUCTING ATMOSPHERIC ENVIRONMENT & TERRAIN...');
-                this.world = new WorldView(this.raceScene, this.trackData, this.audio, { deferredGrass: true });
-                this.streamer.setSceneryManagers(this.world.trees, this.world.props);
+                this.world = new WorldView(this.raceScene, this.trackData, this.audio, {
+                    deferredGrass: true,
+                    hardwareProfile: this.hardwareProfile,
+                    visualModeId: this.visualModeId,
+                    onRoadVisualMode: (mode) => this._applyRoadVisualMode(mode)
+                });
+                this.streamer.setSceneryManagers(this.world.trees, this.world.props, this.world.grass);
+                await this.world.grass.loadConfig('./configure/grass.json');
+                this.world.applyVisualMode(this.visualModeId);
                 try {
-                    if (this.world.sky) this.renderer.compile(this.world.sky, this.camera);
-                    if (this.world.groundMesh) this.renderer.compile(this.world.groundMesh, this.camera);
+                    if (this.world.skyDome) this.renderer.compile(this.world.skyDome, this.camera);
+                    if (this.world.ground) this.renderer.compile(this.world.ground, this.camera);
                 } catch (_) {}
             }
         ];
@@ -1017,6 +1081,11 @@ class GameApp {
         // Arm player vehicle with unified modelGroup rotation and AI rivals (92%)
         steps.push(() => {
             this._updateLoadingProgress(92, 'BAKING VEHICLE ORIENTATION & ARMING RIVALS...');
+            if (this.world && this.world.grass) {
+                this.perfGovernor.setTargets({ renderer: this.renderer, grassField: this.world.grass });
+                this.perfGovernor.reset();
+                this.world.applyVisualMode(this.visualModeId);
+            }
             const mat = ModelLoader.createMaterial(this.selectedColor, this.selectedPattern);
             this.player = new Vehicle(
                 this.raceScene,
@@ -1055,11 +1124,11 @@ class GameApp {
         });
 
         let stepIndex = 0;
-        const executeNextStep = () => {
+        const executeNextStep = async () => {
             if (this.state !== 'GARAGE_LAUNCH') return;
             if (stepIndex < steps.length) {
                 try {
-                    steps[stepIndex]();
+                    await steps[stepIndex]();
                 } catch (err) {
                     console.error(`Stepped Loading Error (Step ${stepIndex + 1}):`, err);
                 }
@@ -1139,8 +1208,7 @@ class GameApp {
         this.playerXp = 0;
         this.activeUpgrades = [];
         this.isRaceLoaded = false;
-        this.perfBenchmarkSamples = [];
-        this.perfBenchmarkDone = false;
+        this.setVisualMode(this.visualModeId);
 
         // Render live race scene underneath so it is immediately visible as overlay dissolves
         this.renderer.render(this.raceScene, this.camera);
@@ -1187,51 +1255,59 @@ class GameApp {
         }
     }
 
-    _completePerfBenchmark() {
-        this.perfBenchmarkDone = true;
-        const samples = this.perfBenchmarkSamples;
-        if (!samples || samples.length === 0) return;
+    setVisualMode(modeId) {
+        const mode = getVisualMode(modeId);
+        this.visualModeId = mode.id;
+        saveVisualMode(mode.id);
 
-        const fpsValues = samples.map(d => 1.0 / Math.max(0.001, d)).sort((a, b) => a - b);
-        const sumFps = fpsValues.reduce((acc, v) => acc + v, 0);
-        const avgFps = sumFps / fpsValues.length;
-        const p1Idx = Math.max(0, Math.floor(fpsValues.length * 0.01));
-        const fps1Low = fpsValues[p1Idx];
-        const minFps = fpsValues[0];
+        const garageSel = document.getElementById('garage-visual-mode');
+        if (garageSel) garageSel.value = mode.id;
+        this.hud.setVisualModeDisplay(mode);
 
-        let gpuName = 'Standard WebGL';
-        try {
-            const gl = this.renderer.getContext();
-            const ext = gl.getExtension('WEBGL_debug_renderer_info');
-            if (ext) gpuName = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL);
-        } catch (_) {}
-
-        let recommendedCellScale = 1.0;
-        if (avgFps < 45 || fps1Low < 25) {
-            recommendedCellScale = 1.45; // Sparser tufts to recover ~60 FPS on weak iGPUs
-        } else if (avgFps < 58 || fps1Low < 35) {
-            recommendedCellScale = 1.20;
-        } else {
-            recommendedCellScale = 1.0; // Keep crisp 0.16
+        if (this.renderer) {
+            this.renderer.toneMappingExposure = mode.atmosphere.exposure || 1.0;
         }
+        if (this.world) {
+            this.world.applyVisualMode(mode.id);
+        }
+        if (this.state === 'RACE' && mode.shadingFx === 4) {
+            this._activateAudioReactive();
+        } else {
+            this._deactivateAudioReactive();
+        }
+    }
 
-        const perfProfile = {
-            avgFps: Math.round(avgFps * 10) / 10,
-            fps1Low: Math.round(fps1Low * 10) / 10,
-            minFps: Math.round(minFps * 10) / 10,
-            gpu: gpuName,
-            samplesCount: samples.length,
-            baseCellSize: 0.16,
-            recommendedCellScale,
-            hardwareConcurrency: navigator.hardwareConcurrency || 4,
-            deviceMemory: navigator.deviceMemory || 'unknown',
-            timestamp: new Date().toISOString()
-        };
-
+    async _activateAudioReactive() {
+        if (this.audioBeat.isMic || this.audioBeat.isPlaying || this._activatingAudio) return;
+        this._activatingAudio = true;
         try {
-            localStorage.setItem('model3d_racing_perf_profile', JSON.stringify(perfProfile));
-            console.log('🏁 [Racing Benchmark Complete] Performance profile saved to localStorage:', perfProfile);
-        } catch (_) {}
+            const micOk = await this.audioBeat.startMic();
+            if (this.visualModeId !== 'audio' || this.state !== 'RACE') {
+                this.audioBeat.stopMic();
+                return;
+            }
+            if (!micOk) {
+                this.audioBeat.startBeat();
+            }
+        } finally {
+            this._activatingAudio = false;
+        }
+    }
+
+    _deactivateAudioReactive() {
+        if (this.audioBeat.isMic) this.audioBeat.stopMic();
+        if (this.audioBeat.isPlaying) this.audioBeat.stopBeat();
+    }
+
+    _applyRoadVisualMode(mode) {
+        if (!this.streamer) return;
+        if (typeof this.streamer.setVisualMode === 'function') {
+            this.streamer.setVisualMode(mode);
+        } else if (this.streamer.roadMat && mode && mode.road) {
+            this.streamer.roadMat.color.set(mode.road.tintHex || '#ffffff');
+            this.streamer.roadMat.emissive.set(mode.road.emissiveHex || '#000000');
+            this.streamer.roadMat.emissiveIntensity = mode.road.emissiveIntensity || 0.0;
+        }
     }
 
     _startRace() {
@@ -1254,8 +1330,15 @@ class GameApp {
         this.hud.initTrack(this.trackData);
 
         // Initialize Scenery & Day-Night cycle
-        this.world = new WorldView(this.raceScene, this.trackData, this.audio);
-        this.streamer.setSceneryManagers(this.world.trees, this.world.props);
+        this.world = new WorldView(this.raceScene, this.trackData, this.audio, {
+            hardwareProfile: this.hardwareProfile,
+            visualModeId: this.visualModeId,
+            onRoadVisualMode: (mode) => this._applyRoadVisualMode(mode)
+        });
+        this.streamer.setSceneryManagers(this.world.trees, this.world.props, this.world.grass);
+        this.perfGovernor.setTargets({ renderer: this.renderer, grassField: this.world.grass });
+        this.perfGovernor.reset();
+        this.setVisualMode(this.visualModeId);
 
         // Bake chosen garage facing/orientation into player vehicle geometry
         // Player Vehicle Physics (Unified Vehicle class with synchronized modelGroup rotation)
@@ -1281,22 +1364,62 @@ class GameApp {
 
     _respawnPlayer() {
         if (!this.player || !this.trackData) return;
-        // Find nearest checkpoint
-        const { points, tangents } = this.trackData;
-        let bestDist = Infinity;
-        let bestIndex = 1;
-        for (let i = 0; i < points.length; i++) {
-            const d = this.player.position.distanceTo(points[i]);
-            if (d < bestDist) {
-                bestDist = d;
-                bestIndex = i;
+        const pPos = this.player.position;
+        const fwdX = -Math.sin(this.player.heading);
+        const fwdZ = -Math.cos(this.player.heading);
+        let bestDistSq = Infinity;
+        let bestPt = null;
+        let bestTan = null;
+
+        if (this.trackData.graph && this.trackData.graph.edges) {
+            for (const edge of this.trackData.graph.edges.values()) {
+                const pts = edge.points;
+                const tans = edge.tangents;
+                if (!pts || pts.length === 0) continue;
+                for (let i = 0; i < pts.length; i++) {
+                    const pt = pts[i];
+                    const dx = pt.x - pPos.x;
+                    const dy = pt.y - pPos.y;
+                    const dz = pt.z - pPos.z;
+                    const dSq = dx * dx + dy * dy + dz * dz;
+                    if (dSq < bestDistSq) {
+                        bestDistSq = dSq;
+                        bestPt = pt;
+                        bestTan = tans ? tans[i] : null;
+                    }
+                }
+            }
+        } else if (this.trackData.points && this.trackData.points.length > 0) {
+            const { points, tangents } = this.trackData;
+            for (let i = 0; i < points.length; i++) {
+                const dSq = pPos.distanceToSquared(points[i]);
+                if (dSq < bestDistSq) {
+                    bestDistSq = dSq;
+                    bestPt = points[i];
+                    bestTan = tangents ? tangents[i] : null;
+                }
             }
         }
-        const respawnPos = points[bestIndex].clone().add(new THREE.Vector3(0, 1.4, 0));
-        this.player.teleport(respawnPos, tangents[bestIndex]);
+
+        if (!bestPt) return;
+        this._respawnPos.set(bestPt.x, bestPt.y + 1.4, bestPt.z);
+        if (bestTan) {
+            this._respawnDir.copy(bestTan);
+            if (this._respawnDir.x * fwdX + this._respawnDir.z * fwdZ < 0) {
+                this._respawnDir.multiplyScalar(-1);
+            }
+        } else {
+            this._respawnDir.set(fwdX, 0, fwdZ);
+        }
+        this.player.teleport(this._respawnPos, this._respawnDir);
     }
 
     _teardownRace() {
+        this._deactivateAudioReactive();
+        if (this.world) {
+            this.world.destroy();
+            this.world = null;
+        }
         if (this.streamer) {
             this.streamer.destroy();
             this.streamer = null;
@@ -1309,7 +1432,6 @@ class GameApp {
             this.rivals.destroy();
             this.rivals = null;
         }
-        this.world = null;
         this.trackData = null;
         this.isRacePreloaded = false;
         this.isRacePreloading = false;
@@ -1360,35 +1482,60 @@ class GameApp {
         }
 
         if (this.state === 'RACE' && this.player) {
-            // Chase camera behind vehicle
+            // Chase camera behind vehicle with slope awareness & floor clamping
             const pPos = this.player.position;
             const heading = this.player.heading;
+            const pitch = this.player.pitch || 0;
 
             const chaseDist = this.player.ascended ? 14.0 : 6.2;
             const chaseHeight = this.player.ascended ? 5.5 : 2.5;
 
             const idealCamX = pPos.x + Math.sin(heading) * chaseDist;
-            const idealCamY = pPos.y + chaseHeight;
+            const idealCamY = pPos.y + chaseHeight - Math.sin(pitch) * 1.4;
             const idealCamZ = pPos.z + Math.cos(heading) * chaseDist;
+            this._camIdeal.set(idealCamX, idealCamY, idealCamZ);
 
             const lerpSpeed = this.player.ascended ? 2.5 : 7.5;
-            this.camera.position.lerp(new THREE.Vector3(idealCamX, idealCamY, idealCamZ), delta * lerpSpeed);
+            this.camera.position.lerp(this._camIdeal, Math.min(1.0, delta * lerpSpeed));
 
-            // Dynamic speed-based FOV punch + boost kickback
+            const camGround = getTerrainHeight(this.camera.position.x, this.camera.position.z);
+            let camFloorY = camGround;
+            if (this.trackData && this.trackData.sampleSurface) {
+                const surf = this.trackData.sampleSurface(
+                    this.camera.position.x,
+                    this.camera.position.z,
+                    pPos.y,
+                    this._camSurfTmp
+                );
+                if (surf && surf.y > camFloorY) camFloorY = surf.y;
+            }
+            const minCamY = camFloorY + 1.15;
+
+            // Dynamic speed-based FOV punch + boost kickback (re-project only when changed meaningfully)
             const isBoosting = this.player.inputs.boost && this.player.boostLeft > 0;
             const speedRatio = Math.min(this.player.speed / this.player.stats.top_speed, 1.5);
             const targetFov = 65 + speedRatio * 14 + (isBoosting ? 12 : 0);
-            this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, targetFov, delta * (isBoosting ? 9.0 : 5.0));
-            this.camera.updateProjectionMatrix();
+            const newFov = THREE.MathUtils.lerp(this.camera.fov, targetFov, Math.min(1.0, delta * (isBoosting ? 9.0 : 5.0)));
+            if (Math.abs(newFov - this.camera.fov) > 0.04) {
+                this.camera.fov = newFov;
+                this.camera.updateProjectionMatrix();
+            }
 
             // High-speed boost camera shake
             if (isBoosting) {
                 this.camera.position.x += (Math.random() - 0.5) * 0.08;
                 this.camera.position.y += (Math.random() - 0.5) * 0.08;
             }
+            if (this.camera.position.y < minCamY) {
+                this.camera.position.y = minCamY;
+            }
 
-            const lookTarget = pPos.clone().add(new THREE.Vector3(-Math.sin(heading) * 3, 0.8, -Math.cos(heading) * 3));
-            this.camera.lookAt(lookTarget);
+            this._camLook.set(
+                pPos.x - Math.sin(heading) * 3.0,
+                pPos.y + 0.8 + Math.sin(pitch) * 2.2,
+                pPos.z - Math.cos(heading) * 3.0
+            );
+            this.camera.lookAt(this._camLook);
         }
     }
 
@@ -1402,18 +1549,7 @@ class GameApp {
         if (this.player) {
             this.totalDistanceDriven += Math.abs(this.player.speed) * delta;
         }
-        const pts = this.trackData.points;
-
-        // Dynamic progress calculation along streaming window
-        let closestIndex = 0;
-        let minDist = Infinity;
-        for (let i = 0; i < pts.length; i++) {
-            const d = this.player.position.distanceTo(pts[i]);
-            if (d < minDist) {
-                minDist = d;
-                closestIndex = i;
-            }
-        }
+        const pts = this.trackData.points || [];
         const progress = (this.totalDistanceDriven % 3000.0) / 3000.0;
 
         // Roguelite XP accumulation
@@ -1427,11 +1563,24 @@ class GameApp {
             }
         }
 
-        // Rank calculation
+        // Graph-aware rank calculation based on forward progress relative to nearby rivals
         let rank = 1;
-        if (this.rivals) {
+        const rivalPositions = this._rivalPositionsScratch;
+        rivalPositions.length = 0;
+        if (this.rivals && this.rivals.rivals.length > 0) {
+            const fwdX = -Math.sin(this.player.heading);
+            const fwdZ = -Math.cos(this.player.heading);
+            const px = this.player.position.x;
+            const pz = this.player.position.z;
             for (const r of this.rivals.rivals) {
-                if (r.pathIndex > closestIndex) rank++;
+                if (!r.vehicle || !r.vehicle.position) continue;
+                const rPos = r.vehicle.position;
+                rivalPositions.push(rPos);
+                const dx = rPos.x - px;
+                const dz = rPos.z - pz;
+                if (dx * dx + dz * dz < 220 * 220 && (dx * fwdX + dz * fwdZ) > 3.0) {
+                    rank++;
+                }
             }
         }
 
@@ -1442,7 +1591,6 @@ class GameApp {
         }
 
         // Update HUD
-        const rivalPositions = this.rivals ? this.rivals.rivals.map(r => r.vehicle.position) : [];
         this.hud.update({
             speed: this.player.speed,
             maxSpeed: this.player.stats.top_speed,
@@ -1456,9 +1604,12 @@ class GameApp {
             canAscend: this.player.stats.can_ascend,
             isAscended: this.player.ascended,
             playerPos: this.player.position,
+            playerHeading: this.player.heading,
             rivalPositions,
+            trackData: this.trackData,
             trackPoints: pts,
-            fps: this.currentFps
+            fps: this.currentFps,
+            densityPercent: this.perfGovernor.getStatus().densityPercent
         });
 
         // Update Procedural Sound
@@ -1535,6 +1686,7 @@ class GameApp {
             this.currentFps = THREE.MathUtils.lerp(this.currentFps || 60, rawFps, 0.08);
 
             if (this.state === 'RACE') {
+                this.perfGovernor.update(delta);
                 this._handleRaceInput();
                 if (this.streamer && this.player) {
                     this.trackData = this.streamer.update(this.player.position, delta);
@@ -1552,17 +1704,12 @@ class GameApp {
                         if (r.vehicle && r.vehicle.position) vehiclePositions.push(r.vehicle.position);
                     }
                 }
-                if (this.world) this.world.update(delta, this.camera.position, playerPos, vehiclePositions);
+                const audioLevels = this.visualModeId === 'audio' ? this.audioBeat.update(delta) : null;
+                if (this.world) {
+                    this.world.update(delta, this.camera.position, playerPos, vehiclePositions, this.camera, audioLevels);
+                }
                 this._checkRaceProgression(delta);
                 this._updateCamera(delta);
-
-                // Background performance benchmark during active driving
-                if (this.elapsedTime > 3.0 && !this.perfBenchmarkDone) {
-                    this.perfBenchmarkSamples.push(delta);
-                    if (this.perfBenchmarkSamples.length >= 240) {
-                        this._completePerfBenchmark();
-                    }
-                }
 
                 this.renderer.render(this.raceScene, this.camera);
             } else if (this.state === 'GARAGE_LAUNCH') {

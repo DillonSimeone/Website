@@ -1,0 +1,285 @@
+/* ==========================================================================
+   SETTINGS DISC (vinyl record rising from the capstone, CSS3D)
+   ========================================================================== */
+
+#settings-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 70;
+  pointer-events: none;
+}
+
+.settings-css3d {
+  position: absolute !important;
+  inset: 0;
+  pointer-events: none;
+}
+
+.settings-disc {
+  position: relative;
+  border-radius: 50%;
+  font-family: var(--font-tech);
+  color: #fff;
+  background:
+    conic-gradient(from 25deg, transparent 0deg, rgba(255, 255, 255, 0.13) 28deg, transparent 62deg,
+      transparent 180deg, rgba(255, 255, 255, 0.1) 208deg, transparent 242deg),
+    radial-gradient(circle, #19141f 0%, #0a080e 70%);
+  box-shadow: 0 0 0 3px rgba(255, 42, 122, 0.7), 0 0 90px rgba(176, 76, 255, 0.45);
+}
+
+.settings-disc:not(.interactive),
+.settings-disc:not(.interactive) * {
+  pointer-events: none !important;
+}
+
+.disc-platter {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+.disc-vinyl {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle, rgba(0, 0, 0, 0.55) 0 2px, rgba(255, 255, 255, 0.025) 2px 5px);
+  border: 8px solid #231c2c;
+}
+
+.disc-panel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 18px;
+  background: rgba(8, 5, 14, 0.94);
+  border: 2px solid var(--accent);
+  border-radius: 16px;
+  opacity: 0.5;
+  cursor: pointer;
+  transition: opacity 0.4s, box-shadow 0.4s;
+}
+
+.disc-panel.active {
+  opacity: 1;
+  cursor: default;
+  box-shadow: 0 0 34px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.disc-panel:not(.active) .disc-rows {
+  pointer-events: none;
+}
+
+.disc-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--accent);
+  font-size: 22px;
+  font-weight: bold;
+  letter-spacing: 4px;
+}
+
+.disc-panel-letter {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #000;
+  font-size: 18px;
+  letter-spacing: 0;
+}
+
+.disc-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.disc-row {
+  display: grid;
+  grid-template-columns: 150px 1fr 66px;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+  font-size: 14px;
+}
+
+.disc-row.is-toggle,
+.disc-row.is-select {
+  grid-template-columns: 1fr auto;
+}
+
+.disc-label {
+  color: #e8e2f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.disc-value {
+  text-align: right;
+  color: var(--accent);
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+}
+
+.disc-range {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.disc-toggle {
+  min-width: 66px;
+  padding: 5px 10px;
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  color: var(--accent);
+  font-family: var(--font-tech);
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.disc-toggle[aria-pressed="true"] {
+  background: var(--accent);
+  color: #000;
+}
+
+.disc-select {
+  min-width: 126px;
+  padding: 5px 8px;
+  background: #100c1a;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  color: #fff;
+  font-family: var(--font-tech);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.disc-hub {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 38%, #ff2a7a 0%, #8a1f9e 58%, #2a0838 100%);
+  box-shadow: inset 0 0 0 6px rgba(0, 0, 0, 0.35), 0 0 30px rgba(255, 42, 122, 0.5);
+}
+
+.disc-hub-title {
+  font-family: var(--font-street);
+  font-size: 40px;
+  letter-spacing: 3px;
+  color: #fff;
+  text-shadow: 0 2px 0 #000;
+}
+
+.disc-hub-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.disc-hub-arrow {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.disc-hub-arrow:hover {
+  background: #fff;
+  color: #000;
+}
+
+.disc-hub-section {
+  min-width: 170px;
+  padding: 6px 10px;
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.7);
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.disc-hub-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.disc-hub-btn {
+  padding: 8px 14px;
+  border: 1px solid #fff;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-family: var(--font-tech);
+  font-size: 15px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.disc-hub-btn:hover {
+  background: #fff;
+  color: #000;
+}
+
+.disc-hub-btn.hot {
+  background: #fff;
+  color: #8a1f9e;
+}
+
+.disc-hub-btn.armed {
+  background: #ffb000;
+  border-color: #ffb000;
+  color: #000;
+}
+
+.disc-hub-note {
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+@media (pointer: coarse) {
+  .disc-range {
+    height: 28px;
+  }
+  .disc-range::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+  }
+  .disc-toggle {
+    padding: 7px 14px;
+  }
+  .disc-hub-arrow {
+    width: 52px;
+    height: 52px;
+    font-size: 20px;
+  }
+  .disc-hub-btn {
+    padding: 10px 16px;
+  }
+}

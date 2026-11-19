@@ -16,6 +16,11 @@ export class RaceHud {
         this.timeValue = document.getElementById('hud-time-val');
         this.rankValue = document.getElementById('hud-rank-val');
         this.fpsValue = document.getElementById('hud-fps-val');
+        this.densityBadge = document.getElementById('hud-density-badge');
+        this.visualModeBtn = document.getElementById('hud-visual-mode-btn');
+        this.visualModeLabel = document.getElementById('hud-visual-mode-label');
+        this.perfModeBtn = document.getElementById('hud-perf-mode-btn');
+        this.perfModeLabel = document.getElementById('hud-perf-mode-label');
         this.ascendBadge = document.getElementById('hud-ascend-badge');
 
         // Modal Elements
@@ -95,11 +100,14 @@ export class RaceHud {
             this.timeValue.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
         }
 
-        // 5. FPS Counter & Rank
+        // 5. FPS Counter, Dynamic Density & Rank
         if (this.fpsValue) {
             this.fpsValue.textContent = state.fps !== undefined ? Math.round(state.fps) : '60';
         } else if (this.rankValue) {
             this.rankValue.textContent = `${rank}/${totalRacers}`;
+        }
+        if (this.densityBadge && state.densityPercent !== undefined) {
+            this.densityBadge.textContent = `${state.densityPercent}%`;
         }
 
         // 6. Ascension Badge
@@ -117,41 +125,79 @@ export class RaceHud {
             }
         }
 
-        // 7. Render 2D Minimap
-        this._drawMinimap(trackPoints, playerPos, rivalPositions);
+        // 7. Render Multi-Directional 2D Network Radar Minimap
+        this._drawMinimap(state.trackData || trackPoints, playerPos, state.playerHeading || 0, rivalPositions);
     }
 
-    _drawMinimap(trackPoints, playerPos, rivalPositions) {
-        if (!this.minimapCtx || !trackPoints || trackPoints.length === 0) return;
+    _drawMinimap(trackSource, playerPos, playerHeading, rivalPositions) {
+        if (!this.minimapCtx || !trackSource) return;
         const ctx = this.minimapCtx;
         const w = this.minimapCanvas.width;
         const h = this.minimapCanvas.height;
 
         ctx.clearRect(0, 0, w, h);
 
-        // Center radar scanner dynamically around player with 240m horizon
         const cx = playerPos ? playerPos.x : 0;
         const cz = playerPos ? playerPos.z : 0;
         const range = 240.0;
         const scaleX = (x) => ((x - (cx - range)) / (range * 2.0)) * (w - 24) + 12;
         const scaleZ = (z) => ((z - (cz - range)) / (range * 2.0)) * (h - 24) + 12;
 
-        // Draw track curve
-        ctx.beginPath();
-        ctx.lineWidth = 5;
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
-        let first = true;
-        for (let i = 0; i < trackPoints.length; i++) {
-            const p = trackPoints[i];
-            const px = scaleX(p.x);
-            const py = scaleZ(p.z);
-            if (first) { ctx.moveTo(px, py); first = false; }
-            else { ctx.lineTo(px, py); }
+        const graph = trackSource.graph;
+        if (graph && graph.edges) {
+            // Draw every road edge in the active multi-directional network
+            ctx.lineWidth = 4.5;
+            for (const edge of graph.edges.values()) {
+                const pts = edge.points;
+                if (!pts || pts.length < 2) continue;
+                ctx.strokeStyle = (edge.profile === 'smooth_hill_ramp' || edge.profile === 'elevated_causeway' || edge.profile === 'overpass_link')
+                    ? 'rgba(0, 242, 254, 0.55)'
+                    : 'rgba(255, 255, 255, 0.35)';
+                ctx.beginPath();
+                for (let i = 0; i < pts.length; i += 2) {
+                    const px = scaleX(pts[i].x);
+                    const py = scaleZ(pts[i].z);
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                const last = pts[pts.length - 1];
+                ctx.lineTo(scaleX(last.x), scaleZ(last.z));
+                ctx.stroke();
+            }
+
+            // Draw junctions and roundabouts
+            for (const node of graph.nodes.values()) {
+                const nx = scaleX(node.x);
+                const ny = scaleZ(node.z);
+                if (nx < -20 || nx > w + 20 || ny < -20 || ny > h + 20) continue;
+                const rPx = Math.max(3, (node.plazaRadius / (range * 2.0)) * (w - 24));
+                ctx.fillStyle = node.type === 'roundabout' ? 'rgba(246, 211, 101, 0.45)' : 'rgba(255, 255, 255, 0.38)';
+                ctx.beginPath();
+                ctx.arc(nx, ny, rPx, 0, Math.PI * 2);
+                ctx.fill();
+                if (node.type === 'roundabout') {
+                    ctx.fillStyle = '#0f172a';
+                    ctx.beginPath();
+                    ctx.arc(nx, ny, rPx * 0.45, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        } else if (Array.isArray(trackSource) && trackSource.length > 0) {
+            ctx.beginPath();
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+            for (let i = 0; i < trackSource.length; i++) {
+                const p = trackSource[i];
+                const px = scaleX(p.x);
+                const py = scaleZ(p.z);
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
         }
-        ctx.stroke();
 
         // Draw rivals (Red dots)
         if (rivalPositions) {
@@ -161,24 +207,35 @@ export class RaceHud {
                 const ry = scaleZ(rPos.z);
                 if (rx >= 0 && rx <= w && ry >= 0 && ry <= h) {
                     ctx.beginPath();
-                    ctx.arc(rx, ry, 4, 0, Math.PI * 2);
+                    ctx.arc(rx, ry, 3.8, 0, Math.PI * 2);
                     ctx.fill();
                 }
             }
         }
 
-        // Draw player (Glowing cyan dot)
+        // Draw player directional chevron
         if (playerPos) {
             const px = scaleX(playerPos.x);
             const py = scaleZ(playerPos.z);
+            const dirX = -Math.sin(playerHeading);
+            const dirZ = -Math.cos(playerHeading);
+            const angle = Math.atan2(dirZ, dirX);
 
+            ctx.save();
+            ctx.translate(px, py);
+            ctx.rotate(angle);
             ctx.shadowColor = '#00f2fe';
             ctx.shadowBlur = 8;
             ctx.fillStyle = '#00f2fe';
             ctx.beginPath();
-            ctx.arc(px, py, 6, 0, Math.PI * 2);
+            ctx.moveTo(8, 0);
+            ctx.lineTo(-5, -5);
+            ctx.lineTo(-2.5, 0);
+            ctx.lineTo(-5, 5);
+            ctx.closePath();
             ctx.fill();
-            ctx.shadowBlur = 0; // reset
+            ctx.restore();
+            ctx.shadowBlur = 0;
         }
     }
 
@@ -259,6 +316,21 @@ export class RaceHud {
     hideFinishModal() {
         if (this.finishModal) {
             this.finishModal.classList.remove('visible');
+        }
+    }
+
+    setVisualModeDisplay(mode) {
+        if (this.visualModeLabel && mode) {
+            this.visualModeLabel.textContent = `${mode.icon} ${mode.shortName}`;
+        }
+    }
+
+    setPerfModeDisplay(status) {
+        if (!this.perfModeLabel || !status) return;
+        const modeTag = status.mode === 'auto' ? 'Auto 60' : status.mode.toUpperCase();
+        this.perfModeLabel.textContent = `⚡ ${modeTag} (${status.densityPercent}%)`;
+        if (this.densityBadge) {
+            this.densityBadge.textContent = `${status.densityPercent}%`;
         }
     }
 

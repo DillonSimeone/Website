@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { SHARED, HUE_UNIFORMS, FOG_PARS, AUDIO_PARS, OUTPUT_CHUNK } from './world.js';
+import { SHARED, setRawAudioColor } from './world.js';
 import { GIGS_DATA } from '../data/gigs.js';
 
 /**
@@ -23,6 +23,11 @@ export class GigTower {
 
     this.position = new THREE.Vector3(31, 0, -140);
     this.group.position.copy(this.position);
+
+    this._peakColor = new THREE.Color();
+    this._cyanColor = new THREE.Color(0x00f0ff);
+    this._beaconIdle = new THREE.Color(0xff0055);
+    this._videoActive = false;
 
     // Video billboard setup for CodaFest
     this.videoEl = null;
@@ -52,8 +57,18 @@ export class GigTower {
         this.billboardMat.needsUpdate = true;
       }
     }
-    if (this.videoEl && this.videoEl.paused) {
-      this.videoEl.play().catch(() => {});
+    this.setVideoActive(this._videoActive);
+  }
+
+  setVideoActive(active) {
+    this._videoActive = active;
+    if (!this.videoEl) return;
+    if (active) {
+      if (this.videoEl.paused) {
+        this.videoEl.play().catch(() => {});
+      }
+    } else if (!this.videoEl.paused) {
+      this.videoEl.pause();
     }
   }
 
@@ -431,6 +446,9 @@ export class GigTower {
 
   update(dt, telemetry, isStageMode = false) {
     let speed = 2.4;
+    const active = SHARED.uActive?.value || 0;
+    const flash = SHARED.uPeakFlash?.value || 0;
+    const peakHue = SHARED.uPeakFreqHue?.value || 0;
 
     if (isStageMode) {
       // VU-reactive elevator building in Live Rig mode:
@@ -445,10 +463,16 @@ export class GigTower {
       // Fast hydraulic rise on beats, smooth gravitational descent
       speed = this.targetHeight > this.currentHeight ? 12.0 : 4.5;
 
-      // Flare neon cylinders with audio energy
+      // Flare neon cylinders with peak-frequency color and audio energy
       if (this.cylinderMat) {
-        this.cylinderMat.emissiveIntensity = 1.6 + vuLevel * 3.2;
+        setRawAudioColor(this._peakColor, peakHue, 0.56);
+        this.cylinderMat.emissive.copy(this._cyanColor).lerp(this._peakColor, active * (0.45 + flash * 0.55));
+        this.cylinderMat.emissiveIntensity = 1.6 + vuLevel * 3.2 + flash * active * 2.2;
       }
+
+      // Subtle rhythmic XZ subwoofer pump on beats
+      const xzPulse = 1 + (subBass * 0.04 + beat * 0.05) * active * (SHARED.uBuildingMotion?.value ?? 1);
+      this.shaftGroup.scale.set(xzPulse, 1, xzPulse);
     } else {
       // Normal page navigation mode: Pages 1, 2, 3, 4 are the 4-sided gig tower
       if (this.currentPage >= 1 && this.currentPage <= 4) {
@@ -457,9 +481,12 @@ export class GigTower {
         this.targetHeight = this.baseHeight;
       }
 
+      this.shaftGroup.scale.set(1, 1, 1);
+
       // Smooth ambient glow
       if (this.cylinderMat) {
         const energy = SHARED.uEnergy?.value || 0;
+        this.cylinderMat.emissive.copy(this._cyanColor);
         this.cylinderMat.emissiveIntensity = 1.4 + energy * 1.8;
       }
     }
@@ -485,11 +512,16 @@ export class GigTower {
     if (this.confluenceFace) this.confluenceFace.position.y = displayY;
     if (this.adaFace) this.adaFace.position.y = displayY;
 
-    // Pulse aviation warning beacon
+    // Pulse aviation warning beacon (syncs to peak frequency flash in stage mode)
     if (this.beaconMat) {
       const beat = SHARED.uBeat?.value || 0;
-      const flash = (Math.sin((SHARED.uTime?.value || 0) * 5) > 0.4 || beat > 0.5) ? 1.0 : 0.15;
-      this.beaconMat.color.setRGB(flash, 0, flash * 0.2);
+      const pulse = (Math.sin((SHARED.uTime?.value || 0) * 5) > 0.4 || beat > 0.5) ? 1.0 : 0.15;
+      if (isStageMode && active > 0.05) {
+        setRawAudioColor(this._peakColor, peakHue, 0.56);
+        this.beaconMat.color.copy(this._beaconIdle).lerp(this._peakColor, active).multiplyScalar(0.6 + flash * 1.6);
+      } else {
+        this.beaconMat.color.setRGB(pulse, 0, pulse * 0.2);
+      }
     }
   }
 }

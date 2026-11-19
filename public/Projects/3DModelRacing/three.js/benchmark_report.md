@@ -1,8 +1,9 @@
 # 🏁 3D Model Racing — Performance Benchmark Report
 
-**Generated:** 2026-10-03T06:07:33.850Z  
-**Frames Sampled:** 1000 frames (~5.2s test drive)  
+**Generated:** 2026-11-19T08:03:53.317Z  
+**Frames Sampled:** 1000 frames (~0.9s test drive)  
 **Resolution:** 1280 × 720 (DPR: 1)  
+**Hardware Tier:** HIGH (ANGLE (NVIDIA, NVIDIA GeForce RTX 5060 Ti (0x00002D04) Direct3D11 vs_5_0 ps_5_0, D3D11))  
 
 ---
 
@@ -10,12 +11,12 @@
 
 | Metric | Result | Target Benchmark | Status |
 | :--- | :--- | :--- | :--- |
-| **Average Framerate** | **190.7 FPS** | ≥ 60.0 FPS | ✅ PASS |
-| **1% Low Framerate** | **129.9 FPS** | ≥ 45.0 FPS | ✅ PASS |
-| **0.1% Low Framerate** | **0.7 FPS** | ≥ 30.0 FPS | ⚠️ WARN |
-| **Avg Frame Time** | **5.24 ms** | ≤ 16.6 ms | ✅ PASS |
-| **99th Percentile** | **7.70 ms** | ≤ 22.0 ms | ✅ PASS |
-| **Frame Variance (StdDev)** | **45.65 ms** | ≤ 3.5 ms | ⚠️ JITTER |
+| **Average Framerate** | **1075.3 FPS** | ≥ 60.0 FPS | ✅ PASS |
+| **1% Low Framerate** | **588.2 FPS** | ≥ 45.0 FPS | ✅ PASS |
+| **0.1% Low Framerate** | **91.7 FPS** | ≥ 30.0 FPS | ✅ PASS |
+| **Avg Frame Time** | **0.93 ms** | ≤ 16.6 ms | ✅ PASS |
+| **99th Percentile** | **1.70 ms** | ≤ 22.0 ms | ✅ PASS |
+| **Frame Variance (StdDev)** | **0.46 ms** | ≤ 3.5 ms | ✅ STABLE |
 
 ---
 
@@ -23,26 +24,26 @@
 
 | Subsystem | Avg Execution Time | % of Frame Budget | Notes |
 | :--- | :--- | :--- | :--- |
-| **GPU Scene Render** | 8.66 ms | 165.1% | WebGL draw calls & shader execution |
-| **Grass & Atmosphere (world.js)** | 0.08 ms | 1.5% | 1.6M blades uniform update & fog sync |
-| **Infinite Road Streamer (road_streamer.js)** | 0.02 ms | 0.4% | C1 Hermite chunk extrusion, rise/sink animation |
-| **Physics & AI Rivals (vehicle.js / rivals.js)** | 0.05 ms | 1.0% | 7 vehicles hover raycasts & autonomous AI |
+| **GPU Scene Render** | 2.64 ms | 283.9% | WebGL draw calls & instanced shader execution |
+| **Grass & Atmosphere (world.js)** | 0.04 ms | 4.3% | Instanced grass uniforms, GPU weather & fog sync |
+| **Infinite Road Streamer (road_streamer.js)** | 0.03 ms | 3.2% | C1 Hermite chunk extrusion, rise/sink animation |
+| **Physics & AI Rivals (vehicle.js / rivals.js)** | 0.11 ms | 11.8% | 7 vehicles hover raycasts & autonomous AI |
 
 ---
 
-## 🎨 WebGL Pipeline & GPU Memory
+## 🎨 WebGL Pipeline & Instanced Grass Memory
 
-| Metric | Average | Peak |
+| Metric | Average / Active | Peak / Pooled |
 | :--- | :--- | :--- |
-| **Draw Calls** | 541 | 974 |
-| **Triangles Rendered** | 16,361,676 | 16,376,774 |
-| **Geometries in VRAM** | 188 | 188 |
-| **Textures in VRAM** | 17 | 17 |
+| **Draw Calls** | 78 | 91 |
+| **Triangles Rendered** | 8,418,902 | 9,903,938 |
+| **Active Grass Blades** | 3,698,307 (92%) | 4,000,878 (183.1 MB VRAM) |
+| **Geometries in VRAM** | 130 | 130 |
+| **Textures in VRAM** | 13 | 13 |
 
 ---
 
 ## 💡 Automated Diagnostics & Optimization Insights
 
-- **GPU Headroom:** Total render call count (541) is well within mobile/desktop budget (< 150 calls).
-- **Triangle Throughput:** Peak tris (16,376,774) handled smoothly in single-pass instanced arrays.
-- **Frame Pacing:** Stutter max was 1404.60ms, min was 1.40ms.
+- **Governor State:** Targeting 60 FPS on `high` tier at **92%** active density.
+- **Frame Pacing:** Stutter max was 10.90ms, min was 0.50ms.

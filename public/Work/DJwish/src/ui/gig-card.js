@@ -68,9 +68,29 @@ export class GigCardController {
         this.cardEl.classList.toggle('expanded');
       }
     });
+
+    // Mobile horizontal swipe inside photo lightbox
+    let lbStartX = 0;
+    let lbStartY = 0;
+    this.lightbox.addEventListener('touchstart', (e) => {
+      if (e.touches && e.touches[0]) {
+        lbStartX = e.touches[0].clientX;
+        lbStartY = e.touches[0].clientY;
+      }
+    }, { passive: true });
+    this.lightbox.addEventListener('touchend', (e) => {
+      if (this.lightbox.classList.contains('hidden')) return;
+      if (!e.changedTouches || !e.changedTouches[0]) return;
+      const dx = e.changedTouches[0].clientX - lbStartX;
+      const dy = e.changedTouches[0].clientY - lbStartY;
+      if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+        this.stepLightbox(dx < 0 ? 1 : -1);
+      }
+    }, { passive: true });
   }
 
   showGig(gigId) {
+    if (this.currentGig?.id === gigId && this.cardEl.classList.contains('visible')) return;
     const gig = GIGS_DATA.find(g => g.id === gigId);
     if (!gig) {
       this.hide();

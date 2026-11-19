@@ -93,22 +93,41 @@ export const INTRO_PATH = {
   ]
 };
 
-// Live rig cameras: low street shot for the sky shows, far pull-back for the street tunnel.
+// Live rig cameras: low street shot for sky shows, far north side for cymatic city overview, overhead void apex, etc.
 export const STAGE_SHOT = { pos: [0, 1.7, -125], yaw: 0, pitch: 20 };
 export const TUNNEL_SHOT = { pos: [0, 70, 430], yaw: 0, pitch: 3 };
 export const VU_SHOT = { pos: [0, 5.5, 272], yaw: 0, pitch: 5 };
+export const CYMATIC_SHOT = { pos: [0, 685, -2420], yaw: 180, pitch: -21 };
+export const CITY_EQ_SHOT = { pos: [0, 95, 290], yaw: 0, pitch: -10 };
+export const MATRIX_SHOT = { pos: [0, 22, 95], yaw: 0, pitch: 8 };
+export const STARFALL_SHOT = { pos: [0, 145, 760], yaw: 0, pitch: -4 };
+export const VOID_APEX_SHOT = { pos: [0, 760, -1590], yaw: 180, pitch: -42 };
+export const OASIS_CYMATIC_SHOT = { pos: [148.4, 15.5, 269], yaw: 5, pitch: -6 };
+
+export const MAX_STAR_WELLS = 8;
+export const MAX_LASER_HITS = 6;
 
 /**
  * Live rig scenes. `shot` picks the camera, `sky` the sky-show layer, `pyramid` the
- * pyramid animation, `sheet` the brand laser fan level and `lampVU` the street meter.
+ * pyramid animation, `sheet` the brand laser fan level, `lampVU` the street meter,
+ * `cymatic` ground wave mix, `bldgBoost` building motion multiplier, `ricochet` window
+ * laser packets, `starRain` falling star shower, `voidTide` abyssal encroachment,
+ * `oasisCymatic` park pool water cymatics, and `fogFar` optional extended visibility range.
  */
 export const STAGE_SCENES = [
   null,
-  { id: 1, label: 'SKY SPECTRUM', shot: 'stage', sky: 1, pyramid: 1, sheet: 0, lampVU: 0 },
-  { id: 2, label: 'SKY SCOPE', shot: 'stage', sky: 2, pyramid: 2, sheet: 0, lampVU: 0 },
-  { id: 3, label: 'HYPER TUNNEL', shot: 'tunnel', sky: 3, pyramid: 3, sheet: 0.35, lampVU: 0 },
-  { id: 4, label: 'STREET VU', shot: 'vu', sky: 0, pyramid: 4, sheet: 0.5, lampVU: 1 },
-  { id: 5, label: 'SEARCHLIGHTS', shot: 'stage', sky: 0, pyramid: 5, sheet: 0, lampVU: 0 }
+  { id: 1, label: 'SKY SPECTRUM', shot: 'stage', sky: 1, pyramid: 1, sheet: 0, lampVU: 0, cymatic: 0, bldgBoost: 1.0, fogFar: 0 },
+  { id: 2, label: 'SKY SCOPE', shot: 'stage', sky: 2, pyramid: 2, sheet: 0, lampVU: 0, cymatic: 0, bldgBoost: 1.0, fogFar: 0 },
+  { id: 3, label: 'HYPER TUNNEL', shot: 'tunnel', sky: 3, pyramid: 3, sheet: 0.35, lampVU: 0, cymatic: 0.25, bldgBoost: 1.1, fogFar: 1400 },
+  { id: 4, label: 'STREET VU', shot: 'vu', sky: 0, pyramid: 4, sheet: 0.5, lampVU: 1, cymatic: 0, bldgBoost: 1.0, fogFar: 0 },
+  { id: 5, label: 'SEARCHLIGHTS', shot: 'stage', sky: 0, pyramid: 5, sheet: 0, lampVU: 0, cymatic: 0.2, bldgBoost: 1.15, fogFar: 0 },
+  { id: 6, label: 'CYMATIC RINGS', shot: 'cymatic', sky: 4, pyramid: 2, sheet: 0.2, lampVU: 0, cymatic: 1.0, bldgBoost: 1.25, fogFar: 4200 },
+  { id: 7, label: 'CITY EQUALIZER', shot: 'cityEq', sky: 1, pyramid: 1, sheet: 0.25, lampVU: 1, cymatic: 0.35, bldgBoost: 1.55, fogFar: 1800 },
+  { id: 8, label: 'LASER RICOCHET', shot: 'matrix', sky: 0, pyramid: 3, sheet: 0.15, lampVU: 0, cymatic: 0.2, bldgBoost: 1.15, ricochet: 1, fogFar: 1800 },
+  { id: 9, label: 'DRONE PILOT', shot: 'drone', sky: 1, pyramid: 2, sheet: 0.35, lampVU: 0, cymatic: 0.35, bldgBoost: 1.25, ricochet: 0.7, fogFar: 2400 },
+  { id: 10, label: 'STARFALL RAIN', shot: 'starfall', sky: 0, pyramid: 2, sheet: 0.35, lampVU: 0, cymatic: 0.3, bldgBoost: 1.15, starRain: 1, fogFar: 3400 },
+  { id: 11, label: 'VOID ENCROACH', shot: 'voidApex', sky: 4, pyramid: 5, sheet: 0.15, lampVU: 0, cymatic: 0.75, bldgBoost: 1.35, voidTide: 1, fogFar: 3800 },
+  { id: 12, label: 'OASIS CYMATICS', shot: 'oasisCymatic', sky: 0, pyramid: 1, sheet: 0.45, lampVU: 0, cymatic: 0.45, bldgBoost: 1.05, oasisCymatic: 1, fogFar: 2800 }
 ];
 
 // Audio texture: 128 x 1, R = log-binned spectrum, G = triggered waveform.
@@ -145,7 +164,30 @@ export const SHARED = {
   uPixelRatio: { value: 1 },
   uFogColor: { value: new THREE.Color(FOG.color) },
   uFogNear: { value: FOG.near },
-  uFogFar: { value: FOG.far }
+  uFogFar: { value: FOG.far },
+  uStageMode: { value: 0 },
+  uPeakFreqHue: { value: 0 },
+  uPeakFlash: { value: 0 },
+  uVisualMode: { value: 0 },
+  uThemeHueOffset: { value: 0 },
+  uThemeSatMul: { value: 1 },
+  uGroundGrid: { value: 0.22 },
+  uCymaticMix: { value: 0 },
+  uBuildingMotion: { value: 1 },
+  uBuildingBoost: { value: 1 },
+  uThemeFacade: { value: new THREE.Vector3(0.03, 0.026, 0.042) },
+  uThemeWinA: { value: new THREE.Vector3(1.0, 0.6, 0.26) },
+  uThemeWinB: { value: new THREE.Vector3(0.35, 0.75, 1.0) },
+  uThemeWinC: { value: new THREE.Vector3(1.0, 0.25, 0.65) },
+  uThemeLightTint: { value: new THREE.Vector3(1.0, 1.0, 1.0) },
+  uVoidMix: { value: 0 },
+  uStarRainMix: { value: 0 },
+  uRicochetMix: { value: 0 },
+  uOasisCymaticMix: { value: 0 },
+  uStarWells: { value: Array.from({ length: MAX_STAR_WELLS }, () => new THREE.Vector4(0, 0, 0, -1)) },
+  uStarWellSpec: { value: Array.from({ length: MAX_STAR_WELLS }, () => new THREE.Vector4(0, 0, 170, 0)) },
+  uLaserHits: { value: Array.from({ length: MAX_LASER_HITS }, () => new THREE.Vector4(0, 0, 0, -1)) },
+  uLaserHitInfo: { value: Array.from({ length: MAX_LASER_HITS }, () => new THREE.Vector4(0, 0, 0, 1)) }
 };
 
 export const HUE_MAX = 0.78;
@@ -161,31 +203,52 @@ export const HUE_UNIFORMS = {
   uHueShift: SHARED.uHueShift,
   uHueSpan: SHARED.uHueSpan,
   uHueDir: SHARED.uHueDir,
-  uSat: SHARED.uSat
+  uSat: SHARED.uSat,
+  uThemeHueOffset: SHARED.uThemeHueOffset,
+  uThemeSatMul: SHARED.uThemeSatMul
 };
 
 /**
  * Colour wheel convention: low frequencies are red, rotating up to purple at the top.
- * Callers pass h on the default 0..HUE_MAX scale; the user's shift / span / direction /
- * saturation settings are applied here so every surface follows them.
+ * Also includes softHDR() for saturation-preserving HDR compression on loud peaks.
  */
 export const HUE_PARS = /* glsl */ `
 uniform float uHueShift;
 uniform float uHueSpan;
 uniform float uHueDir;
 uniform float uSat;
-vec3 hueColor(float h) {
-  float t = uHueShift + (h / ${HUE_MAX.toFixed(2)}) * uHueSpan * uHueDir;
+uniform float uThemeHueOffset;
+uniform float uThemeSatMul;
+vec3 rawHueColor(float h) {
+  float t = uHueShift + uThemeHueOffset + (h / ${HUE_MAX.toFixed(2)}) * uHueSpan * uHueDir;
   vec3 c = clamp(abs(mod(t * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0);
   return mix(vec3(dot(c, vec3(0.3333))), c, uSat);
+}
+vec3 hueColor(float h) {
+  float t = uHueShift + uThemeHueOffset + (h / ${HUE_MAX.toFixed(2)}) * uHueSpan * uHueDir;
+  vec3 c = clamp(abs(mod(t * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0);
+  return mix(vec3(dot(c, vec3(0.3333))), c, clamp(uSat * uThemeSatMul, 0.0, 1.0));
+}
+vec3 softHDR(vec3 c, float maxPeak) {
+  float m = max(max(c.r, c.g), c.b);
+  if (m <= 0.0001) return c;
+  float compressed = maxPeak * (1.0 - exp(-m / maxPeak));
+  return c * (compressed / m);
 }
 `;
 
 const _fract = (x) => x - Math.floor(x);
 
-/** JS twin of hueColor(): sets `color` from a 0..HUE_MAX hue with the user's colour settings. */
+/** JS twin of hueColor(): sets `color` from a 0..HUE_MAX hue with the user's colour settings & visual theme. */
 export function setAudioColor(color, h, lightness = 0.55) {
-  const t = SHARED.uHueShift.value + (h / HUE_MAX) * SHARED.uHueSpan.value * SHARED.uHueDir.value;
+  const t = SHARED.uHueShift.value + SHARED.uThemeHueOffset.value + (h / HUE_MAX) * SHARED.uHueSpan.value * SHARED.uHueDir.value;
+  const sat = Math.min(1, Math.max(0, SHARED.uSat.value * SHARED.uThemeSatMul.value));
+  return color.setHSL(_fract(t), sat, lightness);
+}
+
+/** JS twin of rawHueColor(): preserves full saturation for peak-frequency strobe highlights. */
+export function setRawAudioColor(color, h, lightness = 0.55) {
+  const t = SHARED.uHueShift.value + SHARED.uThemeHueOffset.value + (h / HUE_MAX) * SHARED.uHueSpan.value * SHARED.uHueDir.value;
   return color.setHSL(_fract(t), SHARED.uSat.value, lightness);
 }
 

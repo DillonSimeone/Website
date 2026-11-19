@@ -27,6 +27,9 @@ uniform sampler2D uMap;
 uniform float uBass;
 uniform float uEnergy;
 uniform float uBeat;
+uniform float uStageMode;
+uniform float uPeakFreqHue;
+uniform float uPeakFlash;
 varying vec2 vUv;
 varying vec3 vWorld;
 varying float vDepth;
@@ -37,6 +40,8 @@ void main() {
   vec3 col = t * (0.95 + paint * (uBass * 0.5 + uEnergy * 0.3 + uBeat * 0.4) * uActive);
   // Painted letters pick up the audio colour on bass hits.
   col += paint * hueColor(uHue) * luma * (uBass * 0.6 + uBeat * 0.9) * uActive;
+  // Subtle stage-mode peak-frequency flash across painted highlights.
+  col += paint * rawHueColor(uPeakFreqHue) * luma * uPeakFlash * uStageMode * uActive * 0.85;
   col += t * vec3(0.7, 0.18, 0.5) * exp(-max(vWorld.y, 0.0) / 7.0) * 0.35;
   col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth) * 0.9);
   gl_FragColor = vec4(col, 1.0);
@@ -46,10 +51,19 @@ void main() {
 
 /* ---------- paint helpers ---------- */
 
-function makeCanvas(w, h) {
+function makeCanvas(w, h, scale = 1) {
   const c = document.createElement('canvas');
-  c.width = w;
-  c.height = h;
+  c.width = Math.round(w * scale);
+  c.height = Math.round(h * scale);
+  return c;
+}
+
+function createBrickBaseCanvas(w, h, scale = 1) {
+  const c = makeCanvas(w, h, scale);
+  const ctx = c.getContext('2d');
+  if (scale !== 1) ctx.scale(scale, scale);
+  const rng = mulberry32(7);
+  paintBrickWall(ctx, w, h, rng);
   return c;
 }
 
@@ -116,21 +130,17 @@ function overspray(ctx, x0, y0, x1, y1, color, count, rng) {
   ctx.restore();
 }
 
-/** Drip paint down from wherever bright paint sits on the row just above `y`. */
+/** Deterministic spray-paint drips along [x0, x1] without synchronous getImageData() stalls. */
 function drips(ctx, x0, x1, y, color, rng, count, maxLen) {
-  const width = Math.max(1, Math.floor(x1 - x0));
-  const row = ctx.getImageData(Math.floor(x0), Math.floor(y - 6), width, 1).data;
+  const width = Math.max(1, x1 - x0);
   ctx.save();
   ctx.fillStyle = color;
   for (let i = 0; i < count; i++) {
-    const px = Math.floor(rng() * width);
-    const r = row[px * 4];
-    const g = row[px * 4 + 1];
-    const b = row[px * 4 + 2];
-    if (r + g + b < 260) continue;
+    const t = (i + rng() * 0.85) / count;
+    const x = x0 + t * width;
     const len = 18 + rng() * maxLen;
     const w = 3 + rng() * 5;
-    const x = x0 + px;
+    ctx.globalAlpha = 0.72 + rng() * 0.28;
     ctx.beginPath();
     ctx.moveTo(x - w / 2, y - 8);
     ctx.lineTo(x + w / 2, y - 8);
@@ -298,11 +308,12 @@ function pyramidEmblem(ctx, cx, base, size) {
 
 /* ---------- murals ---------- */
 
-function paintTitle(w, h) {
+function paintTitle(w, h, scale, brickBase) {
   const rng = mulberry32(11);
-  const canvas = makeCanvas(w, h);
+  const canvas = makeCanvas(w, h, scale);
   const ctx = canvas.getContext('2d');
-  paintBrickWall(ctx, w, h, rng);
+  if (scale !== 1) ctx.scale(scale, scale);
+  ctx.drawImage(brickBase, 0, 0, w, h);
 
   sprayCloud(ctx, w * 0.56, h * 0.45, w * 0.42, 'rgba(110, 30, 220, 1)', 0.55);
   sprayCloud(ctx, w * 0.8, h * 0.35, w * 0.22, 'rgba(255, 20, 110, 1)', 0.45);
@@ -345,11 +356,12 @@ function paintTitle(w, h) {
   return canvas;
 }
 
-function paintBio(w, h) {
+function paintBio(w, h, scale, brickBase) {
   const rng = mulberry32(23);
-  const canvas = makeCanvas(w, h);
+  const canvas = makeCanvas(w, h, scale);
   const ctx = canvas.getContext('2d');
-  paintBrickWall(ctx, w, h, rng);
+  if (scale !== 1) ctx.scale(scale, scale);
+  ctx.drawImage(brickBase, 0, 0, w, h);
 
   sprayCloud(ctx, w * 0.2, h * 0.16, w * 0.3, 'rgba(0, 210, 255, 1)', 0.35);
   sprayCloud(ctx, w * 0.85, h * 0.85, w * 0.25, 'rgba(255, 20, 110, 1)', 0.3);
@@ -398,11 +410,12 @@ function paintBio(w, h) {
   return canvas;
 }
 
-function paintRider(w, h) {
+function paintRider(w, h, scale, brickBase) {
   const rng = mulberry32(37);
-  const canvas = makeCanvas(w, h);
+  const canvas = makeCanvas(w, h, scale);
   const ctx = canvas.getContext('2d');
-  paintBrickWall(ctx, w, h, rng);
+  if (scale !== 1) ctx.scale(scale, scale);
+  ctx.drawImage(brickBase, 0, 0, w, h);
 
   sprayCloud(ctx, w * 0.75, h * 0.18, w * 0.3, 'rgba(255, 20, 110, 1)', 0.38);
   sprayCloud(ctx, w * 0.15, h * 0.8, w * 0.25, 'rgba(120, 40, 255, 1)', 0.35);
@@ -463,13 +476,14 @@ function paintRider(w, h) {
  * Murals - spray-painted walls baked once into textures, lit by the street's neon.
  */
 export class Murals {
-  constructor(scene, maxAniso = 4) {
+  constructor(scene, maxAniso = 4, textureScale = 1) {
     this.group = new THREE.Group();
     this.maxAniso = maxAniso;
 
-    this.addMural(MURALS.title, paintTitle(2048, 980));
-    this.addMural(MURALS.bio, paintBio(2048, 1332));
-    this.addMural(MURALS.rider, paintRider(2048, 1332));
+    const brickBase = createBrickBaseCanvas(2048, 1332, textureScale);
+    this.addMural(MURALS.title, paintTitle(2048, 980, textureScale, brickBase));
+    this.addMural(MURALS.bio, paintBio(2048, 1332, textureScale, brickBase));
+    this.addMural(MURALS.rider, paintRider(2048, 1332, textureScale, brickBase));
 
     scene.add(this.group);
   }
@@ -489,6 +503,9 @@ export class Murals {
         ...HUE_UNIFORMS,
         uActive: SHARED.uActive,
         uBands: SHARED.uBands,
+        uStageMode: SHARED.uStageMode,
+        uPeakFreqHue: SHARED.uPeakFreqHue,
+        uPeakFlash: SHARED.uPeakFlash,
         uFogColor: SHARED.uFogColor,
         uFogNear: SHARED.uFogNear,
         uFogFar: SHARED.uFogFar

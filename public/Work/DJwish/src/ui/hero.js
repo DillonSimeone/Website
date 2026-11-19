@@ -83,11 +83,10 @@ export class HeroOverlay {
       this.dismiss(true);
     });
 
-    // Dismiss on scroll, wheel, swipe or keydown
-    const onUserInteraction = (e) => {
+    // Dismiss on desktop scroll/navigation keys without blocking mobile card scrolling
+    this._onUserInteraction = (e) => {
       if (this.isDismissed) return;
-      // If clicking inside the booking mailto button, let it open email without blocking
-      if (e.target.closest('.hero-btn-book')) return;
+      if (e.target?.closest?.('.hero-btn-book')) return;
 
       if (e.type === 'keydown') {
         const keys = ['Space', 'ArrowDown', 'PageDown', 'Enter'];
@@ -97,14 +96,28 @@ export class HeroOverlay {
       this.dismiss(true);
     };
 
-    window.addEventListener('wheel', onUserInteraction, { passive: true });
-    window.addEventListener('touchstart', onUserInteraction, { passive: true });
-    window.addEventListener('keydown', onUserInteraction);
+    window.addEventListener('wheel', this._onUserInteraction, { passive: true });
+    window.addEventListener('keydown', this._onUserInteraction);
   }
 
   dismiss(isManualAction = false) {
     if (this.isDismissed) return;
     this.isDismissed = true;
+
+    if (this._onUserInteraction) {
+      window.removeEventListener('wheel', this._onUserInteraction);
+      window.removeEventListener('keydown', this._onUserInteraction);
+      this._onUserInteraction = null;
+    }
+
+    if (this.videoEl) {
+      try {
+        this.videoEl.pause();
+        this.videoEl.querySelectorAll('source').forEach(s => s.remove());
+        this.videoEl.removeAttribute('src');
+        this.videoEl.load();
+      } catch (_) {}
+    }
 
     this.container.classList.add('dismissed');
     document.body.classList.remove('hero-active');

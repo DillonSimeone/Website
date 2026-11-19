@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DJ Deaf Wish // Deployment & Packaging Station [HIDDEN]</title>
+  <title>DJ Deaf Wish // Deployment &amp; Packaging Station [HIDDEN]</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@400;600;700;800;900&family=Permanent+Marker&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
 
   <style>
     :root {
@@ -48,7 +48,7 @@
 
     header {
       text-align: center;
-      margin-bottom: 35px;
+      margin-bottom: 32px;
       position: relative;
     }
 
@@ -68,7 +68,7 @@
     }
 
     @keyframes pulse {
-      0%, 100% { opacity: 0.8; }
+      0%, 100% { opacity: 0.85; }
       50% { opacity: 1; box-shadow: 0 0 14px rgba(255, 0, 85, 0.4); }
     }
 
@@ -90,7 +90,7 @@
     .grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 25px;
+      gap: 24px;
       margin-bottom: 30px;
     }
 
@@ -136,18 +136,17 @@
       color: var(--neon-cyan);
     }
 
-    /* Preset Selector */
     .preset-selector {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 15px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
     }
 
     .preset-box {
       border: 2px solid rgba(255, 255, 255, 0.12);
       border-radius: 8px;
-      padding: 16px;
+      padding: 15px;
       background: rgba(0, 0, 0, 0.25);
       cursor: pointer;
       transition: all 0.2s ease;
@@ -167,25 +166,55 @@
 
     .preset-title {
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 0.98rem;
       margin-bottom: 6px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 8px;
     }
 
     .preset-size {
       font-family: var(--font-mono);
       font-size: 0.8rem;
       color: var(--neon-gold);
+      white-space: nowrap;
     }
 
     .preset-desc {
-      font-size: 0.85rem;
+      font-size: 0.84rem;
       color: var(--text-dim);
     }
 
-    /* Progress & Actions */
+    .export-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 18px;
+      padding: 12px 14px;
+      background: rgba(0, 0, 0, 0.28);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+    }
+
+    .opt-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.84rem;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .opt-row input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--neon-cyan);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
     .btn-download {
       width: 100%;
       background: linear-gradient(135deg, var(--neon-pink) 0%, #a00045 100%);
@@ -194,7 +223,7 @@
       border-radius: 8px;
       padding: 16px 24px;
       font-family: var(--font-mono);
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 700;
       letter-spacing: 0.05em;
       cursor: pointer;
@@ -239,19 +268,25 @@
       width: 0%;
       background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink));
       box-shadow: 0 0 10px var(--neon-cyan);
-      transition: width 0.15s ease;
+      transition: width 0.12s ease;
     }
 
     .progress-text {
       margin-top: 10px;
       font-family: var(--font-mono);
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       display: flex;
       justify-content: space-between;
+      gap: 10px;
       color: var(--neon-cyan);
     }
 
-    /* Terminal Console */
+    #progress-status {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .terminal-box {
       margin-top: 20px;
       background: #05020a;
@@ -260,7 +295,7 @@
       padding: 12px 14px;
       font-family: var(--font-mono);
       font-size: 0.78rem;
-      max-height: 180px;
+      max-height: 200px;
       overflow-y: auto;
       color: #9fe;
       white-space: pre-wrap;
@@ -272,13 +307,13 @@
     .terminal-box .warn { color: var(--neon-gold); }
     .terminal-box .err { color: var(--neon-pink); font-weight: bold; }
 
-    /* File List Accordion */
     details.file-list {
       margin-top: 20px;
       background: rgba(0, 0, 0, 0.2);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 6px;
       padding: 10px 14px;
+      overflow-x: auto;
     }
 
     details.file-list summary {
@@ -308,7 +343,6 @@
       text-transform: uppercase;
     }
 
-    /* Guide Section */
     .step-box {
       margin-bottom: 18px;
       background: rgba(0, 0, 0, 0.2);
@@ -387,6 +421,19 @@
       color: var(--neon-cyan);
       text-decoration: none;
     }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 18px 12px 50px;
+      }
+      .card {
+        padding: 18px 16px;
+      }
+      .btn-download {
+        padding: 14px 16px;
+        font-size: 0.95rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -394,8 +441,8 @@
   <div class="container">
     <header>
       <div class="badge-hidden">🔒 PRIVATE DEPLOYMENT UTILITY — UNLINKED FROM SITE</div>
-      <h1>PACK & DEPLOY DJ WISH</h1>
-      <p class="tagline">Package Nate Hergert's 3D street, live stage rig, sound engines, and AI Agent instruction guides into a single deploy-ready .zip archive.</p>
+      <h1>PACK &amp; DEPLOY DJ WISH</h1>
+      <p class="tagline">Package Nate Hergert's 3D street, live stage rig, visual themes, sound engines, and AI Agent instruction guides into a single deploy-ready .zip archive.</p>
     </header>
 
     <div id="file-protocol-warning" class="callout" style="display: none;">
@@ -404,34 +451,44 @@
     </div>
 
     <div class="grid grid-2">
-      <!-- LEFT: Downloader & Zipper Controls -->
       <section class="card">
         <h2 class="card-title"><span class="icon">⚡</span> Deployment Package Builder</h2>
-        
+
         <p style="font-size: 0.9rem; margin-bottom: 15px; color: var(--text-dim);">
-          Select your packaging profile, then click <strong>GENERATE .ZIP BUNDLE</strong>. All files will be fetched, compressed in memory via JSZip, and saved directly to your downloads folder.
+          Select your packaging profile, then click <strong>GENERATE .ZIP BUNDLE</strong>. Media files use zero-overhead <code>STORE</code> packing while code &amp; styles use <code>DEFLATE</code> compression for fast packaging.
         </p>
 
         <div class="preset-selector">
           <div class="preset-box active" id="preset-prod" onclick="selectPreset('prod')">
             <div class="preset-title">
               <span>Production Web Deploy</span>
-              <span class="preset-size">~23 MB</span>
+              <span class="preset-size" id="preset-prod-size">...</span>
             </div>
             <div class="preset-desc">
-              Recommended for website deployment. Includes complete 3D engine, UI, optimized CodaFest video, photos, audio engines, and both <code>GEMINI.md</code> & <code>AGENTS.md</code>.
+              Recommended for website deployment. Includes complete 3D engine, modular CSS/JS, optimized CodaFest video, photos, audio engines, and both <code>GEMINI.md</code> &amp; <code>AGENTS.md</code>.
             </div>
           </div>
 
           <div class="preset-box" id="preset-full" onclick="selectPreset('full')">
             <div class="preset-title">
               <span>Full Master Archive</span>
-              <span class="preset-size">~125 MB</span>
+              <span class="preset-size" id="preset-full-size">...</span>
             </div>
             <div class="preset-desc">
               Includes everything in Web Deploy PLUS the full uncompressed gig video captures and social recordings in <code>pastDJ/</code>.
             </div>
           </div>
+        </div>
+
+        <div class="export-options">
+          <label class="opt-row">
+            <input type="checkbox" id="opt-strip-redirect" checked>
+            <span>Strip redirect script from exported <code>index.html</code> (recommended for standalone hosting)</span>
+          </label>
+          <label class="opt-row">
+            <input type="checkbox" id="opt-include-export">
+            <span>Include <code>export.html</code> deployment utility in archive</span>
+          </label>
         </div>
 
         <button id="btn-download" class="btn-download" onclick="startPackaging()">
@@ -448,13 +505,10 @@
           </div>
         </div>
 
-        <div id="terminal-box" class="terminal-box">
-<span class="dim">[READY] Deployment station initialized.</span>
-<span class="dim">[INFO] Manifest contains 57 total site assets.</span>
-<span class="ok">[READY] Select preset and click GENERATE .ZIP BUNDLE.</span></div>
+        <div id="terminal-box" class="terminal-box"></div>
 
         <details class="file-list">
-          <summary>📁 View Included File Manifest (<span id="manifest-count">46 files</span>)</summary>
+          <summary>📁 View Included File Manifest (<span id="manifest-count">...</span>)</summary>
           <table class="manifest-table">
             <thead>
               <tr>
@@ -463,22 +517,19 @@
                 <th>Size</th>
               </tr>
             </thead>
-            <tbody id="manifest-tbody">
-              <!-- Populated by JS -->
-            </tbody>
+            <tbody id="manifest-tbody"></tbody>
           </table>
         </details>
       </section>
 
-      <!-- RIGHT: Deployment & AI Agent Setup -->
       <section class="card">
         <h2 class="card-title"><span class="icon">🚀</span> Deploying Nate's Website</h2>
 
         <div class="step-box">
-          <h4>1. Unzip & Deploy Anywhere</h4>
-          <p>Extract the downloaded <code>dj-deaf-wish-website.zip</code>. The root folder is completely self-contained with no build steps or bundlers required:</p>
+          <h4>1. Unzip &amp; Deploy Anywhere</h4>
+          <p>Extract the downloaded <code>.zip</code> archive. The root folder is completely self-contained with no build steps or bundlers required:</p>
           <ul style="padding-left: 20px; margin-top: 5px;">
-            <li><strong>GitHub Pages:</strong> Push extracted files to a repo & enable Pages in Settings.</li>
+            <li><strong>GitHub Pages:</strong> Push extracted files to a repo &amp; enable Pages in Settings.</li>
             <li><strong>Netlify:</strong> Drag and drop the unzipped folder into Netlify Drop.</li>
             <li><strong>Vercel / Cloudflare Pages:</strong> Connect repo with root directory <code>./</code> and zero build command.</li>
             <li><strong>Shared Hosting:</strong> Upload contents to <code>public_html/</code>.</li>
@@ -500,7 +551,7 @@
           <pre id="prompt-snippet" class="code-snippet">"Read AGENTS.md and add a new 3D camera stop for my latest DJ gig:
 - Event: [Event Name, Dates, Venue]
 - Footage: Place videos/photos into assets/gigs/
-- Add the waypoint to STOPS in src/three/world.js and wire the modal card in src/data/gigs.js"</pre>
+- Add the waypoint to STOPS in src/three/world.js and wire GIG_STOPS in src/ui/navigation-controller.js"</pre>
         </div>
 
         <div class="step-box">
@@ -512,21 +563,21 @@
     </div>
 
     <footer>
-      DJ DEAF WISH // LIVE STAGE RIG & UNIVERSAL MUSIC DESIGN // CREATED FOR NATE HERGERT
+      DJ DEAF WISH // LIVE STAGE RIG &amp; UNIVERSAL MUSIC DESIGN // CREATED FOR NATE HERGERT
     </footer>
   </div>
 
   <script>
-    // File manifest
+    const BINARY_EXT_RE = /\.(mp4|webm|jpe?g|png|webp|gif)$/i;
+
     const ALL_FILES = [
-      { path: "AGENTS.md", size: 11047, cat: "AI Agent Manual", prod: true },
-      { path: "GEMINI.md", size: 1755, cat: "AI Guide", prod: true },
-      { path: "index.html", size: 11713, cat: "Web Page", prod: true },
-      { path: "djwish.css", size: 51323, cat: "Styles", prod: true },
+      { path: "AGENTS.md", size: 14547, cat: "AI Agent Manual", prod: true },
+      { path: "GEMINI.md", size: 2044, cat: "AI Guide", prod: true },
+      { path: "index.html", size: 14955, cat: "Web Page", prod: true },
       { path: "package.json", size: 160, cat: "Config", prod: true },
       { path: "plan.txt", size: 8525, cat: "Dev Plan", prod: true },
       { path: "djWishOldLogo.jpg", size: 226400, cat: "Image", prod: true },
-      
+
       // Assets: Images & Video
       { path: "assets/images/dj_deaf_wish_logo_original.png", size: 470213, cat: "Logo", prod: true },
       { path: "assets/video/codafest.mp4", size: 13934492, cat: "Video (MP4)", prod: true },
@@ -545,36 +596,59 @@
       { path: "assets/gigs/codafest/photo_5.jpg", size: 171246, cat: "Photo", prod: true },
       { path: "assets/gigs/codafest/photo_5_thumb.jpg", size: 13514, cat: "Thumbnail", prod: true },
 
-      // Core Source: App & Audio & Data
-      { path: "src/app.js", size: 28462, cat: "App Core", prod: true },
-      { path: "src/audio/audio-engine.js", size: 22211, cat: "Audio Engine", prod: true },
+      // Modular Stylesheets
+      { path: "src/styles/base.css", size: 3775, cat: "Styles (Base)", prod: true },
+      { path: "src/styles/cards-modals.css", size: 17054, cat: "Styles (Modals)", prod: true },
+      { path: "src/styles/hud.css", size: 7550, cat: "Styles (HUD)", prod: true },
+      { path: "src/styles/mobile.css", size: 9790, cat: "Styles (Mobile)", prod: true },
+      { path: "src/styles/panels.css", size: 5328, cat: "Styles (Panels)", prod: true },
+      { path: "src/styles/settings-disc.css", size: 5437, cat: "Styles (Disc)", prod: true },
+      { path: "src/styles/stage.css", size: 10243, cat: "Styles (Stage)", prod: true },
+
+      // Core Source: App, Audio, Data, Settings, Stage
+      { path: "src/app.js", size: 22750, cat: "App Core", prod: true },
+      { path: "src/audio/audio-engine.js", size: 24136, cat: "Audio Engine", prod: true },
+      { path: "src/audio/demo-synth.js", size: 9761, cat: "Demo Synth", prod: true },
       { path: "src/audio/haptic-engine.js", size: 1705, cat: "Haptics", prod: true },
       { path: "src/data/artist-profile.js", size: 2346, cat: "Data", prod: true },
       { path: "src/data/gigs.js", size: 6463, cat: "Data", prod: true },
-      { path: "src/settings/settings-disc.js", size: 14082, cat: "Settings UI", prod: true },
-      { path: "src/settings/settings-store.js", size: 6968, cat: "Settings Store", prod: true },
+      { path: "src/settings/settings-binder.js", size: 2873, cat: "Settings Binder", prod: true },
+      { path: "src/settings/settings-disc.js", size: 19094, cat: "Settings UI", prod: true },
+      { path: "src/settings/settings-store.js", size: 8365, cat: "Settings Store", prod: true },
       { path: "src/stage/midi-controller.js", size: 4731, cat: "MIDI Engine", prod: true },
       { path: "src/stage/projection-mapper.js", size: 10220, cat: "Keystoner", prod: true },
 
       // Core Source: Three.js 3D World
-      { path: "src/three/world.js", size: 9167, cat: "3D Layout & Stops", prod: true },
-      { path: "src/three/camera-director.js", size: 12792, cat: "Camera & Splines", prod: true },
-      { path: "src/three/city.js", size: 22666, cat: "3D City", prod: true },
+      { path: "src/three/camera-director.js", size: 21175, cat: "Camera & Splines", prod: true },
+      { path: "src/three/camera-drone.js", size: 6446, cat: "Autonomous Drone", prod: true },
+      { path: "src/three/camera-shield.js", size: 11762, cat: "Camera Shield", prod: true },
+      { path: "src/three/city.js", size: 2918, cat: "3D City Core", prod: true },
+      { path: "src/three/city-buildings.js", size: 19243, cat: "Reactive Buildings", prod: true },
+      { path: "src/three/city-ground.js", size: 17435, cat: "Textured Ground", prod: true },
+      { path: "src/three/city-oasis.js", size: 26534, cat: "Neon Oasis Park", prod: true },
+      { path: "src/three/city-props.js", size: 9417, cat: "Lamps & Signs", prod: true },
       { path: "src/three/css3d-panels.js", size: 3691, cat: "CSS3D Hoardings", prod: true },
-      { path: "src/three/gig-tower.js", size: 16245, cat: "Gig Tower", prod: true },
+      { path: "src/three/gig-tower.js", size: 17572, cat: "Gig Tower", prod: true },
       { path: "src/three/glow.js", size: 3903, cat: "Glow Billboards", prod: true },
-      { path: "src/three/lasers.js", size: 6091, cat: "Shaders / Lasers", prod: true },
+      { path: "src/three/laser-ricochet.js", size: 30716, cat: "Window Ricochet", prod: true },
+      { path: "src/three/lasers.js", size: 6136, cat: "Shaders / Lasers", prod: true },
       { path: "src/three/logo-mesh.js", size: 4996, cat: "Sky Logo", prod: true },
-      { path: "src/three/murals.js", size: 15631, cat: "Murals", prod: true },
-      { path: "src/three/pyramid.js", size: 15024, cat: "Gold Pyramid", prod: true },
-      { path: "src/three/quality.js", size: 3026, cat: "Graphics Quality", prod: true },
-      { path: "src/three/scene-manager.js", size: 13941, cat: "Scene Manager", prod: true },
-      { path: "src/three/sky-show.js", size: 13898, cat: "Live Visuals", prod: true },
-      { path: "src/three/starfield.js", size: 6740, cat: "Starfield Dome", prod: true },
+      { path: "src/three/murals.js", size: 16527, cat: "Murals", prod: true },
+      { path: "src/three/pyramid.js", size: 15650, cat: "Gold Pyramid", prod: true },
+      { path: "src/three/quality.js", size: 3693, cat: "Graphics Quality", prod: true },
+      { path: "src/three/scene-manager.js", size: 21586, cat: "Scene Manager", prod: true },
+      { path: "src/three/sky-show.js", size: 18217, cat: "Live Visuals", prod: true },
+      { path: "src/three/star-rain.js", size: 10050, cat: "Starfall Shower", prod: true },
+      { path: "src/three/starfield.js", size: 8103, cat: "Starfield Dome", prod: true },
+      { path: "src/three/visual-modes.js", size: 6772, cat: "Visual Themes", prod: true },
+      { path: "src/three/void-tide.js", size: 11137, cat: "Void Tide Show", prod: true },
+      { path: "src/three/world.js", size: 13450, cat: "3D Layout & Stops", prod: true },
 
-      // Core Source: UI Overlays
-      { path: "src/ui/gig-card.js", size: 11010, cat: "Gig Modal UI", prod: true },
-      { path: "src/ui/hero.js", size: 4000, cat: "Hero Overlay", prod: true },
+      // Core Source: UI Overlays & Controllers
+      { path: "src/ui/gig-card.js", size: 11854, cat: "Gig Modal UI", prod: true },
+      { path: "src/ui/hero.js", size: 4342, cat: "Hero Overlay", prod: true },
+      { path: "src/ui/navigation-controller.js", size: 6819, cat: "Navigation", prod: true },
+      { path: "src/ui/stage-hud.js", size: 6821, cat: "Stage HUD", prod: true },
       { path: "src/ui/video-modal.js", size: 3154, cat: "Video Modal", prod: true },
 
       // Raw Archives in pastDJ/ (Mode = Full)
@@ -607,10 +681,11 @@
     }
 
     function getActiveFiles() {
-      if (currentPreset === 'prod') {
-        return ALL_FILES.filter(f => f.prod);
+      const base = currentPreset === 'prod' ? ALL_FILES.filter(f => f.prod) : ALL_FILES.slice();
+      if (document.getElementById('opt-include-export').checked) {
+        base.push({ path: "export.html", size: 0, cat: "Deploy Tool", prod: false });
       }
-      return ALL_FILES;
+      return base;
     }
 
     function updateManifestTable() {
@@ -622,18 +697,19 @@
         tr.innerHTML = `
           <td><code>${f.path}</code></td>
           <td style="color: var(--text-dim);">${f.cat}</td>
-          <td style="color: var(--neon-cyan);">${formatBytes(f.size)}</td>
+          <td style="color: var(--neon-cyan);">${f.size ? formatBytes(f.size) : 'live'}</td>
         `;
         tbody.appendChild(tr);
       });
-      document.getElementById('manifest-count').textContent = `${active.length} files (${formatBytes(active.reduce((acc, f) => acc + f.size, 0))})`;
+      const totalBytes = active.reduce((acc, f) => acc + f.size, 0);
+      document.getElementById('manifest-count').textContent = `${active.length} files (${formatBytes(totalBytes)})`;
     }
 
     function log(text, type = '') {
       const box = document.getElementById('terminal-box');
       const span = document.createElement('span');
       if (type) span.className = type;
-      span.textContent = '\n' + text;
+      span.textContent = (box.childNodes.length ? '\n' : '') + text;
       box.appendChild(span);
       box.scrollTop = box.scrollHeight;
     }
@@ -643,23 +719,42 @@
       navigator.clipboard.writeText(text).then(() => {
         const btn = document.querySelector('.copy-btn');
         btn.textContent = 'Copied!';
-        setTimeout(() => btn.textContent = 'Copy Prompt', 2000);
+        setTimeout(() => { btn.textContent = 'Copy Prompt'; }, 2000);
       });
     }
 
-    // Check if running on file:// protocol
+    async function ensureJSZip() {
+      if (typeof JSZip !== 'undefined') return true;
+      log('[INFO] Primary JSZip CDN unavailable, trying jsDelivr fallback...', 'warn');
+      return new Promise((resolve) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+        s.onload = () => resolve(typeof JSZip !== 'undefined');
+        s.onerror = () => resolve(false);
+        document.head.appendChild(s);
+      });
+    }
+
+    async function fetchWithRetry(path, retries = 1) {
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          const resp = await fetch(path, { cache: 'no-cache' });
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+          return await resp.arrayBuffer();
+        } catch (err) {
+          if (attempt === retries) throw err;
+          await new Promise(r => setTimeout(r, 250));
+        }
+      }
+    }
+
     if (window.location.protocol === 'file:') {
       document.getElementById('file-protocol-warning').style.display = 'block';
     }
 
-    async function startPackaging() {
-      if (typeof JSZip === 'undefined') {
-        log('[ERROR] JSZip library is not loaded. Please ensure you are connected to the internet.', 'err');
-        alert('JSZip library failed to load from CDN. Please check your internet connection.');
-        return;
-      }
+    document.getElementById('opt-include-export').addEventListener('change', updateManifestTable);
 
-      const files = getActiveFiles();
+    async function startPackaging() {
       const btn = document.getElementById('btn-download');
       const progressContainer = document.getElementById('progress-container');
       const progressBar = document.getElementById('progress-bar-fill');
@@ -670,62 +765,89 @@
       progressContainer.style.display = 'block';
       progressBar.style.width = '0%';
       progressPct.textContent = '0%';
+      progressStatus.textContent = 'Verifying JSZip runtime...';
 
-      log(`[START] Packaging ${files.length} files into zip archive...`, 'ok');
+      const ready = await ensureJSZip();
+      if (!ready) {
+        log('[ERROR] JSZip failed to load from all CDNs. Please check your internet connection.', 'err');
+        alert('JSZip library failed to load from CDN. Please check your internet connection.');
+        btn.disabled = false;
+        return;
+      }
+
+      const files = getActiveFiles();
+      const stripRedirect = document.getElementById('opt-strip-redirect').checked;
+      const expectedTotalBytes = Math.max(1, files.reduce((acc, f) => acc + (f.size || 20000), 0));
+
+      log(`[START] Fetching ${files.length} files in parallel batches (concurrency 6)...`, 'ok');
 
       const zip = new JSZip();
       let completedFiles = 0;
-      let totalBytesFetched = 0;
+      let failedFiles = 0;
+      let bytesFetched = 0;
+      let nextIdx = 0;
 
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        progressStatus.textContent = `Fetching [${i + 1}/${files.length}]: ${file.path}`;
-        
-        try {
-          const resp = await fetch(file.path, { cache: 'no-cache' });
-          if (!resp.ok) {
-            throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+      const worker = async () => {
+        while (nextIdx < files.length) {
+          const idx = nextIdx++;
+          const file = files[idx];
+          try {
+            const buffer = await fetchWithRetry(file.path, 1);
+            bytesFetched += buffer.byteLength;
+
+            if (file.path === 'index.html' && stripRedirect) {
+              const html = new TextDecoder().decode(buffer);
+              const cleaned = html.replace(/\s*<!--\s*djwish-redirect-start\s*-->[\s\S]*?<!--\s*djwish-redirect-end\s*-->\s*/g, '\n  ');
+              zip.file(file.path, cleaned, { compression: 'DEFLATE', compressionOptions: { level: 6 } });
+              log(`  ✓ Added: ${file.path} (redirect script stripped, ${formatBytes(cleaned.length)})`, 'ok');
+            } else if (BINARY_EXT_RE.test(file.path)) {
+              zip.file(file.path, buffer, { compression: 'STORE' });
+              log(`  ✓ Added [STORE]: ${file.path} (${formatBytes(buffer.byteLength)})`);
+            } else {
+              zip.file(file.path, buffer, { compression: 'DEFLATE', compressionOptions: { level: 6 } });
+              log(`  ✓ Added [DEFLATE]: ${file.path} (${formatBytes(buffer.byteLength)})`);
+            }
+          } catch (err) {
+            failedFiles++;
+            log(`  ✗ FAILED: ${file.path} — ${err.message}`, 'err');
+          } finally {
+            completedFiles++;
+            const byteProgress = Math.min(1, bytesFetched / expectedTotalBytes);
+            const fileProgress = completedFiles / files.length;
+            const pct = Math.round(((byteProgress * 0.65 + fileProgress * 0.35)) * 80);
+            progressBar.style.width = `${pct}%`;
+            progressPct.textContent = `${pct}%`;
+            progressStatus.textContent = `Fetching [${completedFiles}/${files.length}]: ${file.path}`;
           }
-          const buffer = await resp.arrayBuffer();
-          totalBytesFetched += buffer.byteLength;
-          zip.file(file.path, buffer);
-          completedFiles++;
-          
-          const pct = Math.round((completedFiles / files.length) * 75); // First 75% is fetching
-          progressBar.style.width = `${pct}%`;
-          progressPct.textContent = `${pct}%`;
-          log(`  ✓ Added: ${file.path} (${formatBytes(buffer.byteLength)})`);
-        } catch (err) {
-          log(`  ✗ FAILED: ${file.path} — ${err.message}`, 'warn');
         }
-      }
+      };
 
-      progressStatus.textContent = 'Compressing archive and building ZIP...';
-      log('[COMPRESS] Compressing assets with DEFLATE level 6...', 'dim');
+      const concurrency = Math.min(6, files.length);
+      await Promise.all(Array.from({ length: concurrency }, () => worker()));
+
+      progressStatus.textContent = 'Building ZIP archive...';
+      log(`[PACK] ${completedFiles - failedFiles} files staged (${failedFiles} failed). Building archive...`, failedFiles ? 'warn' : 'dim');
 
       try {
         const zipBlob = await zip.generateAsync(
-          {
-            type: 'blob',
-            compression: 'DEFLATE',
-            compressionOptions: { level: 6 }
-          },
+          { type: 'blob' },
           (meta) => {
-            const pct = 75 + Math.round((meta.percent / 100) * 25);
+            const pct = 80 + Math.round((meta.percent / 100) * 20);
             progressBar.style.width = `${pct}%`;
             progressPct.textContent = `${pct}%`;
             if (meta.currentFile) {
-              progressStatus.textContent = `Compressing: ${meta.currentFile}`;
+              progressStatus.textContent = `Packing: ${meta.currentFile}`;
             }
           }
         );
 
         progressBar.style.width = '100%';
         progressPct.textContent = '100%';
-        progressStatus.textContent = 'ZIP generated successfully!';
-        log(`[SUCCESS] Archive generated: ${formatBytes(zipBlob.size)} total!`, 'ok');
+        progressStatus.textContent = failedFiles
+          ? `ZIP ready (${failedFiles} file(s) failed — check log)`
+          : 'ZIP generated successfully!';
+        log(`[SUCCESS] Archive generated: ${formatBytes(zipBlob.size)} total (${completedFiles - failedFiles}/${files.length} files)!`, failedFiles ? 'warn' : 'ok');
 
-        // Trigger browser download
         const url = URL.createObjectURL(zipBlob);
         const a = document.createElement('a');
         const filename = currentPreset === 'prod' ? 'dj-deaf-wish-web-deploy.zip' : 'dj-deaf-wish-master-archive.zip';
@@ -738,7 +860,7 @@
 
         log(`[DOWNLOAD] Prompted browser to save '${filename}'.`, 'ok');
       } catch (err) {
-        log(`[ERROR] Compression failed: ${err.message}`, 'err');
+        log(`[ERROR] Archive generation failed: ${err.message}`, 'err');
         alert(`Packaging error: ${err.message}`);
       } finally {
         btn.disabled = false;
@@ -746,8 +868,18 @@
       }
     }
 
-    // Initialize display
-    updateManifestTable();
+    // Dynamic initial preset sizes & terminal summary
+    (function initExportStation() {
+      const prodBytes = ALL_FILES.filter(f => f.prod).reduce((s, f) => s + f.size, 0);
+      const fullBytes = ALL_FILES.reduce((s, f) => s + f.size, 0);
+      document.getElementById('preset-prod-size').textContent = `~${formatBytes(prodBytes)}`;
+      document.getElementById('preset-full-size').textContent = `~${formatBytes(fullBytes)}`;
+
+      log('[READY] Deployment station initialized.', 'dim');
+      log(`[INFO] Manifest contains ${ALL_FILES.length} total site assets (${formatBytes(fullBytes)}).`, 'dim');
+      log('[READY] Select preset and click GENERATE .ZIP BUNDLE.', 'ok');
+      updateManifestTable();
+    })();
   </script>
 </body>
 </html>

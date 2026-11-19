@@ -15,15 +15,30 @@ void main() {
 
 const DOME_FRAG = /* glsl */ `
 uniform vec3 uFogColor;
+uniform vec3 uZenithColor;
+uniform vec3 uHorizonTint;
+uniform vec3 uSunColor;
+uniform float uSunStrength;
 varying vec3 vDir;
 void main() {
   vec3 d = normalize(vDir);
   float h = d.y;
-  vec3 zenith = vec3(0.002, 0.001, 0.008);
-  vec3 col = mix(uFogColor, zenith, smoothstep(0.0, 0.32, h));
+  vec3 col = mix(uFogColor, uZenithColor, smoothstep(0.0, 0.32, h));
   float toward = max(0.0, dot(normalize(d.xz + 1e-5), vec2(0.0, -1.0)));
   float band = exp(-max(h, 0.0) * 11.0);
-  col += vec3(0.16, 0.025, 0.14) * band * (0.35 + 0.65 * toward * toward);
+  col += uHorizonTint * band * (0.35 + 0.65 * toward * toward);
+
+  // Stylized celestial sun / eclipse corona behind the pyramid for visual themes
+  if (uSunStrength > 0.01 && h > -0.02) {
+    vec3 sunDir = normalize(vec3(0.0, 0.2, -1.0));
+    float cosA = dot(d, sunDir);
+    float ang = acos(clamp(cosA, -1.0, 1.0));
+    float disc = 1.0 - smoothstep(0.11, 0.125, ang);
+    float corona = exp(-ang * 10.0) * 0.55;
+    float stripes = step(0.28, fract(h * 46.0)) * smoothstep(0.02, 0.2, h) + (1.0 - smoothstep(0.02, 0.2, h));
+    col += uSunColor * (disc * stripes * 0.85 + corona) * uSunStrength;
+  }
+
   col = mix(col, uFogColor, step(h, 0.0));
   gl_FragColor = vec4(col, 1.0);
   ${OUTPUT_CHUNK}
@@ -94,18 +109,37 @@ void main() {
  * The whole group follows the camera so the sky sits at infinity.
  */
 export class Sky {
-  constructor(scene) {
+  constructor(scene, starScale = 1) {
     this.group = new THREE.Group();
     this.starGain = { value: 1 };
+    this.zenithColor = { value: new THREE.Vector3(0.002, 0.001, 0.008) };
+    this.horizonTint = { value: new THREE.Vector3(0.16, 0.025, 0.14) };
+    this.sunColor = { value: new THREE.Vector3(0.65, 0.2, 0.95) };
+    this.sunStrength = { value: 0.0 };
+    this.starCount = Math.max(800, Math.round(4500 * starScale));
     this.buildDome();
     this.buildStars();
     this.buildSparkles();
     scene.add(this.group);
   }
 
+  applyVisualMode(mode) {
+    if (!mode) return;
+    this.zenithColor.value.set(...mode.zenithColor);
+    this.horizonTint.value.set(...mode.horizonTint);
+    this.sunColor.value.set(...mode.sunColor);
+    this.sunStrength.value = mode.sunStrength;
+  }
+
   buildDome() {
     const mat = new THREE.ShaderMaterial({
-      uniforms: { uFogColor: SHARED.uFogColor },
+      uniforms: {
+        uFogColor: SHARED.uFogColor,
+        uZenithColor: this.zenithColor,
+        uHorizonTint: this.horizonTint,
+        uSunColor: this.sunColor,
+        uSunStrength: this.sunStrength
+      },
       vertexShader: DOME_VERT,
       fragmentShader: DOME_FRAG,
       side: THREE.BackSide,
@@ -119,7 +153,7 @@ export class Sky {
   }
 
   buildStars() {
-    const count = 4500;
+    const count = this.starCount;
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
     const sizes = new Float32Array(count);

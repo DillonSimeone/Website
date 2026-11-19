@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const PROJECT_ROOT = path.resolve(__dirname, '..');
 
 // Import puppeteer from grassStudy/node_modules
 const puppeteerPath = path.resolve(__dirname, '../grassStudy/node_modules/puppeteer/lib/esm/puppeteer/puppeteer.js');
@@ -24,14 +25,35 @@ const MIME_TYPES = {
     '.svg':  'image/svg+xml'
 };
 
-// 1. Temporary local static server for three.js directory
+function resolveBenchmarkPath(pathname) {
+    const clean = pathname.replace(/^\/+/, '');
+    let candidate;
+    if (clean === '') {
+        candidate = path.join(__dirname, 'benchmark.html');
+    } else if (clean.startsWith('shared/')) {
+        candidate = path.resolve(PROJECT_ROOT, clean);
+    } else if (clean.startsWith('three.js/')) {
+        candidate = path.resolve(PROJECT_ROOT, clean);
+    } else {
+        candidate = path.resolve(__dirname, clean);
+    }
+    const rel = path.relative(PROJECT_ROOT, candidate);
+    if (rel.startsWith('..') || path.isAbsolute(rel)) return null;
+    return candidate;
+}
+
 const server = http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     const reqUrl = new URL(req.url, `http://localhost:${PORT}`);
-    let pathname = decodeURIComponent(reqUrl.pathname);
-    if (pathname === '/') pathname = '/benchmark.html';
+    const pathname = decodeURIComponent(reqUrl.pathname);
 
-    const filePath = path.join(__dirname, pathname);
+    const filePath = resolveBenchmarkPath(pathname);
+    if (!filePath) {
+        res.writeHead(403, { 'Content-Type': 'text/plain' });
+        res.end('403 Forbidden');
+        return;
+    }
+
     fs.stat(filePath, (err, stats) => {
         if (err || !stats.isFile()) {
             res.writeHead(404, { 'Content-Type': 'text/plain' });
@@ -88,20 +110,19 @@ server.listen(0, async () => {
         });
 
         await page.goto(`http://localhost:${actualPort}/benchmark.html`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-        console.log(`[Benchmark] Page loaded. Simulating 400 frames of driving...`);
+        console.log(`[Benchmark] Page loaded. Simulating 1000 frames of driving...`);
 
-        // Poll for results
         const startTime = Date.now();
         let results = null;
 
-        while (Date.now() - startTime < 45000) {
+        while (Date.now() - startTime < 60000) {
             results = await page.evaluate(() => window.__BENCHMARK_RESULTS__);
             if (results && results.finished) break;
             await new Promise(r => setTimeout(r, 500));
         }
 
         if (!results || !results.finished) {
-            throw new Error('Benchmark timed out before completing 400 frames.');
+            throw new Error('Benchmark timed out before completing frames.');
         }
 
         const outPath = path.resolve(__dirname, 'benchmark_report.md');
@@ -114,6 +135,7 @@ server.listen(0, async () => {
         console.log(`  ➔ Avg Frame:     ${results.stats.avgFrameTime} ms`);
         console.log(`  ➔ Avg DrawCalls: ${results.stats.avgDrawCalls}`);
         console.log(`  ➔ Avg Triangles: ${results.stats.avgTris.toLocaleString()}`);
+        console.log(`  ➔ Grass Density: ${results.stats.densityPercent}% (${results.stats.activeBlades.toLocaleString()} blades)`);
         console.log(`  ➔ Report saved:  ${outPath}`);
         console.log(`============================================================\n`);
 

@@ -2,7 +2,7 @@
 title Grass Study Lab Server
 cd /d "%~dp0"
 echo ============================================================
-echo   🌿 Grass Study Lab Server
+echo   Grass Study Lab Server
 echo   Live-syncs to three.js/configure/grass.json
 echo ============================================================
 echo Opening browser to http://localhost:8099 ...

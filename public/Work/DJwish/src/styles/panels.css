@@ -1,0 +1,259 @@
+/* ==========================================================================
+   WALL PANELS (pasted onto street hoardings via CSS3D)
+   ========================================================================== */
+
+.wall-panel {
+  position: relative;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 5px),
+    #100c1a;
+  border: 3px solid #f2eee4;
+  padding: 26px 26px 22px;
+  color: #f3efe4;
+  user-select: none;
+  clip-path: polygon(0 1.5%, 3% 0, 97% 0.8%, 100% 0, 99.2% 50%, 100% 98%, 96% 100%, 4% 99.2%, 0 100%, 0.8% 48%);
+}
+
+.paste-tape {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-2deg);
+  width: 120px;
+  height: 24px;
+  background: rgba(230, 220, 190, 0.55);
+}
+
+.deck-panel {
+  border-color: var(--neon-cyan);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.deck-title {
+  font-family: var(--font-tech);
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: var(--neon-cyan);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.deck-status-tag {
+  background: var(--neon-cyan);
+  color: #000;
+  font-size: 0.7rem;
+  padding: 3px 7px;
+  font-weight: bold;
+}
+
+.deck-sub {
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: #cfc8dc;
+}
+
+.track-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.track-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #eee;
+  padding: 12px 14px;
+  text-align: left;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: var(--font-clean);
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.track-btn:hover, .track-btn.active {
+  background: rgba(0, 240, 255, 0.16);
+  border-color: var(--neon-cyan);
+  color: #fff;
+}
+
+.track-tag {
+  font-size: 0.7rem;
+}
+
+.track-tag.cyan { color: var(--neon-cyan); }
+.track-tag.pink { color: var(--neon-pink); }
+.track-tag.gold { color: var(--neon-gold); }
+
+.audio-controls-group {
+  display: flex;
+  gap: 10px;
+}
+
+.control-btn {
+  flex: 1;
+  background: #1d182b;
+  border: 1px solid var(--neon-pink);
+  color: #fff;
+  padding: 12px;
+  font-family: var(--font-tech);
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 0.2s;
+}
+
+.control-btn:hover, .control-btn.active {
+  background: var(--neon-pink);
+}
+
+.drop-zone {
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  padding: 16px;
+  text-align: center;
+  font-size: 0.78rem;
+  color: #bbb;
+  font-family: var(--font-tech);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.drop-zone:hover, .drop-zone.dragover {
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+  background: rgba(0, 240, 255, 0.08);
+}
+
+.links-panel {
+  border-color: var(--neon-pink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+  padding: 16px 24px;
+  box-sizing: border-box;
+}
+
+.links-title {
+  font-family: var(--font-street);
+  font-weight: 400;
+  font-size: 2.3rem;
+  color: #fff;
+  -webkit-text-stroke: 1px #000;
+  text-shadow: 3px 3px 0 var(--neon-pink);
+  transform: rotate(-1.5deg);
+  margin-bottom: 0;
+}
+
+.links-sub {
+  font-size: 0.85rem;
+  color: #cfc8dc;
+  max-width: 540px;
+  line-height: 1.35;
+}
+
+.launch-rig-btn {
+  background: linear-gradient(135deg, var(--neon-pink) 0%, #7928ca 100%);
+  border: 2px solid #fff;
+  color: #fff;
+  padding: 12px 26px;
+  font-family: var(--font-street);
+  font-size: 1.25rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: transform 0.2s;
+}
+
+.launch-rig-btn:hover {
+  transform: scale(1.04) rotate(0.8deg);
+}
+
+.launch-rig-btn kbd {
+  font-family: var(--font-tech);
+  font-size: 0.85rem;
+  opacity: 0.85;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  padding: 2px 6px;
+}
+
+.links-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.portal-link {
+  background: rgba(10, 5, 20, 0.85);
+  border: 1px solid var(--neon-gold);
+  color: var(--neon-gold);
+  padding: 8px 14px;
+  font-family: var(--font-tech);
+  font-size: 0.8rem;
+  text-decoration: none;
+  border-radius: 2px;
+  letter-spacing: 0.8px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.portal-link:hover {
+  background: var(--neon-gold);
+  color: #000;
+}
+
+.portal-link.back {
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+}
+
+.portal-link.back:hover {
+  background: var(--neon-cyan);
+  color: #000;
+}
+
+/* Booking Box inside Links Panel */
+.panel-booking-box {
+  margin: 4px 0 6px 0;
+  width: 100%;
+}
+
+.panel-book-cta {
+  display: block;
+  background: var(--neon-pink);
+  color: #fff !important;
+  text-decoration: none;
+  font-family: var(--font-clean);
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  padding: 11px 18px;
+  text-align: center;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  box-shadow: 0 0 20px rgba(255, 0, 85, 0.55);
+  transition: all 0.25s;
+}
+
+.panel-book-cta:hover {
+  background: #ff2a75;
+  box-shadow: 0 0 35px rgba(255, 0, 85, 0.85);
+  transform: translateY(-2px);
+}
