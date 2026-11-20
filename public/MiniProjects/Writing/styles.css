@@ -264,6 +264,20 @@ h1 {
     flex-grow: 1;
 }
 
+.card p.card-note {
+    flex-grow: 0;
+    margin-top: 14px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.card p.card-note strong {
+    color: #ffffff;
+    font-weight: 500;
+}
+
 .card .card-footer {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.75rem;
