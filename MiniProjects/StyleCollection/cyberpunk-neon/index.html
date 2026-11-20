@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyberpunk Neon Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="scanlines"></div>
+  <div class="cyber-container">
+    <header class="cyber-header">
+      <a href="../index.html" class="back-btn">SYS_NAV: HUB</a>
+      <div class="cyber-header-main">
+        <h1 class="glitch" data-text="CYBERPUNK">CYBERPUNK</h1>
+        <div class="status-indicator">
+          <span class="status-dot pulsing"></span>
+          <span class="status-text">SYSTEM_ONLINE // V3.82</span>
+        </div>
+      </div>
+      <p class="cyber-subtitle">Neon glow, high-tech accents, and dark grid synthesis.</p>
+    </header>
+
+    <main class="cyber-grid">
+      <section class="cyber-card">
+        <div class="card-corner-tag">INFO_01</div>
+        <h2>AESTHETIC SCHEME</h2>
+        <div class="cyber-divider"></div>
+        <p>Combining the dark neon cyberpunk future with retro-wave CRT aesthetics.</p>
+        <ul class="cyber-list">
+          <li>Deep navy and slate grid background</li>
+          <li>Pink-red and electric blue drop shadows</li>
+          <li>Clipped-corner panels (`clip-path`)</li>
+          <li>Pulsing system statuses & monospaced fonts</li>
+        </ul>
+      </section>
+
+      <section class="cyber-card interactive-card">
+        <div class="card-corner-tag">SYS_CTRL</div>
+        <h2>GRID SYNTHESIS</h2>
+        <div class="cyber-divider"></div>
+        <p>Adjust system parameters below. The glowing neon accents will adapt in real-time.</p>
+        <div class="control-group">
+          <label for="neon-color">NEON CHANNELS</label>
+          <select id="neon-color" class="cyber-select">
+            <option value="pink-blue">HYPER PINK & CYAN</option>
+            <option value="green-amber">TOXIC GREEN & AMBER</option>
+            <option value="yellow-purple">VAPOR YELLOW & PURPLE</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <button class="cyber-btn" id="trigger-glitch">INJECT GLITCH</button>
+        </div>
+      </section>
+
+      <section class="cyber-card console-card">
+        <div class="card-corner-tag">TERM_SEC</div>
+        <h2>SYSTEM_LOGS</h2>
+        <div class="cyber-divider"></div>
+        <div class="terminal-output" id="terminal-screen">
+          <p class="terminal-line"><span class="prompt">></span> initializing cybernetic core...</p>
+          <p class="terminal-line"><span class="prompt">></span> security protocols bypassed.</p>
+          <p class="terminal-line"><span class="prompt">></span> ready for command input.</p>
+        </div>
+        <div class="terminal-input-row">
+          <span class="prompt">></span>
+          <input type="text" class="cyber-terminal-input" id="term-input" placeholder="run command..." autocomplete="off">
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

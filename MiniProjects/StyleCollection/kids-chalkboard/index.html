@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kids Chalkboard Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cabin+Sketch:wght@400;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="chalkboard-container">
+    <header class="chalkboard-header">
+      <a href="../index.html" class="nav-back">← Hub</a>
+      <h1 class="chalk-title">Chalkboard</h1>
+      <p class="chalk-subtitle">Grab a chalk and draw something fun!</p>
+    </header>
+
+    <div class="wood-frame">
+      <div class="slate-board">
+        <!-- Canvas for drawing -->
+        <canvas id="chalk-canvas"></canvas>
+        
+        <!-- Welcome chalk note -->
+        <div class="chalk-note" id="chalk-note">
+          <p>Draw area! ✎</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chalkboard tray with colors and eraser -->
+    <div class="tray">
+      <div class="chalks">
+        <button class="chalk-tool active" data-color="#ffffff" style="background-color: #ffffff;"></button>
+        <button class="chalk-tool" data-color="#ffef7d" style="background-color: #ffef7d;"></button>
+        <button class="chalk-tool" data-color="#ff7da9" style="background-color: #ff7da9;"></button>
+        <button class="chalk-tool" data-color="#7dd6ff" style="background-color: #7dd6ff;"></button>
+        <button class="chalk-tool" data-color="#a3ff7d" style="background-color: #a3ff7d;"></button>
+      </div>
+      <button class="eraser-btn" id="btn-erase">Erase All</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

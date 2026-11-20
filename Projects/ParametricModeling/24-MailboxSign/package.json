@@ -1,0 +1,17 @@
+{
+  "name": "24-mailboxsign",
+  "version": "1.0.0",
+  "description": "CLI-driven parametric 3D-printable mailbox sign generator with fused letters",
+  "type": "module",
+  "main": "src/cli.js",
+  "bin": {
+    "mailbox-sign": "./src/cli.js"
+  },
+  "scripts": {
+    "generate": "node src/cli.js"
+  },
+  "dependencies": {
+    "manifold-3d": "^3.3.2",
+    "opentype.js": "^1.3.4"
+  }
+}

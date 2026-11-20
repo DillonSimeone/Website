@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labyrinth editor</title>
+    <link rel="stylesheet" href="./editor.css">
+</head>
+<body>
+    <div class="ed-errors" hidden></div>
+    <script>
+        /* Plain script, so errors and live reload keep working even if a module fails to load. */
+        (function () {
+            const box = document.querySelector('.ed-errors');
+            window.labEditorError = function (text) {
+                box.hidden = false;
+                const line = document.createElement('pre');
+                line.textContent = text;
+                box.appendChild(line);
+            };
+            window.addEventListener('error', (e) => window.labEditorError((e.filename ? e.filename.split('/Labyrinth/')[1] + ':' + e.lineno + '  ' : '') + e.message));
+            window.addEventListener('unhandledrejection', (e) => window.labEditorError(String(e.reason && e.reason.stack || e.reason)));
+
+            const hashes = new Map();
+            const hash = (text) => {
+                let h = 0;
+                for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) | 0;
+                return text.length + ':' + h;
+            };
+            const watched = () => performance.getEntriesByType('resource').map(e => e.name)
+                .concat([location.href.split('?')[0]])
+                .filter(u => u.includes('/Labyrinth/') && /\.(js|css|html)$/.test(new URL(u).pathname));
+            async function check() {
+                if (localStorage.getItem('lab-editor-live') !== '0') {
+                    for (const url of new Set(watched())) {
+                        try {
+                            const h = hash(await (await fetch(url, { cache: 'no-store' })).text());
+                            if (!hashes.has(url)) hashes.set(url, h);
+                            else if (hashes.get(url) !== h) { location.reload(); return; }
+                        } catch (err) { /* server restarting */ }
+                    }
+                }
+                setTimeout(check, 1000);
+            }
+            setTimeout(check, 800);
+        })();
+    </script>
+    <script type="module" src="./editor.js"></script>
+</body>
+</html>

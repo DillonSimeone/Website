@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telemetry // dillonsimeone.com</title>
+  <style>
+    :root {
+      --bg: #070b12;
+      --panel: #0e1522;
+      --panel-2: #121c2d;
+      --border: #1e2d45;
+      --text: #e6f0ff;
+      --muted: #7f95b5;
+      --c1: #38bdf8;
+      --c2: #a855f7;
+      --c3: #34d399;
+      --c4: #f59e0b;
+      --c5: #f43f5e;
+      --c6: #22d3ee;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background:
+        radial-gradient(900px 450px at 90% -10%, rgba(56, 189, 248, 0.14), transparent 60%),
+        radial-gradient(700px 400px at 10% 10%, rgba(168, 85, 247, 0.12), transparent 60%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px 56px;
+    }
+    .wrap { max-width: 1120px; margin: 0 auto; }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 22px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    h1 { margin: 0; font-size: 1.35rem; letter-spacing: 0.5px; }
+    .badge {
+      font-size: 0.72rem;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: rgba(52, 211, 153, 0.12);
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      color: var(--c3);
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+    }
+    .sub { color: var(--muted); font-size: 0.8rem; margin-top: 5px; }
+
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .seg {
+      display: inline-flex;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .seg button {
+      border: none;
+      border-right: 1px solid var(--border);
+      border-radius: 0;
+      padding: 7px 11px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      background: transparent;
+    }
+    .seg button:last-child { border-right: none; }
+    .seg button.active { background: rgba(56, 189, 248, 0.16); color: var(--c1); font-weight: 700; }
+
+    button, a.btn {
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 7px 12px;
+      border-radius: 8px;
+      font: inherit;
+      font-size: 0.8rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    button:hover, a.btn:hover { border-color: var(--c1); color: var(--c1); }
+    button.active-toggle { border-color: var(--c3); color: var(--c3); background: rgba(52, 211, 153, 0.1); }
+
+    .status {
+      display: none;
+      padding: 12px 14px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+      font-size: 0.84rem;
+      border: 1px solid rgba(244, 63, 94, 0.5);
+      background: rgba(244, 63, 94, 0.1);
+      color: #fecdd3;
+    }
+    .status.show { display: block; }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .card {
+      background: linear-gradient(180deg, var(--panel-2), var(--panel));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      position: relative;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+    }
+    .kpi-label { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; }
+    .kpi-val { font-size: 1.9rem; font-weight: 700; margin-top: 6px; color: var(--c1); }
+    .kpi-sub { font-size: 0.76rem; color: var(--muted); margin-top: 4px; }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    h2 { margin: 0; font-size: 0.96rem; letter-spacing: 0.4px; }
+
+    .chart-wrap { position: relative; width: 100%; height: 240px; }
+    svg.line-svg { width: 100%; height: 100%; display: block; overflow: visible; }
+    .grid-line { stroke: #1a273c; stroke-dasharray: 3 4; stroke-width: 1; }
+    .axis-text { fill: var(--muted); font-size: 11px; font-family: inherit; }
+    .data-dot { fill: var(--bg); stroke: var(--c1); stroke-width: 2.5; cursor: pointer; transition: r 0.15s; }
+    .data-dot:hover { r: 6; fill: var(--c1); }
+
+    .tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: #060a10;
+      border: 1px solid var(--c1);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.76rem;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translate(-50%, -115%);
+      transition: opacity 0.12s;
+      z-index: 10;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+    }
+    .tooltip.show { opacity: 1; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .donut-layout {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .donut-box { position: relative; width: 170px; height: 170px; flex-shrink: 0; }
+    .donut-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      text-align: center;
+    }
+    .donut-center strong { font-size: 1.25rem; color: var(--text); }
+    .donut-center span { font-size: 0.7rem; color: var(--muted); }
+    .donut-slice { transition: opacity 0.15s, transform 0.15s; transform-origin: center; cursor: pointer; }
+    .donut-slice:hover { opacity: 0.85; transform: scale(1.03); }
+
+    .legend { flex: 1 1 150px; display: flex; flex-direction: column; gap: 8px; min-width: 150px; }
+    .legend-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      padding: 4px 6px;
+      border-radius: 6px;
+    }
+    .legend-item:hover { background: rgba(255, 255, 255, 0.04); }
+    .legend-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .swatch { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+    .legend-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .legend-val { color: var(--muted); flex-shrink: 0; }
+
+    .list { display: flex; flex-direction: column; gap: 11px; }
+    .row { display: flex; flex-direction: column; gap: 5px; }
+    .row-top { display: flex; justify-content: space-between; font-size: 0.82rem; gap: 10px; }
+    .row-name { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-decoration: none; }
+    a.row-name:hover { color: var(--c1); text-decoration: underline; }
+    .row-val { color: var(--c3); font-weight: 600; flex-shrink: 0; }
+    .track { height: 7px; background: #192436; border-radius: 999px; overflow: hidden; }
+    .fill { height: 100%; background: linear-gradient(90deg, var(--c1), var(--c2)); border-radius: 999px; transition: width 0.4s ease; }
+
+    .empty { color: var(--muted); font-size: 0.84rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <div class="title-row">
+          <h1>dillonsimeone.com // Telemetry</h1>
+          <span class="badge" id="egoBadge">Connecting…</span>
+        </div>
+        <div class="sub" id="lastUpdated">Fetching live Google Sheets telemetry…</div>
+      </div>
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Timeframe">
+          <button type="button" data-range="7">7D</button>
+          <button type="button" data-range="30" class="active">30D</button>
+          <button type="button" data-range="all">All</button>
+        </div>
+        <div class="seg" role="group" aria-label="Chart mode">
+          <button type="button" data-mode="daily" class="active">Daily</button>
+          <button type="button" data-mode="cumulative">Cumulative</button>
+        </div>
+        <button id="autoBtn" type="button" title="Auto-refresh every 30s">⏱ Auto: Off</button>
+        <button id="refreshBtn" type="button">↻ Refresh</button>
+        <a class="btn" href="/">← Portfolio</a>
+      </div>
+    </header>
+
+    <div id="statusBox" class="status"></div>
+
+    <section class="kpis">
+      <div class="card">
+        <div class="kpi-label">Total Hits</div>
+        <div class="kpi-val" id="kpiHits">—</div>
+        <div class="kpi-sub">Page &amp; SPA section views</div>
+      </div>
+      <div class="card">
+        <div class="kpi-label">Unique Sessions</div>
+        <div class="kpi-val" id="kpiSessions" style="color: var(--c2);">—</div>
+        <div class="kpi-sub" id="kpiRatio">Anonymous tab sessions</div>
+      </div>
+      <div class="card">
+        <div class="kpi-label">Peak Day</div>
+        <div class="kpi-val" id="kpiPeak" style="color: var(--c3);">—</div>
+        <div class="kpi-sub" id="kpiPeakDate">Highest single-day traffic</div>
+      </div>
+      <div class="card">
+        <div class="kpi-label">Top Section</div>
+        <div class="kpi-val" id="kpiTopPath" style="font-size: 1.35rem; color: var(--c4);">—</div>
+        <div class="kpi-sub" id="kpiTopPathSub">Most visited route</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2 id="chartTitle">Traffic Over Time</h2>
+        <span class="sub" id="chartSub" style="margin:0;">Hover points for exact counts</span>
+      </div>
+      <div class="chart-wrap" id="lineChartWrap">
+        <div class="tooltip" id="lineTooltip"></div>
+        <svg class="line-svg" id="lineSvg" viewBox="0 0 800 220" preserveAspectRatio="none"></svg>
+      </div>
+    </section>
+
+    <section class="grid-2">
+      <div class="card">
+        <div class="card-head"><h2>Device Split</h2></div>
+        <div class="donut-layout">
+          <div class="donut-box">
+            <svg viewBox="0 0 120 120" width="170" height="170" id="deviceDonut"></svg>
+            <div class="donut-center">
+              <strong id="deviceCenterVal">—</strong>
+              <span id="deviceCenterLabel">Desktop</span>
+            </div>
+          </div>
+          <div class="legend" id="deviceLegend"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Referrer Breakdown</h2></div>
+        <div class="donut-layout">
+          <div class="donut-box">
+            <svg viewBox="0 0 120 120" width="170" height="170" id="refDonut"></svg>
+            <div class="donut-center">
+              <strong id="refCenterVal">—</strong>
+              <span id="refCenterLabel">Sources</span>
+            </div>
+          </div>
+          <div class="legend" id="refLegend"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid-2">
+      <div class="card">
+        <div class="card-head"><h2>Top Sections &amp; Paths</h2></div>
+        <div class="list" id="pathsList"><span class="empty">Loading…</span></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Top Referrers</h2></div>
+        <div class="list" id="referrersList"><span class="empty">Loading…</span></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwoF49FeLYWhKucwrGH6t6CecjubQT_0RMlWfzCNOF841k09W2XpeK3tgBtMTwRlYM3dw/exec';
+    const PALETTE = ['#38bdf8', '#a855f7', '#34d399', '#f59e0b', '#f43f5e', '#22d3ee', '#818cf8'];
+
+    let cachedData = null;
+    let rangeMode = '30';
+    let chartMode = 'daily';
+    let autoTimer = null;
+
+    function animateCount(el, target) {
+      const end = Number(target) || 0;
+      const start = 0;
+      const dur = 450;
+      const t0 = performance.now();
+      function step(now) {
+        const p = Math.min(1, (now - t0) / dur);
+        const eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(start + (end - start) * eased).toLocaleString();
+        if (p < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    function getEgoBadge(hits) {
+      if (hits === 0) return 'Awaiting First Signal';
+      if (hits < 25) return 'Lab Bench Warmup';
+      if (hits < 100) return 'Signal Detected';
+      if (hits < 500) return 'Gaining Momentum';
+      if (hits < 2000) return 'Certified Notable';
+      return 'Internet Famous';
+    }
+
+    function renderLineChart(byDay) {
+      const svg = document.getElementById('lineSvg');
+      const tip = document.getElementById('lineTooltip');
+      const wrap = document.getElementById('lineChartWrap');
+
+      let entries = Object.entries(byDay || {}).sort((a, b) => a[0].localeCompare(b[0]));
+      if (rangeMode !== 'all') {
+        entries = entries.slice(-Number(rangeMode));
+      }
+
+      if (!entries.length) {
+        svg.innerHTML = '<text x="400" y="110" text-anchor="middle" fill="#7f95b5" font-size="13">No daily traffic recorded yet</text>';
+        return;
+      }
+
+      if (chartMode === 'cumulative') {
+        let sum = 0;
+        entries = entries.map(([d, v]) => { sum += v; return [d, sum]; });
+      }
+
+      const W = 800, H = 220;
+      const pad = { top: 18, right: 20, bottom: 32, left: 42 };
+      const plotW = W - pad.left - pad.right;
+      const plotH = H - pad.top - pad.bottom;
+      const maxVal = Math.max(...entries.map(([, v]) => v), 1);
+      const niceMax = maxVal <= 4 ? 4 : Math.ceil(maxVal * 1.15);
+
+      const pts = entries.map(([day, val], i) => {
+        const x = entries.length === 1
+          ? pad.left + plotW / 2
+          : pad.left + (i / (entries.length - 1)) * plotW;
+        const y = pad.top + plotH - (val / niceMax) * plotH;
+        return { day, val, x, y };
+      });
+
+      let html = `
+        <defs>
+          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.42"/>
+            <stop offset="100%" stop-color="#a855f7" stop-opacity="0.02"/>
+          </linearGradient>
+        </defs>`;
+
+      // Horizontal gridlines
+      for (let t = 0; t <= 4; t++) {
+        const y = pad.top + (t / 4) * plotH;
+        const label = Math.round(niceMax * (1 - t / 4));
+        html += `<line class="grid-line" x1="${pad.left}" y1="${y}" x2="${W - pad.right}" y2="${y}"/>`;
+        html += `<text class="axis-text" x="${pad.left - 8}" y="${y + 4}" text-anchor="end">${label}</text>`;
+      }
+
+      // Area & line
+      const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+      const areaPath = `${linePath} L${pts[pts.length - 1].x.toFixed(1)},${(pad.top + plotH).toFixed(1)} L${pts[0].x.toFixed(1)},${(pad.top + plotH).toFixed(1)} Z`;
+      html += `<path d="${areaPath}" fill="url(#areaGrad)"/>`;
+      html += `<path d="${linePath}" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+
+      // X-axis labels (up to ~7 evenly spaced)
+      const step = Math.max(1, Math.ceil(pts.length / 7));
+      pts.forEach((p, i) => {
+        if (i % step === 0 || i === pts.length - 1) {
+          html += `<text class="axis-text" x="${p.x.toFixed(1)}" y="${H - 8}" text-anchor="middle">${p.day.slice(5)}</text>`;
+        }
+      });
+
+      // Data dots
+      pts.forEach((p) => {
+        html += `<circle class="data-dot" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" data-day="${p.day}" data-val="${p.val}"/>`;
+      });
+
+      svg.innerHTML = html;
+
+      svg.querySelectorAll('.data-dot').forEach((dot) => {
+        dot.addEventListener('mouseenter', () => {
+          const rect = wrap.getBoundingClientRect();
+          const dotRect = dot.getBoundingClientRect();
+          tip.textContent = `${dot.dataset.day}: ${Number(dot.dataset.val).toLocaleString()} hits`;
+          tip.style.left = `${dotRect.left - rect.left + dotRect.width / 2}px`;
+          tip.style.top = `${dotRect.top - rect.top}px`;
+          tip.classList.add('show');
+        });
+        dot.addEventListener('mouseleave', () => tip.classList.remove('show'));
+      });
+    }
+
+    function renderDonut(svgId, legendId, centerValId, centerLabelId, entries) {
+      const svg = document.getElementById(svgId);
+      const legend = document.getElementById(legendId);
+      const cVal = document.getElementById(centerValId);
+      const cLbl = document.getElementById(centerLabelId);
+
+      const total = entries.reduce((s, [, v]) => s + v, 0);
+      if (!total) {
+        svg.innerHTML = '<circle cx="60" cy="60" r="44" fill="none" stroke="#1e2d45" stroke-width="16"/>';
+        legend.innerHTML = '<span class="empty">No data yet</span>';
+        cVal.textContent = '0';
+        return;
+      }
+
+      const r = 44;
+      const circ = 2 * Math.PI * r;
+      let offset = 0;
+      let circles = '';
+      legend.innerHTML = '';
+
+      entries.forEach(([name, count], idx) => {
+        const color = PALETTE[idx % PALETTE.length];
+        const frac = count / total;
+        const dash = frac * circ;
+        const pct = Math.round(frac * 100);
+
+        circles += `<circle class="donut-slice" cx="60" cy="60" r="${r}" fill="none"
+          stroke="${color}" stroke-width="16"
+          stroke-dasharray="${dash.toFixed(2)} ${circ.toFixed(2)}"
+          stroke-dashoffset="${(-offset).toFixed(2)}"
+          transform="rotate(-90 60 60)"
+          data-name="${name}" data-pct="${pct}%" data-count="${count}"/>`;
+        offset += dash;
+
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.innerHTML = `
+          <span class="legend-left">
+            <span class="swatch" style="background:${color}"></span>
+            <span class="legend-name" title="${name}">${name}</span>
+          </span>
+          <span class="legend-val">${pct}% (${count})</span>`;
+        item.addEventListener('mouseenter', () => { cVal.textContent = `${pct}%`; cLbl.textContent = name; });
+        item.addEventListener('mouseleave', () => { cVal.textContent = total.toLocaleString(); cLbl.textContent = 'Total'; });
+        legend.appendChild(item);
+      });
+
+      svg.innerHTML = circles;
+      cVal.textContent = total.toLocaleString();
+      cLbl.textContent = 'Total';
+
+      svg.querySelectorAll('.donut-slice').forEach((slice) => {
+        slice.addEventListener('mouseenter', () => {
+          cVal.textContent = slice.dataset.pct;
+          cLbl.textContent = slice.dataset.name;
+        });
+        slice.addEventListener('mouseleave', () => {
+          cVal.textContent = total.toLocaleString();
+          cLbl.textContent = 'Total';
+        });
+      });
+    }
+
+    function renderBars(containerId, obj, linkable) {
+      const container = document.getElementById(containerId);
+      const entries = Object.entries(obj || {}).sort((a, b) => b[1] - a[1]).slice(0, 10);
+      if (!entries.length) {
+        container.innerHTML = '<span class="empty">No data recorded yet.</span>';
+        return;
+      }
+      const max = entries[0][1] || 1;
+      const total = entries.reduce((s, [, v]) => s + v, 0) || 1;
+      container.innerHTML = '';
+
+      for (const [name, count] of entries) {
+        const row = document.createElement('div');
+        row.className = 'row';
+        const top = document.createElement('div');
+        top.className = 'row-top';
+
+        const label = document.createElement(linkable && name.startsWith('/') ? 'a' : 'span');
+        label.className = 'row-name';
+        label.textContent = name;
+        label.title = name;
+        if (label.tagName === 'A') label.href = name;
+
+        const pct = Math.round((count / total) * 100);
+        const val = document.createElement('span');
+        val.className = 'row-val';
+        val.textContent = `${count.toLocaleString()} (${pct}%)`;
+        top.append(label, val);
+
+        const track = document.createElement('div');
+        track.className = 'track';
+        const fill = document.createElement('div');
+        fill.className = 'fill';
+        fill.style.width = `${Math.max(4, Math.round((count / max) * 100))}%`;
+        track.appendChild(fill);
+
+        row.append(top, track);
+        container.appendChild(row);
+      }
+    }
+
+    function renderDashboard(data) {
+      const hits = data.totalHits || 0;
+      const sessions = data.uniqueSessions || 0;
+      animateCount(document.getElementById('kpiHits'), hits);
+      animateCount(document.getElementById('kpiSessions'), sessions);
+
+      document.getElementById('egoBadge').textContent = getEgoBadge(hits);
+      document.getElementById('kpiRatio').textContent =
+        sessions > 0 ? `${(hits / sessions).toFixed(1)} hits / session` : 'Anonymous tab sessions';
+
+      const days = Object.entries(data.byDay || {}).sort((a, b) => b[1] - a[1]);
+      if (days.length) {
+        document.getElementById('kpiPeak').textContent = days[0][1].toLocaleString();
+        document.getElementById('kpiPeakDate').textContent = `on ${days[0][0]}`;
+      } else {
+        document.getElementById('kpiPeak').textContent = '0';
+        document.getElementById('kpiPeakDate').textContent = 'No days yet';
+      }
+
+      const paths = Object.entries(data.byPath || {}).sort((a, b) => b[1] - a[1]);
+      if (paths.length) {
+        document.getElementById('kpiTopPath').textContent = paths[0][0];
+        document.getElementById('kpiTopPathSub').textContent = `${paths[0][1].toLocaleString()} views`;
+      }
+
+      document.getElementById('lastUpdated').textContent =
+        `Synced ${new Date(data.lastUpdated || Date.now()).toLocaleString()}`;
+
+      renderLineChart(data.byDay);
+
+      const devEntries = [
+        ['Desktop', data.byDevice?.desktop || 0],
+        ['Mobile', data.byDevice?.mobile || 0]
+      ].filter(([, v]) => v > 0);
+      renderDonut('deviceDonut', 'deviceLegend', 'deviceCenterVal', 'deviceCenterLabel', devEntries);
+
+      const refSorted = Object.entries(data.byReferrer || {}).sort((a, b) => b[1] - a[1]);
+      const topRefs = refSorted.slice(0, 5);
+      const otherSum = refSorted.slice(5).reduce((s, [, v]) => s + v, 0);
+      if (otherSum > 0) topRefs.push(['Other', otherSum]);
+      renderDonut('refDonut', 'refLegend', 'refCenterVal', 'refCenterLabel', topRefs);
+
+      renderBars('pathsList', data.byPath, true);
+      renderBars('referrersList', data.byReferrer, false);
+    }
+
+    async function loadStats() {
+      const statusBox = document.getElementById('statusBox');
+      statusBox.classList.remove('show');
+      try {
+        const res = await fetch(ENDPOINT, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status} from Apps Script`);
+        cachedData = await res.json();
+        renderDashboard(cachedData);
+      } catch (err) {
+        statusBox.textContent = `Telemetry error: ${err.message}`;
+        statusBox.classList.add('show');
+        document.getElementById('egoBadge').textContent = 'Offline';
+      }
+    }
+
+    document.querySelectorAll('[data-range]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-range]').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        rangeMode = btn.dataset.range;
+        if (cachedData) renderLineChart(cachedData.byDay);
+      });
+    });
+
+    document.querySelectorAll('[data-mode]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-mode]').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        chartMode = btn.dataset.mode;
+        if (cachedData) renderLineChart(cachedData.byDay);
+      });
+    });
+
+    document.getElementById('autoBtn').addEventListener('click', (e) => {
+      const btn = e.currentTarget;
+      if (autoTimer) {
+        clearInterval(autoTimer);
+        autoTimer = null;
+        btn.textContent = '⏱ Auto: Off';
+        btn.classList.remove('active-toggle');
+      } else {
+        autoTimer = setInterval(loadStats, 30000);
+        btn.textContent = '⏱ Auto: 30s';
+        btn.classList.add('active-toggle');
+      }
+    });
+
+    document.getElementById('refreshBtn').addEventListener('click', loadStats);
+    loadStats();
+  </script>
+</body>
+</html>

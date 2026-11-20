@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workshop // Live Music & Light Performance Tool</title>
+
+  <!-- Google Fonts for Neo-Noir / Typewriter theme -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Special+Elite&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="workshop.css">
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <!-- File Protocol CORS & Audio Security Warning Banner -->
+  <div id="file-protocol-warning" style="display:none; background:#ff0055; color:#ffffff; padding:10px 16px; font-family:'Courier Prime', monospace; font-size:0.8rem; font-weight:bold; letter-spacing:0.5px; border-bottom:2px solid #ffffff; text-align:center; z-index:99999; position:sticky; top:0; box-shadow:0 4px 20px rgba(255,0,85,0.6);">
+    ⚠️ LOCAL SERVER REQUIRED: Direct file:// access blocks ES Modules and Microphone capture in modern browsers due to CORS security policies. Double-click <code>start-server.bat</code> or run <code>npm start</code> to launch locally at <code>http://localhost:8080/workshop/index.html</code>.
+  </div>
+  <script>
+    if (window.location.protocol === 'file:') {
+      document.getElementById('file-protocol-warning').style.display = 'block';
+    }
+  </script>
+
+  <!-- Gritty Newspaper Halftone Grid background -->
+  <div class="halftone-screen"></div>
+
+  <!-- Master App Container -->
+  <div id="app-container">
+
+    <!-- -------------------------------------------------------------
+         TOP HUD: MINIMETERS & AUDIO TELEMETRY
+         ------------------------------------------------------------- -->
+    <header class="top-hud">
+      <!-- Left: Brand & Source Controls -->
+      <div class="brand-section">
+        <div class="brand-title">
+          <a href="../index.html" class="nav-back-link" id="nav-back-link" title="Return to Sound-Reactive Hub">/// RETURN_TO_HUD</a>
+          <script>
+            // Prevent broken link if running standalone local server in SoundReactive directory
+            const backLink = document.getElementById('nav-back-link');
+            if (backLink && window.location.pathname.endsWith('/index.html') && !window.location.pathname.includes('/public/MiniProjects/SoundReactive/')) {
+              backLink.href = '/index.html';
+            }
+          </script>
+          <span>WORKSHOP_MATRIX</span>
+          <span class="brand-tag">LIVE_PERF</span>
+        </div>
+        <div class="audio-controls-row">
+          <button id="btn-mic" class="hud-btn active" title="Use Live Microphone">MIC</button>
+          <button id="btn-demo" class="hud-btn" title="Use Procedural Synth Beat">DEMO</button>
+          <button id="btn-file" class="hud-btn" title="Load Audio File">FILE</button>
+          <input type="file" id="audio-file-input" accept="audio/*" style="display: none;">
+          
+          <div class="gain-control">
+            <span>GAIN:</span>
+            <input type="range" id="slider-gain" min="0.2" max="3.5" step="0.1" value="1.2">
+            <span id="gain-val">1.2x</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center: Minimeters Spectrum Visualizer (Red to Purple 20Hz-20kHz) -->
+      <div class="spectrum-container">
+        <div class="spectrum-header-row">
+          <span>MINIMETERS // 20Hz (RED)</span>
+          <span>FULL SPECTRUM FFT (64 BANDS)</span>
+          <span>20kHz (PURPLE)</span>
+        </div>
+        <canvas id="spectrum-canvas"></canvas>
+      </div>
+
+      <!-- Right: Sound Classifier & MIDI Status -->
+      <div class="telemetry-section">
+        <div class="sound-detector-badge">
+          <span class="detector-label">ACOUSTIC CLASSIFIER</span>
+          <span id="sound-category-display" class="detector-val">LISTENING...</span>
+        </div>
+
+        <span class="fps-telemetry-chip" id="fps-display">FPS: --</span>
+        <button id="btn-quality" class="hud-btn" title="Press [P] to cycle Performance Mode (BALANCED / ECO / HIGH)">PERF: BALANCED [P]</button>
+
+        <div id="midi-pill" class="midi-pill" title="MIDI Controller Status">
+          <div id="midi-led" class="midi-led"></div>
+          <span id="midi-device-name">MIDI: SCANNING...</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- -------------------------------------------------------------
+         CENTER STAGE: LIGHT PILLARS (4 SECTIONS) & CYMATICS SHADER
+         ------------------------------------------------------------- -->
+    <main class="stage-container">
+      <!-- Left Column: Upper-Left & Lower-Left -->
+      <div class="pillar-column left">
+        <!-- Upper-Left (Key 1 / Red) -->
+        <div id="pillar-section-ul" class="pillar-section upper section-ul" title="Click or press [1] / [Q] or MIDI Key 1">
+          <canvas id="pillar-canvas-ul" class="pillar-canvas"></canvas>
+          <div class="pillar-prompt">
+            <span>[1] UPPER-LEFT (RED)</span>
+          </div>
+          <div id="ul-binding-tag" class="pillar-binding-tag">AUTO: WAITING MIDI 1...</div>
+        </div>
+
+        <!-- Lower-Left (Key 3 / Amber) -->
+        <div id="pillar-section-ll" class="pillar-section lower section-ll" title="Click or press [3] / [A] or MIDI Key 3">
+          <canvas id="pillar-canvas-ll" class="pillar-canvas"></canvas>
+          <div class="pillar-prompt">
+            <span>[3] LOWER-LEFT (AMBER)</span>
+          </div>
+          <div id="ll-binding-tag" class="pillar-binding-tag">AUTO: WAITING MIDI 3...</div>
+        </div>
+      </div>
+
+      <!-- Center: Sound-Reactive Cymatics WebGL Shader -->
+      <div class="shader-viewport">
+        <div id="shader-canvas-container"></div>
+      </div>
+
+      <!-- Right Column: Upper-Right & Lower-Right -->
+      <div class="pillar-column right">
+        <!-- Upper-Right (Key 2 / Blue) -->
+        <div id="pillar-section-ur" class="pillar-section upper section-ur" title="Click or press [2] / [W] or MIDI Key 2">
+          <canvas id="pillar-canvas-ur" class="pillar-canvas"></canvas>
+          <div class="pillar-prompt">
+            <span>[2] UPPER-RIGHT (BLUE)</span>
+          </div>
+          <div id="ur-binding-tag" class="pillar-binding-tag">AUTO: WAITING MIDI 2...</div>
+        </div>
+
+        <!-- Lower-Right (Key 4 / Violet) -->
+        <div id="pillar-section-lr" class="pillar-section lower section-lr" title="Click or press [4] / [S] or MIDI Key 4">
+          <canvas id="pillar-canvas-lr" class="pillar-canvas"></canvas>
+          <div class="pillar-prompt">
+            <span>[4] LOWER-RIGHT (VIOLET)</span>
+          </div>
+          <div id="lr-binding-tag" class="pillar-binding-tag">AUTO: WAITING MIDI 4...</div>
+        </div>
+      </div>
+    </main>
+
+    <!-- -------------------------------------------------------------
+         BOTTOM BAR: BPM METRONOME & DOCK CONTROLS
+         ------------------------------------------------------------- -->
+    <footer class="bottom-dock">
+      <!-- Metronome System -->
+      <div class="metronome-section">
+        <div class="metro-title-group">
+          <span class="metro-label">TEMPO METRONOME</span>
+          <span id="bpm-val" class="bpm-number-display">80 BPM</span>
+        </div>
+
+        <div class="bpm-controls-row">
+          <button id="btn-bpm-minus" class="nudge-btn" title="Decrease 1 BPM">-</button>
+          <input type="range" id="bpm-slider" class="bpm-slider" min="60" max="120" step="1" value="80">
+          <button id="btn-bpm-plus" class="nudge-btn" title="Increase 1 BPM">+</button>
+        </div>
+
+        <button id="btn-tap-tempo" class="metro-btn" title="Tap repeatedly to set BPM">TAP TEMPO</button>
+        <button id="btn-metro-click" class="metro-btn active" title="Toggle Metronome Audio Click">AUDIO CLICK: ON</button>
+
+        <!-- 4-Beat Visual Flash Indicators -->
+        <div class="beat-indicators">
+          <div id="beat-dot-1" class="beat-dot accent" title="Beat 1 (Accent)"></div>
+          <div id="beat-dot-2" class="beat-dot normal" title="Beat 2"></div>
+          <div id="beat-dot-3" class="beat-dot normal" title="Beat 3"></div>
+          <div id="beat-dot-4" class="beat-dot normal" title="Beat 4"></div>
+        </div>
+
+        <!-- Rhythmic Pendulum Sweep Bar -->
+        <div class="pendulum-track">
+          <div id="pendulum-thumb"></div>
+        </div>
+      </div>
+
+      <!-- Right Dock Actions -->
+      <div class="dock-actions">
+        <button id="btn-musical-score" class="drawer-toggle-btn" style="color:var(--accent-gold); border-color:var(--accent-gold);">
+          <span>🎼 MUSICAL SCORE</span>
+        </button>
+        <button id="btn-toggle-drawer" class="drawer-toggle-btn">
+          <span>⚙️ SETTINGS & MIDI MATRIX</span>
+        </button>
+        <button id="btn-fullscreen" class="hud-btn" title="Toggle Fullscreen">FULLSCREEN</button>
+      </div>
+    </footer>
+
+    <!-- -------------------------------------------------------------
+         SLIDERS & DYNAMIC MIDI MAPPINGS DRAWER
+         ------------------------------------------------------------- -->
+    <aside id="sliders-drawer" class="sliders-drawer">
+      <div class="drawer-header">
+        <span class="drawer-title">SOUND CONTROLS & MIDI MATRIX</span>
+        <button id="btn-close-drawer" class="close-drawer-btn">&times;</button>
+      </div>
+
+      <div class="drawer-body">
+        <div class="drawer-intro-note">
+          <strong>Auto-Map Active:</strong> The first 4 MIDI keys/buttons map to the 4 corner light pillars. Knobs, sliders, and MIDI 5+ auto-map to sound controls. Click <strong>[UNLINK]</strong> on any item below to redo its MIDI binding at any time!
+        </div>
+
+        <div class="drawer-section-title">CORNER LIGHT PILLARS (KEYS 1-4)</div>
+        <div id="pillars-rack" class="pillars-rack">
+          <!-- Rendered dynamically by workshop.js -->
+        </div>
+
+        <div class="drawer-section-title" style="margin-top: 14px;">SOUND PARAMETERS (MIDI 5+)</div>
+        <div id="sliders-rack" class="sliders-rack">
+          <!-- Rendered dynamically by workshop.js -->
+        </div>
+      </div>
+
+      <div class="drawer-footer">
+        <button id="btn-reset-midi" class="hud-btn" style="color:#ff0055; border-color:#ff0055;">UNLINK ALL MIDI</button>
+        <button id="btn-reset-sliders" class="hud-btn">RESET VALUES</button>
+      </div>
+    </aside>
+
+    <!-- -------------------------------------------------------------
+         FULL-SCREEN SLIDE-IN MUSICAL SCORE WINDOW
+         ------------------------------------------------------------- -->
+    <div id="score-overlay" class="score-overlay">
+      <div class="score-window">
+        <!-- Visual 4-Beat Count-In Overlay -->
+        <div id="countin-overlay" class="countin-overlay">
+          <div class="countin-box">
+            <span class="countin-title">VISUAL COUNT-IN</span>
+            <div id="countin-num" class="countin-num">4</div>
+            <span id="countin-label" class="countin-label">WATCH FOR BEAT 1</span>
+          </div>
+        </div>
+
+        <!-- Header -->
+        <div class="score-header">
+          <div class="score-title-group">
+            <span class="score-badge">DEAF ACCESSIBLE SCORE // "LOVE YOUR NEIGHBOR"</span>
+            <h2 class="score-main-title">ENSEMBLE SCORE & ASL REHEARSAL // 4/4 TIME</h2>
+            <span class="score-sub-note">14 Sessions • 5 Musical Voices: Cajon Bass & Snare, Clap, Hoot, Singers & Signers</span>
+          </div>
+
+          <!-- Section Selectors -->
+          <div class="score-section-tabs">
+            <button class="score-tab-btn active" data-mode="loop">14-BAR MASTER LOOP</button>
+            <button class="score-tab-btn" data-mode="lift" title="Bars 41–45: Steady 80 BPM building toward the final accelerando">THE LIFT (BARS 41–45 • 80 BPM)</button>
+            <button class="score-tab-btn" data-mode="spiral" title="Last 10 Seconds: Bars 47–48 ramp 80→90 BPM (5s), Bars 49–50 ramp 90→100 BPM (5s)">SPIRAL OUT (BARS 46–50 • 80→100 BPM)</button>
+            <button class="score-tab-btn" data-mode="full">FULL SESSION (50 BARS / 2:30)</button>
+            <button class="score-tab-btn overlay-tab-btn" data-mode="overlay" id="btn-tab-overlay" title="14-Session Staircase Spiraling Overlay">🌪️ 14-SESSION SPIRAL OVERLAY</button>
+          </div>
+
+          <div class="score-controls">
+            <div class="score-zoom-group">
+              <span class="zoom-lbl">ZOOM:</span>
+              <button id="btn-score-zoom-minus" class="nudge-btn" title="Zoom Out">-</button>
+              <span id="score-zoom-val" class="score-tele-num" style="min-width:32px; text-align:center;">1.0x</span>
+              <button id="btn-score-zoom-plus" class="nudge-btn" title="Zoom In">+</button>
+            </div>
+            <button id="btn-score-warmup" class="hud-btn" title="Toggle Audience Warm-Up mode (No lyrics until Bar 14)">WARM-UP: AUTO</button>
+            <button id="btn-score-synth" class="hud-btn active" title="Toggle Synthesized Guide Audio">SYNTH: ON</button>
+            <button id="btn-score-countin" class="hud-btn active" title="Toggle 4-Beat Visual Count-In">COUNT-IN: 4</button>
+            <button id="btn-score-loop" class="hud-btn active" title="Loop Selected Part">LOOP: ON</button>
+            <button id="btn-score-play" class="hud-btn" title="Start Score Playhead">PLAY</button>
+            <button id="btn-close-score" class="close-score-btn" title="Close Score (Esc)">&times;</button>
+          </div>
+        </div>
+
+        <!-- Session 1–14 Offset Selector Bar -->
+        <div class="score-session-bar" id="score-session-bar">
+          <div class="session-bar-label" id="session-bar-label">
+            <span class="sess-title">CLASSROOM SESSION OFFSET:</span>
+            <span class="sess-desc">Each session starts 1 bar later to create the spiraling overlay</span>
+          </div>
+          <div id="session-pills-rack" class="session-pills-rack">
+            <!-- 14 Session pills dynamically rendered -->
+          </div>
+          <div id="staircase-order-controls" class="staircase-order-controls" style="display:none;">
+            <span class="staircase-summary-badge">🌪️ 14-SESSION STAIRCASE COMPOSITE // ~3 MINUTE FINAL PERFORMANCE (BARS 1–64)</span>
+            <button id="btn-toggle-staircase-order" class="hud-btn active" title="Toggle Ascending (Session 1 at bottom like sketch) or Descending">STAIRCASE: S1 AT BOTTOM ⇅</button>
+          </div>
+        </div>
+
+        <!-- Synchronized Lyric & Caption Media Box (Centered & Room-Readable) -->
+        <div class="score-asl-caption-card">
+          <div class="caption-content">
+            <div class="caption-header-row">
+              <span id="caption-phrase-badge" class="caption-phrase-badge">BARS 1–2 // PHRASE 1 • BAR A</span>
+              <span class="caption-dot">•</span>
+              <span id="caption-tempo-badge" class="caption-tempo-badge">80 BPM</span>
+            </div>
+            <div id="caption-lyric-text" class="caption-lyric-text">“Our big world is open wide,”</div>
+            <div class="phrase-progress-track">
+              <div id="phrase-progress-bar" class="phrase-progress-bar"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Telemetry & Beat Ruler -->
+        <div class="score-telemetry-bar">
+          <div class="score-tele-item">
+            <span class="score-tele-lbl">MEASURE:</span>
+            <span id="score-measure-val" class="score-tele-num">BAR 1 / 14</span>
+          </div>
+          <div class="score-tele-item">
+            <span class="score-tele-lbl">METRONOME BEAT:</span>
+            <span id="score-beat-val" class="score-tele-num">BEAT 1</span>
+          </div>
+          <div class="score-tele-item">
+            <span class="score-tele-lbl">TEMPO:</span>
+            <span id="score-bpm-val" class="score-tele-num">80 BPM</span>
+          </div>
+          <div class="score-tele-hint">
+            <span id="score-tele-hint-text">TIP: WATCH THE PLAYHEAD SWEEP ACROSS BEATS 1 - 2 - 3 - 4</span>
+          </div>
+        </div>
+
+        <!-- Visual Timeline Grid & 5 Synchronized Tracks -->
+        <div class="score-grid-wrapper">
+          <!-- Measure Header Ruler (Beats 1, 2, 3, 4 per measure) -->
+          <div id="score-measure-ruler" class="score-measure-ruler"></div>
+
+          <!-- Synchronized Lanes (Bass, Snare, Clap, Hoot, Lyrics) -->
+          <div id="score-lanes-container" class="score-lanes-container">
+            <!-- Rendered dynamically by workshop.js -->
+          </div>
+
+          <!-- 14-Session Staircase Spiraling Overlay Container -->
+          <div id="score-staircase-container" class="score-staircase-container" style="display:none;">
+            <canvas id="staircase-canvas" class="staircase-canvas"></canvas>
+            <div id="staircase-tooltip" class="staircase-tooltip" style="display:none;"></div>
+          </div>
+
+          <!-- Synchronized Sweeping Playhead Line -->
+          <div id="score-playhead" class="score-playhead">
+            <div class="playhead-glow"></div>
+            <div class="playhead-badge">HIT</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Audio Start Modal -->
+    <div id="start-modal" class="modal-overlay">
+      <div class="modal-card">
+        <h2 class="modal-title">WORKSHOP MUSIC & LIGHT MATRIX</h2>
+        <p class="modal-desc">
+          Ready for live acoustic performance and MIDI control.<br>
+          Features dual reactive Red/Blue light pillars, Cymatics resonance shader, Minimeters full-spectrum display, and 60–120 BPM metronome.
+        </p>
+        <div class="modal-actions">
+          <button id="modal-btn-mic" class="primary-btn">START WITH MICROPHONE</button>
+          <button id="modal-btn-demo" class="secondary-btn">START DEMO BEAT</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module" src="workshop.js"></script>
+</body>
+</html>

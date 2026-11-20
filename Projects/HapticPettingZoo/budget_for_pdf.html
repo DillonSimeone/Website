@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>The Haptic Petting Zoo - Exhibit B: Project Budget and Disbursement Schedule</title>
+  <style>
+    @page {
+      size: letter portrait;
+      margin: 0.75in 0.8in 0.75in 0.8in;
+    }
+    *, *:before, *:after {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 10pt;
+      line-height: 1.5;
+      color: #1e293b;
+      background: #ffffff;
+      margin: 0;
+      padding: 0;
+    }
+    .page {
+      position: relative;
+      height: 100%;
+    }
+    .page-break {
+      page-break-before: always;
+      padding-top: 10px;
+    }
+    .header {
+      border-bottom: 2.5px solid #0f2b48;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+    .doc-badge {
+      display: inline-block;
+      font-size: 8.5pt;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #0f2b48;
+      background: #e2eaf2;
+      padding: 4px 10px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: 20pt;
+      font-weight: 800;
+      color: #0f2b48;
+      margin: 0 0 4px 0;
+      letter-spacing: -0.015em;
+    }
+    .subtitle {
+      font-size: 12pt;
+      font-weight: 600;
+      color: #334155;
+      margin: 0 0 6px 0;
+    }
+    .agreement-ref {
+      font-size: 9.5pt;
+      font-style: italic;
+      color: #64748b;
+      margin: 0;
+    }
+    .preamble {
+      background: #f8fafc;
+      border-left: 3.5px solid #0f2b48;
+      padding: 10px 14px;
+      margin-bottom: 18px;
+      font-size: 9.5pt;
+      line-height: 1.45;
+      color: #334155;
+      border-radius: 0 4px 4px 0;
+    }
+    h2 {
+      font-size: 12pt;
+      font-weight: 700;
+      color: #0f2b48;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-bottom: 1.5px solid #cbd5e1;
+      padding-bottom: 5px;
+      margin: 18px 0 12px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+      font-size: 9.5pt;
+    }
+    th {
+      background: #0f2b48;
+      color: #ffffff;
+      font-weight: 700;
+      text-align: left;
+      padding: 8px 10px;
+      font-size: 9pt;
+      letter-spacing: 0.03em;
+    }
+    th.num, td.num {
+      text-align: center;
+      width: 32px;
+    }
+    th.amt, td.amt {
+      text-align: right;
+      width: 120px;
+    }
+    td {
+      padding: 7px 10px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #1e293b;
+      vertical-align: middle;
+    }
+    tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+    tr.total-row td {
+      background: #e8f0f8;
+      font-weight: 800;
+      border-top: 2px solid #0f2b48;
+      border-bottom: 2.5px solid #0f2b48;
+      color: #0f2b48;
+      padding: 9px 10px;
+      font-size: 10pt;
+    }
+    .notes-block {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 5px;
+      padding: 12px 14px;
+      margin-top: 14px;
+      font-size: 9pt;
+      line-height: 1.48;
+      color: #334155;
+    }
+    .notes-block p {
+      margin: 0 0 8px 0;
+    }
+    .notes-block p:last-child {
+      margin-bottom: 0;
+    }
+    .disbursement-intro {
+      font-size: 9.5pt;
+      color: #475569;
+      margin-bottom: 14px;
+      line-height: 1.45;
+    }
+    .signatures {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 2px solid #0f2b48;
+    }
+    .sig-grid {
+      display: table;
+      width: 100%;
+    }
+    .sig-col {
+      display: table-cell;
+      width: 50%;
+      vertical-align: top;
+      padding-right: 35px;
+    }
+    .sig-col:last-child {
+      padding-right: 0;
+      padding-left: 35px;
+    }
+    .sig-label {
+      font-size: 9pt;
+      font-weight: 700;
+      color: #0f2b48;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 45px;
+    }
+    .sig-line {
+      border-bottom: 1.5px solid #1e293b;
+      margin-bottom: 6px;
+    }
+    .sig-name {
+      font-size: 10.5pt;
+      font-weight: 700;
+      color: #0f2b48;
+    }
+    .sig-title {
+      font-size: 9pt;
+      color: #64748b;
+      margin-bottom: 20px;
+    }
+    .date-line {
+      border-bottom: 1px solid #94a3b8;
+      width: 150px;
+      display: inline-block;
+      margin-left: 8px;
+    }
+    .date-wrapper {
+      font-size: 9pt;
+      color: #475569;
+    }
+    .page-footer {
+      margin-top: 25px;
+      font-size: 8pt;
+      color: #94a3b8;
+      text-align: right;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== PAGE 1 ==================== -->
+  <div class="page">
+    <div class="header">
+      <div class="doc-badge">Exhibit B &bull; Legal Grant Attachment</div>
+      <h1>The Haptic Petting Zoo</h1>
+      <div class="subtitle">Project Budget and Disbursement Schedule</div>
+      <div class="agreement-ref">Exhibit B to the Fiscal Sponsorship and Grant Agreement between PDX Hackerspace and Dillon Simeone</div>
+    </div>
+
+    <div class="preamble">
+      Direct Project costs may total no more than <strong>$91,200.00</strong>, which represents the full <strong>$96,000.00</strong> Oregon Community Foundation (OCF) Creative Heights award less the 5% fiscal sponsorship fee of <strong>$4,800.00</strong> retained upfront by Sponsor under Section 2 of the Agreement. The sponsorship fee is not a direct Project cost and is not a line item in this budget.
+    </div>
+
+    <h2>1. Project Budget &mdash; Direct Costs</h2>
+    <table>
+      <thead>
+        <tr>
+          <th class="num">#</th>
+          <th>Budget Line Item &amp; Operational Scope</th>
+          <th class="amt">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="num">1</td>
+          <td><strong>Artist Fees &amp; Project Direction</strong> &mdash; Lead Artist &amp; Principal Investigator</td>
+          <td class="amt">$35,000.00</td>
+        </tr>
+        <tr>
+          <td class="num">2</td>
+          <td><strong>Production &amp; Fabricator Stipends</strong> (Note 1)</td>
+          <td class="amt">$18,000.00</td>
+        </tr>
+        <tr>
+          <td class="num">3</td>
+          <td><strong>Materials, Actuators &amp; Components</strong> &mdash; Custom PCBs, solenoids, Peltiers, drivers</td>
+          <td class="amt">$16,500.00</td>
+        </tr>
+        <tr>
+          <td class="num">4</td>
+          <td><strong>Tour Equipment &amp; Transit Cases</strong> &mdash; Ruggedized cases &amp; custom frames</td>
+          <td class="amt">$6,500.00</td>
+        </tr>
+        <tr>
+          <td class="num">5</td>
+          <td><strong>Tour Logistics, Travel &amp; Shipping</strong> &mdash; 2-year Oregon transit, venue support &amp; insurance (Note 2)</td>
+          <td class="amt">$7,700.00</td>
+        </tr>
+        <tr>
+          <td class="num">6</td>
+          <td><strong>Media, Video &amp; ASL Production</strong> &mdash; High-speed capture &amp; accessible docs</td>
+          <td class="amt">$4,500.00</td>
+        </tr>
+        <tr>
+          <td class="num">7</td>
+          <td><strong>Hardware Maintenance Reserve</strong> &mdash; Field repairs &amp; wear replacement stock</td>
+          <td class="amt">$3,000.00</td>
+        </tr>
+        <tr class="total-row">
+          <td class="num"></td>
+          <td><strong>TOTAL DIRECT PROJECT COSTS (Cap under Agreement: $91,200.00)</strong></td>
+          <td class="amt"><strong>$91,200.00</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="notes-block">
+      <p><strong>Note 1, fabricator stipends:</strong> This line covers stipends for fabricators, technicians, and accessibility specialists Grantee selects on skill, whether or not they are members of PDX Hackerspace, with the line able to cover a paid PDX Hackerspace membership for any collaborator who needs one to work on the Project at the space. Grantee engages and pays collaborators under Section 11 of the Agreement; no director or officer of PDX Hackerspace, and no family member of one, may be paid from the Grant without prior approval of Sponsor's disinterested directors.</p>
+      <p><strong>Note 2, insurance:</strong> Liability insurance for the public exhibition and tour is charged to this line under Section 15 of the Agreement.</p>
+    </div>
+
+    <div class="page-footer">Page 1 of 2 &bull; Exhibit B: Project Budget &bull; PDX Hackerspace & Dillon Simeone</div>
+  </div>
+
+  <!-- ==================== PAGE 2 ==================== -->
+  <div class="page page-break">
+    <div class="header">
+      <div class="doc-badge">Exhibit B &bull; Legal Grant Attachment</div>
+      <h1>The Haptic Petting Zoo</h1>
+      <div class="subtitle">Disbursement Schedule &amp; Execution Approvals</div>
+    </div>
+
+    <h2>2. Disbursement Schedule</h2>
+    <div class="disbursement-intro">
+      Installments are conditions to continued grant funding for charitable purposes, not payments for services or acceptance of deliverables. The amounts below are weighted toward the initial fabrication and equipment procurement phases. They total the budget total.
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th class="num">#</th>
+          <th>Milestone Release Target &amp; Conditions</th>
+          <th class="amt">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="num">1</td>
+          <td><strong>Execution of the Agreement and delivery of Form W-9</strong> (Target: September 2026)</td>
+          <td class="amt">$20,000.00</td>
+        </tr>
+        <tr>
+          <td class="num">2</td>
+          <td><strong>Completion of prototyping phase</strong> (Target: January 2027)</td>
+          <td class="amt">$20,000.00</td>
+        </tr>
+        <tr>
+          <td class="num">3</td>
+          <td><strong>Fabrication midpoint and OCF midpoint interview</strong> (Target: April 2027)</td>
+          <td class="amt">$20,000.00</td>
+        </tr>
+        <tr>
+          <td class="num">4</td>
+          <td><strong>Final assembly and calibration complete</strong> (Target: June 2027)</td>
+          <td class="amt">$15,000.00</td>
+        </tr>
+        <tr>
+          <td class="num">5</td>
+          <td><strong>Public exhibition debut</strong> (Target: August 2027)</td>
+          <td class="amt">$12,000.00</td>
+        </tr>
+        <tr>
+          <td class="num">6</td>
+          <td><strong>Phase 1 fabrication accounting delivered to Sponsor</strong> (Target: October 2027)</td>
+          <td class="amt">$4,200.00</td>
+        </tr>
+        <tr class="total-row">
+          <td class="num"></td>
+          <td><strong>TOTAL INSTALLMENTS</strong></td>
+          <td class="amt"><strong>$91,200.00</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="signatures">
+      <div class="sig-grid">
+        <div class="sig-col">
+          <div class="sig-label">Confirmed by Grantee:</div>
+          <div class="sig-line"></div>
+          <div class="sig-name">Dillon Simeone</div>
+          <div class="sig-title">Lead Artist &amp; Principal Investigator</div>
+          <div class="date-wrapper">Date: <span class="date-line"></span></div>
+        </div>
+        <div class="sig-col">
+          <div class="sig-label">Approved by Sponsor:</div>
+          <div class="sig-line"></div>
+          <div class="sig-name">Jonathan Hannis</div>
+          <div class="sig-title">Executive Director, PDX Hackerspace</div>
+          <div class="date-wrapper">Date: <span class="date-line"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer" style="margin-top: 60px;">Page 2 of 2 &bull; Exhibit B: Disbursement Schedule &bull; PDX Hackerspace & Dillon Simeone</div>
+  </div>
+
+</body>
+</html>
+

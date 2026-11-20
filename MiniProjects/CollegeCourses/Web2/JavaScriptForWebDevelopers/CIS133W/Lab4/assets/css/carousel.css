@@ -1,0 +1,173 @@
+.carousel-section {
+  margin: 1.5rem 0 2.5rem 0;
+  position: relative;
+}
+
+.carousel {
+  width: 800px;
+  max-width: 100%;
+  overflow: hidden;
+  border: 2px solid var(--swamp-border, #3d582c);
+  border-radius: 12px;
+  margin: 0 auto;
+  background: rgba(27, 38, 21, 0.85);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.carouselTrack {
+  display: flex;
+  transition: transform 0.5s ease;
+  will-change: transform;
+}
+
+.carouselItem {
+  flex: 0 0 200px;
+  width: 200px;
+  padding: 12px 10px;
+  text-align: center;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.carouselCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  text-decoration: none;
+  color: var(--text-light, #e8ede0);
+  background: rgba(37, 53, 29, 0.7);
+  border: 1px solid var(--swamp-border, #3d582c);
+  border-radius: 8px;
+  padding: 10px 8px;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.carouselCard:hover,
+.carouselCard:focus {
+  transform: translateY(-3px);
+  border-color: var(--swamp-glow, #b1d65c);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5), 0 0 10px rgba(177, 214, 92, 0.25);
+}
+
+.carouselThumbWrapper {
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 12, 0.6);
+  border-radius: 50%;
+  border: 2px dashed rgba(127, 166, 58, 0.3);
+  margin: 0.5rem auto 1rem auto;
+  overflow: visible;
+  transition: border-color 0.2s ease;
+}
+
+.carouselCard:hover .carouselThumbWrapper {
+  border-color: var(--swamp-glow, #b1d65c);
+}
+
+.carouselThumb {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.5));
+  animation: onionFloat 2.4s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.carouselItem:nth-child(2n) .carouselThumb {
+  animation-duration: 2.8s;
+  animation-delay: -0.7s;
+}
+
+.carouselItem:nth-child(3n) .carouselThumb {
+  animation-duration: 2.1s;
+  animation-delay: -1.3s;
+}
+
+.carouselCard:hover .carouselThumb {
+  filter: drop-shadow(0 12px 18px rgba(177, 214, 92, 0.35));
+}
+
+@keyframes onionFloat {
+  0% {
+    transform: translateY(6px) rotate(-3.5deg);
+  }
+
+  50% {
+    transform: translateY(-8px) rotate(2deg);
+  }
+
+  100% {
+    transform: translateY(-18px) rotate(-3deg);
+  }
+}
+
+.carouselItemTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--mud-tan, #cfb17d);
+  line-height: 1.25;
+  margin-bottom: 6px;
+  min-height: 2.5em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.carouselItemDesc {
+  font-size: 0.75rem;
+  color: var(--text-muted, #a3b293);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.carousel-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.carousel-btn {
+  background: #4a6710;
+  color: #ffffff;
+  border: 1px solid #739d22;
+  border-radius: 6px;
+  padding: 0.6rem 1.6rem;
+  font-size: 0.95rem;
+  font-weight: bold;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.carousel-btn:hover:not(:disabled) {
+  background: #5b7f15;
+  border-color: #b1d65c;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4), 0 0 8px rgba(177, 214, 92, 0.3);
+}
+
+.carousel-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.carousel-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+  box-shadow: none;
+}

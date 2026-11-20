@@ -1,0 +1,15 @@
+{
+  "id": "drywall_brute",
+  "name": "Drywall Brute",
+  "isBoss": false,
+  "nodes": [
+    { "id": 0, "parentId": null, "type": "core", "pos": [0, 1.5, 0], "dir": [0, 1, 0], "scale": 1.2 },
+    { "id": 1, "parentId": 0, "type": "muscle", "pos": [-0.32, 0.2, 0], "dir": [-0.7, 0.3, 0.2], "scale": 1.1 },
+    { "id": 2, "parentId": 0, "type": "muscle", "pos": [0.32, 0.2, 0], "dir": [0.7, 0.3, 0.2], "scale": 1.1 },
+    { "id": 3, "parentId": 1, "type": "claw", "pos": [0, 0.45, 0], "dir": [0.1, -0.6, 0.8], "scale": 1.1 },
+    { "id": 4, "parentId": 2, "type": "claw", "pos": [0, 0.45, 0], "dir": [-0.1, -0.6, 0.8], "scale": 1.1 },
+    { "id": 5, "parentId": 0, "type": "bone", "pos": [-0.26, -0.35, 0], "dir": [-0.1, -1, 0], "scale": 1.1 },
+    { "id": 6, "parentId": 0, "type": "bone", "pos": [0.26, -0.35, 0], "dir": [0.1, -1, 0], "scale": 1.1 },
+    { "id": 7, "parentId": 0, "type": "ocular", "pos": [0, 0.25, 0.42], "dir": [0, 0, 1], "scale": 1.2 }
+  ]
+}

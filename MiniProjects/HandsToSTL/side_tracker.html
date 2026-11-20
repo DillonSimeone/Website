@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Side Camera Tracker (Isolated Context)</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #090a0f;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100vw;
+            height: 100vh;
+            font-family: sans-serif;
+            color: #9ca3af;
+        }
+        #canvasElement {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        #statusOverlay {
+            position: absolute;
+            font-size: 13px;
+            pointer-events: none;
+        }
+    </style>
+    <!-- MediaPipe scripts for isolated iframe context -->
+    <script src="camera_utils.js"></script>
+    <script src="drawing_utils.js"></script>
+    <script src="hands.js"></script>
+</head>
+<body>
+    <div id="statusOverlay">Side camera waiting...</div>
+    <video id="videoElement" autoplay muted playsinline style="display: none;"></video>
+    <canvas id="canvasElement"></canvas>
+
+    <script>
+        class StreamRunner {
+            constructor(video, onFrame) {
+                this.video = video;
+                this.onFrame = onFrame;
+                this.lastTime = -1;
+                this.isRunning = false;
+                this.rafId = null;
+            }
+
+            start() {
+                this.isRunning = true;
+                const tick = async () => {
+                    if (!this.isRunning) return;
+                    if (this.video && !this.video.paused && this.video.currentTime !== this.lastTime) {
+                        this.lastTime = this.video.currentTime;
+                        try {
+                            await this.onFrame();
+                        } catch (err) {
+                            console.error('Frame inference error:', err);
+                        }
+                    }
+                    if (this.isRunning) {
+                        this.rafId = requestAnimationFrame(tick);
+                    }
+                };
+                this.rafId = requestAnimationFrame(tick);
+            }
+
+            stop() {
+                this.isRunning = false;
+                if (this.rafId) {
+                    cancelAnimationFrame(this.rafId);
+                    this.rafId = null;
+                }
+            }
+        }
+
+        let hands = null;
+        let runner = null;
+        let showOverlay = true;
+        let isStarted = false;
+        const statusOverlay = document.getElementById('statusOverlay');
+        const videoElement = document.getElementById('videoElement');
+        const canvasElement = document.getElementById('canvasElement');
+
+        function initHands(locateMode = 'local', options = {}) {
+            if (hands) return;
+            const HandsClass = window.Hands;
+            if (!HandsClass) {
+                console.error('Hands not loaded in side frame');
+                return;
+            }
+
+            hands = new HandsClass({
+                locateFile: (file) => {
+                    if (file === 'hand_landmark_lite.tflite') file = 'hand_landmark_full.tflite';
+                    return locateMode === 'local' ? `./${file}` : `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+                }
+            });
+
+            hands.setOptions({
+                maxNumHands: 1,
+                modelComplexity: 1,
+                minDetectionConfidence: options.detectionConfidence || 0.6,
+                minTrackingConfidence: options.trackingConfidence || 0.6
+            });
+
+            hands.onResults(onResults);
+        }
+
+        function copyLandmarks(list) {
+            if (!list || list.length < 21) return null;
+            const out = new Array(21);
+            for (let i = 0; i < 21; i++) {
+                const p = list[i];
+                if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y)) return null;
+                out[i] = { x: p.x, y: p.y, z: p.z || 0 };
+            }
+            return out;
+        }
+
+        function onResults(results) {
+            statusOverlay.style.display = 'none';
+            const ctx = canvasElement.getContext('2d');
+            canvasElement.width = results.image.width || 640;
+            canvasElement.height = results.image.height || 480;
+
+            ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            ctx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+            let landmarks = null;
+            let worldLandmarks = null;
+            let score = 0;
+            let label = '';
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                landmarks = copyLandmarks(results.multiHandLandmarks[0]);
+                worldLandmarks = copyLandmarks(results.multiHandWorldLandmarks?.[0]);
+                score = results.multiHandedness?.[0]?.score || 0.8;
+                label = results.multiHandedness?.[0]?.label
+                    || results.multiHandedness?.[0]?.displayName
+                    || '';
+
+                if (landmarks && showOverlay && window.drawConnectors && window.drawLandmarks && window.HAND_CONNECTIONS) {
+                    window.drawConnectors(ctx, landmarks, window.HAND_CONNECTIONS, { color: '#38bdf8', lineWidth: 2 });
+                    window.drawLandmarks(ctx, landmarks, { color: '#f43f5e', lineWidth: 1, radius: 3 });
+                }
+            }
+
+            window.parent.postMessage({
+                type: 'SIDE_FRAME_RESULTS',
+                landmarks: landmarks,
+                worldLandmarks: worldLandmarks,
+                score: score,
+                label: label,
+                width: canvasElement.width,
+                height: canvasElement.height
+            }, '*');
+        }
+
+        window.attachStream = function(stream, options = {}) {
+            if (isStarted) stopCamera();
+            showOverlay = options.showOverlay !== undefined ? options.showOverlay : true;
+            initHands(options.locateMode || 'local', options);
+
+            statusOverlay.textContent = 'Connecting side camera...';
+            statusOverlay.style.display = 'block';
+
+            videoElement.srcObject = stream;
+            videoElement.onloadedmetadata = () => {
+                videoElement.play();
+                runner = new StreamRunner(videoElement, async () => {
+                    if (hands && isStarted) {
+                        await hands.send({ image: videoElement });
+                    }
+                });
+                runner.start();
+                isStarted = true;
+                statusOverlay.style.display = 'none';
+                window.parent.postMessage({ type: 'SIDE_FRAME_STARTED' }, '*');
+            };
+        };
+
+        async function stopCamera() {
+            isStarted = false;
+            if (runner) {
+                runner.stop();
+                runner = null;
+            }
+            if (videoElement.srcObject) {
+                videoElement.srcObject = null;
+            }
+            statusOverlay.textContent = 'Side camera stopped.';
+            statusOverlay.style.display = 'block';
+            const ctx = canvasElement.getContext('2d');
+            ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        }
+
+        window.addEventListener('message', async (e) => {
+            const data = e.data;
+            if (!data || !data.type) return;
+
+            switch (data.type) {
+                case 'START_SIDE_CAMERA':
+                    showOverlay = data.showOverlay !== undefined ? data.showOverlay : true;
+                    await startCamera(data.deviceId, data.locateMode, data.options || {});
+                    break;
+                case 'STOP_SIDE_CAMERA':
+                    await stopCamera();
+                    break;
+                case 'UPDATE_SIDE_OPTIONS':
+                    if (data.showOverlay !== undefined) showOverlay = data.showOverlay;
+                    if (hands && data.confidence) {
+                        hands.setOptions({
+                            minDetectionConfidence: data.confidence.detection || 0.6,
+                            minTrackingConfidence: data.confidence.tracking || 0.6
+                        });
+                    }
+                    break;
+            }
+        });
+
+        // Let parent know the frame is ready
+        window.parent.postMessage({ type: 'SIDE_TRACKER_READY' }, '*');
+    </script>
+</body>
+</html>

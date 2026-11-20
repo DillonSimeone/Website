@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 2,
+  "id": "quadruped",
+  "art": {
+    "body": null,
+    "size": [1024, 640],
+    "keying": "none"
+  },
+  "slots": [
+    {
+      "id": "head",
+      "name": "Head",
+      "kind": "part",
+      "slotType": "head",
+      "region": "head",
+      "anchor": [180, 300],
+      "hitShape": { "type": "ellipse", "rx": 55, "ry": 45 },
+      "rarity": "uncommon",
+      "presencePct": 95,
+      "pulseCost": 10,
+      "killsPulse": true
+    },
+    {
+      "id": "foreleg_l",
+      "name": "Left Foreleg",
+      "kind": "part",
+      "slotType": "leg",
+      "side": "left",
+      "region": "forelegs",
+      "anchor": [260, 420],
+      "hitShape": { "type": "ellipse", "rx": 30, "ry": 50 },
+      "rarity": "common",
+      "presencePct": 85,
+      "pulseCost": 3,
+      "reasonAbsent": "mangled"
+    },
+    {
+      "id": "foreleg_r",
+      "name": "Right Foreleg",
+      "kind": "part",
+      "slotType": "leg",
+      "side": "right",
+      "region": "forelegs",
+      "anchor": [350, 430],
+      "hitShape": { "type": "ellipse", "rx": 30, "ry": 50 },
+      "rarity": "common",
+      "presencePct": 85,
+      "pulseCost": 3,
+      "reasonAbsent": "mangled"
+    },
+    {
+      "id": "hindleg_l",
+      "name": "Left Hindleg",
+      "kind": "part",
+      "slotType": "leg",
+      "side": "left",
+      "region": "hindlegs",
+      "anchor": [720, 430],
+      "hitShape": { "type": "ellipse", "rx": 32, "ry": 52 },
+      "rarity": "common",
+      "presencePct": 85,
+      "pulseCost": 3,
+      "reasonAbsent": "mangled"
+    },
+    {
+      "id": "hindleg_r",
+      "name": "Right Hindleg",
+      "kind": "part",
+      "slotType": "leg",
+      "side": "right",
+      "region": "hindlegs",
+      "anchor": [810, 420],
+      "hitShape": { "type": "ellipse", "rx": 32, "ry": 52 },
+      "rarity": "common",
+      "presencePct": 85,
+      "pulseCost": 3,
+      "reasonAbsent": "mangled"
+    },
+    {
+      "id": "tail",
+      "name": "Tail",
+      "kind": "part",
+      "slotType": "tail",
+      "region": "tail",
+      "anchor": [890, 320],
+      "hitShape": { "type": "ellipse", "rx": 40, "ry": 24 },
+      "rarity": "common",
+      "presencePct": 70,
+      "pulseCost": 2,
+      "reasonAbsent": "docked"
+    },
+    {
+      "id": "eyes",
+      "name": "Eyes",
+      "kind": "organ",
+      "slotType": "eye",
+      "region": "head",
+      "anchor": [165, 275],
+      "hitShape": { "type": "ellipse", "rx": 20, "ry": 14 },
+      "rarity": "common",
+      "presencePct": 55,
+      "yield": { "min": 1, "max": 2 },
+      "pulseCost": 7,
+      "tags": ["fragile"]
+    },
+    {
+      "id": "brain",
+      "name": "Cerebral Node",
+      "kind": "organ",
+      "slotType": "brain",
+      "region": "head",
+      "anchor": [205, 260],
+      "hitShape": { "type": "ellipse", "rx": 22, "ry": 18 },
+      "rarity": "uncommon",
+      "presencePct": 50,
+      "pulseCost": 8,
+      "killsPulse": true,
+      "tags": ["fragile"]
+    },
+    {
+      "id": "lungs",
+      "name": "Lungs",
+      "kind": "organ",
+      "slotType": "organ",
+      "region": "thorax",
+      "anchor": [420, 270],
+      "hitShape": { "type": "ellipse", "rx": 34, "ry": 26 },
+      "rarity": "common",
+      "presencePct": 75,
+      "pulseCost": 8,
+      "tags": ["fragile"]
+    },
+    {
+      "id": "heart",
+      "name": "Heart",
+      "kind": "organ",
+      "slotType": "organ",
+      "region": "thorax",
+      "anchor": [330, 300],
+      "hitShape": { "type": "ellipse", "rx": 35, "ry": 30 },
+      "rarity": "rare",
+      "presencePct": 95,
+      "pulseCost": 18,
+      "killsPulse": true
+    },
+    {
+      "id": "liver",
+      "name": "Liver",
+      "kind": "organ",
+      "slotType": "organ",
+      "region": "abdomen",
+      "anchor": [520, 310],
+      "hitShape": { "type": "ellipse", "rx": 30, "ry": 24 },
+      "rarity": "common",
+      "presencePct": 65,
+      "pulseCost": 7
+    },
+    {
+      "id": "flank_meat",
+      "name": "Flank Meat",
+      "kind": "organ",
+      "slotType": "organ",
+      "region": "abdomen",
+      "anchor": [610, 320],
+      "hitShape": { "type": "ellipse", "rx": 38, "ry": 28 },
+      "rarity": "common",
+      "presencePct": 85,
+      "pulseCost": 6
+    },
+    {
+      "id": "hide",
+      "name": "Pelt Hide",
+      "kind": "part",
+      "slotType": "carapace",
+      "region": "thorax",
+      "anchor": [470, 230],
+      "hitShape": { "type": "ellipse", "rx": 42, "ry": 20 },
+      "rarity": "common",
+      "presencePct": 80,
+      "pulseCost": 3
+    }
+  ],
+  "clampPoints": [
+    {
+      "id": "carotid",
+      "name": "Carotid Artery",
+      "anchor": [200, 250],
+      "protects": ["head"],
+      "drainReductionPct": 50,
+      "bleedReductionPct": 10
+    },
+    {
+      "id": "aorta",
+      "name": "Aorta Trunk",
+      "anchor": [340, 260],
+      "protects": ["thorax", "abdomen"],
+      "drainReductionPct": 40,
+      "bleedReductionPct": 25
+    },
+    {
+      "id": "femoral",
+      "name": "Femoral Vessel",
+      "anchor": [680, 350],
+      "protects": ["forelegs", "hindlegs", "tail"],
+      "drainReductionPct": 50,
+      "bleedReductionPct": 10
+    }
+  ]
+}

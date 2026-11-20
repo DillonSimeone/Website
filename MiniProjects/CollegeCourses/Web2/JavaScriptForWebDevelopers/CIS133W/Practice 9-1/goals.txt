@@ -1,0 +1,67 @@
+In this exercise, you will enhance a sign-up form by writing your own JavaScript validation logic. The provided HTML file uses only basic attributes like type and required. It does not include attributes like minlength or pattern. Your job is to write the detailed validation rules yourself in JavaScript.
+
+This project emphasizes DOM scripting, real-time feedback, and the validation techniques covered in Chapter 9 of Murach's Modern JavaScript. You will work with event listeners, input field evaluation, cross-field logic (password confirmation), regular expressions, and dynamic UI feedback.
+
+Files Provided
+
+    index.html: defines the form interface, pre-built using Bootstrap styling (do not modify!)
+
+You will create a signup.js file to make the HTML file above work.
+
+Click to download the practice_9_1.zip file
+What You'll Practice
+
+    Writing real-time input validation using JavaScript
+    Displaying inline error messages below each field
+    Comparing values across multiple fields, such as password and confirmation
+    Disabling and enabling a submit button based on form validity
+    Preventing submission of invalid forms and managing user feedback
+    Using regular expressions to test input formats (at least one field must use a regex)
+    Organizing validation logic into clean, readable functions
+    Resetting forms and UI state after successful submission
+
+What You'll Do
+
+    Environment Setup
+        Download the practice_9_1.zip to the CIS133W root folder in VS Code.
+        Unzip it to create a practice_9_1 folder.
+        Create a signup.js file in the practice_9_1 folder
+    Set up validation logic in signup.js
+        Use event listeners such as input and submit to validate fields in real time and control form behavior.
+    Validate each field using the following rules:
+        First and Last name: required, letters only, 2 to 30 characters
+        Email: required, must be a valid email format and end in .edu
+            You must use a regular expression for this rule.
+        Phone: optional, but if provided, must match the format 555-123-4567
+            You are encouraged to use a regular expression here as well.
+        Password: required, at least 8 characters
+        Confirm Password: must match the Password field
+        Country (dropdown): required, cannot be left on the default blank option
+    Display error messages
+    Show feedback in the <p class="error"> elements that are already placed under each field. Each field should show a clear, user-friendly message when it is invalid, and the message should disappear once the field becomes valid.
+    Control the Register button
+    Keep the Register button disabled until the form is completely valid according to all of the rules above.
+    Submit behavior
+    When the form is submitted, prevent the default behavior. If the form is valid, show a confirmation alert message (for example, Thank you, check your inbox.), reset the form, and re-disable the Register button. If the form is not valid, do not submit, and move focus to the first invalid field.
+
+Tips
+
+These techniques are discussed in the following sections of Murach's Modern JavaScript:
+
+    Attaching input and submit event listeners
+    Using the checkValidity() method and validity object
+    Providing inline user-friendly error messages using JavaScript
+    Writing custom comparison logic (like matching passwords)
+    Resetting form values and DOM updates after successful submission
+    Writing and applying regular expressions to test user input
+
+Note: Do not use HTML validation attributes. All validation must happen in JavaScript.
+Final Result
+
+The finalized practice should look like the output below. Note the messages with all the incorrect information that's been entered.
+
+Practice 9-1 Errors
+
+A correctly built file will have none of the error messages and will just display an alert() stating that the form was successfully sent.
+
+Practice 9-1 Complete

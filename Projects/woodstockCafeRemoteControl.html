@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Woodstock Cafe — Curtains Remote Control</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --border: #30363d;
+      --accent: #ff6a00;
+      --accent-hover: #ff8533;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --success: #3fb950;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    header {
+      text-align: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-top: 4px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+    }
+    .row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .form-group {
+      flex: 1;
+      min-width: 180px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    label {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .slider-val {
+      font-weight: 600;
+      color: var(--accent);
+      font-size: 0.9rem;
+    }
+    input[type="color"] {
+      width: 100%;
+      height: 42px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: none;
+      cursor: pointer;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #0d1117;
+      color: #fff;
+      font-size: 0.95rem;
+    }
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    button {
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #21262d;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    button:hover {
+      background: #30363d;
+      border-color: #8b949e;
+    }
+    button.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #000;
+      font-weight: 700;
+    }
+    .toggle-btn {
+      width: 100%;
+      padding: 14px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      border-radius: 8px;
+      background: #238636;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+    }
+    .toggle-btn.off {
+      background: #da3633;
+    }
+    pre {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      padding: 14px;
+      border-radius: 8px;
+      font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+      font-size: 0.8rem;
+      color: #7ee787;
+      overflow-x: auto;
+      max-height: 240px;
+    }
+    .action-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .action-btn {
+      flex: 1;
+      padding: 12px;
+      background: var(--accent);
+      border: none;
+      color: #000;
+      font-weight: 700;
+    }
+    .action-btn:hover {
+      background: var(--accent-hover);
+    }
+    .instructions {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-top: 12px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: rgba(63, 185, 80, 0.2);
+      color: var(--success);
+      border: 1px solid rgba(63, 185, 80, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🏮 Woodstock Cafe Curtains</h1>
+      <p class="subtitle">Cloud Remote Generator &bull; Master / Slave Curtain Array</p>
+      <div style="margin-top: 10px;">
+        <span class="badge" id="syncStatus">● Cloud Target: woodstockCafeCurtains.json</span>
+      </div>
+    </header>
+
+    <!-- Master Power & Brightness -->
+    <div class="card">
+      <div class="card-title">⚡ Master Controls</div>
+      <div class="row">
+        <button id="powerBtn" class="toggle-btn" onclick="togglePower()">Curtains ON</button>
+      </div>
+      <div class="row">
+        <div class="form-group" style="flex: 2;">
+          <label>Brightness: <span id="briVal" class="slider-val">50% (128)</span></label>
+          <input type="range" id="briSlider" min="0" max="255" value="128" oninput="updateBrightness(this.value)">
+        </div>
+        <div class="form-group">
+          <label>Transition: <span id="transVal" class="slider-val">0.7s</span></label>
+          <input type="range" id="transSlider" min="0" max="30" value="7" oninput="updateTransition(this.value)">
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Presets -->
+    <div class="card">
+      <div class="card-title">🎨 Presets & Atmospheric Themes</div>
+      <div class="btn-grid">
+        <button class="active" onclick="setPreset('orange')">☕ Orange Breathe</button>
+        <button onclick="setPreset('sunset')">🌅 Sunset Waves</button>
+        <button onclick="setPreset('rainbow')">🌈 Rainbow Flow</button>
+        <button onclick="setPreset('candle')">🕯️ Candle Glow</button>
+        <button onclick="setPreset('fire')">🔥 Fire 2012</button>
+        <button onclick="setPreset('matrix')">💻 Matrix Rain</button>
+        <button onclick="setPreset('ocean')">🌊 Deep Ocean</button>
+        <button onclick="setPreset('sparkle')">✨ Color Sparkle</button>
+      </div>
+    </div>
+
+    <!-- Color Palette & Speeds -->
+    <div class="card">
+      <div class="card-title">🎛️ Palette & Dynamics</div>
+      <div class="row">
+        <div class="form-group">
+          <label>Color 1 (Primary)</label>
+          <input type="color" id="col1" value="#ff5500" onchange="updateColors()">
+        </div>
+        <div class="form-group">
+          <label>Color 2 (Secondary)</label>
+          <input type="color" id="col2" value="#000000" onchange="updateColors()">
+        </div>
+        <div class="form-group">
+          <label>Color 3 (Tertiary)</label>
+          <input type="color" id="col3" value="#000000" onchange="updateColors()">
+        </div>
+      </div>
+      <div class="row">
+        <div class="form-group">
+          <label>Effect Speed: <span id="speedVal" class="slider-val">135</span></label>
+          <input type="range" id="speedSlider" min="0" max="255" value="135" oninput="updateSpeed(this.value)">
+        </div>
+        <div class="form-group">
+          <label>Effect Intensity: <span id="intVal" class="slider-val">128</span></label>
+          <input type="range" id="intSlider" min="0" max="255" value="128" oninput="updateIntensity(this.value)">
+        </div>
+      </div>
+    </div>
+
+    <!-- Generated JSON & Export -->
+    <div class="card">
+      <div class="card-title">📄 Cloud Payload (woodstockCafeCurtains.json)</div>
+      <pre id="jsonPreview"></pre>
+      <div class="action-row">
+        <button class="action-btn" onclick="copyJson()">📋 Copy JSON</button>
+        <button class="action-btn" style="background: #21262d; color: #fff; border: 1px solid var(--border);" onclick="downloadJson()">💾 Download File</button>
+      </div>
+      <div class="action-row" style="margin-top: 12px;">
+        <div style="display: flex; gap: 8px; width: 100%; align-items: center;">
+          <input type="text" id="directIp" value="192.168.4.1" placeholder="Master IP (e.g. 192.168.4.1)" style="flex: 1; padding: 10px 12px; background: #0d1117; border: 1px solid var(--border); border-radius: 8px; color: #fff; font-size: 0.9rem;">
+          <button class="action-btn" style="background: #238636; white-space: nowrap;" onclick="sendDirect()">⚡ Send Direct to Master</button>
+        </div>
+      </div>
+      <div id="directStatus" style="font-size: 0.85rem; margin-top: 8px; display: none;"></div>
+      <p class="instructions">
+        💡 <b>How to update the curtains:</b> Save or commit this JSON into <code>public/Projects/woodstockCafeCurtains.json</code> in your Website repository and push to <code>main</code>. The Master ESP32 polls this file every 30-45 seconds and updates automatically! You can also use the <b>Send Direct to Master</b> button above when connected to <code>CurtainMaster-AP</code> or the venue Wi-Fi for instantaneous live control.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    let state = {
+      version: 1,
+      name: "Woodstock Cafe Curtains",
+      updated: new Date().toISOString(),
+      on: true,
+      bri: 128,
+      transition: 7,
+      seg: [{
+        id: 0,
+        start: 0,
+        stop: 10000,
+        fx: 2, // Breathe
+        sx: 135,
+        ix: 128,
+        col: [
+          [255, 85, 0],
+          [0, 0, 0],
+          [0, 0, 0]
+        ]
+      }]
+    };
+
+    const presets = {
+      orange: { fx: 2, sx: 135, ix: 128, c1: "#ff5500", c2: "#000000", c3: "#000000" },
+      sunset: { fx: 80, sx: 110, ix: 160, c1: "#ff3300", c2: "#ff9900", c3: "#660066" },
+      rainbow: { fx: 8, sx: 100, ix: 128, c1: "#ff0000", c2: "#00ff00", c3: "#0000ff" },
+      candle: { fx: 4, sx: 120, ix: 90, c1: "#ff8800", c2: "#ff3300", c3: "#000000" },
+      fire: { fx: 45, sx: 140, ix: 170, c1: "#ff2200", c2: "#ff8800", c3: "#ffff00" },
+      matrix: { fx: 105, sx: 150, ix: 200, c1: "#00ff33", c2: "#003311", c3: "#000000" },
+      ocean: { fx: 80, sx: 90, ix: 140, c1: "#0066ff", c2: "#00ffff", c3: "#001144" },
+      sparkle: { fx: 26, sx: 120, ix: 180, c1: "#ff0088", c2: "#00ffff", c3: "#ffff00" }
+    };
+
+    function hexToRgb(hex) {
+      const bigint = parseInt(hex.replace('#', ''), 16);
+      return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+    }
+
+    function rgbToHex(r, g, b) {
+      return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+
+    function refreshView() {
+      state.updated = new Date().toISOString();
+      document.getElementById('jsonPreview').textContent = JSON.stringify(state, null, 2);
+    }
+
+    function togglePower() {
+      state.on = !state.on;
+      const btn = document.getElementById('powerBtn');
+      if (state.on) {
+        btn.textContent = "Curtains ON";
+        btn.className = "toggle-btn";
+      } else {
+        btn.textContent = "Curtains OFF";
+        btn.className = "toggle-btn off";
+      }
+      refreshView();
+    }
+
+    function updateBrightness(val) {
+      state.bri = parseInt(val);
+      document.getElementById('briVal').textContent = `${Math.round((val/255)*100)}% (${val})`;
+      refreshView();
+    }
+
+    function updateTransition(val) {
+      state.transition = parseInt(val);
+      document.getElementById('transVal').textContent = `${(val/10).toFixed(1)}s`;
+      refreshView();
+    }
+
+    function updateColors() {
+      const c1 = hexToRgb(document.getElementById('col1').value);
+      const c2 = hexToRgb(document.getElementById('col2').value);
+      const c3 = hexToRgb(document.getElementById('col3').value);
+      state.seg[0].col = [c1, c2, c3];
+      refreshView();
+    }
+
+    function updateSpeed(val) {
+      state.seg[0].sx = parseInt(val);
+      document.getElementById('speedVal').textContent = val;
+      refreshView();
+    }
+
+    function updateIntensity(val) {
+      state.seg[0].ix = parseInt(val);
+      document.getElementById('intVal').textContent = val;
+      refreshView();
+    }
+
+    function setPreset(key) {
+      const p = presets[key];
+      if (!p) return;
+      state.seg[0].fx = p.fx;
+      state.seg[0].sx = p.sx;
+      state.seg[0].ix = p.ix;
+      state.seg[0].col = [hexToRgb(p.c1), hexToRgb(p.c2), hexToRgb(p.c3)];
+
+      document.getElementById('col1').value = p.c1;
+      document.getElementById('col2').value = p.c2;
+      document.getElementById('col3').value = p.c3;
+      document.getElementById('speedSlider').value = p.sx;
+      document.getElementById('speedVal').textContent = p.sx;
+      document.getElementById('intSlider').value = p.ix;
+      document.getElementById('intVal').textContent = p.ix;
+
+      // Update button active state
+      document.querySelectorAll('.btn-grid button').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+
+      refreshView();
+    }
+
+    function copyJson() {
+      const text = JSON.stringify(state, null, 2);
+      navigator.clipboard.writeText(text).then(() => {
+        alert("JSON copied to clipboard! Paste it into public/Projects/woodstockCafeCurtains.json");
+      });
+    }
+
+    function downloadJson() {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'woodstockCafeCurtains.json';
+      a.click();
+    }
+
+    async function sendDirect() {
+      const ip = document.getElementById('directIp').value.trim();
+      const statusEl = document.getElementById('directStatus');
+      if (!ip) return;
+      statusEl.style.display = 'block';
+      statusEl.style.color = '#8b949e';
+      statusEl.textContent = `Sending state to http://${ip}/json/state...`;
+      try {
+        const res = await fetch(`http://${ip}/json/state`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(state),
+          mode: 'cors'
+        });
+        if (res.ok) {
+          statusEl.style.color = '#3fb950';
+          statusEl.textContent = `✓ Successfully applied to Master at ${ip}!`;
+        } else {
+          statusEl.style.color = '#f85149';
+          statusEl.textContent = `Failed to apply (HTTP ${res.status})`;
+        }
+      } catch (e) {
+        statusEl.style.color = '#f85149';
+        statusEl.textContent = `Connection error: Ensure you are connected to the Master Wi-Fi / AP.`;
+      }
+    }
+
+    // Initialize on page load
+    refreshView();
+  </script>
+</body>
+</html>

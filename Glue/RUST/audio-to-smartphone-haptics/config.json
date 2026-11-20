@@ -1,0 +1,16 @@
+{
+  "enabled": false,
+  "mic_mode": false,
+  "amplitude_scale": 2.3,
+  "base_amplitude": 65,
+  "punch_duration_ms": 75,
+  "noise_floor": 0.008,
+  "min_velocity": 0.015,
+  "enable_snap_primitives": true,
+  "sub_bass_low_hz": 30,
+  "sub_bass_high_hz": 95,
+  "mid_punch_high_hz": 240,
+  "snap_high_hz": 1400,
+  "mode": "BouncingDecay",
+  "govee_sync": false
+}

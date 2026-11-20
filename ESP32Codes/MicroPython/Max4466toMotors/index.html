@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reactive Cogs</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        :root { 
+            --bg-grad: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text: #ffffff;
+            --primary: #bb86fc; 
+            --secondary: #03dac6; 
+            --danger: #cf6679; 
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: var(--bg-grad); 
+            background-attachment: fixed;
+            color: var(--text); 
+            padding: 20px; 
+            max-width: 900px; 
+            margin: 0 auto; 
+            min-height: 100vh;
+        }
+
+        .card { 
+            background: var(--glass);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px; 
+            padding: 25px; 
+            margin-bottom: 25px; 
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h1, h2 { 
+            margin-top: 0; 
+            color: var(--primary); 
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+        }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--glass-border);
+            color: #aaa;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: #000;
+            box-shadow: 0 0 15px rgba(187, 134, 252, 0.4);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Volume Meter */
+        .meter-container { 
+            background: rgba(0,0,0,0.3); 
+            height: 50px; 
+            border-radius: 25px; 
+            overflow: hidden; 
+            margin: 25px 0; 
+            position: relative; 
+            border: 1px solid var(--glass-border);
+        }
+        .meter-fill { 
+            height: 100%; 
+            background: linear-gradient(90deg, var(--secondary), var(--primary)); 
+            width: 0%; 
+            transition: width 0.1s linear; 
+            box-shadow: 0 0 20px rgba(187, 134, 252, 0.4);
+        }
+        .meter-val { 
+            position: absolute; 
+            width: 100%; 
+            text-align: center; 
+            line-height: 50px; 
+            font-weight: 600; 
+            font-size: 1.5rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            z-index: 2;
+        }
+        
+        /* Controls */
+        label {
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        input, select, button { 
+            padding: 12px 15px; 
+            border-radius: 8px; 
+            border: 1px solid var(--glass-border); 
+            background: rgba(0,0,0,0.2); 
+            color: white; 
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(0,0,0,0.4);
+        }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1em;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        option { background: #24243e; }
+        option:disabled { color: #555; background: #1a1a2e; font-style: italic; }
+
+        input[type="number"] { width: 100%; }
+        input[type="range"] { 
+            width: 100%; height: 10px; border-radius: 5px; 
+            background: rgba(0,0,0,0.3); outline: none; -webkit-appearance: none; border: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 20px; height: 20px; 
+            background: var(--secondary); border-radius: 50%; cursor: pointer; 
+            box-shadow: 0 0 10px rgba(3, 218, 198, 0.5);
+        }
+        
+        /* Buttons */
+        .btn { 
+            background: linear-gradient(135deg, #bb86fc 0%, #9a67ea 100%);
+            color: white; border: none; font-weight: 600; cursor: pointer; 
+            text-transform: uppercase; letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(187, 134, 252, 0.3);
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(187, 134, 252, 0.4); }
+        .btn-danger { 
+            background: linear-gradient(135deg, #cf6679 0%, #b0485d 100%);
+            box-shadow: 0 4px 15px rgba(207, 102, 121, 0.3);
+        }
+        .btn-full { width: 100%; }
+        
+        /* Motor List */
+        .motor-item { 
+            background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; 
+            margin-bottom: 20px; border: 1px solid var(--glass-border); 
+            transition: transform 0.2s;
+        }
+        .motor-item:hover { background: rgba(255,255,255,0.05); }
+        .grid-row { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+            gap: 15px; align-items: end; 
+        }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+        /* WiFi List */
+        .wifi-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px; border-bottom: 1px solid var(--glass-border);
+            cursor: pointer; transition: background 0.2s;
+        }
+        .wifi-item:hover { background: rgba(255,255,255,0.05); }
+        .wifi-rssi { font-size: 0.8rem; color: var(--secondary); }
+        .wifi-lock { font-size: 0.8rem; opacity: 0.5; margin-left: 5px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('motors')">Motors</button>
+        <button class="tab-btn" onclick="switchTab('wifi')">WiFi</button>
+    </div>
+
+    <!-- MOTORS TAB -->
+    <div id="tab-motors" class="tab-content active">
+        <div class="card">
+            <h2>Audio Input</h2>
+            <div class="meter-container">
+                <div class="meter-val" id="vol-text">0</div>
+                <div class="meter-fill" id="vol-bar"></div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <label>Smoothing Factor: <span id="smooth-val" style="color:var(--secondary); font-weight:bold;">0.2</span></label>
+                <input type="range" id="smoothing" min="0" max="1" step="0.05" oninput="document.getElementById('smooth-val').innerText = this.value">
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="flex-between">
+                <h2>Motor Map</h2>
+                <button class="btn" onclick="addMotor()">+ Add Motor</button>
+            </div>
+            <div id="motor-list" style="margin-top: 20px;"></div>
+            <div style="margin-top: 30px; text-align: right;">
+                <button class="btn" onclick="saveSettings()" style="width: 200px; padding: 15px; font-size: 1.1rem;">Save Motor Config</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- WIFI TAB -->
+    <div id="tab-wifi" class="tab-content">
+        <div class="card">
+            <div class="flex-between">
+                <h2>WiFi Manager</h2>
+                <button class="btn" onclick="scanWifi()">Scan Networks</button>
+            </div>
+            <div id="wifi-list" style="margin-top: 20px; max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                <div style="padding:20px; text-align:center; color:#888;">Click Scan to find networks...</div>
+            </div>
+            
+            <div id="wifi-form" style="margin-top: 20px; display: none; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px;">
+                <h3 style="margin-top:0; color:white;">Connect to <span id="target-ssid" style="color:var(--secondary)"></span></h3>
+                <label>Password</label>
+                <input type="password" id="wifi-pass" style="width:100%; margin-bottom: 15px;" placeholder="Enter Password">
+                <button class="btn btn-full" onclick="saveWifi()">Connect & Save</button>
+                <div style="margin-top: 15px; font-size: 0.9rem; color: #aaa; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; border-left: 3px solid var(--secondary);">
+                    <strong>Note:</strong> After connecting, your device will reboot. 
+                    <br>Access it on your local network at:
+                    <br><a href="http://reactiveCogs.local" style="color: var(--primary); font-weight: bold; text-decoration: none;">http://reactiveCogs.local</a>
+                    <br>(or check your router for the IP address)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let settings = { motors: [], smoothing: 0.2 };
+        const validPins = [0, 1, 2, 5, 6, 7, 8, 9, 10, 20, 21];
+
+        // --- Tabs ---
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tab).classList.add('active');
+        }
+
+        // --- Motors Logic ---
+        async function fetchStatus() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                const max = 4096;
+                const pct = Math.min(100, (data.volume / max) * 100);
+                document.getElementById('vol-bar').style.width = pct + '%';
+                document.getElementById('vol-text').innerText = data.volume;
+            } catch (e) {}
+        }
+
+        async function loadSettings() {
+            try {
+                const res = await fetch('/api/settings');
+                settings = await res.json();
+                document.getElementById('smoothing').value = settings.smoothing || 0.2;
+                document.getElementById('smooth-val').innerText = settings.smoothing || 0.2;
+                renderMotors();
+            } catch (e) { console.error(e); }
+        }
+
+        function getUsedPins() {
+            return settings.motors.map(m => m.pin);
+        }
+
+        function renderMotors() {
+            const container = document.getElementById('motor-list');
+            container.innerHTML = '';
+            
+            const usedPins = getUsedPins();
+
+            settings.motors.forEach((m, i) => {
+                const div = document.createElement('div');
+                div.className = 'motor-item';
+                
+                // Generate Options Logic
+                let optionsHtml = '';
+                validPins.forEach(p => {
+                    // Disable if used by ANOTHER motor
+                    const isUsed = usedPins.includes(p) && p !== m.pin;
+                    const selected = m.pin === p ? 'selected' : '';
+                    const disabled = isUsed ? 'disabled' : '';
+                    const label = isUsed ? `IO ${p} (Used)` : `IO ${p}`;
+                    optionsHtml += `<option value="${p}" ${selected} ${disabled}>${label}</option>`;
+                });
+
+                div.innerHTML = `
+                    <div class="flex-between" style="margin-bottom:15px;">
+                        <strong style="font-size: 1.2rem; color: var(--secondary);">Motor #${i+1}</strong>
+                        <button class="btn btn-danger" onclick="removeMotor(${i})">Remove</button>
+                    </div>
+                    <div class="grid-row">
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <label>GPIO Pin</label>
+                            <select onchange="updateMotor(${i}, 'pin', this.value)">${optionsHtml}</select>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <label>Min Vol</label>
+                            <input type="number" value="${m.min_v}" onchange="updateMotor(${i}, 'min_v', this.value)">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <label>Max Vol</label>
+                            <input type="number" value="${m.max_v}" onchange="updateMotor(${i}, 'max_v', this.value)">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <label>Min Duty %</label>
+                            <input type="number" value="${m.min_d}" onchange="updateMotor(${i}, 'min_d', this.value)">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <label>Max Duty %</label>
+                            <input type="number" value="${m.max_d}" onchange="updateMotor(${i}, 'max_d', this.value)">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function updateMotor(index, key, value) {
+            settings.motors[index][key] = parseInt(value);
+            if (key === 'pin') renderMotors(); // Re-render to update disabled states
+        }
+
+        function addMotor() {
+            // Find first available pin
+            const used = getUsedPins();
+            const firstFree = validPins.find(p => !used.includes(p));
+            
+            if (firstFree === undefined) {
+                alert("No more free pins available!");
+                return;
+            }
+
+            settings.motors.push({
+                pin: firstFree,
+                min_v: 100, max_v: 3000,
+                min_d: 0, max_d: 100
+            });
+            renderMotors();
+        }
+
+        function removeMotor(index) {
+            if(confirm('Remove this motor mapping?')) {
+                settings.motors.splice(index, 1);
+                renderMotors();
+            }
+        }
+
+        async function saveSettings() {
+            settings.smoothing = parseFloat(document.getElementById('smoothing').value);
+            try {
+                const res = await fetch('/api/settings', {
+                    method: 'POST', body: JSON.stringify(settings)
+                });
+                if(res.ok) alert('Settings Saved!');
+                else alert('Error saving settings');
+            } catch(e) { alert('Error: ' + e); }
+        }
+
+        // --- WiFi Logic ---
+        let selectedSSID = "";
+
+        async function scanWifi() {
+            const list = document.getElementById('wifi-list');
+            list.innerHTML = '<div style="padding:20px; text-align:center;">Scanning...</div>';
+            
+            try {
+                const res = await fetch('/api/wifi/scan');
+                const nets = await res.json();
+                
+                list.innerHTML = '';
+                if(nets.length === 0) {
+                    list.innerHTML = '<div style="padding:20px; text-align:center;">No networks found.</div>';
+                    return;
+                }
+                
+                // Sort by signal strength
+                nets.sort((a,b) => b.rssi - a.rssi);
+
+                nets.forEach(n => {
+                    const div = document.createElement('div');
+                    div.className = 'wifi-item';
+                    div.onclick = () => selectWifi(n.ssid);
+                    div.innerHTML = `
+                        <div>
+                            <strong>${n.ssid}</strong>
+                            ${n.auth > 0 ? '<span class="wifi-lock">🔒</span>' : ''}
+                        </div>
+                        <span class="wifi-rssi">${n.rssi} dBm</span>
+                    `;
+                    list.appendChild(div);
+                });
+            } catch(e) {
+                list.innerHTML = '<div style="padding:20px; text-align:center; color:var(--danger);">Scan failed.</div>';
+            }
+        }
+
+        function selectWifi(ssid) {
+            selectedSSID = ssid;
+            document.getElementById('target-ssid').innerText = ssid;
+            document.getElementById('wifi-form').style.display = 'block';
+            document.getElementById('wifi-pass').focus();
+        }
+
+        async function saveWifi() {
+            const pass = document.getElementById('wifi-pass').value;
+            if(!selectedSSID) return;
+            
+            try {
+                const res = await fetch('/api/wifi/save', {
+                    method: 'POST',
+                    body: JSON.stringify({ ssid: selectedSSID, password: pass })
+                });
+                if(res.ok) {
+                    alert("Credentials Saved! Rebooting to connect...");
+                } else {
+                    alert("Error saving credentials.");
+                }
+            } catch(e) { alert("Error: " + e); }
+        }
+
+        // Init
+        loadSettings();
+        setInterval(fetchStatus, 200);
+    </script>
+</body>
+</html>

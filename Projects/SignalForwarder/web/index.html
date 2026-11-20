@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignalForwarder Monitor</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts for a modern premium look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="glass-container main-layout">
+        <header>
+            <h1 class="app-title">SIGNAL FORWARDER</h1>
+            <div class="header-status">
+                <div class="conn-display">
+                    <span class="conn-label">HOST IP</span>
+                    <span class="conn-value" id="ip-display">Loading...</span>
+                </div>
+                <div class="conn-display">
+                    <span class="conn-label">BLUETOOTH</span>
+                    <span class="conn-value color-danger" id="ble-status-badge">DISCONNECTED</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- Left Side: Source Controls -->
+            <div class="left-column flex-col gap-15">
+                <!-- UDP Listeners Panel -->
+                <div class="glass-panel flex-col gap-10">
+                    <h2>UDP Network Servers</h2>
+                    <div class="control-group">
+                        <label for="osc-port">OSC PORT</label>
+                        <input type="number" id="osc-port" value="3330" style="width: 100%;">
+                    </div>
+                    <div class="control-group" style="margin-top: 5px;">
+                        <label for="artnet-port">DMX PORT</label>
+                        <input type="number" id="artnet-port" value="6454" style="width: 100%;">
+                    </div>
+                    <div class="flex-row gap-10 justify-between align-center margin-top-5">
+                        <button id="btn-start-servers" onclick="toggleServers()" class="btn btn-primary">START SERVERS</button>
+                        <div class="status-indicator">
+                            <div class="status-dot" id="server-status-dot"></div>
+                            <span id="server-status-text">OFFLINE</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MIDI Inputs Panel -->
+                <div class="glass-panel flex-col gap-10 flex-grow-1 min-h-120">
+                    <h2>MIDI Inputs</h2>
+                    <div class="source-list-container scrollable" id="midi-port-list">
+                        <div class="empty-state">No MIDI inputs found.</div>
+                    </div>
+                </div>
+
+                <!-- Audio Input Panel -->
+                <div class="glass-panel flex-col gap-10">
+                    <h2>Audio Level Capture</h2>
+                    <div class="control-group">
+                        <label for="audio-device-select">AUDIO INPUT DEVICE</label>
+                        <select id="audio-device-select" onchange="changeAudioDevice()">
+                            <option value="-1">None (Disabled)</option>
+                        </select>
+                    </div>
+                    <div class="audio-meter-container">
+                        <div class="audio-meter-label">
+                            <span>RMS AMPLITUDE</span>
+                            <span id="audio-val-display">0.00 (PWM: 0)</span>
+                        </div>
+                        <div class="meter-bar-bg">
+                            <div class="meter-bar-fill" id="audio-meter-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Signal Simulator & Test Mode Panel -->
+                <div class="glass-panel flex-col gap-10">
+                    <h2>Signal Simulator & Test Mode</h2>
+                    <div class="control-group">
+                        <label for="test-signal-type">SIMULATE PROTOCOL</label>
+                        <select id="test-signal-type" onchange="changeTestSignalType()" style="font-size: 0.75rem; padding: 6px 10px;">
+                            <option value="midi">MIDI Note</option>
+                            <option value="pwm">PWM Raw GPIO</option>
+                            <option value="osc">OSC Packet</option>
+                            <option value="dmx">DMX (Art-Net)</option>
+                        </select>
+                    </div>
+                    <div id="test-fields-container" class="flex-col gap-5">
+                        <!-- Dynamic inputs populated via JS -->
+                    </div>
+                    <div class="flex-row gap-10 justify-between align-center margin-top-5">
+                        <button id="btn-test-once" onclick="sendTestSignal()" class="btn btn-secondary btn-small">PING ONCE</button>
+                        <label class="toggle-container">
+                            <input type="checkbox" id="test-ping-toggle" onchange="toggleTestPing()">
+                            <span class="toggle-text">AUTO-PING (1S)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Serial Ports info -->
+                <div class="glass-panel flex-col gap-5">
+                    <h2>Serial COM Ports</h2>
+                    <div id="serial-port-list" class="serial-text">
+                        None detected
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Bluetooth, Routing & Logs -->
+            <div class="right-column flex-col gap-15">
+                <!-- Bluetooth Control Panel -->
+                <div class="glass-panel flex-col gap-10">
+                    <div class="flex-row justify-between align-center">
+                        <h2>Bluetooth BLE Control</h2>
+                        <span id="ble-hardware-status" class="status-text-small">Checking BLE...</span>
+                    </div>
+                    
+                    <div class="ble-layout-grid">
+                        <!-- Left: Scan & Connect -->
+                        <div class="flex-col gap-10">
+                            <div class="flex-row gap-10">
+                                <button id="btn-scan-ble" onclick="scanBLE()" class="btn btn-secondary flex-grow-1">SCAN BLE</button>
+                                <button id="btn-disconnect-ble" onclick="disconnectBLE()" disabled class="btn btn-danger">DISCONNECT</button>
+                            </div>
+                            
+                            <div class="source-list-container scrollable min-h-120 max-h-120" id="ble-device-list">
+                                <div class="empty-state">Scan for BLE devices...</div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Config Editor -->
+                        <div class="flex-col gap-5">
+                            <label for="esp32-config-editor" class="sub-label">ESP32 CONFIGURATION (JSON)</label>
+                            <textarea id="esp32-config-editor" placeholder='{"devices": [{"pin": 1, "type": "pwm"}]}'></textarea>
+                            <div class="flex-row gap-10 justify-between align-center">
+                                <button id="btn-read-config" onclick="readConfigFromESP32()" disabled class="btn btn-secondary btn-small">READ FROM ESP</button>
+                                <button id="btn-write-config" onclick="writeConfigToESP32()" disabled class="btn btn-primary btn-small">SAVE TO ESP</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Signal Routing Manager Panel -->
+                <div class="glass-panel flex-col gap-10">
+                    <div class="flex-row justify-between align-center">
+                        <h2>Signal Routing Matrix</h2>
+                        <div class="flex-row gap-5 align-center">
+                            <input type="text" id="custom-osc-ip" placeholder="Custom Target IP" style="width: 120px; font-size: 0.75rem; padding: 4px 8px;">
+                            <input type="number" id="custom-osc-port" value="3330" style="width: 65px; font-size: 0.75rem; padding: 4px 8px;">
+                            <button onclick="addCustomDestination()" class="btn btn-secondary btn-small">ADD OSC</button>
+                        </div>
+                    </div>
+                    
+                    <div class="ble-layout-grid">
+                        <!-- Left: Create Route -->
+                        <div class="flex-col gap-5">
+                            <div class="control-group">
+                                <label for="route-source-select">SELECT SOURCE SIGNAL</label>
+                                <select id="route-source-select" style="font-size: 0.75rem; padding: 6px 10px;">
+                                    <!-- Dynamic -->
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="route-dest-select">SELECT OUTPUT TARGET</label>
+                                <select id="route-dest-select" style="font-size: 0.75rem; padding: 6px 10px;">
+                                    <!-- Dynamic -->
+                                </select>
+                            </div>
+                            <button onclick="createRouteLink()" class="btn btn-primary btn-small margin-top-5">LINK SOURCE TO TARGET</button>
+                        </div>
+
+                        <!-- Right: Active Connections -->
+                        <div class="flex-col gap-5">
+                            <label class="sub-label">ACTIVE CONNECTIONS MATRIX</label>
+                            <div class="source-list-container scrollable min-h-80 max-h-80" id="active-routes-list">
+                                <div class="empty-state">No signal routes linked yet.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Log Panel -->
+                <div class="glass-panel flex-col flex-grow-2">
+                    <div class="log-header">
+                        <h2>MESSAGE CONSOLE LOG</h2>
+                        <div class="flex-row gap-10 align-center">
+                            <span class="log-count" id="log-count">0 messages</span>
+                            <button id="btn-clear" onclick="clearLog()" class="btn btn-secondary btn-small">CLEAR</button>
+                        </div>
+                    </div>
+                    <div id="log-container" class="scrollable">
+                        <div class="empty-state">Waiting for signals (MIDI, OSC, Art-Net/DMX)...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

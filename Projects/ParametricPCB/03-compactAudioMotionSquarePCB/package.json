@@ -1,0 +1,10 @@
+{
+  "name": "03-compact-audio-motion-square-pcb",
+  "version": "1.0.0",
+  "description": "Compact Dense Square Audio & Motion Reactive Controller PCB (38x38mm)",
+  "type": "module",
+  "scripts": {
+    "check-overlays": "node ../shared/check-overlays.mjs",
+    "test": "node ../shared/check-overlays.mjs"
+  }
+}

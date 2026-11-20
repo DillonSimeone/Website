@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Constrained Hand Pose STL</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<style>
+body {margin:0;padding:20px;font-family:Arial,sans-serif;background:#1a1a1a;color:white;}
+.container {display:flex;gap:20px;max-width:1400px;margin:0 auto;}
+.panel {background:#2a2a2a;padding:20px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.3);}
+.camera-panel {flex:1;}
+.preview-panel {flex:1;}
+.controls {margin-bottom:20px;text-align:center;}
+button {background:#4a90e2;color:white;border:none;padding:12px 24px;margin:5px;border-radius:6px;cursor:pointer;font-size:16px;transition:background 0.3s;}
+button:hover {background:#357abd;}
+button:disabled {background:#666;cursor:not-allowed;}
+.capture-btn {background:#e74c3c;font-size:18px;padding:15px 30px;font-weight:bold;}
+.capture-btn:hover {background:#c0392b;}
+#videoElement,#canvasElement,#preview3D {width:100%;height:400px;border-radius:10px;object-fit:cover;background:#000;}
+.status {text-align:center;margin-top:10px;padding:10px;border-radius:5px;background:#333;}
+.hand-detected {background:#27ae60 !important;}
+.info {background:#34495e;padding:15px;border-radius:8px;margin-top:20px;}
+h1 {text-align:center;color:#4a90e2;margin-bottom:30px;}
+h2 {color:#e67e22;margin-bottom:15px;}
+</style>
+</head>
+<body>
+<h1>🖐️ Constrained Hand Pose STL</h1>
+<div class="container">
+<div class="panel camera-panel">
+<h2>Camera Feed</h2>
+<div class="controls">
+<button id="startBtn">Start Camera</button>
+<button id="captureBtn" class="capture-btn" disabled>📸 Capture Hand (SPACE)</button>
+</div>
+<video id="videoElement" autoplay muted></video>
+<canvas id="canvasElement"></canvas>
+<div id="status" class="status">Camera not started</div>
+</div>
+<div class="panel preview-panel">
+<h2>3D Hand Model</h2>
+<div class="controls">
+<button id="downloadBtn" disabled>⬇️ Download STL</button>
+<button id="clearBtn">🗑️ Clear Model</button>
+</div>
+<div id="preview3D"></div>
+<div class="info">
+<h3>Instructions:</h3>
+<ul>
+<li>Click "Start Camera" to begin hand tracking</li>
+<li>Show your hand to the camera</li>
+<li>Press SPACEBAR or click "Capture Hand" when ready</li>
+<li>View the 3D model on the right</li>
+<li>Download as STL for 3D printing</li>
+</ul>
+<p><strong>Tips:</strong> Good lighting and clear hand visibility work best!</p>
+</div>
+</div>
+</div>
+
+<script>
+let camera,hands,scene,renderer,handMesh,handGeometry;
+let latestHandLandmarks=null;
+
+function init3D(){
+    scene=new THREE.Scene(); scene.background=new THREE.Color(0x222222);
+    const camera3D=new THREE.PerspectiveCamera(75,1,0.1,1000); camera3D.position.set(0,0,2);
+    renderer=new THREE.WebGLRenderer({antialias:true}); 
+    const container=document.getElementById('preview3D'); 
+    renderer.setSize(container.clientWidth,container.clientHeight); 
+    container.appendChild(renderer.domElement);
+    scene.add(new THREE.AmbientLight(0x404040,0.7));
+    const dir=new THREE.DirectionalLight(0xffffff,0.8); dir.position.set(1,1,1); scene.add(dir);
+
+    let isMouseDown=false,mouseX=0,mouseY=0,targetX=0,targetY=0,rotX=0,rotY=0;
+    renderer.domElement.addEventListener('mousedown',e=>{isMouseDown=true; mouseX=e.clientX; mouseY=e.clientY;});
+    document.addEventListener('mousemove',e=>{if(!isMouseDown) return; targetY+=(e.clientX-mouseX)*0.01; targetX+=(e.clientY-mouseY)*0.01; mouseX=e.clientX; mouseY=e.clientY;});
+    document.addEventListener('mouseup',()=>{isMouseDown=false;});
+
+    function animate(){
+        requestAnimationFrame(animate); rotX+=(targetX-rotX)*0.1; rotY+=(targetY-rotY)*0.1;
+        if(handMesh){handMesh.rotation.x=rotX; handMesh.rotation.y=rotY;}
+        renderer.render(scene,camera3D);
+    }
+    animate();
+}
+
+function initHandTracking(){
+    hands=new Hands({locateFile:file=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+    hands.setOptions({maxNumHands:1,modelComplexity:1,minDetectionConfidence:0.5,minTrackingConfidence:0.5});
+    hands.onResults(onHandResults);
+}
+
+function onHandResults(results){
+    const canvas=document.getElementById('canvasElement'); const ctx=canvas.getContext('2d');
+    canvas.width=results.image.width; canvas.height=results.image.height;
+    ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(results.image,0,0,canvas.width,canvas.height);
+    const status=document.getElementById('status');
+    if(results.multiHandLandmarks && results.multiHandLandmarks.length>0){
+        status.textContent='Hand detected - Ready to capture!'; status.className='status hand-detected';
+        document.getElementById('captureBtn').disabled=false; latestHandLandmarks=results.multiHandLandmarks[0];
+        drawConnectors(ctx,latestHandLandmarks,HAND_CONNECTIONS,{color:'#00FF00',lineWidth:2});
+        drawLandmarks(ctx,latestHandLandmarks,{color:'#FF0000',lineWidth:2});
+    } else {status.textContent='No hand detected'; status.className='status'; document.getElementById('captureBtn').disabled=true; latestHandLandmarks=null;}
+}
+
+// Finger constraint function
+function applyJointConstraints(base,pip,dip,tip){
+    // Vector from base to pip
+    const v1=new THREE.Vector3().subVectors(pip,base);
+    // Vector from pip to dip
+    const v2=new THREE.Vector3().subVectors(dip,pip);
+    // Vector from dip to tip
+    const v3=new THREE.Vector3().subVectors(tip,dip);
+
+    const maxAngle=Math.PI; // 180 degrees straight
+    const clamp=(vA,vB)=>{
+        const angle=vA.angleTo(vB);
+        if(angle>maxAngle){
+            vB.copy(vA.clone().multiplyScalar(vB.length()/vA.length()));
+        }
+    };
+    clamp(v1,v2); clamp(v2,v3);
+
+    dip.copy(pip).add(v2);
+    tip.copy(dip).add(v3);
+}
+
+// Create constrained hand
+function create3DHandFromLandmarks(landmarks){
+    if(!landmarks||landmarks.length<21) return;
+    if(handMesh){scene.remove(handMesh);}
+    const scale=2;
+    const vertices=landmarks.map(l=>new THREE.Vector3((l.x-0.5)*scale,-(l.y-0.5)*scale,(l.z-0.5)*scale*2));
+
+    // Apply constraints per finger
+    const fingers=[[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16],[17,18,19,20]];
+    fingers.forEach(f=>{
+        applyJointConstraints(vertices[f[0]],vertices[f[1]],vertices[f[2]],vertices[f[3]]);
+    });
+
+    // Create geometry
+    const geometries=[];
+    // Forearm
+    const wrist=vertices[0];
+    const forearm=new THREE.CylinderGeometry(0.08,0.08,0.3,12);
+    forearm.translate(wrist.x,wrist.y-0.15,wrist.z);
+    geometries.push(forearm);
+
+    // Fingers
+    fingers.forEach(f=>{
+        for(let j=0;j<f.length;j++){
+            const start=j===0?0:f[j-1]; const end=f[j];
+            const s=vertices[start]; const e=vertices[end];
+            const length=s.distanceTo(e);
+            const cyl=new THREE.CylinderGeometry(0.04,0.05,length,12);
+            const mid=new THREE.Vector3().addVectors(s,e).multiplyScalar(0.5);
+            const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),new THREE.Vector3().subVectors(e,s).normalize());
+            const m=new THREE.Matrix4(); m.makeRotationFromQuaternion(q); m.setPosition(mid); cyl.applyMatrix4(m);
+            geometries.push(cyl);
+        }
+    });
+
+    // Merge
+    handGeometry=THREE.BufferGeometryUtils.mergeBufferGeometries(geometries.map(g=>g.toNonIndexed()),false);
+    handMesh=new THREE.Mesh(handGeometry,new THREE.MeshStandardMaterial({color:0xfdbcb4}));
+    scene.add(handMesh);
+    document.getElementById('downloadBtn').disabled=false;
+}
+
+// STL download
+function downloadSTL(){
+    if(!handGeometry) return;
+    const exporter=new THREE.STLExporter();
+    const stlString=exporter.parse(handMesh);
+    const blob=new Blob([stlString],{type:'application/octet-stream'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=`hand_pose_${Date.now()}.stl`; a.click();
+    URL.revokeObjectURL(url);
+}
+
+// Event listeners
+document.getElementById('startBtn').addEventListener('click',async()=>{
+    try{
+        const stream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480}});
+        const video=document.getElementById('videoElement'); video.srcObject=stream;
+        camera=new Camera(video,{onFrame:async()=>{await hands.send({image:video});},width:640,height:480});
+        camera.start(); document.getElementById('startBtn').disabled=true; document.getElementById('status').textContent='Camera started - Show your hand!';
+    }catch(err){alert('Could not access camera: '+err.message);}
+});
+document.getElementById('captureBtn').addEventListener('click',()=>{if(latestHandLandmarks) create3DHandFromLandmarks(latestHandLandmarks);});
+document.getElementById('downloadBtn').addEventListener('click',downloadSTL);
+document.getElementById('clearBtn').addEventListener('click',()=>{if(handMesh){scene.remove(handMesh);handMesh=null;handGeometry=null;document.getElementById('downloadBtn').disabled=true;}});
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&latestHandLandmarks){e.preventDefault();create3DHandFromLandmarks(latestHandLandmarks);}});
+
+// Initialize
+init3D(); initHandTracking();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/BufferGeometryUtils.js"></script>
+</body>
+</html>

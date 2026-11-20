@@ -1,0 +1,193 @@
+/* ==========================================================================
+   DJ DEAF WISH // Base Reset, Theme Tokens, Viewport & Scroll Track
+   ========================================================================== */
+
+:root {
+  --neon-pink: #ff0055;
+  --neon-cyan: #00f0ff;
+  --neon-gold: #ffaa00;
+  --neon-purple: #9d00ff;
+  --neon-violet: #d900ff;
+  --bg-dark: #0c0718;
+  --theme-accent: #00f0ff;
+  --font-street: 'Permanent Marker', 'Impact', sans-serif;
+  --font-tech: 'Courier Prime', monospace;
+  --font-clean: 'Montserrat', sans-serif;
+}
+
+body[data-visual-mode="synthwave"] {
+  --bg-dark: #160526;
+  --theme-accent: #ff2a9d;
+}
+
+body[data-visual-mode="thermal"] {
+  --bg-dark: #140406;
+  --theme-accent: #ff7b1c;
+}
+
+body[data-visual-mode="uv_acid"] {
+  --bg-dark: #06041a;
+  --theme-accent: #22ffaa;
+}
+
+body[data-visual-mode="monochrome"] {
+  --bg-dark: #070709;
+  --theme-accent: #e8e8f0;
+}
+
+body[data-visual-mode="solar"] {
+  --bg-dark: #160d05;
+  --theme-accent: #ffd056;
+}
+
+body[data-visual-mode="void"] {
+  --bg-dark: #030208;
+  --theme-accent: #b84cff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  background-color: var(--bg-dark);
+  color: #fff;
+  font-family: var(--font-clean);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+body.stage-mode {
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ==========================================================================
+   BOOT VEIL
+   ========================================================================== */
+#boot-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  background: #050309;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: opacity 0.9s ease;
+}
+
+#boot-veil.gone {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.boot-title {
+  font-family: var(--font-clean);
+  font-weight: 900;
+  font-style: italic;
+  font-size: clamp(1.6rem, 5vw, 3rem);
+  letter-spacing: 2px;
+  color: #07060c;
+  -webkit-text-stroke: 2px #fff;
+}
+
+.boot-sub {
+  font-family: var(--font-tech);
+  font-size: 0.75rem;
+  letter-spacing: 3px;
+  color: var(--neon-violet);
+}
+
+/* ==========================================================================
+   FIXED STAGE VIEWPORT (WebGL + CSS3D + overlays)
+   ========================================================================== */
+#stage-viewport {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  transform-origin: 0 0;
+  overflow: hidden;
+  overflow: clip;
+  z-index: 1;
+}
+
+#three-container {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  touch-action: pan-y;
+}
+
+#three-container canvas {
+  display: block;
+}
+
+#css3d-container {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.css3d-layer {
+  position: absolute !important;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Scroll track (8 discrete camera stops) */
+#scroll-spacer {
+  position: relative;
+  height: 800vh;
+  pointer-events: none;
+}
+
+.scroll-anchor {
+  position: absolute;
+  left: 0;
+  width: 1px;
+  height: 1px;
+}
+
+#panel-source {
+  position: absolute;
+  left: -10000px;
+  top: 0;
+}
+
+/* ==========================================================================
+   REDUCED MOTION ACCESSIBILITY
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.08s !important;
+  }
+}

@@ -1,0 +1,63 @@
+Test Plan - Lab 5 Debugging
+
+1. carousel.js
+Type of error: Syntax error
+Location: Line 27
+Problem: Arrow function was written as () = { instead of () => {.
+Fix: Changed = to =>.
+Testing:
+- Open index.html.
+- Valid case: Click the next button.
+  Expected: Carousel moves to the right without syntax errors.
+
+2. carousel.js
+Type of error: Runtime error
+Location: Line 24
+Problem: Function name was misspelled as updateCarosel().
+Fix: Fixed spelling to updateCarousel().
+Testing:
+- Valid case: Click next, then click prev.
+  Expected: Carousel moves back without crashing.
+- Invalid case before fix: Clicking prev crashed with ReferenceError.
+
+3. gallery.js
+Type of error: Syntax error
+Location: Line 3
+Problem: Missing closing parenthesis in for loop header (i++ {).
+Fix: Added closing parenthesis (i++) {.
+Testing:
+- Open index.html.
+- Valid case: View page.
+  Expected: Script runs and console logs "Loaded Javascript".
+
+4. gallery.js
+Type of error: Logic error
+Location: Line 6
+Problem: Used = instead of +=, so only the last anime showed.
+Fix: Changed = to += to keep all items.
+Testing:
+- Valid case: Check the gallery on index.html.
+  Expected: All 6 anime cards show up instead of just one.
+
+5. search.js
+Type of error: Runtime error
+Location: Line 1
+Problem: Input id had lowercase i (#searchTextinput).
+Fix: Changed to #searchTextInput to match HTML.
+Testing:
+- Valid case: Click the CLEAR button.
+  Expected: Input box clears without crashing.
+- Invalid case before fix: Clicking CLEAR crashed with TypeError because variable was null.
+
+6. search.js
+Type of error: Type error
+Location: Line 40
+Problem: Called .toLowerCase() on the input element instead of its text.
+Fix: Changed to searchTextInput.value.toLowerCase().
+Testing:
+- Valid case: Type "action" and click SEARCH.
+  Expected: Filters and shows matching anime.
+- Valid case: Leave box empty and click SEARCH.
+  Expected: Shows all anime without crashing.
+- Invalid/no match case: Type "123xyz" and click SEARCH.
+  Expected: Shows zero results without error.
