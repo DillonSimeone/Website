@@ -206,3 +206,40 @@ fn fft_in_place(buf: &mut [Complex; FFT_N], inverse: bool) {
         }
     }
 }
+
+/// Fallback energy/SNR VAD wrapping [`VoiceIsolator`] for comparison or missing-ONNX fallback.
+pub struct LegacySnrVad {
+    isolator: VoiceIsolator,
+    in_speech: bool,
+}
+
+impl LegacySnrVad {
+    pub fn new() -> Self {
+        Self {
+            isolator: VoiceIsolator::new(),
+            in_speech: false,
+        }
+    }
+}
+
+impl crate::stream_decoder::VadModel for LegacySnrVad {
+    fn is_speech(&mut self, frame_512: &[f32]) -> bool {
+        let mut buf = [0i16; FFT_N];
+        for (dst, &src) in buf.iter_mut().zip(frame_512.iter()) {
+            *dst = (src.clamp(-1.0, 1.0) * 32767.0) as i16;
+        }
+        let (snr, rms) = self.isolator.process_chunk(&mut buf);
+        let active = if self.in_speech {
+            snr >= 1.25 && rms >= 120.0
+        } else {
+            snr >= 1.50 && rms >= 160.0
+        };
+        self.in_speech = active;
+        active
+    }
+
+    fn reset(&mut self) {
+        self.isolator = VoiceIsolator::new();
+        self.in_speech = false;
+    }
+}

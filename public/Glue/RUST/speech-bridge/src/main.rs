@@ -1,15 +1,5 @@
 #![windows_subsystem = "windows"]
 
-mod denoise;
-mod icon;
-mod icon_gen;
-mod live_captions;
-mod meter;
-mod stt;
-mod tts;
-mod ui;
-mod win_util;
-
 use windows::core::PCWSTR;
 use windows::Win32::Foundation::{LPARAM, WPARAM};
 use windows::Win32::Graphics::Dwm::{DwmSetWindowAttribute, DWMWA_USE_IMMERSIVE_DARK_MODE};
@@ -24,9 +14,9 @@ use windows::Win32::UI::WindowsAndMessaging::{
     WINDOW_EX_STYLE, WM_SETICON, WNDCLASSW, WS_OVERLAPPEDWINDOW, WS_VISIBLE,
 };
 
-use crate::icon::create_cyber_icon;
-use crate::ui::{main_wnd_proc, C_BG};
-use crate::win_util::{to_wide, ComGuard};
+use speech_bridge::icon::create_cyber_icon;
+use speech_bridge::ui::{main_wnd_proc, C_BG};
+use speech_bridge::win_util::{to_wide, ComGuard};
 
 fn main() {
     unsafe {
@@ -35,7 +25,7 @@ fn main() {
 
         let hinstance = GetModuleHandleW(None).unwrap_or_default();
         let class_name = to_wide("GlueSpeechBridgeWindow");
-        let title = to_wide("SPEECH_BRIDGE // GLUE_NET");
+        let title = to_wide("SPEECH_BRIDGE // RTX NEURAL CAPTIONING");
 
         let icon_big = create_cyber_icon(32);
         let icon_small = create_cyber_icon(16);
@@ -59,15 +49,20 @@ fn main() {
             WS_OVERLAPPEDWINDOW | WS_VISIBLE,
             CW_USEDEFAULT,
             CW_USEDEFAULT,
-            980,
-            640,
+            1120,
+            700,
             None,
             None,
             hinstance,
             None,
         ) {
             if let Some(ic) = icon_big {
-                SendMessageW(hwnd, WM_SETICON, WPARAM(ICON_BIG as usize), LPARAM(ic.0 as isize));
+                SendMessageW(
+                    hwnd,
+                    WM_SETICON,
+                    WPARAM(ICON_BIG as usize),
+                    LPARAM(ic.0 as isize),
+                );
             }
             if let Some(ic) = icon_small {
                 SendMessageW(

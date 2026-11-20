@@ -1,21 +1,27 @@
-//! Leet-hacker double-buffered Win32 GDI UI with clickable TTS/STT cards,
-//! WASAPI loopback toggle, voice speed control, export, and always-on-top pin.
+//! Cyber-terminal double-buffered Win32 GDI UI with:
+//! - Multi-engine RTX GPU STT selector (Parakeet TDT 0.6B v2, Distil-Whisper v3.5, Win11, Legacy)
+//! - Multi-mic WASAPI picker (1 mic, 2+ simultaneous mics with active-SNR switching, or System Loopback)
+//! - Quick Denoise mode toggle (OFF / BAL / MAX) & color-coded Speaker Labels ([SPK 1..N])
+//! - Two-tone LocalAgreement streaming hypothesis (bright locked words + amber tentative tail)
+//! - Live Signal/SNR health badge & active-mic telemetry
+//! - Auto-gated STT during outbound Piper/WinRT TTS playback
+//! - Scalable caption font size (A-/A+ buttons and Ctrl+/Ctrl-/Ctrl+0)
 
 use std::fs::{self, File};
 use std::io::Write;
 use std::sync::Arc;
 use windows::core::PCWSTR;
 use windows::Win32::Foundation::{
-    COLORREF, HANDLE, HINSTANCE, HWND, LPARAM, LRESULT, POINT, RECT, WPARAM,
+    COLORREF, HANDLE, HINSTANCE, HWND, LPARAM, LRESULT, POINT, RECT, SIZE, WPARAM,
 };
 use windows::Win32::Graphics::Gdi::{
     BeginPaint, BitBlt, ClientToScreen, CreateCompatibleBitmap, CreateCompatibleDC, CreateFontW,
     CreatePen, CreateSolidBrush, DeleteDC, DeleteObject, DrawTextW, Ellipse, EndPaint, FillRect,
-    FrameRect, IntersectClipRect, InvalidateRect, RestoreDC, SaveDC, ScreenToClient, SelectObject,
-    SetBkColor, SetBkMode, SetTextColor, CLEARTYPE_QUALITY, CLIP_DEFAULT_PRECIS, DEFAULT_CHARSET,
-    DEFAULT_PITCH, DT_CALCRECT, DT_CENTER, DT_LEFT, DT_NOPREFIX, DT_RIGHT, DT_SINGLELINE,
-    DT_VCENTER, DT_WORDBREAK, FF_MODERN, FW_BOLD, FW_NORMAL, HBRUSH, HDC, HFONT,
-    OUT_DEFAULT_PRECIS, PAINTSTRUCT, PS_SOLID, SRCCOPY, TRANSPARENT,
+    FrameRect, GetTextExtentPoint32W, IntersectClipRect, InvalidateRect, RestoreDC, SaveDC,
+    ScreenToClient, SelectObject, SetBkColor, SetBkMode, SetTextColor, CLEARTYPE_QUALITY,
+    CLIP_DEFAULT_PRECIS, DEFAULT_CHARSET, DEFAULT_PITCH, DT_CALCRECT, DT_CENTER, DT_LEFT,
+    DT_NOPREFIX, DT_RIGHT, DT_SINGLELINE, DT_VCENTER, DT_WORDBREAK, FF_MODERN, FW_BOLD, FW_NORMAL,
+    HBRUSH, HDC, HFONT, OUT_DEFAULT_PRECIS, PAINTSTRUCT, PS_SOLID, SRCCOPY, TRANSPARENT,
 };
 use windows::Win32::System::DataExchange::{
     CloseClipboard, EmptyClipboard, OpenClipboard, SetClipboardData,
@@ -23,7 +29,8 @@ use windows::Win32::System::DataExchange::{
 use windows::Win32::System::Memory::{GlobalAlloc, GlobalLock, GlobalUnlock, GMEM_MOVEABLE};
 use windows::Win32::System::SystemInformation::GetLocalTime;
 use windows::Win32::UI::Input::KeyboardAndMouse::{
-    GetKeyState, SetFocus, VK_CONTROL, VK_ESCAPE, VK_SHIFT,
+    GetKeyState, SetFocus, VK_ADD, VK_CONTROL, VK_ESCAPE, VK_OEM_MINUS, VK_OEM_PLUS, VK_SHIFT,
+    VK_SUBTRACT,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     AppendMenuW, CallWindowProcW, CreatePopupMenu, CreateWindowExW, DefWindowProcW, DestroyMenu,
@@ -31,15 +38,17 @@ use windows::Win32::UI::WindowsAndMessaging::{
     GetWindowTextW, LoadCursorW, MoveWindow, PostMessageW, PostQuitMessage, SendMessageW,
     SetCursor, SetWindowLongPtrW, SetWindowPos, SetWindowTextW, TrackPopupMenu, ES_AUTOVSCROLL,
     ES_MULTILINE, ES_WANTRETURN, GWLP_USERDATA, GWLP_WNDPROC, HMENU, HWND_NOTOPMOST, HWND_TOPMOST,
-    IDC_HAND, MF_CHECKED, MF_STRING, MF_UNCHECKED, SWP_NOMOVE, SWP_NOSIZE, TPM_LEFTALIGN,
-    TPM_RETURNCMD, TPM_TOPALIGN, WM_APP, WM_CHAR, WM_CREATE, WM_CTLCOLOREDIT, WM_DESTROY,
-    WM_ERASEBKGND, WM_KEYDOWN, WM_LBUTTONDOWN, WM_MOUSEMOVE, WM_MOUSEWHEEL, WM_NCDESTROY,
-    WM_PAINT, WM_SETCURSOR, WM_SETFONT, WM_SIZE, WNDPROC, WS_CHILD, WS_TABSTOP, WS_VISIBLE,
+    IDC_HAND, MF_CHECKED, MF_SEPARATOR, MF_STRING, MF_UNCHECKED, SWP_NOMOVE, SWP_NOSIZE,
+    TPM_LEFTALIGN, TPM_RETURNCMD, TPM_TOPALIGN, WM_APP, WM_CHAR, WM_CREATE, WM_CTLCOLOREDIT,
+    WM_DESTROY, WM_ERASEBKGND, WM_KEYDOWN, WM_LBUTTONDOWN, WM_MOUSEMOVE, WM_MOUSEWHEEL,
+    WM_NCDESTROY, WM_PAINT, WM_SETCURSOR, WM_SETFONT, WM_SIZE, WNDPROC, WS_CHILD, WS_TABSTOP,
+    WS_VISIBLE,
 };
 
-use crate::meter::{AudioSource, MicMeter, BANDS};
+use crate::meter::{list_input_devices, AudioSource, MicMeter, SignalStatus, BANDS};
+use crate::stream_decoder::DenoiseMode;
 use crate::stt::{SttBackend, SttEngine, SttEvent, SttEventQueue};
-use crate::tts::{list_local_voices, TtsEngine, VoiceEntry};
+use crate::tts::{list_local_voices, TtsEchoGate, TtsEngine, VoiceEntry};
 use crate::win_util::to_wide;
 
 pub const WM_APP_STT_EVENT: u32 = WM_APP + 1;
@@ -49,6 +58,7 @@ pub const WM_APP_METER_TICK: u32 = WM_APP + 4;
 const WM_APP_STOP_TTS: u32 = WM_APP + 5;
 const WM_APP_TOGGLE_PIN: u32 = WM_APP + 6;
 pub const WM_APP_BENCH_PROGRESS: u32 = WM_APP + 7;
+const WM_APP_FONT_DELTA: u32 = WM_APP + 8;
 
 const ID_EDIT_INPUT: usize = 201;
 const CF_UNICODETEXT: u32 = 13;
@@ -66,19 +76,51 @@ const C_GREEN_DIM: COLORREF = COLORREF(0x00589E3A); // #3A9E58
 const C_GREEN_BG: COLORREF = COLORREF(0x0018240A); // #0A2418
 const C_CYAN: COLORREF = COLORREF(0x00FFD400); // #00D4FF
 const C_RED: COLORREF = COLORREF(0x005C3BFF); // #FF3B5C
+const C_RED_BG: COLORREF = COLORREF(0x0018102A); // #2A1018
 const C_AMBER: COLORREF = COLORREF(0x0033B8FF); // #FFB833
+const C_AMBER_BG: COLORREF = COLORREF(0x0010202C); // #2C2010
+const C_VIOLET: COLORREF = COLORREF(0x00FF7DC7); // #C77DFF
+const C_CORAL: COLORREF = COLORREF(0x008B6BFF); // #FF6B8B
+const C_SKY: COLORREF = COLORREF(0x00DDEF72); // #72EFDD
 const C_TEXT: COLORREF = COLORREF(0x00F4FFE6); // #E6FFF4
 const C_TEXT_CYAN: COLORREF = COLORREF(0x00F2E6C9); // #C9E6F2
 const C_MUTED: COLORREF = COLORREF(0x008A7A62); // #627A8A
+
+fn speaker_color(id: Option<u8>) -> COLORREF {
+    match id {
+        Some(1) => C_CYAN,
+        Some(2) => C_GREEN,
+        Some(3) => C_AMBER,
+        Some(4) => C_VIOLET,
+        Some(5) => C_CORAL,
+        Some(6) => C_SKY,
+        Some(n) => match n % 6 {
+            0 => C_SKY,
+            1 => C_CYAN,
+            2 => C_GREEN,
+            3 => C_AMBER,
+            4 => C_VIOLET,
+            _ => C_CORAL,
+        },
+        None => C_CYAN,
+    }
+}
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum HitTarget {
     None,
     BtnMic,
     BtnEngine,
-    BtnSource,
+    BtnInputPicker,
+    BtnDenoise,
+    BtnSpeakers,
+    BtnLlm,
+    BtnFontDown,
+    BtnFontUp,
+    HealthBadge,
+    MeterBadge,
     BtnVoice,
-    BtnBench,
+    BtnTestVoices,
     BtnRate,
     BtnPin,
     BtnExport,
@@ -88,7 +130,15 @@ enum HitTarget {
     ReplyCard(usize),
 }
 
-struct MessageItem {
+struct HeardItem {
+    card_id: u64,
+    time: String,
+    text: String,
+    speaker_id: Option<u8>,
+    llm_polished: bool,
+}
+
+struct ReplyItem {
     time: String,
     text: String,
 }
@@ -97,8 +147,11 @@ pub struct AppState {
     hwnd: HWND,
     edit_input: HWND,
     font_mono: HFONT,
+    font_mono_active: HFONT,
+    font_caption: HFONT,
     font_bold: HFONT,
     font_small: HFONT,
+    caption_font_px: i32,
     brush_input: HBRUSH,
     voices: Vec<VoiceEntry>,
     selected_voice: usize,
@@ -106,6 +159,9 @@ pub struct AppState {
     pinned: bool,
     source: AudioSource,
     backend: SttBackend,
+    denoise_mode: DenoiseMode,
+    speaker_labels: bool,
+    llm_polish: bool,
     tts: TtsEngine,
     stt: SttEngine,
     stt_queue: Arc<SttEventQueue>,
@@ -114,18 +170,31 @@ pub struct AppState {
     tts_speaking: bool,
     bench_active: bool,
     active_reply_idx: Option<usize>,
+    active_tts_word: Option<usize>,
     status_text: String,
-    heard_items: Vec<MessageItem>,
-    current_hypothesis: String,
-    reply_items: Vec<MessageItem>,
+    health_buf: String,
+    heard_items: Vec<HeardItem>,
+    stable_hypothesis: String,
+    draft_hypothesis: String,
+    reply_items: Vec<ReplyItem>,
     left_scroll: i32,
     right_scroll: i32,
     left_max_scroll: i32,
     right_max_scroll: i32,
     hover: HitTarget,
+    hover_pt: POINT,
+    // Row 1 controls (STT & Audio Health)
     rect_mic: RECT,
     rect_engine: RECT,
-    rect_source: RECT,
+    rect_input_picker: RECT,
+    rect_denoise: RECT,
+    rect_speakers: RECT,
+    rect_llm: RECT,
+    rect_font_down: RECT,
+    rect_font_up: RECT,
+    rect_health: RECT,
+    rect_meter: RECT,
+    // Row 2 controls (TTS & Session)
     rect_voice: RECT,
     rect_bench: RECT,
     rect_rate: RECT,
@@ -133,7 +202,7 @@ pub struct AppState {
     rect_export: RECT,
     rect_clear: RECT,
     rect_status: RECT,
-    rect_meter: RECT,
+    // Main panes
     rect_speak: RECT,
     rect_left_feed: RECT,
     rect_right_feed: RECT,
@@ -165,6 +234,25 @@ impl AppState {
         }
     }
 
+    fn adjust_caption_font(&mut self, delta: i32) {
+        let next = if delta == 0 {
+            17
+        } else {
+            (self.caption_font_px + delta).clamp(13, 34)
+        };
+        if next == self.caption_font_px {
+            return;
+        }
+        self.caption_font_px = next;
+        unsafe {
+            let new_font = make_font("Consolas", -next, FW_NORMAL.0 as i32);
+            let _ = DeleteObject(self.font_caption);
+            self.font_caption = new_font;
+        }
+        self.status_text = format!(">> CAPTION FONT: {}px", self.caption_font_px);
+        self.redraw();
+    }
+
     fn toggle_mic(&mut self) {
         if self.mic_active {
             self.mic_active = false;
@@ -172,35 +260,187 @@ impl AppState {
             self.stt.stop();
         } else {
             self.mic_active = true;
-            self.status_text = ">> ARMING...".to_string();
+            self.status_text = format!(">> ARMING {}...", self.backend.short_label());
             self.stt.start(self.backend);
         }
         self.redraw();
     }
 
-    fn toggle_engine(&mut self) {
-        self.backend = match self.backend {
-            SttBackend::Win11Captions => SttBackend::WhisperLive,
-            SttBackend::WhisperLive => SttBackend::Win11Captions,
+    fn show_engine_menu(&mut self) {
+        unsafe {
+            let Ok(menu) = CreatePopupMenu() else {
+                return;
+            };
+            for (i, &b) in SttBackend::ALL.iter().enumerate() {
+                let wide = to_wide(b.menu_label());
+                let flags = MF_STRING
+                    | if b == self.backend {
+                        MF_CHECKED
+                    } else {
+                        MF_UNCHECKED
+                    };
+                let _ = AppendMenuW(menu, flags, i + 1, PCWSTR(wide.as_ptr()));
+            }
+            let mut pt = POINT {
+                x: self.rect_engine.left,
+                y: self.rect_engine.bottom + 2,
+            };
+            let _ = ClientToScreen(self.hwnd, &mut pt);
+            let cmd = TrackPopupMenu(
+                menu,
+                TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RETURNCMD,
+                pt.x,
+                pt.y,
+                0,
+                self.hwnd,
+                None,
+            );
+            let _ = DestroyMenu(menu);
+            if cmd.0 > 0 {
+                let idx = (cmd.0 as usize) - 1;
+                if let Some(&chosen) = SttBackend::ALL.get(idx) {
+                    self.backend = chosen;
+                    if self.mic_active {
+                        self.status_text = format!(">> LOADING {}...", chosen.short_label());
+                        self.stt.start(chosen);
+                    } else {
+                        self.status_text = format!(">> ENG: {}", chosen.short_label());
+                    }
+                    self.redraw();
+                }
+            }
+        }
+    }
+
+    fn show_input_picker_menu(&mut self) {
+        let devices = list_input_devices();
+        let selected = self.meter.selected_mics();
+
+        unsafe {
+            let Ok(menu) = CreatePopupMenu() else {
+                return;
+            };
+            // Item 1: System Audio Loopback
+            let sys_lbl = to_wide("System Audio Loopback (Calls / Videos / Music)");
+            let sys_flags = MF_STRING
+                | if self.source == AudioSource::Loopback {
+                    MF_CHECKED
+                } else {
+                    MF_UNCHECKED
+                };
+            let _ = AppendMenuW(menu, sys_flags, 1, PCWSTR(sys_lbl.as_ptr()));
+            let _ = AppendMenuW(menu, MF_SEPARATOR, 0, PCWSTR::null());
+
+            // Item 2: Select All Mics (Auto Best-SNR Fusion)
+            if devices.len() > 1 {
+                let all_lbl = to_wide("Use ALL Connected Mics (Auto Best-SNR Switching)");
+                let all_checked = self.source == AudioSource::Mic
+                    && devices.iter().all(|d| selected.contains(d));
+                let _ = AppendMenuW(
+                    menu,
+                    MF_STRING | if all_checked { MF_CHECKED } else { MF_UNCHECKED },
+                    2,
+                    PCWSTR(all_lbl.as_ptr()),
+                );
+                let _ = AppendMenuW(menu, MF_SEPARATOR, 0, PCWSTR::null());
+            }
+
+            // Items 100+: Individual checkable microphones (toggle multiple for multi-mic fusion!)
+            for (i, name) in devices.iter().enumerate() {
+                let is_on = self.source == AudioSource::Mic
+                    && (selected.contains(name) || (selected.is_empty() && i == 0));
+                let lbl = to_wide(&format!("Mic: {name}"));
+                let flags = MF_STRING | if is_on { MF_CHECKED } else { MF_UNCHECKED };
+                let _ = AppendMenuW(menu, flags, 100 + i, PCWSTR(lbl.as_ptr()));
+            }
+
+            let mut pt = POINT {
+                x: self.rect_input_picker.left,
+                y: self.rect_input_picker.bottom + 2,
+            };
+            let _ = ClientToScreen(self.hwnd, &mut pt);
+            let cmd = TrackPopupMenu(
+                menu,
+                TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RETURNCMD,
+                pt.x,
+                pt.y,
+                0,
+                self.hwnd,
+                None,
+            );
+            let _ = DestroyMenu(menu);
+
+            if cmd.0 == 1 {
+                self.source = AudioSource::Loopback;
+                self.meter.set_source(AudioSource::Loopback);
+                self.status_text = ">> SRC: SYSTEM LOOPBACK".to_string();
+                self.redraw();
+            } else if cmd.0 == 2 && !devices.is_empty() {
+                self.source = AudioSource::Mic;
+                let n = devices.len();
+                self.meter.set_selected_mics(devices);
+                self.status_text = format!(">> MULTI-MIC ACTIVE ({n} MICS AUTO-SNR)");
+                self.redraw();
+            } else if cmd.0 >= 100 {
+                let idx = (cmd.0 as usize) - 100;
+                if let Some(chosen) = devices.get(idx) {
+                    let mut next = if self.source == AudioSource::Loopback {
+                        Vec::new()
+                    } else {
+                        selected
+                    };
+                    if let Some(pos) = next.iter().position(|n| n == chosen) {
+                        // Keep at least 1 mic selected; uncheck only if >1 selected.
+                        if next.len() > 1 {
+                            next.remove(pos);
+                        }
+                    } else {
+                        next.push(chosen.clone());
+                    }
+                    let count = next.len();
+                    self.source = AudioSource::Mic;
+                    self.meter.set_selected_mics(next);
+                    self.status_text = if count > 1 {
+                        format!(">> MULTI-MIC ({count} ACTIVE :: AUTO-SNR)")
+                    } else {
+                        format!(">> MIC: {}", short_mic_name(chosen))
+                    };
+                    self.redraw();
+                }
+            }
+        }
+    }
+
+    fn cycle_denoise(&mut self) {
+        self.denoise_mode = self.denoise_mode.next();
+        self.stt.set_denoise_mode(self.denoise_mode);
+        self.status_text = match self.denoise_mode {
+            DenoiseMode::Off => ">> DENOISE: OFF (BEST FOR MULTI-TALKER BABBLE)".to_string(),
+            DenoiseMode::Balanced => ">> DENOISE: GTCRN (FAST NEURAL ENHANCER)".to_string(),
+            DenoiseMode::Strong => ">> DENOISE: DPDFNet8 (DEEP MUSIC/CAFE SUPPRESSOR)".to_string(),
+            DenoiseMode::VoxLock => ">> DENOISE: VOXLOCK (1-ON-1 TARGET VOICE LOCK)".to_string(),
         };
-        if self.mic_active {
-            self.status_text = ">> SWITCHING STT...".to_string();
-            self.stt.start(self.backend);
+        self.redraw();
+    }
+
+    fn toggle_speakers(&mut self) {
+        self.speaker_labels = !self.speaker_labels;
+        self.stt.set_speaker_labels(self.speaker_labels);
+        self.status_text = if self.speaker_labels {
+            ">> SPEAKER LABELS: ON (WeSpeaker CAM++)".to_string()
         } else {
-            self.status_text = format!(">> ENG: {}", self.backend.short_label());
-        }
+            ">> SPEAKER LABELS: OFF".to_string()
+        };
         self.redraw();
     }
 
-    fn toggle_source(&mut self) {
-        self.source = match self.source {
-            AudioSource::Mic => AudioSource::Loopback,
-            AudioSource::Loopback => AudioSource::Mic,
-        };
-        self.meter.set_source(self.source);
-        self.status_text = match self.source {
-            AudioSource::Mic => ">> SRC: MIC".to_string(),
-            AudioSource::Loopback => ">> SRC: SYS LOOPBACK".to_string(),
+    fn toggle_llm_polish(&mut self) {
+        self.llm_polish = !self.llm_polish;
+        self.stt.set_llm_polish(self.llm_polish);
+        self.status_text = if self.llm_polish {
+            ">> LLM POLISH: ON (Qwen2.5-1.5B CUDA <=30% GUARD)".to_string()
+        } else {
+            ">> LLM POLISH: OFF (RAW ASR ONLY)".to_string()
         };
         self.redraw();
     }
@@ -274,7 +514,7 @@ impl AppState {
             return;
         }
         let owned = trimmed.to_string();
-        self.reply_items.push(MessageItem {
+        self.reply_items.push(ReplyItem {
             time: now_hms(),
             text: owned.clone(),
         });
@@ -317,7 +557,11 @@ impl AppState {
             let _ = writeln!(f, "=== SPEECH_BRIDGE TRANSCRIPT ===");
             let _ = writeln!(f, "\n[INBOUND :: HEARD]");
             for item in &self.heard_items {
-                let _ = writeln!(f, "[{}] {}", item.time, item.text);
+                if let Some(spk) = item.speaker_id {
+                    let _ = writeln!(f, "[{}] [SPK {}] {}", item.time, spk, item.text);
+                } else {
+                    let _ = writeln!(f, "[{}] {}", item.time, item.text);
+                }
             }
             let _ = writeln!(f, "\n[OUTBOUND :: REPLIES]");
             for item in &self.reply_items {
@@ -332,11 +576,14 @@ impl AppState {
 
     fn clear_all(&mut self) {
         self.heard_items.clear();
-        self.current_hypothesis.clear();
+        self.stable_hypothesis.clear();
+        self.draft_hypothesis.clear();
         self.reply_items.clear();
         self.active_reply_idx = None;
         self.left_scroll = 0;
         self.right_scroll = 0;
+        self.stt.reset_speakers();
+        self.status_text = ">> CLEARED (SPEAKERS RESET)".to_string();
         self.redraw();
     }
 
@@ -393,26 +640,48 @@ impl AppState {
                     self.mic_active = true;
                     self.status_text = format!(">> RX LIVE [{backend}]");
                 }
-                SttEvent::Hypothesis(text) => {
-                    self.current_hypothesis = text;
+                SttEvent::Partial { stable, draft } => {
+                    self.stable_hypothesis = stable;
+                    self.draft_hypothesis = draft;
                     self.left_scroll = i32::MAX;
                 }
-                SttEvent::Final(text) => {
-                    self.current_hypothesis.clear();
-                    self.heard_items.push(MessageItem {
+                SttEvent::Final {
+                    card_id,
+                    text,
+                    speaker_id,
+                } => {
+                    self.stable_hypothesis.clear();
+                    self.draft_hypothesis.clear();
+                    self.heard_items.push(HeardItem {
+                        card_id,
                         time: now_hms(),
                         text,
+                        speaker_id,
+                        llm_polished: false,
                     });
                     self.left_scroll = i32::MAX;
                 }
+                SttEvent::Polished { card_id, text } => {
+                    if let Some(item) = self
+                        .heard_items
+                        .iter_mut()
+                        .rev()
+                        .find(|h| h.card_id == card_id && card_id != 0)
+                    {
+                        item.text = text;
+                        item.llm_polished = true;
+                    }
+                }
                 SttEvent::Stopped => {
                     self.mic_active = false;
-                    self.current_hypothesis.clear();
+                    self.stable_hypothesis.clear();
+                    self.draft_hypothesis.clear();
                     self.status_text = ">> STANDBY".to_string();
                 }
                 SttEvent::Error(msg) => {
                     self.mic_active = false;
-                    self.current_hypothesis.clear();
+                    self.stable_hypothesis.clear();
+                    self.draft_hypothesis.clear();
                     self.status_text = format!("!! {msg}");
                 }
             }
@@ -425,95 +694,71 @@ impl AppState {
         unsafe {
             let _ = GetClientRect(self.hwnd, &mut rc);
         }
-        let w = (rc.right - rc.left).max(740);
-        let h = (rc.bottom - rc.top).max(400);
+        let w = (rc.right - rc.left).max(760);
+        let h = (rc.bottom - rc.top).max(460);
         let pad = 14;
-        let top_h = 34;
+        let row_h = 30;
+        let row1_y = pad;
+        let row2_y = row1_y + row_h + 6;
 
+        // --- Row 1: RX Arm | Engine | Mic Picker | Denoise | Speakers | LLM | A- | A+ | Health | Spectrum ---
         let mut x = pad;
-        self.rect_mic = RECT {
-            left: x,
-            top: pad,
-            right: x + 122,
-            bottom: pad + top_h,
-        };
-        x = self.rect_mic.right + 6;
-        self.rect_engine = RECT {
-            left: x,
-            top: pad,
-            right: x + 98,
-            bottom: pad + top_h,
-        };
-        x = self.rect_engine.right + 6;
-        self.rect_source = RECT {
-            left: x,
-            top: pad,
-            right: x + 86,
-            bottom: pad + top_h,
-        };
-        x = self.rect_source.right + 6;
-        self.rect_voice = RECT {
-            left: x,
-            top: pad,
-            right: x + 150,
-            bottom: pad + top_h,
-        };
-        x = self.rect_voice.right + 6;
-        self.rect_bench = RECT {
-            left: x,
-            top: pad,
-            right: x + 68,
-            bottom: pad + top_h,
-        };
-        x = self.rect_bench.right + 6;
-        self.rect_rate = RECT {
-            left: x,
-            top: pad,
-            right: x + 56,
-            bottom: pad + top_h,
-        };
-        x = self.rect_rate.right + 6;
-        self.rect_pin = RECT {
-            left: x,
-            top: pad,
-            right: x + 64,
-            bottom: pad + top_h,
-        };
-        x = self.rect_pin.right + 6;
-        self.rect_export = RECT {
-            left: x,
-            top: pad,
-            right: x + 68,
-            bottom: pad + top_h,
-        };
-        x = self.rect_export.right + 6;
-        self.rect_clear = RECT {
-            left: x,
-            top: pad,
-            right: x + 64,
-            bottom: pad + top_h,
-        };
+        self.rect_mic = RECT { left: x, top: row1_y, right: x + 110, bottom: row1_y + row_h };
+        x = self.rect_mic.right + 5;
+        self.rect_engine = RECT { left: x, top: row1_y, right: x + 140, bottom: row1_y + row_h };
+        x = self.rect_engine.right + 5;
+        self.rect_input_picker = RECT { left: x, top: row1_y, right: x + 102, bottom: row1_y + row_h };
+        x = self.rect_input_picker.right + 5;
+        self.rect_denoise = RECT { left: x, top: row1_y, right: x + 112, bottom: row1_y + row_h };
+        x = self.rect_denoise.right + 5;
+        self.rect_speakers = RECT { left: x, top: row1_y, right: x + 72, bottom: row1_y + row_h };
+        x = self.rect_speakers.right + 5;
+        self.rect_llm = RECT { left: x, top: row1_y, right: x + 72, bottom: row1_y + row_h };
+        x = self.rect_llm.right + 5;
+        self.rect_font_down = RECT { left: x, top: row1_y, right: x + 32, bottom: row1_y + row_h };
+        x = self.rect_font_down.right + 4;
+        self.rect_font_up = RECT { left: x, top: row1_y, right: x + 32, bottom: row1_y + row_h };
 
-        let status_left = self.rect_clear.right + 10;
-        let meter_w = 180.min((w - status_left - pad).max(80));
-        let meter_left = (w - pad - meter_w).max(status_left + 90);
-        self.rect_status = RECT {
-            left: status_left,
-            top: pad,
-            right: meter_left - 8,
-            bottom: pad + top_h,
+        let right_space_left = self.rect_font_up.right + 8;
+        let meter_w = 166.min((w - right_space_left - pad).max(76));
+        let meter_left = (w - pad - meter_w).max(right_space_left + 104);
+        self.rect_health = RECT {
+            left: right_space_left,
+            top: row1_y,
+            right: (meter_left - 6).max(right_space_left + 40),
+            bottom: row1_y + row_h,
         };
         self.rect_meter = RECT {
             left: meter_left,
-            top: pad,
+            top: row1_y,
             right: (w - pad).max(meter_left + 60),
-            bottom: pad + top_h,
+            bottom: row1_y + row_h,
         };
 
-        let pane_top = pad + top_h + 14;
+        // --- Row 2: Voice | Bench | Rate | Pin | Export | Clear | Status Readout ---
+        let mut x2 = pad;
+        self.rect_voice = RECT { left: x2, top: row2_y, right: x2 + 168, bottom: row2_y + row_h };
+        x2 = self.rect_voice.right + 6;
+        self.rect_bench = RECT { left: x2, top: row2_y, right: x2 + 64, bottom: row2_y + row_h };
+        x2 = self.rect_bench.right + 6;
+        self.rect_rate = RECT { left: x2, top: row2_y, right: x2 + 54, bottom: row2_y + row_h };
+        x2 = self.rect_rate.right + 6;
+        self.rect_pin = RECT { left: x2, top: row2_y, right: x2 + 58, bottom: row2_y + row_h };
+        x2 = self.rect_pin.right + 6;
+        self.rect_export = RECT { left: x2, top: row2_y, right: x2 + 58, bottom: row2_y + row_h };
+        x2 = self.rect_export.right + 6;
+        self.rect_clear = RECT { left: x2, top: row2_y, right: x2 + 58, bottom: row2_y + row_h };
+        self.rect_status = RECT {
+            left: self.rect_clear.right + 10,
+            top: row2_y,
+            right: w - pad,
+            bottom: row2_y + row_h,
+        };
+
+        let pane_top = row2_y + row_h + 12;
         let col_w = (w - pad * 3) / 2;
         let right_x = pad * 2 + col_w;
-        let header_h = 26;
+        let header_h = 24;
 
         self.rect_left_feed = RECT {
             left: pad,
@@ -565,14 +810,35 @@ impl AppState {
         if pt_in_rect(pt, self.rect_engine) {
             return HitTarget::BtnEngine;
         }
-        if pt_in_rect(pt, self.rect_source) {
-            return HitTarget::BtnSource;
+        if pt_in_rect(pt, self.rect_input_picker) {
+            return HitTarget::BtnInputPicker;
+        }
+        if pt_in_rect(pt, self.rect_denoise) {
+            return HitTarget::BtnDenoise;
+        }
+        if pt_in_rect(pt, self.rect_speakers) {
+            return HitTarget::BtnSpeakers;
+        }
+        if pt_in_rect(pt, self.rect_llm) {
+            return HitTarget::BtnLlm;
+        }
+        if pt_in_rect(pt, self.rect_font_down) {
+            return HitTarget::BtnFontDown;
+        }
+        if pt_in_rect(pt, self.rect_font_up) {
+            return HitTarget::BtnFontUp;
+        }
+        if pt_in_rect(pt, self.rect_health) {
+            return HitTarget::HealthBadge;
+        }
+        if pt_in_rect(pt, self.rect_meter) {
+            return HitTarget::MeterBadge;
         }
         if pt_in_rect(pt, self.rect_voice) {
             return HitTarget::BtnVoice;
         }
         if pt_in_rect(pt, self.rect_bench) {
-            return HitTarget::BtnBench;
+            return HitTarget::BtnTestVoices;
         }
         if pt_in_rect(pt, self.rect_rate) {
             return HitTarget::BtnRate;
@@ -625,32 +891,97 @@ impl AppState {
             FillRect(mem_dc, &rc, bg_brush);
             let _ = DeleteObject(bg_brush);
 
-            // Top Command Bar
+            // Row 1: STT + Multi-Mic + Denoise + Speaker ID + Font + Health + Spectrum
             self.draw_mic_button(mem_dc);
             let eng_acc = match self.backend {
-                SttBackend::Win11Captions => C_CYAN,
-                SttBackend::WhisperLive => C_GREEN,
+                SttBackend::ParakeetGpu => C_GREEN,
+                SttBackend::DistilWhisperGpu => C_CYAN,
+                SttBackend::Win11Captions => C_AMBER,
+                SttBackend::WhisperCpuLegacy => C_MUTED,
             };
             self.draw_button(
                 mem_dc,
                 self.rect_engine,
-                self.backend.button_label(),
+                &format!("{} \u{25BE}", self.backend.button_label()),
                 self.hover == HitTarget::BtnEngine,
                 eng_acc,
-                self.backend == SttBackend::Win11Captions,
+                matches!(
+                    self.backend,
+                    SttBackend::ParakeetGpu | SttBackend::DistilWhisperGpu
+                ),
             );
+
+            let mic_count = self.meter.selected_mics().len().max(1);
             let (src_lbl, src_acc) = match self.source {
-                AudioSource::Mic => ("SRC: MIC", C_GREEN),
-                AudioSource::Loopback => ("SRC: SYS", C_CYAN),
+                AudioSource::Loopback => ("SRC: SYS \u{25BE}".to_string(), C_CYAN),
+                AudioSource::Mic if mic_count > 1 => {
+                    (format!("MICS:{mic_count} \u{25BE}"), C_GREEN)
+                }
+                AudioSource::Mic => ("MIC: 1 \u{25BE}".to_string(), C_GREEN),
             };
             self.draw_button(
                 mem_dc,
-                self.rect_source,
-                src_lbl,
-                self.hover == HitTarget::BtnSource,
+                self.rect_input_picker,
+                &src_lbl,
+                self.hover == HitTarget::BtnInputPicker,
                 src_acc,
-                self.source == AudioSource::Loopback,
+                self.source == AudioSource::Loopback || mic_count > 1,
             );
+
+            let dns_acc = match self.denoise_mode {
+                DenoiseMode::Off => C_MUTED,
+                DenoiseMode::Balanced => C_CYAN,
+                DenoiseMode::Strong => C_GREEN,
+                DenoiseMode::VoxLock => C_AMBER,
+            };
+            self.draw_button(
+                mem_dc,
+                self.rect_denoise,
+                self.denoise_mode.button_label(),
+                self.hover == HitTarget::BtnDenoise,
+                dns_acc,
+                self.denoise_mode != DenoiseMode::Off,
+            );
+
+            self.draw_button(
+                mem_dc,
+                self.rect_speakers,
+                if self.speaker_labels { "SPK: ON" } else { "SPK:OFF" },
+                self.hover == HitTarget::BtnSpeakers,
+                if self.speaker_labels { C_VIOLET } else { C_MUTED },
+                self.speaker_labels,
+            );
+
+            self.draw_button(
+                mem_dc,
+                self.rect_llm,
+                if self.llm_polish { "LLM: ON" } else { "LLM:OFF" },
+                self.hover == HitTarget::BtnLlm,
+                if self.llm_polish { C_SKY } else { C_MUTED },
+                self.llm_polish,
+            );
+
+            self.draw_button(
+                mem_dc,
+                self.rect_font_down,
+                "A-",
+                self.hover == HitTarget::BtnFontDown,
+                C_CYAN,
+                false,
+            );
+            self.draw_button(
+                mem_dc,
+                self.rect_font_up,
+                "A+",
+                self.hover == HitTarget::BtnFontUp,
+                C_CYAN,
+                false,
+            );
+
+            self.draw_signal_health(mem_dc);
+            self.draw_freq_meter(mem_dc);
+
+            // Row 2: TTS Voice + Test Voices + Rate + Pin + Export + Clear + Status
             let short_voice = self
                 .selected_voice_label()
                 .strip_prefix("Microsoft ")
@@ -666,8 +997,8 @@ impl AppState {
             self.draw_button(
                 mem_dc,
                 self.rect_bench,
-                if self.bench_active { "STOP" } else { "BENCH" },
-                self.hover == HitTarget::BtnBench,
+                if self.bench_active { "STOP" } else { "TEST" },
+                self.hover == HitTarget::BtnTestVoices,
                 if self.bench_active { C_RED } else { C_AMBER },
                 self.bench_active,
             );
@@ -714,34 +1045,41 @@ impl AppState {
             };
             SelectObject(mem_dc, self.font_bold);
             SetTextColor(mem_dc, status_color);
-            draw_text_single(mem_dc, &self.status_text, self.rect_status, DT_LEFT | DT_VCENTER);
-
-            self.draw_freq_meter(mem_dc);
+            draw_text_single(
+                mem_dc,
+                &self.status_text,
+                self.rect_status,
+                DT_LEFT | DT_VCENTER,
+            );
 
             // Pane Headers
             let left_hdr = RECT {
                 left: self.rect_left_feed.left,
-                top: self.rect_left_feed.top - 24,
+                top: self.rect_left_feed.top - 22,
                 right: self.rect_left_feed.right,
                 bottom: self.rect_left_feed.top - 2,
             };
             let right_hdr = RECT {
                 left: self.rect_right_feed.left,
-                top: self.rect_right_feed.top - 24,
+                top: self.rect_right_feed.top - 22,
                 right: self.rect_right_feed.right,
                 bottom: self.rect_right_feed.top - 2,
             };
+            SelectObject(mem_dc, self.font_small);
             SetTextColor(mem_dc, if self.mic_active { C_GREEN } else { C_CYAN });
             draw_text_single(
                 mem_dc,
-                "// INBOUND :: SPEECH_TO_TEXT (CLICK CARD TO COPY)",
+                &format!(
+                    "// INBOUND :: HEARD ({}px | CLICK CARD TO COPY | CTRL+/- ZOOM)",
+                    self.caption_font_px
+                ),
                 left_hdr,
                 DT_LEFT | DT_VCENTER,
             );
             SetTextColor(mem_dc, C_GREEN);
             draw_text_single(
                 mem_dc,
-                "// OUTBOUND :: VOICE_CARDS (CLICK TO SPEAK | ESC STOP)",
+                "// OUTBOUND :: VOICE_CARDS (AUTO-GATES STT WHILE SPEAKING | ESC STOP)",
                 right_hdr,
                 DT_LEFT | DT_VCENTER,
             );
@@ -773,12 +1111,124 @@ impl AppState {
                 false,
             );
 
+            self.draw_hover_tooltip(mem_dc, w, h);
+
             BitBlt(hdc_screen, 0, 0, w, h, mem_dc, 0, 0, SRCCOPY).ok();
             SelectObject(mem_dc, old_font);
             SelectObject(mem_dc, old_bmp);
             let _ = DeleteObject(bmp);
             let _ = DeleteDC(mem_dc);
         }
+    }
+
+    unsafe fn draw_signal_health(&mut self, hdc: HDC) {
+        use std::fmt::Write as _;
+        let rc = self.rect_health;
+        if rc.right - rc.left < 50 {
+            return;
+        }
+        self.health_buf.clear();
+        let status = if let Ok(g) = self.meter.data.lock() {
+            if g.status == SignalStatus::TtsMuted {
+                self.health_buf.push_str("TTS GATE (MUTED)");
+            } else if g.active_mic_count > 1 && !g.active_mic_name.is_empty() {
+                let _ = write!(
+                    self.health_buf,
+                    "{} {:+.0}dB | ",
+                    g.status.short_label(),
+                    g.snr_db.clamp(-10.0, 40.0)
+                );
+                push_short_mic_name(&g.active_mic_name, &mut self.health_buf);
+            } else {
+                let _ = write!(
+                    self.health_buf,
+                    "SIG: {} ({:+.0}dB)",
+                    g.status.short_label(),
+                    g.snr_db.clamp(-10.0, 40.0)
+                );
+            }
+            g.status
+        } else {
+            self.health_buf.push_str("SIG: QUIET");
+            SignalStatus::Standby
+        };
+
+        let (bg, fg) = match status {
+            SignalStatus::Clear => (C_GREEN_BG, C_GREEN),
+            SignalStatus::TtsMuted => (C_CARD, C_CYAN),
+            SignalStatus::Noisy => (C_AMBER_BG, C_AMBER),
+            SignalStatus::Drowned | SignalStatus::Clipping => (C_RED_BG, C_RED),
+            SignalStatus::Standby => (C_PANE, C_MUTED),
+        };
+
+        let br = CreateSolidBrush(bg);
+        FillRect(hdc, &rc, br);
+        let _ = DeleteObject(br);
+        draw_border(hdc, rc, fg);
+
+        SelectObject(hdc, self.font_small);
+        SetTextColor(hdc, fg);
+        let pad_rc = RECT {
+            left: rc.left + 6,
+            top: rc.top,
+            right: rc.right - 6,
+            bottom: rc.bottom,
+        };
+        draw_text_single(hdc, &self.health_buf, pad_rc, DT_CENTER | DT_VCENTER);
+    }
+
+    unsafe fn draw_hover_tooltip(&self, hdc: HDC, win_w: i32, win_h: i32) {
+        let Some((title, desc)) = tooltip_for(self.hover) else {
+            return;
+        };
+        let box_w = 340.min((win_w - 28).max(180));
+        let inner_w = box_w - 20;
+
+        SelectObject(hdc, self.font_small);
+        let desc_h = measure_wrapped_height(hdc, desc, inner_w);
+        let box_h = 26 + desc_h + 12;
+
+        let mut left = self.hover_pt.x + 12;
+        if left + box_w > win_w - 10 {
+            left = (win_w - 10 - box_w).max(10);
+        }
+        let mut top = self.hover_pt.y + 20;
+        if top + box_h > win_h - 10 {
+            top = (self.hover_pt.y - box_h - 10).max(10);
+        }
+
+        let tip_rc = RECT {
+            left,
+            top,
+            right: left + box_w,
+            bottom: top + box_h,
+        };
+
+        let bg = CreateSolidBrush(C_PANE);
+        FillRect(hdc, &tip_rc, bg);
+        let _ = DeleteObject(bg);
+        draw_border(hdc, tip_rc, C_CYAN);
+        draw_accent_stripe(hdc, tip_rc, C_GREEN);
+
+        SelectObject(hdc, self.font_bold);
+        SetTextColor(hdc, C_CYAN);
+        let title_rc = RECT {
+            left: tip_rc.left + 10,
+            top: tip_rc.top + 6,
+            right: tip_rc.right - 10,
+            bottom: tip_rc.top + 22,
+        };
+        draw_text_single(hdc, title, title_rc, DT_LEFT | DT_VCENTER);
+
+        SelectObject(hdc, self.font_small);
+        SetTextColor(hdc, C_TEXT);
+        let body_rc = RECT {
+            left: tip_rc.left + 10,
+            top: tip_rc.top + 24,
+            right: tip_rc.right - 10,
+            bottom: tip_rc.bottom - 8,
+        };
+        draw_text_wrapped(hdc, desc, body_rc);
     }
 
     unsafe fn draw_mic_button(&self, hdc: HDC) {
@@ -801,7 +1251,13 @@ impl AppState {
         let old_br = SelectObject(hdc, dot_br);
         let old_pen = SelectObject(hdc, dot_pen);
         let cy = (self.rect_mic.top + self.rect_mic.bottom) / 2;
-        let _ = Ellipse(hdc, self.rect_mic.left + 12, cy - 4, self.rect_mic.left + 20, cy + 4);
+        let _ = Ellipse(
+            hdc,
+            self.rect_mic.left + 10,
+            cy - 4,
+            self.rect_mic.left + 18,
+            cy + 4,
+        );
         SelectObject(hdc, old_br);
         SelectObject(hdc, old_pen);
         let _ = DeleteObject(dot_br);
@@ -810,9 +1266,9 @@ impl AppState {
         SelectObject(hdc, self.font_bold);
         SetTextColor(hdc, if self.mic_active { C_GREEN } else { C_TEXT });
         let trc = RECT {
-            left: self.rect_mic.left + 18,
+            left: self.rect_mic.left + 16,
             top: self.rect_mic.top,
-            right: self.rect_mic.right - 6,
+            right: self.rect_mic.right - 4,
             bottom: self.rect_mic.bottom,
         };
         draw_text_single(hdc, text, trc, DT_LEFT | DT_VCENTER);
@@ -861,11 +1317,11 @@ impl AppState {
             ([0.0; BANDS], 0.0)
         };
 
-        let label_w = 46;
+        let label_w = 42;
         SelectObject(hdc, self.font_small);
         SetTextColor(hdc, if peak > 0.05 { C_GREEN } else { C_MUTED });
         let lbl_rc = RECT {
-            left: rc.left + 6,
+            left: rc.left + 5,
             top: rc.top,
             right: rc.left + label_w,
             bottom: rc.bottom,
@@ -878,10 +1334,10 @@ impl AppState {
         );
 
         let bar_area_left = rc.left + label_w + 2;
-        let bar_area_right = rc.right - 6;
+        let bar_area_right = rc.right - 5;
         let area_w = (bar_area_right - bar_area_left).max(BANDS as i32 * 2);
-        let top_pad = 5;
-        let bot_pad = 5;
+        let top_pad = 4;
+        let bot_pad = 4;
         let max_h = (rc.bottom - rc.top - top_pad - bot_pad).max(6);
         let slot_w = (area_w / BANDS as i32).max(2);
         let bar_w = (slot_w - 1).max(1);
@@ -936,7 +1392,11 @@ impl AppState {
         let br = CreateSolidBrush(C_PANE);
         FillRect(hdc, &pane, br);
         let _ = DeleteObject(br);
-        draw_border(hdc, pane, if self.mic_active { C_GREEN_DIM } else { C_BORDER });
+        draw_border(
+            hdc,
+            pane,
+            if self.mic_active { C_GREEN_DIM } else { C_BORDER },
+        );
 
         let saved = SaveDC(hdc);
         let _ = IntersectClipRect(
@@ -948,20 +1408,32 @@ impl AppState {
         );
 
         let pad = 10;
-        let inner_w = (pane.right - pane.left - pad * 2 - 16).max(60);
+        let inner_w = (pane.right - pane.left - pad * 2 - 18).max(60);
 
         let mut total_h = pad;
         let mut item_heights = Vec::with_capacity(self.heard_items.len());
-        SelectObject(hdc, self.font_mono);
+        SelectObject(hdc, self.font_caption);
         for item in &self.heard_items {
             let th = measure_wrapped_height(hdc, &item.text, inner_w);
             let card_h = 24 + th + 10;
             item_heights.push(card_h);
             total_h += card_h + 8;
         }
-        let hyp_h = if !self.current_hypothesis.is_empty() {
-            let h_text = format!(">_ {}", self.current_hypothesis);
-            measure_wrapped_height(hdc, &h_text, inner_w) + 18
+
+        let has_hyp = !self.stable_hypothesis.is_empty() || !self.draft_hypothesis.is_empty();
+        let stable_h = if !self.stable_hypothesis.is_empty() {
+            measure_wrapped_height(hdc, &format!(">_ {}", self.stable_hypothesis), inner_w)
+        } else {
+            0
+        };
+        let draft_h = if !self.draft_hypothesis.is_empty() {
+            measure_wrapped_height(hdc, &format!("~ {}", self.draft_hypothesis), inner_w)
+        } else {
+            0
+        };
+        let hyp_h = if has_hyp {
+            let gap = if stable_h > 0 && draft_h > 0 { 4 } else { 0 };
+            stable_h + draft_h + gap + 18
         } else {
             0
         };
@@ -980,18 +1452,18 @@ impl AppState {
 
         self.left_card_rects.clear();
         let mut y = pane.top + pad - self.left_scroll;
-        if self.heard_items.is_empty() && self.current_hypothesis.is_empty() {
-            SelectObject(hdc, self.font_mono);
+        if self.heard_items.is_empty() && !has_hyp {
+            SelectObject(hdc, self.font_caption);
             SetTextColor(hdc, C_MUTED);
             let empty_rc = RECT {
                 left: pane.left + 14,
                 top: pane.top + 14,
                 right: pane.right - 14,
-                bottom: pane.top + 60,
+                bottom: pane.top + 100,
             };
             draw_text_wrapped(
                 hdc,
-                "// Listening... Speak into mic or toggle [SRC: SYS] for system audio.",
+                "// RTX Neural STT Armed. Pick 1 or multiple mics via [MIC], adjust [DNS] for noisy cafes, or press Ctrl+/Ctrl- to zoom text.",
                 empty_rc,
             );
         } else {
@@ -1005,22 +1477,28 @@ impl AppState {
                 };
                 self.left_card_rects.push(card_rc);
                 if card_rc.bottom >= pane.top && card_rc.top <= pane.bottom {
+                    let accent = speaker_color(item.speaker_id);
                     let is_hovered = self.hover == HitTarget::HeardCard(i);
                     let cbr = CreateSolidBrush(if is_hovered { C_CARD_HOVER } else { C_CARD });
                     FillRect(hdc, &card_rc, cbr);
                     let _ = DeleteObject(cbr);
-                    draw_border(hdc, card_rc, if is_hovered { C_CYAN } else { C_BORDER });
-                    draw_accent_stripe(hdc, card_rc, C_CYAN);
+                    draw_border(hdc, card_rc, if is_hovered { accent } else { C_BORDER });
+                    draw_accent_stripe(hdc, card_rc, accent);
 
                     SelectObject(hdc, self.font_small);
-                    SetTextColor(hdc, C_CYAN);
+                    SetTextColor(hdc, accent);
                     let hdr_rc = RECT {
                         left: card_rc.left + 10,
                         top: card_rc.top + 5,
                         right: card_rc.right - 90,
                         bottom: card_rc.top + 21,
                     };
-                    draw_text_single(hdc, &format!("[{}] RX", item.time), hdr_rc, DT_LEFT);
+                    let llm_tag = if item.llm_polished { "  [LLM]" } else { "" };
+                    let hdr_txt = match item.speaker_id {
+                        Some(sid) => format!("[{}]  [SPK {}]{llm_tag}", item.time, sid),
+                        None => format!("[{}]  RX{llm_tag}", item.time),
+                    };
+                    draw_text_single(hdc, &hdr_txt, hdr_rc, DT_LEFT);
 
                     if is_hovered {
                         let copy_rc = RECT {
@@ -1032,7 +1510,7 @@ impl AppState {
                         draw_text_single(hdc, "COPY", copy_rc, DT_RIGHT);
                     }
 
-                    SelectObject(hdc, self.font_mono);
+                    SelectObject(hdc, self.font_caption);
                     SetTextColor(hdc, C_TEXT_CYAN);
                     let body_rc = RECT {
                         left: card_rc.left + 10,
@@ -1045,6 +1523,7 @@ impl AppState {
                 y += card_h + 8;
             }
 
+            // Two-tone LocalAgreement live streaming box (bright locked prefix + dim amber draft)
             if hyp_h > 0 {
                 let h_rc = RECT {
                     left: pane.left + pad,
@@ -1056,15 +1535,31 @@ impl AppState {
                 FillRect(hdc, &h_rc, cbr);
                 let _ = DeleteObject(cbr);
                 draw_border(hdc, h_rc, C_CYAN);
-                SelectObject(hdc, self.font_mono);
-                SetTextColor(hdc, C_CYAN);
-                let body_rc = RECT {
-                    left: h_rc.left + 10,
-                    top: h_rc.top + 8,
-                    right: h_rc.right - 8,
-                    bottom: h_rc.bottom - 8,
-                };
-                draw_text_wrapped(hdc, &format!(">_ {}", self.current_hypothesis), body_rc);
+                draw_accent_stripe(hdc, h_rc, C_GREEN);
+
+                SelectObject(hdc, self.font_caption);
+                let mut cur_y = h_rc.top + 8;
+                if stable_h > 0 {
+                    SetTextColor(hdc, C_TEXT);
+                    let s_rc = RECT {
+                        left: h_rc.left + 10,
+                        top: cur_y,
+                        right: h_rc.right - 8,
+                        bottom: cur_y + stable_h + 2,
+                    };
+                    draw_text_wrapped(hdc, &format!(">_ {}", self.stable_hypothesis), s_rc);
+                    cur_y += stable_h + 4;
+                }
+                if draft_h > 0 {
+                    SetTextColor(hdc, C_AMBER);
+                    let d_rc = RECT {
+                        left: h_rc.left + 10,
+                        top: cur_y,
+                        right: h_rc.right - 8,
+                        bottom: h_rc.bottom - 6,
+                    };
+                    draw_text_wrapped(hdc, &format!("~ {}", self.draft_hypothesis), d_rc);
+                }
             }
         }
 
@@ -1122,7 +1617,7 @@ impl AppState {
             };
             draw_text_wrapped(
                 hdc,
-                "// Type below & press [ENTER] to speak. Cards appear here — click any card to re-speak.",
+                "// Type below & press [ENTER] to speak. Mic auto-gates while TTS plays so your reply won't echo into HEARD.",
                 empty_rc,
             );
         } else {
@@ -1198,7 +1693,22 @@ impl AppState {
                         right: card_rc.right - 10,
                         bottom: card_rc.bottom - 6,
                     };
-                    draw_text_wrapped(hdc, &item.text, body_rc);
+                    if is_active {
+                        if let Some(word_idx) = self.active_tts_word {
+                            draw_text_wrapped_highlight_word(
+                                hdc,
+                                &item.text,
+                                body_rc,
+                                self.font_mono,
+                                self.font_mono_active,
+                                word_idx,
+                            );
+                        } else {
+                            draw_text_wrapped(hdc, &item.text, body_rc);
+                        }
+                    } else {
+                        draw_text_wrapped(hdc, &item.text, body_rc);
+                    }
                 }
                 y += card_h + 8;
             }
@@ -1214,6 +1724,8 @@ impl Drop for AppState {
         self.tts.stop();
         unsafe {
             let _ = DeleteObject(self.font_mono);
+            let _ = DeleteObject(self.font_mono_active);
+            let _ = DeleteObject(self.font_caption);
             let _ = DeleteObject(self.font_bold);
             let _ = DeleteObject(self.font_small);
             let _ = DeleteObject(self.brush_input);
@@ -1256,19 +1768,38 @@ pub unsafe extern "system" fn main_wnd_proc(
             LRESULT(0)
         }
         WM_KEYDOWN => {
+            let ctrl = (GetKeyState(VK_CONTROL.0 as i32) as u16 & 0x8000) != 0;
             if wparam.0 == VK_ESCAPE.0 as usize {
                 if let Some(st) = get_state(hwnd) {
                     st.stop_tts();
                 }
                 return LRESULT(0);
             }
-            if wparam.0 == b'T' as usize
-                && (GetKeyState(VK_CONTROL.0 as i32) as u16 & 0x8000) != 0
-            {
-                if let Some(st) = get_state(hwnd) {
-                    st.toggle_pin();
+            if ctrl {
+                if wparam.0 == b'T' as usize {
+                    if let Some(st) = get_state(hwnd) {
+                        st.toggle_pin();
+                    }
+                    return LRESULT(0);
                 }
-                return LRESULT(0);
+                if wparam.0 == VK_OEM_PLUS.0 as usize || wparam.0 == VK_ADD.0 as usize {
+                    if let Some(st) = get_state(hwnd) {
+                        st.adjust_caption_font(2);
+                    }
+                    return LRESULT(0);
+                }
+                if wparam.0 == VK_OEM_MINUS.0 as usize || wparam.0 == VK_SUBTRACT.0 as usize {
+                    if let Some(st) = get_state(hwnd) {
+                        st.adjust_caption_font(-2);
+                    }
+                    return LRESULT(0);
+                }
+                if wparam.0 == b'0' as usize {
+                    if let Some(st) = get_state(hwnd) {
+                        st.adjust_caption_font(0);
+                    }
+                    return LRESULT(0);
+                }
             }
             DefWindowProcW(hwnd, msg, wparam, lparam)
         }
@@ -1276,7 +1807,10 @@ pub unsafe extern "system" fn main_wnd_proc(
             let pt = lparam_point(lparam);
             if let Some(st) = get_state(hwnd) {
                 let hit = st.hit_test(pt);
-                if hit != st.hover {
+                let had_tip = tooltip_for(st.hover).is_some();
+                let has_tip = tooltip_for(hit).is_some();
+                st.hover_pt = pt;
+                if hit != st.hover || had_tip || has_tip {
                     st.hover = hit;
                     st.redraw();
                 }
@@ -1288,7 +1822,11 @@ pub unsafe extern "system" fn main_wnd_proc(
                 let mut pt = POINT::default();
                 let _ = GetCursorPos(&mut pt);
                 let _ = ScreenToClient(hwnd, &mut pt);
-                if st.hit_test(pt) != HitTarget::None {
+                let hit = st.hit_test(pt);
+                if !matches!(
+                    hit,
+                    HitTarget::None | HitTarget::HealthBadge | HitTarget::MeterBadge
+                ) {
                     if let Ok(hand) = LoadCursorW(None, IDC_HAND) {
                         SetCursor(hand);
                         return LRESULT(1);
@@ -1302,10 +1840,15 @@ pub unsafe extern "system" fn main_wnd_proc(
             if let Some(st) = get_state(hwnd) {
                 match st.hit_test(pt) {
                     HitTarget::BtnMic => st.toggle_mic(),
-                    HitTarget::BtnEngine => st.toggle_engine(),
-                    HitTarget::BtnSource => st.toggle_source(),
+                    HitTarget::BtnEngine => st.show_engine_menu(),
+                    HitTarget::BtnInputPicker => st.show_input_picker_menu(),
+                    HitTarget::BtnDenoise => st.cycle_denoise(),
+                    HitTarget::BtnSpeakers => st.toggle_speakers(),
+                    HitTarget::BtnLlm => st.toggle_llm_polish(),
+                    HitTarget::BtnFontDown => st.adjust_caption_font(-2),
+                    HitTarget::BtnFontUp => st.adjust_caption_font(2),
                     HitTarget::BtnVoice => st.show_voice_menu(),
-                    HitTarget::BtnBench => st.toggle_benchmark(),
+                    HitTarget::BtnTestVoices => st.toggle_benchmark(),
                     HitTarget::BtnRate => st.cycle_rate(),
                     HitTarget::BtnPin => st.toggle_pin(),
                     HitTarget::BtnExport => st.export_transcript(),
@@ -1318,7 +1861,7 @@ pub unsafe extern "system" fn main_wnd_proc(
                             st.speak_text(text, Some(idx));
                         }
                     }
-                    HitTarget::None => {}
+                    HitTarget::HealthBadge | HitTarget::MeterBadge | HitTarget::None => {}
                 }
             }
             LRESULT(0)
@@ -1349,9 +1892,11 @@ pub unsafe extern "system" fn main_wnd_proc(
             if let Some(st) = get_state(hwnd) {
                 st.tts_speaking = wparam.0 != 0;
                 if st.tts_speaking {
-                    st.status_text = ">> TX AUDIO...".to_string();
+                    st.active_tts_word = st.tts.current_word_index();
+                    st.status_text = ">> TX AUDIO (STT GATED)...".to_string();
                 } else {
                     st.active_reply_idx = None;
+                    st.active_tts_word = None;
                     st.status_text = if st.mic_active {
                         st.backend.live_status().to_string()
                     } else {
@@ -1380,6 +1925,13 @@ pub unsafe extern "system" fn main_wnd_proc(
             }
             LRESULT(0)
         }
+        WM_APP_FONT_DELTA => {
+            if let Some(st) = get_state(hwnd) {
+                let delta = wparam.0 as isize as i32;
+                st.adjust_caption_font(delta);
+            }
+            LRESULT(0)
+        }
         WM_APP_BENCH_PROGRESS => {
             if let Some(st) = get_state(hwnd) {
                 if wparam.0 != 0 {
@@ -1396,6 +1948,14 @@ pub unsafe extern "system" fn main_wnd_proc(
         WM_APP_METER_TICK => {
             if let Some(st) = get_state(hwnd) {
                 let _ = InvalidateRect(hwnd, Some(&st.rect_meter), false);
+                let _ = InvalidateRect(hwnd, Some(&st.rect_health), false);
+                if st.tts_speaking {
+                    let cur = st.tts.current_word_index();
+                    if cur != st.active_tts_word {
+                        st.active_tts_word = cur;
+                        let _ = InvalidateRect(hwnd, Some(&st.rect_right_feed), false);
+                    }
+                }
             }
             LRESULT(0)
         }
@@ -1423,7 +1983,7 @@ pub unsafe extern "system" fn main_wnd_proc(
     }
 }
 
-/// Subclassed procedure for the reply input box (Enter = Speak, Esc = Stop TTS, Ctrl+T = Pin).
+/// Subclassed procedure for the reply input box (Enter = Speak, Esc = Stop TTS, Ctrl+T = Pin, Ctrl+/- = Zoom).
 unsafe extern "system" fn input_subclass_proc(
     hwnd: HWND,
     msg: u32,
@@ -1434,6 +1994,7 @@ unsafe extern "system" fn input_subclass_proc(
     let orig_proc = get_state(parent).and_then(|s| s.orig_input_proc);
 
     if msg == WM_KEYDOWN {
+        let ctrl = (GetKeyState(VK_CONTROL.0 as i32) as u16 & 0x8000) != 0;
         if wparam.0 == 0x0D {
             let shift_down = (GetKeyState(VK_SHIFT.0 as i32) as u16 & 0x8000) != 0;
             if !shift_down {
@@ -1443,10 +2004,17 @@ unsafe extern "system" fn input_subclass_proc(
         } else if wparam.0 == VK_ESCAPE.0 as usize {
             let _ = PostMessageW(parent, WM_APP_STOP_TTS, WPARAM(0), LPARAM(0));
             return LRESULT(0);
-        } else if wparam.0 == b'T' as usize
-            && (GetKeyState(VK_CONTROL.0 as i32) as u16 & 0x8000) != 0
-        {
+        } else if ctrl && wparam.0 == b'T' as usize {
             let _ = PostMessageW(parent, WM_APP_TOGGLE_PIN, WPARAM(0), LPARAM(0));
+            return LRESULT(0);
+        } else if ctrl && (wparam.0 == VK_OEM_PLUS.0 as usize || wparam.0 == VK_ADD.0 as usize) {
+            let _ = PostMessageW(parent, WM_APP_FONT_DELTA, WPARAM(2isize as usize), LPARAM(0));
+            return LRESULT(0);
+        } else if ctrl && (wparam.0 == VK_OEM_MINUS.0 as usize || wparam.0 == VK_SUBTRACT.0 as usize) {
+            let _ = PostMessageW(parent, WM_APP_FONT_DELTA, WPARAM((-2isize) as usize), LPARAM(0));
+            return LRESULT(0);
+        } else if ctrl && wparam.0 == b'0' as usize {
+            let _ = PostMessageW(parent, WM_APP_FONT_DELTA, WPARAM(0), LPARAM(0));
             return LRESULT(0);
         }
     }
@@ -1475,9 +2043,12 @@ unsafe fn get_state<'a>(hwnd: HWND) -> Option<&'a mut AppState> {
 
 unsafe fn create_app_state(hwnd: HWND) -> Box<AppState> {
     let hinst = HINSTANCE(std::ptr::null_mut());
+    let caption_font_px = 17;
     let font_mono = make_font("Consolas", -15, FW_NORMAL.0 as i32);
-    let font_bold = make_font("Consolas", -13, FW_BOLD.0 as i32);
-    let font_small = make_font("Consolas", -12, FW_BOLD.0 as i32);
+    let font_mono_active = make_font_styled("Consolas", -15, FW_BOLD.0 as i32, true);
+    let font_caption = make_font("Consolas", -caption_font_px, FW_NORMAL.0 as i32);
+    let font_bold = make_font("Consolas", -12, FW_BOLD.0 as i32);
+    let font_small = make_font("Consolas", -11, FW_BOLD.0 as i32);
     let brush_input = CreateSolidBrush(C_CARD);
 
     let edit_class = to_wide("EDIT");
@@ -1504,7 +2075,12 @@ unsafe fn create_app_state(hwnd: HWND) -> Box<AppState> {
         None,
     )
     .unwrap_or_default();
-    SendMessageW(edit_input, WM_SETFONT, WPARAM(font_mono.0 as usize), LPARAM(1));
+    SendMessageW(
+        edit_input,
+        WM_SETFONT,
+        WPARAM(font_mono.0 as usize),
+        LPARAM(1),
+    );
 
     let orig_ptr = SetWindowLongPtrW(
         edit_input,
@@ -1515,27 +2091,46 @@ unsafe fn create_app_state(hwnd: HWND) -> Box<AppState> {
 
     let voices = list_local_voices();
     let hwnd_raw = hwnd.0 as isize;
-    let meter = Arc::new(MicMeter::start(hwnd_raw));
+    let echo_gate = TtsEchoGate::new();
+    let meter = Arc::new(MicMeter::start(hwnd_raw, Arc::clone(&echo_gate)));
     let stt_queue = SttEventQueue::new(hwnd_raw);
-    let stt = SttEngine::new(Arc::clone(&stt_queue), Arc::clone(&meter));
-    let tts = TtsEngine::new(hwnd_raw);
 
-    // Auto-engage speech-to-text on startup (default: Windows 11 Live Captions).
-    stt.start(SttBackend::Win11Captions);
+    let initial_denoise = DenoiseMode::Balanced;
+    let initial_speakers = true;
+    let initial_llm = true;
+    let initial_backend = SttBackend::ParakeetGpu;
+
+    let stt = SttEngine::new(
+        Arc::clone(&stt_queue),
+        Arc::clone(&meter),
+        initial_denoise,
+        initial_speakers,
+        initial_llm,
+    );
+    let tts = TtsEngine::new(hwnd_raw, echo_gate);
+
+    // Auto-engage RTX GPU Parakeet TDT 0.6B v2 on startup!
+    stt.start(initial_backend);
 
     Box::new(AppState {
         hwnd,
         edit_input,
         font_mono,
+        font_mono_active,
+        font_caption,
         font_bold,
         font_small,
+        caption_font_px,
         brush_input,
         voices,
         selected_voice: 0,
         rate_idx: 1,
         pinned: false,
         source: AudioSource::Mic,
-        backend: SttBackend::Win11Captions,
+        backend: initial_backend,
+        denoise_mode: initial_denoise,
+        speaker_labels: initial_speakers,
+        llm_polish: initial_llm,
         tts,
         stt,
         stt_queue,
@@ -1544,18 +2139,29 @@ unsafe fn create_app_state(hwnd: HWND) -> Box<AppState> {
         tts_speaking: false,
         bench_active: false,
         active_reply_idx: None,
-        status_text: ">> ARMING...".to_string(),
+        active_tts_word: None,
+        status_text: ">> LOADING PARAKEET GPU...".to_string(),
+        health_buf: String::with_capacity(64),
         heard_items: Vec::new(),
-        current_hypothesis: String::new(),
+        stable_hypothesis: String::new(),
+        draft_hypothesis: String::new(),
         reply_items: Vec::new(),
         left_scroll: 0,
         right_scroll: 0,
         left_max_scroll: 0,
         right_max_scroll: 0,
         hover: HitTarget::None,
+        hover_pt: POINT::default(),
         rect_mic: RECT::default(),
         rect_engine: RECT::default(),
-        rect_source: RECT::default(),
+        rect_input_picker: RECT::default(),
+        rect_denoise: RECT::default(),
+        rect_speakers: RECT::default(),
+        rect_llm: RECT::default(),
+        rect_font_down: RECT::default(),
+        rect_font_up: RECT::default(),
+        rect_health: RECT::default(),
+        rect_meter: RECT::default(),
         rect_voice: RECT::default(),
         rect_bench: RECT::default(),
         rect_rate: RECT::default(),
@@ -1563,7 +2169,6 @@ unsafe fn create_app_state(hwnd: HWND) -> Box<AppState> {
         rect_export: RECT::default(),
         rect_clear: RECT::default(),
         rect_status: RECT::default(),
-        rect_meter: RECT::default(),
         rect_speak: RECT::default(),
         rect_left_feed: RECT::default(),
         rect_right_feed: RECT::default(),
@@ -1572,6 +2177,110 @@ unsafe fn create_app_state(hwnd: HWND) -> Box<AppState> {
         card_rects: Vec::new(),
         orig_input_proc,
     })
+}
+
+fn tooltip_for(target: HitTarget) -> Option<(&'static str, &'static str)> {
+    match target {
+        HitTarget::BtnMic => Some((
+            "RX LISTEN TOGGLE",
+            "Arm or pause live Speech-to-Text captioning. Green dot = actively listening on your RTX GPU.",
+        )),
+        HitTarget::BtnEngine => Some((
+            "SPEECH RECOGNITION ENGINE",
+            "Switch AI models: Parakeet TDT 0.6B (fastest & best English GPU accuracy), Distil-Whisper v3.5 GPU, Win11 Live Captions (battery saver), or Legacy Whisper CPU.",
+        )),
+        HitTarget::BtnInputPicker => Some((
+            "MICROPHONE & MULTI-MIC PICKER",
+            "Select 1 mic, check 2+ mics simultaneously for automatic best-SNR switching (great for placing a mic closer to someone), or choose System Audio Loopback for calls/videos.",
+        )),
+        HitTarget::BtnDenoise => Some((
+            "NEURAL NOISE SUPPRESSION",
+            "Cycles: OFF (best when nearby voices talk over your partner), GTCRN (fast 0.5 MB cafe/music cleaner), DPDF8 (deep music & clatter suppressor), VOXLOCK (locks onto 1 voice after 3s in crowded bars).",
+        )),
+        HitTarget::BtnSpeakers => Some((
+            "SPEAKER LABELS [SPK 1..N]",
+            "Color-codes who is talking around a group table using local WeSpeaker CAM++ voice embeddings. Click CLR to reset speaker profiles for a new conversation.",
+        )),
+        HitTarget::BtnLlm => Some((
+            "LOCAL LLM PHONETIC POLISH",
+            "Runs Qwen2.5-1.5B on your RTX GPU after each sentence to fix phonetic mishearings using context + hotwords.txt. Strict <=30% edit guard prevents hallucinations.",
+        )),
+        HitTarget::BtnFontDown => Some((
+            "SHRINK CAPTION TEXT (Ctrl+-)",
+            "Decreases HEARD caption font size (13px to 34px). Press Ctrl+0 to reset to default.",
+        )),
+        HitTarget::BtnFontUp => Some((
+            "ENLARGE CAPTION TEXT (Ctrl++)",
+            "Increases HEARD caption font size up to 34px so captions are easy to read across a table.",
+        )),
+        HitTarget::HealthBadge => Some((
+            "VISUAL AUDIO SIGNAL HEALTH",
+            "Real-time voice-to-noise ratio (SNR dB) so you can see mic health without hearing: CLEAR (good), NOISY (denoising working), DROWNED (move mic closer), CLIP! (too loud), or TTS GATE (muted during your reply).",
+        )),
+        HitTarget::MeterBadge => Some((
+            "24-BAND LIVE FREQUENCY SPECTRUM",
+            "Real-time Goertzel audio spectrum from 85 Hz (rumble) to 7.2 kHz (consonants). Confirms your mic is live and picking up speech.",
+        )),
+        HitTarget::BtnVoice => Some((
+            "OUTBOUND TTS VOICE PICKER",
+            "Choose which local neural Piper or Windows voice speaks aloud when you type a reply and press Enter.",
+        )),
+        HitTarget::BtnTestVoices => Some((
+            "AUDITION ALL VOICES (FOR LISTENERS)",
+            "Speaks a sample sentence aloud through each installed voice one by one (showing synthesis ms) so a hearing person nearby can help pick the clearest voice for you. Press ESC to stop.",
+        )),
+        HitTarget::BtnRate => Some((
+            "SPEAKING SPEED",
+            "Cycles outbound TTS voice speed between 0.8x (slower/clearer), 1.0x (normal), 1.25x, and 1.5x.",
+        )),
+        HitTarget::BtnPin => Some((
+            "ALWAYS ON TOP (Ctrl+T)",
+            "Pins Speech Bridge above all other windows so captions stay visible during video calls or multitasking.",
+        )),
+        HitTarget::BtnExport => Some((
+            "EXPORT CONVERSATION TRANSCRIPT",
+            "Saves timestamped HEARD captions (with [SPK] labels) and your OUTBOUND replies to a .txt file in transcripts/.",
+        )),
+        HitTarget::BtnClear => Some((
+            "CLEAR SESSION & RESET SPEAKERS",
+            "Clears both panes and resets speaker ID clusters + LLM conversation context for a fresh conversation.",
+        )),
+        HitTarget::BtnSpeak => Some((
+            "SPEAK REPLY ALOUD (Enter)",
+            "Speaks your typed text aloud via local Piper TTS while automatically gating STT so your own reply never echoes back into HEARD. Shift+Enter adds a newline.",
+        )),
+        _ => None,
+    }
+}
+
+fn push_short_mic_name(full: &str, out: &mut String) {
+    let trimmed = full
+        .strip_prefix("Microphone Array (")
+        .or_else(|| full.strip_prefix("Microphone ("))
+        .unwrap_or(full)
+        .trim_end_matches(')');
+    let mut count = 0usize;
+    for ch in trimmed.chars() {
+        if count == 15 {
+            out.push('…');
+            return;
+        }
+        out.push(ch);
+        count += 1;
+    }
+}
+
+fn short_mic_name(full: &str) -> String {
+    let trimmed = full
+        .strip_prefix("Microphone Array (")
+        .or_else(|| full.strip_prefix("Microphone ("))
+        .unwrap_or(full)
+        .trim_end_matches(')');
+    if trimmed.chars().count() <= 16 {
+        trimmed.to_string()
+    } else {
+        trimmed.chars().take(15).collect::<String>() + "…"
+    }
 }
 
 fn copy_to_clipboard(hwnd: HWND, text: &str) -> bool {
@@ -1600,6 +2309,10 @@ fn copy_to_clipboard(hwnd: HWND, text: &str) -> bool {
 }
 
 unsafe fn make_font(face: &str, height: i32, weight: i32) -> HFONT {
+    make_font_styled(face, height, weight, false)
+}
+
+unsafe fn make_font_styled(face: &str, height: i32, weight: i32, underline: bool) -> HFONT {
     let face_w = to_wide(face);
     CreateFontW(
         height,
@@ -1608,7 +2321,7 @@ unsafe fn make_font(face: &str, height: i32, weight: i32) -> HFONT {
         0,
         weight,
         0,
-        0,
+        u32::from(underline),
         0,
         DEFAULT_CHARSET.0 as u32,
         OUT_DEFAULT_PRECIS.0 as u32,
@@ -1654,8 +2367,102 @@ unsafe fn draw_text_wrapped(hdc: HDC, text: &str, mut rc: RECT) {
     let mut wide = to_wide(text);
     wide.pop();
     if !wide.is_empty() {
-        DrawTextW(hdc, &mut wide, &mut rc, DT_LEFT | DT_WORDBREAK | DT_NOPREFIX);
+        DrawTextW(
+            hdc,
+            &mut wide,
+            &mut rc,
+            DT_LEFT | DT_WORDBREAK | DT_NOPREFIX,
+        );
     }
+}
+
+/// Draws wrapped monospace text while bolding, underlining, and highlighting the active spoken word.
+unsafe fn draw_text_wrapped_highlight_word(
+    hdc: HDC,
+    text: &str,
+    rc: RECT,
+    font_normal: HFONT,
+    font_active: HFONT,
+    active_word_idx: usize,
+) {
+    SelectObject(hdc, font_normal);
+    let mut space_sz = SIZE::default();
+    let space_w = [b' ' as u16];
+    let _ = GetTextExtentPoint32W(hdc, &space_w, &mut space_sz);
+    let sp_w = space_sz.cx.max(6);
+    let line_h = space_sz.cy.max(18);
+
+    let mut x = rc.left;
+    let mut y = rc.top;
+    let mut word_idx = 0usize;
+
+    for (line_i, raw_line) in text.split('\n').enumerate() {
+        if line_i > 0 {
+            x = rc.left;
+            y += line_h;
+        }
+        let mut first_on_line = true;
+        for word in raw_line.split_whitespace() {
+            let mut wide = to_wide(word);
+            wide.pop();
+            if wide.is_empty() {
+                continue;
+            }
+            let is_active = word_idx == active_word_idx;
+            SelectObject(hdc, if is_active { font_active } else { font_normal });
+            let mut wsz = SIZE::default();
+            let _ = GetTextExtentPoint32W(hdc, &wide, &mut wsz);
+
+            let needed_x = if first_on_line { x } else { x + sp_w };
+            if !first_on_line && needed_x + wsz.cx > rc.right {
+                x = rc.left;
+                y += line_h;
+            } else if !first_on_line {
+                x = needed_x;
+            }
+            first_on_line = false;
+
+            if y < rc.bottom {
+                let mut wrc = RECT {
+                    left: x,
+                    top: y,
+                    right: (x + wsz.cx + 2).min(rc.right),
+                    bottom: (y + line_h).min(rc.bottom),
+                };
+                if is_active {
+                    let pill = RECT {
+                        left: (x - 2).max(rc.left),
+                        top: y,
+                        right: (x + wsz.cx + 2).min(rc.right),
+                        bottom: (y + line_h).min(rc.bottom),
+                    };
+                    let pbr = CreateSolidBrush(C_GREEN_BG);
+                    FillRect(hdc, &pill, pbr);
+                    let _ = DeleteObject(pbr);
+
+                    // Extra crisp cyan underline bar beneath active word
+                    let ul = RECT {
+                        left: pill.left,
+                        top: (pill.bottom - 2).max(pill.top),
+                        right: pill.right,
+                        bottom: pill.bottom,
+                    };
+                    let ubr = CreateSolidBrush(C_CYAN);
+                    FillRect(hdc, &ul, ubr);
+                    let _ = DeleteObject(ubr);
+
+                    SetTextColor(hdc, COLORREF(0x00FFFFFF));
+                } else {
+                    SetTextColor(hdc, C_TEXT);
+                }
+                DrawTextW(hdc, &mut wide, &mut wrc, DT_LEFT | DT_SINGLELINE | DT_NOPREFIX);
+            }
+
+            x += wsz.cx;
+            word_idx += 1;
+        }
+    }
+    SelectObject(hdc, font_normal);
 }
 
 unsafe fn measure_wrapped_height(hdc: HDC, text: &str, width: i32) -> i32 {

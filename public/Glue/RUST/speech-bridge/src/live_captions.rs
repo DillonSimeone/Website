@@ -45,7 +45,11 @@ impl CaptionDiffer {
             let start = self.prev_lines.len().saturating_sub(1);
             for line in &lines[start..committed_count] {
                 if !is_placeholder(line) {
-                    events.push(SttEvent::Final(line.clone()));
+                    events.push(SttEvent::Final {
+                        card_id: 0,
+                        text: line.clone(),
+                        speaker_id: None,
+                    });
                 }
             }
         } else if committed_count > 0
@@ -53,13 +57,20 @@ impl CaptionDiffer {
             && lines[committed_count - 1] != self.prev_lines[committed_count - 1]
             && !is_placeholder(&lines[committed_count - 1])
         {
-            events.push(SttEvent::Final(lines[committed_count - 1].clone()));
+            events.push(SttEvent::Final {
+                card_id: 0,
+                text: lines[committed_count - 1].clone(),
+                speaker_id: None,
+            });
         }
 
         if let Some(active) = lines.last() {
             if !is_placeholder(active) && *active != self.last_hyp {
                 self.last_hyp = active.clone();
-                events.push(SttEvent::Hypothesis(active.clone()));
+                events.push(SttEvent::Partial {
+                    stable: String::new(),
+                    draft: active.clone(),
+                });
             }
         }
         self.prev_lines = lines;
@@ -84,7 +95,7 @@ fn run_inner(rx: &Receiver<LcCommand>, events: &Arc<SttEventQueue>) -> bool {
     let mut differ = CaptionDiffer::default();
 
     events.push(SttEvent::Started {
-        backend: SttBackend::Win11Captions.short_label(),
+        backend: SttBackend::Win11Captions.short_label().to_string(),
     });
 
     loop {
