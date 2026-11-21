@@ -1,7 +1,7 @@
 {
   "toggles": {
     "wifi_sentinel": false,
-    "usb_tether": false,
+    "usb_tether": true,
     "energy_daemon": false,
     "audio_haptics": false
   },
