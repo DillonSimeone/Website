@@ -1325,7 +1325,13 @@
 (() => {
   const VOICES = [
     { name: "Alan-Dillon", src: "./audio/Alan-Dillon.mp3" },
+    { name: "Amy-Dillon", src: "./audio/Amy-Dillon.mp3" },
+    { name: "Bryce-Dillon", src: "./audio/Bryce-Dillon.mp3" },
+    { name: "Cori-Dillon", src: "./audio/Cori-Dillon.mp3" },
+    { name: "Joe-Dillon", src: "./audio/Joe-Dillon.mp3" },
+    { name: "Kristin-Dillon", src: "./audio/Kristin-Dillon.mp3" },
     { name: "Lessac-Dillon", src: "./audio/Lessac-Dillon.mp3" },
+    { name: "Ryan-Dillon", src: "./audio/Ryan-Dillon.mp3" },
   ];
   let idx = 0;
 
