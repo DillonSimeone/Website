@@ -680,6 +680,19 @@
             <li><strong>Zero Driver Bloat &amp; Multi-Mic Ready:</strong> Drop three ~$4 mics across a dinner table for ~$12 total; Speech Bridge automatically locks onto whichever person is speaking clearest.</li>
             <li><strong>Plug-and-Flash Simplicity:</strong> <code>esp32-mic-hub.exe</code> auto-detects newly plugged-in ESP32-C3 boards and flashes firmware in one click, then idles in the system tray with near-zero battery impact.</li>
           </ul>
+
+          <div style="margin-top:16px; padding:12px 14px; border:1px solid rgba(56,189,248,0.28); border-radius:8px; background:rgba(15,23,42,0.55);">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+              <strong style="font-family:var(--mono); color:var(--cyan); font-size:0.9rem;">Browser USB Flasher (Web Serial / TinyUSB)</strong>
+              <button id="btnWebFlash" class="cyber-btn on-cyan" type="button">⚡ Flash ESP32-C3 (.bin)</button>
+            </div>
+            <div style="margin-top:8px; height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
+              <div id="flashProgressBar" style="width:0%; height:100%; background:var(--cyan); transition:width 0.15s ease;"></div>
+            </div>
+            <div id="flashStatusText" style="margin-top:7px; font-family:var(--mono); font-size:0.78rem; color:var(--text-soft);">
+              Plug in an ESP32-C3 SuperMini over USB-C and click Flash (Chrome / Edge).
+            </div>
+          </div>
         </div>
 
         <div class="panel">
@@ -707,9 +720,27 @@
       <div class="sec-tag">// 08 :: VOICE CLONING FOR DEAF MAKERS (RUSTYVOICECLONER + OPENVOICE V2)</div>
       <h2>Clone Your Own Voice by Matching Soundwaves Visually</h2>
       <p class="sec-intro">
-        As someone who is completely deaf and never learned to speak, hearing a voice prompt isn't an option.
-        <strong>RustyVoiceCloner</strong> solves this by showing three real-time visual graphs: <strong>Loudness Envelope</strong>, <strong>Pitch (F<sub>0</sub>)</strong>, and <strong>24-Band Vowel Spectrum</strong>, so you can mimic target soundwaves by eye until you hit a green match, then transfer your vocal timbre onto Speech Bridge's offline neural voices.
+        Because I am completely deaf and never learned to speak, I can't just read a paragraph out loud into a microphone to clone my voice.
+        Instead, <strong>RustyVoiceCloner</strong> lets me mimic individual vowels and short sounds by eye: it shows three real-time visual graphs (<strong>Loudness Envelope</strong>, <strong>Pitch (F<sub>0</sub>)</strong>, and <strong>24-Band Vowel Spectrum</strong>) so I can practice each sound until my live microphone wave matches the target wave.
+        Once all 9 sounds are captured, OpenVoice v2 extracts my vocal timbre and applies it to Speech Bridge's offline neural voices.
       </p>
+
+      <!-- Inline Dillon Voice Player (visible on both mobile & PC) -->
+      <div id="dillonPlayerInline" class="dillon-player-inline" aria-label="Have Dillon read aloud to you">
+        <div class="dp-title">Have Dillon read aloud to you!</div>
+        <div class="dp-inline-row">
+          <div class="dp-voice-row" style="margin-bottom:0; gap:10px;">
+            <button id="dpInlinePrevVoice" class="dp-arrow" type="button" aria-label="Previous cloned voice" title="Previous voice">&larr;</button>
+            <span id="dpInlineVoiceName" class="dp-voice-name">Alan-Dillon</span>
+            <button id="dpInlineNextVoice" class="dp-arrow" type="button" aria-label="Next cloned voice" title="Next voice">&rarr;</button>
+          </div>
+          <div class="dp-controls">
+            <button id="dpInlinePlayStop" class="dp-btn dp-play" type="button">Play</button>
+            <button id="dpInlineRestart" class="dp-btn" type="button">Restart</button>
+          </div>
+        </div>
+        <div id="dpInlineStatus" class="dp-status">Ready · Real OpenVoice v2 clone</div>
+      </div>
 
       <div class="hero-callout" style="margin-bottom:22px;">
         <strong>Interactive Web Replica Only:</strong> The widget below is a browser-based replica of <code>RustyVoiceCloner</code> so you can try matching soundwaves right here.
@@ -809,5 +840,6 @@
   </div>
 
   <script src="./app.js"></script>
+  <script type="module" src="./flasher.js"></script>
 </body>
 </html>

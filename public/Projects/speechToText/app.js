@@ -1053,7 +1053,7 @@
 
 
 // =========================================================================
-// 12. Fixed Upper-Right "Have Dillon read aloud to you!" Voice Player
+// 12. Synced "Have Dillon read aloud to you!" Players (Corner + Inline)
 // =========================================================================
 (() => {
   const VOICES = [
@@ -1063,72 +1063,86 @@
   let idx = 0;
 
   const audio = document.getElementById("dpAudio");
-  const elName = document.getElementById("dpVoiceName");
-  const elPlay = document.getElementById("dpPlayStop");
-  const elRestart = document.getElementById("dpRestart");
-  const elPrev = document.getElementById("dpPrevVoice");
-  const elNext = document.getElementById("dpNextVoice");
-  const elStatus = document.getElementById("dpStatus");
-  if (!audio || !elName || !elPlay) return;
+  if (!audio) return;
+
+  const widgets = [
+    {
+      name: document.getElementById("dpVoiceName"),
+      play: document.getElementById("dpPlayStop"),
+      restart: document.getElementById("dpRestart"),
+      prev: document.getElementById("dpPrevVoice"),
+      next: document.getElementById("dpNextVoice"),
+      status: document.getElementById("dpStatus"),
+    },
+    {
+      name: document.getElementById("dpInlineVoiceName"),
+      play: document.getElementById("dpInlinePlayStop"),
+      restart: document.getElementById("dpInlineRestart"),
+      prev: document.getElementById("dpInlinePrevVoice"),
+      next: document.getElementById("dpInlineNextVoice"),
+      status: document.getElementById("dpInlineStatus"),
+    },
+  ].filter((w) => w.name && w.play);
+
+  function syncUI(statusText, isPlaying) {
+    for (const w of widgets) {
+      w.name.textContent = VOICES[idx].name;
+      w.play.textContent = isPlaying ? "Stop" : "Play";
+      w.play.classList.toggle("playing", isPlaying);
+      if (w.status && statusText) w.status.textContent = statusText;
+    }
+  }
 
   function loadVoice(autoplay) {
-    const v = VOICES[idx];
-    elName.textContent = v.name;
-    audio.src = v.src;
+    audio.src = VOICES[idx].src;
     audio.currentTime = 0;
     if (autoplay) {
       audio.play().catch(() => {});
     } else {
-      elPlay.textContent = "Play";
-      elPlay.classList.remove("playing");
-      elStatus.textContent = "Ready · Real OpenVoice v2 clone";
+      syncUI("Ready · Real OpenVoice v2 clone", false);
     }
   }
 
-  elPrev.addEventListener("click", () => {
-    const wasPlaying = !audio.paused;
-    idx = (idx - 1 + VOICES.length) % VOICES.length;
-    loadVoice(wasPlaying);
-  });
+  for (const w of widgets) {
+    w.prev?.addEventListener("click", () => {
+      const wasPlaying = !audio.paused;
+      idx = (idx - 1 + VOICES.length) % VOICES.length;
+      loadVoice(wasPlaying);
+    });
 
-  elNext.addEventListener("click", () => {
-    const wasPlaying = !audio.paused;
-    idx = (idx + 1) % VOICES.length;
-    loadVoice(wasPlaying);
-  });
+    w.next?.addEventListener("click", () => {
+      const wasPlaying = !audio.paused;
+      idx = (idx + 1) % VOICES.length;
+      loadVoice(wasPlaying);
+    });
 
-  elPlay.addEventListener("click", () => {
-    if (audio.paused) {
+    w.play.addEventListener("click", () => {
+      if (audio.paused) {
+        if (!audio.src) audio.src = VOICES[idx].src;
+        audio.play().catch(() => {});
+      } else {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    });
+
+    w.restart?.addEventListener("click", () => {
       if (!audio.src) audio.src = VOICES[idx].src;
-      audio.play().catch(() => {});
-    } else {
-      audio.pause();
       audio.currentTime = 0;
-    }
-  });
-
-  elRestart.addEventListener("click", () => {
-    if (!audio.src) audio.src = VOICES[idx].src;
-    audio.currentTime = 0;
-    audio.play().catch(() => {});
-  });
+      audio.play().catch(() => {});
+    });
+  }
 
   audio.addEventListener("play", () => {
-    elPlay.textContent = "Stop";
-    elPlay.classList.add("playing");
-    elStatus.textContent = `Speaking as ${VOICES[idx].name}...`;
+    syncUI(`Speaking as ${VOICES[idx].name}...`, true);
   });
 
   audio.addEventListener("pause", () => {
-    elPlay.textContent = "Play";
-    elPlay.classList.remove("playing");
-    elStatus.textContent = "Ready · Real OpenVoice v2 clone";
+    syncUI("Ready · Real OpenVoice v2 clone", false);
   });
 
   audio.addEventListener("ended", () => {
-    elPlay.textContent = "Play";
-    elPlay.classList.remove("playing");
-    elStatus.textContent = "Finished · Try another voice!";
+    syncUI("Finished · Try another voice!", false);
   });
 
   loadVoice(false);

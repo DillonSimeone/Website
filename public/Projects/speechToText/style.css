@@ -25,10 +25,14 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  overflow-x: clip;
+}
 
 body {
   margin: 0;
+  overflow-x: clip;
   background: radial-gradient(circle at 18% 0%, rgba(0, 212, 255, 0.08), transparent 45%),
               radial-gradient(circle at 85% 12%, rgba(0, 255, 136, 0.06), transparent 40%),
               var(--bg);
@@ -1010,12 +1014,29 @@ footer {
   color: var(--muted);
   text-align: center;
 }
-@media (max-width: 720px) {
+.dillon-player-inline {
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  background: var(--pane);
+  border: 1px solid var(--cyan);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  font-family: var(--mono);
+}
+.dp-inline-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+@media (max-width: 900px) {
+  .top-nav {
+    position: static;
+  }
   .dillon-player {
-    top: auto;
-    bottom: 12px;
-    right: 12px;
-    width: 230px;
+    display: none;
   }
 }
 
