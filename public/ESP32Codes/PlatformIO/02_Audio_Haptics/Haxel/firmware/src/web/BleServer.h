@@ -1,10 +1,16 @@
 #pragma once
 
 #include <Arduino.h>
+#if __has_include(<BLEDevice.h>)
+#define HAXEL_BLE_V4 0
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
+#elif __has_include(<BLE.h>)
+#define HAXEL_BLE_V4 1
+#include <BLE.h>
+#endif
 #include <ArduinoJson.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
@@ -15,12 +21,36 @@ namespace haxel { class StatusLed; }
 
 namespace haxel::web {
 
+#if HAXEL_BLE_V4
+class BleServer {
+public:
+    bool begin(core::Engine* engine, Config* config, StatusLed* statusLed = nullptr);
+    void stop();
+    void pump();
+    void broadcastState();
+    void broadcastChannels();
+    void broadcastBins();
+    void broadcastConfig();
+
+private:
+    void handleConnect_();
+    void handleDisconnect_();
+    void handleWrite_(BLECharacteristic chr);
+
+    core::Engine* engine_ = nullptr;
+    Config* config_ = nullptr;
+    StatusLed* statusLed_ = nullptr;
+    BLEServer server_;
+    BLECharacteristic txChar_;
+    BLECharacteristic rxChar_;
+#else
 class BleServer : public BLEServerCallbacks, public BLECharacteristicCallbacks {
 public:
     bool begin(core::Engine* engine, Config* config, StatusLed* statusLed = nullptr);
     void stop();
     void pump();
     void broadcastState();
+    void broadcastChannels();
     void broadcastBins();
     void broadcastConfig();
 
@@ -38,6 +68,7 @@ private:
     BLEServer* pServer_ = nullptr;
     BLECharacteristic* pTxCharacteristic_ = nullptr;
     BLECharacteristic* pRxCharacteristic_ = nullptr;
+#endif
     volatile bool deviceConnected_ = false;
     volatile bool configSyncPending_ = false;
     volatile bool stateSyncPending_ = false;

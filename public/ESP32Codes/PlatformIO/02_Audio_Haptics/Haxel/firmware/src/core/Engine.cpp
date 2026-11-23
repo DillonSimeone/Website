@@ -298,13 +298,31 @@ void Engine::writeAllChannels(double tMs, float dtMs) {
             driver_->write(ch, 0.0f);
             continue;
         }
-        ctx.channelIndex = ch;
-        IPattern* p = cs.patternOverride ? cs.patternOverride : active_.pattern;
+        const bool synced = cs.synced;
+        const float chSpeed = synced ? active_.speed : cs.speed;
+        const float chIntensity = synced ? active_.intensity : cs.intensity;
+        const float chFloor = synced ? active_.startupFloor : cs.startupFloor;
+        const float chCeil = synced ? 1.0f : cs.ceiling;
+        if (!synced) {
+            channelTimeMs_[ch] += (double)dtMs * (double)chSpeed;
+        } else {
+            channelTimeMs_[ch] = tMs;
+        }
+
+        PatternContext chCtx = ctx;
+        chCtx.channelIndex = ch;
+        chCtx.tMs = synced ? tMs : channelTimeMs_[ch];
+        chCtx.speed = chSpeed;
+        chCtx.intensityMaster = chIntensity;
+        chCtx.startupFloor = chFloor;
+
+        IPattern* p = (!synced && cs.patternOverride) ? cs.patternOverride
+                      : (cs.patternOverride ? cs.patternOverride : active_.pattern);
         if (p && !reg.contains(p)) p = nullptr;
 
         float v = 0.0f;
         if (active_.audioReactive) {
-            if (!ctx.audio.valid) {
+            if (!chCtx.audio.valid) {
                 v = 0.0f;
             } else {
                 float maxAmp = 0.0f;
@@ -319,15 +337,15 @@ void Engine::writeAllChannels(double tMs, float dtMs) {
 
                     float sum = 0.0f;
                     for (int b = startIdx; b < endIdx; ++b) {
-                        sum += ctx.audio.mags[b];
+                        sum += chCtx.audio.mags[b];
                     }
-                    float vol = (sum / (float)len) * (ctx.audio.rms * 4.0f * 0.45f);
+                    float vol = (sum / (float)len) * (chCtx.audio.rms * 4.0f * 0.45f);
 
                     const char* patId = active_.binPatterns[i];
                     if (strcmp(patId, "none") != 0 && strlen(patId) > 0) {
                         IPattern* binPat = reg.find(patId);
                         if (binPat) {
-                            float sampleVal = binPat->sample(ctx);
+                            float sampleVal = binPat->sample(chCtx);
                             if (!std::isfinite(sampleVal)) sampleVal = 0.0f;
                             float out = vol * sampleVal;
                             if (out > maxAmp) maxAmp = out;
@@ -337,22 +355,25 @@ void Engine::writeAllChannels(double tMs, float dtMs) {
                 v = maxAmp;
             }
         } else if (p) {
-            v = p->sample(ctx);
+            v = p->sample(chCtx);
         }
 
-        v *= cs.intensity * active_.intensity;
+        v *= chIntensity;
         if (!std::isfinite(v)) v = 0.0f;
         if (v < 0.0f) v = 0.0f;
         if (v > 1.0f) v = 1.0f;
         // Capture pattern envelope before motor-floor / soft-start for LEDs.
         lastPattern_[ch] = v;
 
-        // Apply Motor Startup Floor Calibration (actuator only).
+        // Apply Motor Startup Floor & Ceiling Calibration (actuator only).
         if (v > 0.001f) {
-            v = active_.startupFloor + v * (1.0f - active_.startupFloor);
+            float span = chCeil - chFloor;
+            if (span < 0.0f) span = 0.0f;
+            v = chFloor + v * span;
             if (minDuty > 0.0f && v < minDuty) v = minDuty;
         }
 
+        if (v > chCeil) v = chCeil;
         if (v > maxDuty) v = maxDuty;
 
         // Soft-start: rate-limit deltas on rising/falling play path.

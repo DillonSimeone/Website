@@ -29,8 +29,12 @@ struct EngineCmd {
 };
 
 struct ChannelState {
-    bool   on        = true;
-    float  intensity = 1.0f;
+    bool   on           = true;
+    bool   synced       = true;  // true = follow master; false = independent settings
+    float  intensity    = 1.0f;
+    float  speed        = 1.0f;
+    float  startupFloor = 0.35f;
+    float  ceiling      = 1.0f;
     IPattern* patternOverride = nullptr; // nullptr -> use master pattern
 };
 
@@ -120,6 +124,7 @@ private:
     hal::IHapticDriver* driver_ = nullptr;
     uint32_t            lastTickDeltaUs_ = kTargetTickUs;
     double              patternTimeMs_   = 0.0;
+    double              channelTimeMs_[8] = {0.0};
     AudioAnalyzer*      audio_  = nullptr;
 
     StagedState         active_;

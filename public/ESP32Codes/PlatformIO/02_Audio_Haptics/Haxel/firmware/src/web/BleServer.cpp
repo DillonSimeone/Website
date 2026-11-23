@@ -1,5 +1,6 @@
 #include "BleServer.h"
 #include "StateApi.h"
+#include "../hal/PinSanity.h"
 #include "../core/Engine.h"
 #include "../core/PatternRegistry.h"
 #include "../core/RuntimeStore.h"
@@ -43,6 +44,72 @@ bool BleServer::begin(core::Engine* engine, Config* config, StatusLed* statusLed
     if (!rxQueue_) {
         rxQueue_ = xQueueCreate(8, sizeof(BleRxPacket));
     }
+#if HAXEL_BLE_V4
+    BTStatus initStatus = BLE.begin(devName);
+    if (!initStatus) {
+        Serial.printf("[BLE] BLE.begin('%s') failed: %s\n", devName.c_str(), initStatus.toString());
+        return false;
+    }
+    BTStatus mtuStatus = BLE.setMTU(512);
+    if (!mtuStatus) {
+        Serial.printf("[BLE] BLE.setMTU(512) warning: %s\n", mtuStatus.toString());
+    }
+    server_ = BLE.createServer();
+    if (!server_) {
+        Serial.println("[BLE] BLE.createServer() failed");
+        return false;
+    }
+    server_.onConnect([this](BLEServer, const BLEConnInfo&) {
+        this->handleConnect_();
+    });
+    server_.onDisconnect([this](BLEServer, const BLEConnInfo&, uint8_t) {
+        this->handleDisconnect_();
+    });
+
+    BLEService svc = server_.createService(BLEUUID(HAXEL_SERVICE_UUID));
+    if (!svc) {
+        Serial.println("[BLE] server.createService() failed");
+        return false;
+    }
+
+    txChar_ = svc.createCharacteristic(
+        BLEUUID(TX_CHAR_UUID),
+        BLEProperty::Notify,
+        BLEPermission::None
+    );
+    if (!txChar_) {
+        Serial.println("[BLE] createCharacteristic(TX) failed");
+        return false;
+    }
+
+    rxChar_ = svc.createCharacteristic(
+        BLEUUID(RX_CHAR_UUID),
+        BLEProperty::Write | BLEProperty::WriteNR,
+        BLEPermission::WriteOpen
+    );
+    if (!rxChar_) {
+        Serial.println("[BLE] createCharacteristic(RX) failed");
+        return false;
+    }
+    rxChar_.onWrite([this](BLECharacteristic chr, const BLEConnInfo&) {
+        this->handleWrite_(chr);
+    });
+
+    BTStatus srvStatus = server_.start();
+    if (!srvStatus) {
+        Serial.printf("[BLE] server.start() failed: %s\n", srvStatus.toString());
+        return false;
+    }
+
+    BLEAdvertising adv = BLE.getAdvertising();
+    adv.addServiceUUID(BLEUUID(HAXEL_SERVICE_UUID));
+    BTStatus advStatus = adv.start();
+    if (!advStatus) {
+        Serial.printf("[BLE] adv.start() failed: %s\n", advStatus.toString());
+        return false;
+    }
+    Serial.printf("[BLE] Server started & advertising as '%s'\n", BLE.getDeviceName().c_str());
+#else
     BLEDevice::init(devName.c_str());
     BLEDevice::setMTU(512);
     pServer_ = BLEDevice::createServer();
@@ -72,6 +139,7 @@ bool BleServer::begin(core::Engine* engine, Config* config, StatusLed* statusLed
     pAdvertising->setMinPreferred(0x06);  // helper for iPhone connections
     pAdvertising->setMinPreferred(0x12);
     BLEDevice::startAdvertising();
+#endif
     if (statusLed_) statusLed_->apMode();
 
     log_i("BLE Server started. Advertising as '%s'", devName.c_str());
@@ -79,11 +147,18 @@ bool BleServer::begin(core::Engine* engine, Config* config, StatusLed* statusLed
 }
 
 void BleServer::stop() {
+#if HAXEL_BLE_V4
+    BLE.end(true);
+    server_ = BLEServer();
+    txChar_ = BLECharacteristic();
+    rxChar_ = BLECharacteristic();
+#else
     // BLE stop procedures if needed.
     BLEDevice::deinit(true);
     pServer_ = nullptr;
     pTxCharacteristic_ = nullptr;
     pRxCharacteristic_ = nullptr;
+#endif
     deviceConnected_ = false;
     configSyncPending_ = false;
     stateSyncPending_ = false;
@@ -94,7 +169,11 @@ void BleServer::stop() {
     }
 }
 
+#if HAXEL_BLE_V4
+void BleServer::handleConnect_() {
+#else
 void BleServer::onConnect(BLEServer* pServer) {
+#endif
     deviceConnected_ = true;
     stateSyncPending_ = true;
     binsSyncPending_ = true;
@@ -103,7 +182,11 @@ void BleServer::onConnect(BLEServer* pServer) {
     // Deferred to housekeepingTask via pump() — never notify() inside Bluedroid callback!
 }
 
+#if HAXEL_BLE_V4
+void BleServer::handleDisconnect_() {
+#else
 void BleServer::onDisconnect(BLEServer* pServer) {
+#endif
     deviceConnected_ = false;
     configSyncPending_ = false;
     stateSyncPending_ = false;
@@ -115,6 +198,20 @@ void BleServer::onDisconnect(BLEServer* pServer) {
     // Restart advertising & reset upload state via housekeepingTask pump().
 }
 
+#if HAXEL_BLE_V4
+void BleServer::handleWrite_(BLECharacteristic chr) {
+    size_t len = 0;
+    const uint8_t* raw = chr.getValue(&len);
+    if (!raw || len == 0 || !rxQueue_) return;
+
+    static BleRxPacket sOnWriteScratch;
+    const size_t copyLen = len < sizeof(sOnWriteScratch.data) - 1 ? len : sizeof(sOnWriteScratch.data) - 1;
+    memcpy(sOnWriteScratch.data, raw, copyLen);
+    sOnWriteScratch.data[copyLen] = '\0';
+    sOnWriteScratch.len = (uint16_t)copyLen;
+    xQueueSend(rxQueue_, &sOnWriteScratch, 0);
+}
+#else
 void BleServer::onWrite(BLECharacteristic* pCharacteristic) {
     auto value = pCharacteristic->getValue();
     const size_t len = value.length();
@@ -129,6 +226,7 @@ void BleServer::onWrite(BLECharacteristic* pCharacteristic) {
     sOnWriteScratch.len = (uint16_t)copyLen;
     xQueueSend(rxQueue_, &sOnWriteScratch, 0);
 }
+#endif
 
 void BleServer::processWrite_(const char* data, size_t len) {
     if (!data || len == 0) return;
@@ -344,10 +442,17 @@ void BleServer::pump() {
         if (rxQueue_) {
             xQueueReset(rxQueue_);
         }
+#if HAXEL_BLE_V4
+        if (server_ && !deviceConnected_) {
+            server_.startAdvertising();
+            log_i("BLE restarted advertising");
+        }
+#else
         if (pServer_ && !deviceConnected_) {
             pServer_->startAdvertising();
             log_i("BLE restarted advertising");
         }
+#endif
     }
     if (!deviceConnected_) return;
     if (statusLed_ && stateSyncPending_) {
@@ -370,11 +475,16 @@ void BleServer::pump() {
     if (stateSyncPending_) {
         stateSyncPending_ = false;
         broadcastState();
+        broadcastChannels();
     }
 }
 
 void BleServer::broadcastState() {
+#if HAXEL_BLE_V4
+    if (!deviceConnected_ || !txChar_ || !engine_ || configSyncInProgress_) return;
+#else
     if (!deviceConnected_ || !pTxCharacteristic_ || !engine_ || configSyncInProgress_) return;
+#endif
 
     core::StagedState s;
     engine_->copyState(s);
@@ -406,8 +516,52 @@ void BleServer::broadcastState() {
     notifyJson_(doc);
 }
 
-void BleServer::broadcastBins() {
+void BleServer::broadcastChannels() {
+#if HAXEL_BLE_V4
+    if (!deviceConnected_ || !txChar_ || !engine_ || configSyncInProgress_) return;
+#else
     if (!deviceConnected_ || !pTxCharacteristic_ || !engine_ || configSyncInProgress_) return;
+#endif
+
+    core::StagedState s;
+    engine_->copyState(s);
+
+    auto round3 = [](float v) -> double {
+        return round((double)v * 1000.0) / 1000.0;
+    };
+
+    const int total = (s.channelCount < 1) ? 1 : (s.channelCount > 8 ? 8 : s.channelCount);
+    for (int offset = 0; offset < total; offset += 4) {
+        JsonDocument doc;
+        doc["type"] = "ch";
+        doc["offset"] = offset;
+        auto arr = doc["data"].to<JsonArray>();
+        for (int i = offset; i < total && i < offset + 4; ++i) {
+            auto c = arr.add<JsonObject>();
+            const auto& cs = s.channels[i];
+            c["on"] = cs.on;
+            c["sy"] = cs.synced;
+            c["in"] = round3(cs.intensity);
+            c["sp"] = round3(cs.speed);
+            c["fl"] = round3(cs.startupFloor);
+            c["ce"] = round3(cs.ceiling);
+            char patId[32] = "";
+            if (cs.patternOverride) {
+                core::PatternRegistry::instance().copyIdIfValid(cs.patternOverride, patId, sizeof(patId));
+            }
+            c["pa"] = patId;
+        }
+        notifyJson_(doc);
+        delay(20);
+    }
+}
+
+void BleServer::broadcastBins() {
+#if HAXEL_BLE_V4
+    if (!deviceConnected_ || !txChar_ || !engine_ || configSyncInProgress_) return;
+#else
+    if (!deviceConnected_ || !pTxCharacteristic_ || !engine_ || configSyncInProgress_) return;
+#endif
 
     core::StagedState s;
     engine_->copyState(s);
@@ -430,12 +584,21 @@ void BleServer::broadcastBins() {
 }
 
 void BleServer::notifyJson_(JsonDocument& doc) {
+#if HAXEL_BLE_V4
+    if (!deviceConnected_ || !txChar_) return;
+#else
     if (!deviceConnected_ || !pTxCharacteristic_) return;
+#endif
 
     String body;
     serializeJson(doc, body);
+#if HAXEL_BLE_V4
+    txChar_.setValue(body);
+    txChar_.notify();
+#else
     pTxCharacteristic_->setValue(body.c_str());
     pTxCharacteristic_->notify();
+#endif
     const char* type = doc["type"] | "";
     if (strncmp(type, "config", 6) == 0) {
         delay(60); // Keep the multi-part config burst from overrunning BLE queues.
@@ -445,7 +608,11 @@ void BleServer::notifyJson_(JsonDocument& doc) {
 }
 
 void BleServer::broadcastConfig() {
+#if HAXEL_BLE_V4
+    if (!deviceConnected_ || !txChar_ || !config_) return;
+#else
     if (!deviceConnected_ || !pTxCharacteristic_ || !config_) return;
+#endif
     configSyncInProgress_ = true;
 
     {
@@ -513,6 +680,24 @@ void BleServer::broadcastConfig() {
         auto data = doc["data"].to<JsonObject>();
         config_->oledToJson(data);
         data["eStopPin"] = config_->eStopPin();
+        notifyJson_(doc);
+    }
+    {
+        JsonDocument doc;
+        doc["type"] = "config";
+        doc["section"] = "pins";
+        auto data = doc["data"].to<JsonObject>();
+        int maxPin = haxel::hal::getChipMaxPin();
+        data["maxPin"] = maxPin;
+        auto unavail = data["unavail"].to<JsonArray>();
+        for (int p = 0; p <= maxPin; ++p) {
+            const char* reason = haxel::hal::getPinConflictReason((int8_t)p, *config_);
+            if (reason) {
+                auto u = unavail.add<JsonObject>();
+                u["p"] = p;
+                u["r"] = reason;
+            }
+        }
         notifyJson_(doc);
     }
     {

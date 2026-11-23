@@ -318,13 +318,276 @@ function envNeedsUploadFs(projectDir, envName) {
   return projectHasLittleFS(projectDir);
 }
 
-function attachBuildOutput(proc) {
-  proc.stdout.on('data', data => {
-    broadcast({ type: 'log', stream: 'build', text: data.toString('utf8') });
+function attachBuildOutput(proc, onText) {
+  const handleData = (data) => {
+    const text = data.toString('utf8');
+    broadcast({ type: 'log', stream: 'build', text });
+    if (onText) onText(text);
+  };
+  proc.stdout.on('data', handleData);
+  proc.stderr.on('data', handleData);
+}
+
+function isPioCoreOutdatedError(text) {
+  if (!text) return false;
+  return /IncompatiblePlatform:/i.test(text)
+    || /depends on PlatformIO Core\s*[><=]/i.test(text)
+    || /Please upgrade PlatformIO Core/i.test(text);
+}
+
+function extractPioOutdatedReason(text) {
+  const lines = String(text || '').split(/\r?\n/);
+  const match = lines.find(l => /IncompatiblePlatform:|depends on PlatformIO Core|Please upgrade PlatformIO Core/i.test(l));
+  return match ? match.trim() : 'This project requires a newer version of PlatformIO Core.';
+}
+
+function showWindowsYesNoDialog(title, message, runId) {
+  if (process.platform !== 'win32') return Promise.resolve(false);
+  return new Promise(resolve => {
+    const psScript = "$ws = New-Object -ComObject WScript.Shell; $r = $ws.Popup($env:PIO_DLG_MSG, 0, $env:PIO_DLG_TITLE, 4 + 48 + 4096); Write-Output $r";
+    const dlgProc = spawn('powershell', ['-NoProfile', '-Command', psScript], {
+      env: { ...process.env, PIO_DLG_TITLE: title, PIO_DLG_MSG: message },
+      windowsHide: true
+    });
+    activeProcesses.build = dlgProc;
+    let out = '';
+    dlgProc.stdout.on('data', d => { out += d.toString('utf8'); });
+    dlgProc.on('error', () => resolve(false));
+    dlgProc.on('close', () => {
+      if (runId !== currentBuildRunId) {
+        resolve(false);
+        return;
+      }
+      // WScript.Shell.Popup returns 6 for Yes, 7 for No
+      resolve(out.trim() === '6');
+    });
   });
-  proc.stderr.on('data', data => {
-    broadcast({ type: 'log', stream: 'build', text: data.toString('utf8') });
+}
+
+function killAllPioProcesses() {
+  if (process.platform !== 'win32') return;
+  for (const img of ['pio.exe', 'platformio.exe']) {
+    try {
+      execFileSync('taskkill', ['/F', '/IM', img, '/T'], { stdio: 'ignore', windowsHide: true, timeout: 4000 });
+    } catch {
+      // Ignore if no matching process is running
+    }
+  }
+}
+
+function resolvePioPython() {
+  if (PIO_PATH && PIO_PATH.includes(path.sep)) {
+    const sameDir = path.join(path.dirname(PIO_PATH), process.platform === 'win32' ? 'python.exe' : 'python');
+    if (fs.existsSync(sameDir)) return sameDir;
+    const parentDir = path.join(path.dirname(path.dirname(PIO_PATH)), process.platform === 'win32' ? 'python.exe' : 'python');
+    if (fs.existsSync(parentDir)) return parentDir;
+  }
+  for (const pyCmd of process.platform === 'win32' ? ['python', 'py'] : ['python3', 'python']) {
+    try {
+      const out = execFileSync(pyCmd, ['-c', 'import sys, platformio; print(sys.executable)'], {
+        env: childEnv(),
+        encoding: 'utf8',
+        timeout: 5000,
+        windowsHide: true
+      }).trim();
+      if (out && fs.existsSync(out)) return out;
+    } catch {
+      // Try next candidate
+    }
+  }
+  return null;
+}
+
+function runPioUpgrade(runId) {
+  return new Promise(resolve => {
+    if (runId !== currentBuildRunId) return resolve(false);
+
+    broadcast({ type: 'log', stream: 'build', text: '[System] Closing any running pio.exe / platformio.exe processes...\n' });
+    killAllPioProcesses();
+
+    const pythonExe = resolvePioPython();
+    const cmd = pythonExe || PIO_PATH;
+    const args = pythonExe ? ['-m', 'pip', 'install', '-U', 'platformio'] : ['upgrade'];
+    broadcast({ type: 'log', stream: 'build', text: `[System] Running "${cmd} ${args.join(' ')}"...\n\n` });
+
+    const proc = spawn(cmd, args, { cwd: WORKSPACE_DIR, env: childEnv() });
+    activeProcesses.build = proc;
+    attachBuildOutput(proc);
+    let done = false;
+    const finish = (ok) => {
+      if (done) return;
+      done = true;
+      if (runId !== currentBuildRunId) return resolve(false);
+      resolve(ok);
+    };
+    proc.on('error', err => {
+      broadcast({ type: 'log', stream: 'build', text: `\n[System] Failed to run PlatformIO update: ${err.message}\n` });
+      finish(false);
+    });
+    proc.on('close', code => {
+      if (code === 0) {
+        broadcast({ type: 'log', stream: 'build', text: '\n[System] PlatformIO Core updated successfully! Retrying...\n\n' });
+        finish(true);
+      } else {
+        broadcast({ type: 'log', stream: 'build', text: `\n[System] PlatformIO upgrade FAILED (exit ${code}).\n` });
+        finish(false);
+      }
+    });
   });
+}
+
+function isWindowsLongPathError(text) {
+  if (process.platform !== 'win32' || !text) return false;
+  const match = text.match(/FileNotFoundError:\s*\[Errno 2\]\s*No such file or directory:\s*['"]([^'"]+)['"]/i);
+  if (!match) return false;
+  return match[1].length >= 240 || /pkg-installing-/i.test(match[1]);
+}
+
+function isWindowsLongPathsEnabled() {
+  if (process.platform !== 'win32') return true;
+  try {
+    const out = execFileSync(
+      'powershell',
+      ['-NoProfile', '-Command', "(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\FileSystem' -Name LongPathsEnabled -ErrorAction SilentlyContinue).LongPathsEnabled"],
+      { encoding: 'utf8', timeout: 3000, windowsHide: true }
+    ).trim();
+    return out === '1';
+  } catch {
+    return false;
+  }
+}
+
+function enableWindowsLongPaths(runId) {
+  return new Promise(resolve => {
+    if (runId !== currentBuildRunId) return resolve(false);
+    broadcast({ type: 'log', stream: 'build', text: '[System] Requesting Admin (UAC) permission to enable Windows Long Paths...\n' });
+    const psScript = "Start-Process -FilePath 'reg.exe' -ArgumentList 'add','HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem','/v','LongPathsEnabled','/t','REG_DWORD','/d','1','/f' -Verb RunAs -Wait -WindowStyle Hidden";
+    const proc = spawn('powershell', ['-NoProfile', '-Command', psScript], { windowsHide: true });
+    activeProcesses.build = proc;
+    proc.on('error', err => {
+      broadcast({ type: 'log', stream: 'build', text: `[System] Failed to elevate reg.exe: ${err.message}\n` });
+      resolve(false);
+    });
+    proc.on('close', () => {
+      if (runId !== currentBuildRunId) return resolve(false);
+      const ok = isWindowsLongPathsEnabled();
+      if (ok) {
+        broadcast({ type: 'log', stream: 'build', text: '[System] Windows Long Paths enabled! Retrying...\n\n' });
+      } else {
+        broadcast({ type: 'log', stream: 'build', text: '[System] Windows Long Paths was not enabled (UAC cancelled or failed).\n' });
+      }
+      resolve(ok);
+    });
+  });
+}
+
+async function promptAndEnableLongPaths(runId) {
+  if (isWindowsLongPathsEnabled()) return false;
+  broadcast({
+    type: 'log',
+    stream: 'build',
+    text: '\n[System] Detected Windows 260-char MAX_PATH error during package extraction. Prompting to enable Windows Long Paths...\n'
+  });
+  const msg = 'Windows MAX_PATH (260-character limit) blocked extracting a PlatformIO package.\n\nEnable Windows Long Paths (LongPathsEnabled = 1, requires Admin UAC prompt) and retry?';
+  const approved = await showWindowsYesNoDialog('Windows Long Paths Required', msg, runId);
+  if (runId !== currentBuildRunId) return false;
+  if (!approved) {
+    broadcast({ type: 'log', stream: 'build', text: '[System] Enabling Windows Long Paths declined by user.\n' });
+    return false;
+  }
+  return await enableWindowsLongPaths(runId);
+}
+
+async function promptAndUpgradePio(outputText, runId) {
+  const reason = extractPioOutdatedReason(outputText);
+  broadcast({
+    type: 'log',
+    stream: 'build',
+    text: '\n[System] Detected outdated PlatformIO Core. Prompting to update PlatformIO...\n'
+  });
+
+  if (process.platform !== 'win32') {
+    broadcast({
+      type: 'log',
+      stream: 'build',
+      text: '[System] Run "pio upgrade" in your terminal and retry.\n'
+    });
+    return false;
+  }
+
+  const msg = `${reason}\n\nWould you like to update PlatformIO Core now and retry?`;
+  const approved = await showWindowsYesNoDialog('PlatformIO Update Required', msg, runId);
+  if (runId !== currentBuildRunId) return false;
+  if (!approved) {
+    broadcast({ type: 'log', stream: 'build', text: '[System] PlatformIO update declined by user.\n' });
+    return false;
+  }
+  return await runPioUpgrade(runId);
+}
+
+async function tryRecoverPioFailure(outputText, runId, triedSet) {
+  if (!triedSet.has('upgrade') && isPioCoreOutdatedError(outputText)) {
+    triedSet.add('upgrade');
+    return await promptAndUpgradePio(outputText, runId);
+  }
+  if (!triedSet.has('longpaths') && isWindowsLongPathError(outputText)) {
+    triedSet.add('longpaths');
+    return await promptAndEnableLongPaths(runId);
+  }
+  return false;
+}
+
+function startSerialMonitorProcess(projectDir, port, baud, logExit = false) {
+  if (!port) {
+    broadcast({ type: 'log', stream: 'monitor', text: '[Monitor] No serial port specified or detected.\n' });
+    broadcast({ type: 'status', stream: 'monitor', active: false });
+    return null;
+  }
+  const pythonExe = resolvePioPython() || (process.platform === 'win32' ? 'python' : 'python3');
+  const baudRate = String(baud || 115200);
+  const pyScript = [
+    'import sys, serial',
+    'ser = serial.Serial(sys.argv[1], int(sys.argv[2]), timeout=0.1)',
+    'try:',
+    '    while True:',
+    '        data = ser.read(1024)',
+    '        if data:',
+    '            sys.stdout.buffer.write(data)',
+    '            sys.stdout.buffer.flush()',
+    'except KeyboardInterrupt:',
+    '    pass',
+    'finally:',
+    '    ser.close()'
+  ].join('\n');
+
+  console.log(`[WS] Spawning pyserial monitor: ${pythonExe} (${port} @ ${baudRate})`);
+  const monProc = spawn(pythonExe, ['-u', '-c', pyScript, port, baudRate], {
+    cwd: projectDir || WORKSPACE_DIR,
+    env: childEnv()
+  });
+
+  activeProcesses.monitor = monProc;
+  broadcast({ type: 'status', stream: 'monitor', active: true });
+
+  monProc.stdout.on('data', data => {
+    broadcast({ type: 'log', stream: 'monitor', text: data.toString('utf8') });
+  });
+  monProc.stderr.on('data', data => {
+    broadcast({ type: 'log', stream: 'monitor', text: data.toString('utf8') });
+  });
+  monProc.on('error', err => {
+    broadcast({ type: 'log', stream: 'monitor', text: `\n[Monitor] Failed to start monitor: ${err.message}\n` });
+    broadcast({ type: 'status', stream: 'monitor', active: false });
+    activeProcesses.monitor = null;
+  });
+  monProc.on('close', code => {
+    if (logExit) {
+      broadcast({ type: 'log', stream: 'monitor', text: `\n[Monitor] Process exited with code ${code}\n` });
+    }
+    broadcast({ type: 'status', stream: 'monitor', active: false });
+    activeProcesses.monitor = null;
+  });
+  return monProc;
 }
 
 function resumeMonitor(wasMonitoring) {
@@ -334,38 +597,13 @@ function resumeMonitor(wasMonitoring) {
   pendingMonitorTimer = setTimeout(() => {
     pendingMonitorTimer = null;
     if (activeProcesses.build || activeProcesses.monitor) return;
-    const args = ['device', 'monitor'];
-    if (monitorConfig.port) args.push('--port', monitorConfig.port);
-    if (monitorConfig.baud) args.push('--baud', monitorConfig.baud);
-
-    const monProc = spawn(PIO_PATH, args, {
-      cwd: monitorConfig.projectDir || WORKSPACE_DIR,
-      env: childEnv()
-    });
-
-    activeProcesses.monitor = monProc;
-    broadcast({ type: 'status', stream: 'monitor', active: true });
-
-    monProc.stdout.on('data', data => {
-      broadcast({ type: 'log', stream: 'monitor', text: data.toString('utf8') });
-    });
-    monProc.stderr.on('data', data => {
-      broadcast({ type: 'log', stream: 'monitor', text: data.toString('utf8') });
-    });
-    monProc.on('error', err => {
-      broadcast({ type: 'log', stream: 'monitor', text: `\n[Monitor] Failed to start monitor: ${err.message}\n` });
-      broadcast({ type: 'status', stream: 'monitor', active: false });
-      activeProcesses.monitor = null;
-    });
-    monProc.on('close', () => {
-      broadcast({ type: 'status', stream: 'monitor', active: false });
-      activeProcesses.monitor = null;
-    });
+    startSerialMonitorProcess(monitorConfig.projectDir, monitorConfig.port, monitorConfig.baud, false);
   }, 2000);
 }
 
 function runPioTargetsAfterPackages(projectDir, env, port, targets, wasMonitoring, runId = currentBuildRunId) {
   let step = 0;
+  const triedRecovery = new Set();
 
   const runNext = () => {
     if (runId !== currentBuildRunId) return;
@@ -387,16 +625,28 @@ function runPioTargetsAfterPackages(projectDir, env, port, targets, wasMonitorin
       text: `[System] pio ${args.join(' ')}\n\n`
     });
 
+    let outputTail = '';
     const proc = spawn(PIO_PATH, args, { cwd: projectDir, env: childEnv() });
     activeProcesses.build = proc;
-    attachBuildOutput(proc);
+    attachBuildOutput(proc, (chunk) => {
+      outputTail = (outputTail + chunk).slice(-16384);
+    });
 
     let done = false;
-    const handleFinish = (code, errMsg) => {
+    const handleFinish = async (code, errMsg) => {
       if (done) return;
       done = true;
       if (runId !== currentBuildRunId) return;
       if (errMsg || code !== 0) {
+        if (!errMsg) {
+          const recovered = await tryRecoverPioFailure(outputTail, runId, triedRecovery);
+          if (runId !== currentBuildRunId) return;
+          if (recovered) {
+            step--;
+            runNext();
+            return;
+          }
+        }
         activeProcesses.build = null;
         broadcast({ type: 'status', stream: 'build', active: false });
         broadcast({
@@ -762,19 +1012,30 @@ function spawnEsptoolFlash(resolved, projectDir, chip, port, flashTargets, runId
   return proc;
 }
 
-function spawnPioTarget(projectDir, env, port, target, runId, onClose) {
+function spawnPioTarget(projectDir, env, port, target, runId, onClose, triedRecovery = new Set()) {
   if (runId !== currentBuildRunId) return null;
   const args = ['run', '-t', target, '-e', env];
   if (port) args.push('--upload-port', port);
   broadcast({ type: 'log', stream: 'build', text: `[System] pio ${args.join(' ')}\n\n` });
   const proc = spawn(PIO_PATH, args, { cwd: projectDir, env: childEnv() });
   activeProcesses.build = proc;
-  attachBuildOutput(proc);
+  let outputTail = '';
+  attachBuildOutput(proc, (chunk) => {
+    outputTail = (outputTail + chunk).slice(-16384);
+  });
   let finished = false;
-  const finish = (code) => {
+  const finish = async (code) => {
     if (finished) return;
     finished = true;
     if (runId !== currentBuildRunId) return;
+    if (code !== 0) {
+      const recovered = await tryRecoverPioFailure(outputTail, runId, triedRecovery);
+      if (runId !== currentBuildRunId) return;
+      if (recovered) {
+        spawnPioTarget(projectDir, env, port, target, runId, onClose, triedRecovery);
+        return;
+      }
+    }
     onClose(code);
   };
   proc.on('error', err => {
@@ -963,13 +1224,27 @@ function runQuickFlash(projectDir, env, port, wasMonitoring, runId, options = {}
 }
 
 // WS client broadcasting helper
+let buildLogHistory = '';
+
 function broadcast(data) {
+  if (data && data.type === 'log' && data.stream === 'build' && data.text) {
+    buildLogHistory = (buildLogHistory + data.text).slice(-32768);
+  }
+  const payload = JSON.stringify(data);
   wss.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify(data));
+      client.send(payload);
     }
   });
 }
+
+setInterval(() => {
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.ping();
+    }
+  });
+}, 15000);
 
 // Non-blocking async port listing & auto-detection
 function listSerialPortsAsync() {
@@ -1375,6 +1650,15 @@ app.post('/api/project/open-explorer', (req, res) => {
 // WebSocket Handler
 wss.on('connection', ws => {
   console.log('[WS] Client connected');
+  ws.send(JSON.stringify({ type: 'status', stream: 'build', active: !!activeProcesses.build }));
+  ws.send(JSON.stringify({ type: 'status', stream: 'monitor', active: !!activeProcesses.monitor }));
+  if (activeProcesses.build && buildLogHistory) {
+    ws.send(JSON.stringify({
+      type: 'log',
+      stream: 'build',
+      text: `\n[System] Reattached to active build:\n${buildLogHistory.slice(-4096)}`
+    }));
+  }
 
   ws.on('message', async message => {
     let msg;
@@ -1402,41 +1686,7 @@ wss.on('connection', ws => {
         }
       }
       monitorConfig = { projectDir: resolvedProj, port, baud };
-
-      broadcast({ type: 'status', stream: 'monitor', active: true });
-
-      const args = ['device', 'monitor'];
-      if (port) args.push('--port', port);
-      if (baud) args.push('--baud', String(baud));
-
-      console.log(`[WS] Spawning pio monitor: ${PIO_PATH} ${args.join(' ')}`);
-
-      const proc = spawn(PIO_PATH, args, {
-        cwd: resolvedProj,
-        env: childEnv()
-      });
-
-      activeProcesses.monitor = proc;
-
-      proc.stdout.on('data', data => {
-        broadcast({ type: 'log', stream: 'monitor', text: data.toString('utf8') });
-      });
-
-      proc.stderr.on('data', data => {
-        broadcast({ type: 'log', stream: 'monitor', text: data.toString('utf8') });
-      });
-
-      proc.on('error', err => {
-        broadcast({ type: 'log', stream: 'monitor', text: `\n[Monitor] Failed to start monitor: ${err.message}\n` });
-        broadcast({ type: 'status', stream: 'monitor', active: false });
-        activeProcesses.monitor = null;
-      });
-
-      proc.on('close', code => {
-        broadcast({ type: 'log', stream: 'monitor', text: `\n[Monitor] Process exited with code ${code}\n` });
-        broadcast({ type: 'status', stream: 'monitor', active: false });
-        activeProcesses.monitor = null;
-      });
+      startSerialMonitorProcess(resolvedProj, port, baud, true);
     }
 
     else if (msg.type === 'stop-monitor') {
@@ -1476,6 +1726,7 @@ wss.on('connection', ws => {
       }
 
       killProcess('build', false);
+      buildLogHistory = '';
       const runId = ++currentBuildRunId;
       broadcast({ type: 'status', stream: 'build', active: true });
 

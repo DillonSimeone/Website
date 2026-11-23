@@ -921,3 +921,225 @@ footer {
   font-size: 12px;
   color: var(--muted);
 }
+
+
+/* Fixed Upper-Right "Have Dillon read aloud to you!" Widget */
+.dillon-player {
+  position: fixed;
+  top: 64px;
+  right: 18px;
+  z-index: 90;
+  width: 248px;
+  background: rgba(10, 15, 20, 0.94);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--cyan);
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.55);
+  font-family: var(--mono);
+}
+.dp-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--cyan);
+  margin-bottom: 8px;
+  text-align: center;
+}
+.dp-voice-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  background: var(--pane);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 4px 6px;
+  margin-bottom: 8px;
+}
+.dp-arrow {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-weight: 700;
+}
+.dp-arrow:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+.dp-voice-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--green);
+}
+.dp-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.dp-btn {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 6px 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.dp-btn:hover {
+  border-color: var(--cyan);
+}
+.dp-btn.dp-play {
+  background: var(--green-bg);
+  border-color: var(--green-dim);
+  color: var(--green);
+}
+.dp-btn.dp-play.playing {
+  background: var(--red-bg);
+  border-color: var(--red);
+  color: var(--red);
+}
+.dp-status {
+  margin-top: 6px;
+  font-size: 10.5px;
+  color: var(--muted);
+  text-align: center;
+}
+@media (max-width: 720px) {
+  .dillon-player {
+    top: auto;
+    bottom: 12px;
+    right: 12px;
+    width: 230px;
+  }
+}
+
+/* RustyVoiceCloner Interactive Web Replica */
+.vc-replica {
+  background: var(--pane);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.vc-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+}
+.vc-brand {
+  color: var(--cyan);
+  font-weight: 700;
+  font-size: 13px;
+}
+.vc-match-pill {
+  padding: 3px 10px;
+  border-radius: 4px;
+  background: #060a0e;
+  border: 1px solid var(--border);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--amber);
+}
+.vc-match-pill.good {
+  border-color: var(--green);
+  color: var(--green);
+  background: var(--green-bg);
+}
+.vc-grid {
+  display: grid;
+  grid-template-columns: 230px 1fr;
+}
+@media (max-width: 820px) {
+  .vc-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.vc-cards {
+  border-right: 1px solid var(--border);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.vc-card-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  background: var(--card);
+  color: var(--text-soft);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 7px 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  cursor: pointer;
+}
+.vc-card-btn.active {
+  border-color: var(--cyan);
+  color: var(--text);
+  background: var(--card-hover);
+}
+.vc-card-score {
+  font-size: 11px;
+  color: var(--muted);
+}
+.vc-card-score.good {
+  color: var(--green);
+  font-weight: 700;
+}
+.vc-stage {
+  padding: 14px 16px;
+}
+.vc-cue {
+  background: #102030;
+  border: 1px solid #1e3b55;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13.5px;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.vc-plot-label {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+  margin: 6px 0 3px;
+}
+.vc-stage canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: #060a0e;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+.vc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.vc-status {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-soft);
+}
+.blooper-video {
+  width: 100%;
+  max-height: 360px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #05080c;
+}

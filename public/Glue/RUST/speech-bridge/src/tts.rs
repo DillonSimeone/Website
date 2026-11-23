@@ -2,10 +2,10 @@
 //! plus a sequential Voice Benchmark mode.
 
 use std::fs;
-use std::io::Write;
+use std::io::{BufRead, BufReader, Write};
 use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Arc, Mutex};
@@ -64,6 +64,11 @@ fn now_epoch_ms() -> u64 {
 pub enum VoiceKind {
     WinRt { id: String },
     Piper { model_path: PathBuf },
+    PiperCloned {
+        model_path: PathBuf,
+        se_path: PathBuf,
+        src_key: String,
+    },
 }
 
 /// Metadata for a local Windows 11 or Piper neural voice.
@@ -348,11 +353,12 @@ impl TtsEngine {
     }
 }
 
-/// Lists all local Windows 11 OneCore voices + Piper neural voices.
+/// Lists all local cloned Piper voices, Piper neural voices, and Windows 11 OneCore voices.
 pub fn list_local_voices() -> Vec<VoiceEntry> {
     let mut out = Vec::new();
+    let cloned_profiles = find_cloned_profiles();
 
-    // Local Piper neural voices first (more natural)
+    // Local Piper neural voices (+ cloned variants if any .pth profiles exist)
     if let Some(voices_dir) = find_piper_voices_dir() {
         if let Ok(entries) = fs::read_dir(&voices_dir) {
             let mut paths: Vec<PathBuf> = entries
@@ -361,6 +367,23 @@ pub fn list_local_voices() -> Vec<VoiceEntry> {
                 .filter(|p| p.extension().and_then(|s| s.to_str()) == Some("onnx"))
                 .collect();
             paths.sort();
+
+            for (profile_name, se_path) in &cloned_profiles {
+                for p in &paths {
+                    let stem = p.file_stem().and_then(|s| s.to_str()).unwrap_or("piper");
+                    let (lang, name) = parse_piper_stem(stem);
+                    out.push(VoiceEntry {
+                        display_name: format!("{name}-{profile_name}"),
+                        language: lang,
+                        kind: VoiceKind::PiperCloned {
+                            model_path: p.clone(),
+                            se_path: se_path.clone(),
+                            src_key: name,
+                        },
+                    });
+                }
+            }
+
             for p in paths {
                 let stem = p.file_stem().and_then(|s| s.to_str()).unwrap_or("piper");
                 let (lang, name) = parse_piper_stem(stem);
@@ -415,11 +438,34 @@ fn winrt_voice_to_entry(voice: &VoiceInformation) -> Option<VoiceEntry> {
 fn synthesize_voice(
     synth: Option<&SpeechSynthesizer>,
     piper_exe: Option<&Path>,
+    openvoice: &mut Option<OpenVoiceDaemon>,
     voice: Option<&VoiceEntry>,
     text: &str,
     rate: f64,
 ) -> Vec<u8> {
     match voice.map(|v| &v.kind) {
+        Some(VoiceKind::PiperCloned {
+            model_path,
+            se_path,
+            src_key,
+        }) => {
+            let Some(exe) = piper_exe else {
+                return Vec::new();
+            };
+            let Ok(piper_wav) = synthesize_piper_wav(exe, model_path, text, rate) else {
+                return Vec::new();
+            };
+            if openvoice.is_none() {
+                *openvoice = OpenVoiceDaemon::spawn().ok();
+            }
+            if let Some(ov) = openvoice.as_mut() {
+                if let Ok(converted) = ov.convert_wav(&piper_wav, src_key, se_path) {
+                    return converted;
+                }
+            }
+            // Fallback to raw Piper WAV if OpenVoice sidecar is not installed
+            piper_wav
+        }
         Some(VoiceKind::Piper { model_path }) => piper_exe
             .and_then(|exe| synthesize_piper_wav(exe, model_path, text, rate).ok())
             .unwrap_or_default(),
@@ -456,6 +502,7 @@ fn tts_worker_loop(
     let _com = ComGuard::mta();
     let synth = SpeechSynthesizer::new().ok();
     let piper_exe = find_piper_exe();
+    let mut openvoice: Option<OpenVoiceDaemon> = None;
     let mut active_wav: Vec<u8> = Vec::new();
 
     while let Ok(cmd) = rx.recv() {
@@ -476,6 +523,7 @@ fn tts_worker_loop(
                     notify_hwnd,
                     synth.as_ref(),
                     piper_exe.as_deref(),
+                    &mut openvoice,
                     &echo_gate,
                     &word_tracker,
                     &mut active_wav,
@@ -495,6 +543,7 @@ fn tts_worker_loop(
                     notify_hwnd,
                     synth.as_ref(),
                     piper_exe.as_deref(),
+                    &mut openvoice,
                     &cancel_bg,
                     &status_bg,
                     &echo_gate,
@@ -507,6 +556,9 @@ fn tts_worker_loop(
         }
     }
 
+    if let Some(mut ov) = openvoice.take() {
+        ov.shutdown();
+    }
     word_tracker.clear();
     echo_gate.set_speaking(false);
     unsafe {
@@ -519,6 +571,7 @@ fn handle_speak(
     notify_hwnd: isize,
     synth: Option<&SpeechSynthesizer>,
     piper_exe: Option<&Path>,
+    openvoice: &mut Option<OpenVoiceDaemon>,
     echo_gate: &TtsEchoGate,
     word_tracker: &TtsWordTracker,
     active_wav: &mut Vec<u8>,
@@ -527,7 +580,7 @@ fn handle_speak(
     rate: f64,
 ) {
     post_app_msg(notify_hwnd, WM_APP_TTS_STATUS, 1);
-    let wav = synthesize_voice(synth, piper_exe, voice, text, rate);
+    let wav = synthesize_voice(synth, piper_exe, openvoice, voice, text, rate);
     if !wav.is_empty() {
         echo_gate.set_speaking(true);
         word_tracker.begin(text, &wav);
@@ -552,6 +605,7 @@ fn handle_benchmark(
     notify_hwnd: isize,
     synth: Option<&SpeechSynthesizer>,
     piper_exe: Option<&Path>,
+    openvoice: &mut Option<OpenVoiceDaemon>,
     cancel_bg: &AtomicBool,
     status_bg: &Mutex<String>,
     echo_gate: &TtsEchoGate,
@@ -575,7 +629,7 @@ fn handle_benchmark(
             ),
         };
         let t0 = Instant::now();
-        let wav = synthesize_voice(synth, piper_exe, Some(v), &phrase, rate);
+        let wav = synthesize_voice(synth, piper_exe, openvoice, Some(v), &phrase, rate);
         let ms = t0.elapsed().as_millis();
         if cancel_bg.load(Ordering::Relaxed) {
             break;
@@ -659,6 +713,128 @@ pub fn find_piper_exe() -> Option<PathBuf> {
 
 pub fn find_piper_voices_dir() -> Option<PathBuf> {
     resolve_asset_path(&["piper/voices"], true)
+}
+
+fn find_cloned_profiles() -> Vec<(String, PathBuf)> {
+    let Some(dir) = resolve_asset_path(&["voices/cloned", "piper/cloned"], true) else {
+        return Vec::new();
+    };
+    let Ok(entries) = fs::read_dir(&dir) else {
+        return Vec::new();
+    };
+    let mut out = Vec::new();
+    for entry in entries.flatten() {
+        let p = entry.path();
+        if p.extension().and_then(|s| s.to_str()) == Some("pth") {
+            if let Some(stem) = p.file_stem().and_then(|s| s.to_str()) {
+                out.push((stem.to_string(), p));
+            }
+        }
+    }
+    out.sort_by(|a, b| a.0.cmp(&b.0));
+    out
+}
+
+fn find_openvoice_worker() -> Option<(PathBuf, PathBuf)> {
+    let worker_dir = resolve_asset_path(
+        &[
+            "openvoice_worker",
+            "../RustyVoiceCloner/openvoice_worker",
+        ],
+        true,
+    )?;
+    let py = worker_dir.join(".venv").join("Scripts").join("python.exe");
+    let script = worker_dir.join("worker.py");
+    if py.is_file() && script.is_file() {
+        Some((py, script))
+    } else {
+        None
+    }
+}
+
+fn json_escape(s: &str) -> String {
+    s.replace('\\', "\\\\").replace('"', "\\\"")
+}
+
+struct OpenVoiceDaemon {
+    child: Child,
+    stdin: ChildStdin,
+    stdout: BufReader<ChildStdout>,
+}
+
+impl OpenVoiceDaemon {
+    fn spawn() -> Result<Self, String> {
+        let (py, script) = find_openvoice_worker()
+            .ok_or_else(|| "OpenVoice worker not found".to_string())?;
+        let mut child = Command::new(&py)
+            .arg(&script)
+            .arg("--daemon")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .creation_flags(CREATE_NO_WINDOW)
+            .spawn()
+            .map_err(|e| format!("Failed to spawn OpenVoice daemon: {e}"))?;
+
+        let stdin = child.stdin.take().ok_or("Missing OpenVoice stdin")?;
+        let stdout_raw = child.stdout.take().ok_or("Missing OpenVoice stdout")?;
+        let mut stdout = BufReader::new(stdout_raw);
+
+        let mut ready_line = String::new();
+        stdout
+            .read_line(&mut ready_line)
+            .map_err(|e| format!("Failed reading OpenVoice ready line: {e}"))?;
+        if !ready_line.contains("\"ready\"") {
+            let _ = child.kill();
+            return Err(format!("OpenVoice failed to start: {ready_line}"));
+        }
+
+        Ok(Self {
+            child,
+            stdin,
+            stdout,
+        })
+    }
+
+    fn convert_wav(&mut self, piper_wav: &[u8], src_key: &str, tgt_se: &Path) -> Result<Vec<u8>, String> {
+        let tid = now_epoch_ms();
+        let src_path = std::env::temp_dir().join(format!("sb_ov_src_{tid}.wav"));
+        let out_path = std::env::temp_dir().join(format!("sb_ov_out_{tid}.wav"));
+        fs::write(&src_path, piper_wav).map_err(|e| format!("write src wav: {e}"))?;
+
+        let cmd = format!(
+            "{{\"cmd\":\"convert\",\"src_wav\":\"{}\",\"src_key\":\"{}\",\"tgt_se\":\"{}\",\"out_wav\":\"{}\"}}\n",
+            json_escape(&src_path.to_string_lossy()),
+            json_escape(src_key),
+            json_escape(&tgt_se.to_string_lossy()),
+            json_escape(&out_path.to_string_lossy()),
+        );
+        self.stdin
+            .write_all(cmd.as_bytes())
+            .and_then(|_| self.stdin.flush())
+            .map_err(|e| format!("write cmd: {e}"))?;
+
+        let mut resp_line = String::new();
+        self.stdout
+            .read_line(&mut resp_line)
+            .map_err(|e| format!("read resp: {e}"))?;
+
+        let _ = fs::remove_file(&src_path);
+        if !resp_line.contains("\"ok\": true") && !resp_line.contains("\"ok\":true") {
+            let _ = fs::remove_file(&out_path);
+            return Err(format!("OpenVoice convert failed: {resp_line}"));
+        }
+
+        let bytes = fs::read(&out_path).map_err(|e| format!("read out wav: {e}"))?;
+        let _ = fs::remove_file(&out_path);
+        Ok(bytes)
+    }
+
+    fn shutdown(&mut self) {
+        let _ = self.stdin.write_all(b"{\"cmd\":\"quit\"}\n");
+        let _ = self.stdin.flush();
+        let _ = self.child.wait();
+    }
 }
 
 #[cfg(test)]

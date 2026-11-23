@@ -3,6 +3,7 @@
 #ifdef HAXEL_WIFI
 
 #include "StateApi.h"
+#include "../hal/PinSanity.h"
 #include "../core/Engine.h"
 #include "../core/Config.h"
 #include "../core/AudioAnalyzer.h"
@@ -58,7 +59,20 @@ void ApiHandlers::install(AsyncWebServer& server, Engine* engine, Config* config
 
     server.on("/json/config", HTTP_GET, [config](AsyncWebServerRequest* req) {
         JsonDocument doc;
-        config->toJson(doc.to<JsonObject>(), false);
+        JsonObject root = doc.to<JsonObject>();
+        config->toJson(root, false);
+        JsonObject pinInfo = root["pinInfo"].to<JsonObject>();
+        int maxPin = haxel::hal::getChipMaxPin();
+        pinInfo["maxPin"] = maxPin;
+        JsonArray unavail = pinInfo["unavailable"].to<JsonArray>();
+        for (int p = 0; p <= maxPin; ++p) {
+            const char* reason = haxel::hal::getPinConflictReason((int8_t)p, *config);
+            if (reason) {
+                JsonObject u = unavail.add<JsonObject>();
+                u["p"] = p;
+                u["r"] = reason;
+            }
+        }
         String body; serializeJson(doc, body);
         req->send(200, "application/json", body);
     });

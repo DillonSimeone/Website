@@ -1113,6 +1113,17 @@ function setDeviceControlValue(id, value) {
 
 function applyDeviceConfig(cfg) {
     if (!cfg) return;
+    if (cfg.pins && typeof cfg.pins.maxPin === "number") {
+        devicePinInfo = {
+            maxPin: cfg.pins.maxPin,
+            unavailable: Array.isArray(cfg.pins.unavail) ? cfg.pins.unavail : []
+        };
+    } else if (cfg.pinInfo && typeof cfg.pinInfo.maxPin === "number") {
+        devicePinInfo = {
+            maxPin: cfg.pinInfo.maxPin,
+            unavailable: Array.isArray(cfg.pinInfo.unavailable) ? cfg.pinInfo.unavailable : []
+        };
+    }
     const ssidEl = document.getElementById("deviceSsid");
     if (ssidEl && cfg.apSsid) {
         // Show clean user suffix in text input (e.g., "Shrek" instead of "Haxel-Shrek")
@@ -1346,7 +1357,7 @@ function handleNotification(event) {
                 };
                 activePattern = p;
                 const vLabel = document.getElementById("patternName");
-                if (vLabel) vLabel.textContent = p.name;
+                if (vLabel) vLabel.textContent = p.name; if (typeof syncPlayPatternLabel === "function") syncPlayPatternLabel();
             }
             if (s.uptime_ms !== undefined) {
                 const uptimeText = document.getElementById("uptime");
@@ -1356,13 +1367,51 @@ function handleNotification(event) {
             }
             if (Array.isArray(s.channels)) {
                 s.channels.forEach((ch, i) => {
-                    if (typeof ch === "boolean") channelEnabled[i] = ch;
-                    else if (ch && typeof ch.on === "boolean") channelEnabled[i] = ch.on;
+                    if (typeof ch === "boolean") {
+                        channelEnabled[i] = ch;
+                        if (channelDetails[i]) channelDetails[i].on = ch;
+                    } else if (ch && typeof ch === "object") {
+                        if (typeof ch.on === "boolean") {
+                            channelEnabled[i] = ch.on;
+                            if (channelDetails[i]) channelDetails[i].on = ch.on;
+                        }
+                        if (channelDetails[i]) {
+                            if (typeof ch.synced === "boolean") channelDetails[i].synced = ch.synced;
+                            if (typeof ch.intensity === "number") channelDetails[i].intensity = ch.intensity;
+                            if (typeof ch.speed === "number") channelDetails[i].speed = ch.speed;
+                            if (typeof ch.startupFloor === "number") channelDetails[i].startupFloor = ch.startupFloor;
+                            if (typeof ch.ceiling === "number") channelDetails[i].ceiling = ch.ceiling;
+                            if (typeof ch.patternOverride === "string") channelDetails[i].patternOverride = ch.patternOverride;
+                        }
+                    }
                 });
                 renderMotors();
+                if (typeof renderChannelStrip === "function") renderChannelStrip();
             }
             bleStateReceived = true;
             if (!bleReady) finishBleHydrationIfReady();
+            return;
+        }
+        if (m.type === 'ch' && Array.isArray(m.data)) {
+            const off = Number(m.offset) || 0;
+            m.data.forEach((c, idx) => {
+                const i = off + idx;
+                if (i >= 0 && i < 8) {
+                    if (typeof c.on === 'boolean') {
+                        channelEnabled[i] = c.on;
+                        channelDetails[i].on = c.on;
+                    }
+                    if (typeof c.sy === 'boolean') channelDetails[i].synced = c.sy;
+                    if (typeof c.in === 'number') channelDetails[i].intensity = c.in;
+                    if (typeof c.sp === 'number') channelDetails[i].speed = c.sp;
+                    if (typeof c.fl === 'number') channelDetails[i].startupFloor = c.fl;
+                    if (typeof c.ce === 'number') channelDetails[i].ceiling = c.ce;
+                    if (typeof c.pa === 'string') channelDetails[i].patternOverride = c.pa;
+                }
+            });
+            renderMotors();
+            if (typeof renderChannelStrip === "function") renderChannelStrip();
+            return;
         }
     } catch (e) {
         console.error("BLE Notification Parse Error:", e);
@@ -1748,6 +1797,19 @@ if (isMobileDevice) {
 let activeMotors = [6];
 let activeKnobs = [];
 let channelEnabled = [true, true, true, true, true, true, true, true];
+let channelDetails = Array.from({ length: 8 }, () => ({
+    on: true,
+    synced: true,
+    intensity: 1.0,
+    speed: 1.0,
+    startupFloor: 0.35,
+    ceiling: 1.0,
+    patternOverride: ""
+}));
+let selectedControlCh = 0;
+let selectedDeviceCh = 0;
+let deviceChSettingsOpen = false;
+let devicePinInfo = { maxPin: 21, unavailable: [] };
 // C3/C6/common GPIOs; device-assigned pins are merged in at render time.
 const pinOptions = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23];
 const drvKindMap = {
@@ -1862,7 +1924,21 @@ async function pushChannelEnabled() {
     }
 }
 
-function renderMotors() {
+let lastMotorsRenderSig = "";
+
+function computeMotorsSig(kind) {
+    return JSON.stringify({
+        k: kind,
+        sel: selectedDeviceCh,
+        open: deviceChSettingsOpen,
+        m: activeMotors.slice(0, 8),
+        en: channelEnabled.slice(0, 8),
+        cd: channelDetails,
+        pi: devicePinInfo
+    });
+}
+
+function renderMotors(force = false) {
     const container = document.getElementById("motorsContainer");
     if (!container) return;
     const drvChip = document.getElementById("drvChip");
@@ -1870,42 +1946,194 @@ function renderMotors() {
     const positional = isPositionalDriver(kind);
     if (positional) ensurePositionalMotors(kind);
     const labels = POSITIONAL_SLOT_LABELS[kind];
-    const rowCount = motorRowCount();
-    while (channelEnabled.length < rowCount) channelEnabled.push(true);
+    while (channelEnabled.length < 8) channelEnabled.push(true);
+
+    const sig = computeMotorsSig(kind);
+    if (!force) {
+        if (container.contains(document.activeElement)) return;
+        if (sig === lastMotorsRenderSig) return;
+    }
+    lastMotorsRenderSig = sig;
     container.innerHTML = "";
-    activeMotors.forEach((pin, idx) => {
-        const pinNum = Number.isFinite(Number(pin)) ? Number(pin) : -1;
-        const opts = motorPinSelectOptions(pinNum);
-        const row = document.createElement("div");
-        row.className = "motor-row";
-        row.style.cssText = "display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;";
-        const slotLabel = positional ? (labels[idx] || `Pin ${idx}`) : `Ch ${idx}:`;
-        const chIdx = logicalChannelForSlot(kind, idx);
-        const showToggle = chIdx >= 0 && isChannelToggleSlot(kind, idx);
-        const chOn = chIdx >= 0 ? (channelEnabled[chIdx] !== false) : true;
-        const toggleHtml = showToggle
-            ? `<label style="display:flex; align-items:center; gap:4px; font-size:11px; margin:0; min-width:52px;">
-                <input type="checkbox" class="motor-output-enable" data-ch="${chIdx}" ${chOn ? "checked" : ""} style="width:auto; margin:0;">
-                <span class="hint">${chOn ? "On" : "Off"}</span>
-               </label>`
-            : `<span style="min-width:52px; font-size:10px; color:#777;">${chIdx >= 0 ? `Ch ${chIdx}` : ""}</span>`;
-        const unassignedOpt = (positional || kind === 3)
-            ? `<option value="-1" ${pinNum < 0 ? "selected" : ""}>Unassigned (-1)</option>`
-            : "";
-        const removeBtn = positional
-            ? ""
-            : `<button class="btn btn-remove-row remove-motor" data-index="${idx}" style="cursor:pointer;">&times;</button>`;
-        row.innerHTML = `
-            <span style="font-size: 11px; min-width: 66px;">${slotLabel}</span>
-            ${toggleHtml}
-            <select class="motor-pin" data-index="${idx}" style="flex:1; min-width:100px;">
-                ${unassignedOpt}
-                ${opts.map(p => `<option value="${p}" ${p === pinNum ? "selected" : ""}>GPIO ${p}</option>`).join("")}
-            </select>
-            ${removeBtn}
+    const unavailMap = new Map();
+    if (devicePinInfo && Array.isArray(devicePinInfo.unavailable)) {
+        devicePinInfo.unavailable.forEach(u => {
+            if (u && typeof u.p === "number") unavailMap.set(u.p, u.r || "Unavailable");
+        });
+    }
+    const maxPin = (devicePinInfo && typeof devicePinInfo.maxPin === "number") ? devicePinInfo.maxPin : 21;
+    const allPins = Array.from({ length: maxPin + 1 }, (_, i) => i);
+
+    if (!positional) {
+        while (activeMotors.length < 8) activeMotors.push(-1);
+        if (selectedDeviceCh < 0 || selectedDeviceCh >= 8) selectedDeviceCh = 0;
+
+        const bar = document.createElement("div");
+        bar.style.cssText = "display:grid; grid-template-columns:repeat(8, 1fr); gap:4px; margin-bottom:10px;";
+        for (let i = 0; i < 8; i++) {
+            const p = Number(activeMotors[i]);
+            const pinStr = (Number.isFinite(p) && p >= 0) ? `G${p}` : "OFF";
+            const chOn = channelEnabled[i] !== false;
+            const indep = channelDetails[i] && !channelDetails[i].synced;
+            const isSel = (i === selectedDeviceCh);
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "btn";
+            const bg = isSel ? "#002f6c" : (chOn ? "#ffffff" : "#e5e5e5");
+            const fg = isSel ? "#ffffff" : (chOn ? "#111111" : "#777777");
+            const brd = isSel ? "#111111" : (chOn ? "#111111" : "#999999");
+            const botBar = chOn ? "#2a9d8f" : "#d62828";
+            btn.style.cssText = `padding:5px 2px 4px; font-size:11px; line-height:1.15; cursor:pointer; border:2px solid ${brd}; border-bottom:4px solid ${botBar}; background:${bg}; color:${fg}; box-shadow:${isSel ? "2px 2px 0 #111" : "none"};`;
+            btn.innerHTML = `<div style="font-weight:700;">${i + 1}${indep ? "*" : ""}</div><div style="font-size:9px; opacity:0.85;">${pinStr}</div>`;
+            btn.addEventListener("click", () => {
+                selectedDeviceCh = i;
+                selectedControlCh = i;
+                renderMotors(true);
+            });
+            bar.appendChild(btn);
+        }
+        container.appendChild(bar);
+
+        const ch = selectedDeviceCh;
+        const pinNum = Number.isFinite(Number(activeMotors[ch])) ? Number(activeMotors[ch]) : -1;
+        const chOn = channelEnabled[ch] !== false;
+        const cd = channelDetails[ch] || { on: chOn, synced: true, intensity: 1, speed: 1, startupFloor: 0.35, ceiling: 1, patternOverride: "" };
+
+        const card = document.createElement("div");
+        card.style.cssText = "border:2px solid var(--black); background:#fff; padding:10px; margin-bottom:6px; box-shadow:3px 3px 0 var(--black);";
+
+        const pinOptsHtml = allPins.map(p => {
+            const usedByOther = activeMotors.some((otherP, otherIdx) => otherIdx !== ch && Number(otherP) === p);
+            const reason = unavailMap.get(p) || (usedByOther ? "Used by another Ch" : "");
+            const isCur = (p === pinNum);
+            if (reason && !isCur) {
+                return `<option value="${p}" disabled>GPIO ${p} (${reason})</option>`;
+            }
+            return `<option value="${p}" ${isCur ? "selected" : ""}>GPIO ${p}${reason ? ` (${reason})` : ""}</option>`;
+        }).join("");
+
+        const patOptsHtml = (Array.isArray(PATTERNS) ? PATTERNS : []).map(p =>
+            `<option value="${p.id}" ${cd.patternOverride === p.id ? "selected" : ""}>${p.name || p.id}</option>`
+        ).join("");
+
+        card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:wrap;">
+                <strong style="font-size:12px;">CH ${ch + 1} PIN</strong>
+                <div style="display:flex; gap:6px;">
+                    <button type="button" class="btn" id="devChSetBtn" style="padding:4px 10px; font-size:11px; background:${!cd.synced ? "#ffb703" : "var(--cream)"}; color:#111; box-shadow:2px 2px 0 #111;">&#9881; SET</button>
+                    <button type="button" class="btn" id="devChOnBtn" style="padding:4px 10px; font-size:11px; background:${chOn ? "#002f6c" : "#d62828"}; color:#fff; box-shadow:2px 2px 0 #111;">CH: ${chOn ? "ON" : "OFF"}</button>
+                </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <select class="motor-pin" data-index="${ch}" style="flex:1;">
+                    <option value="-1" ${pinNum < 0 ? "selected" : ""}>Unassigned (-1 / OFF)</option>
+                    ${pinOptsHtml}
+                </select>
+            </div>
+            <div id="devChSettingsDrawer" style="display:${deviceChSettingsOpen ? "block" : "none"}; margin-top:10px; padding-top:10px; border-top:2px solid #111;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-size:11px; font-weight:700;">CH ${ch + 1} MOTOR SETTINGS</span>
+                    <button type="button" class="btn" id="devChSyncBtn" style="padding:3px 8px; font-size:11px; background:${cd.synced ? "var(--cream)" : "#ffb703"}; color:#111; box-shadow:2px 2px 0 #111;">${cd.synced ? "SYNC: MASTER" : "INDEPENDENT"}</button>
+                </div>
+                <div style="opacity:${cd.synced ? "0.5" : "1"};">
+                    <div class="row"><label>Intensity</label><input type="range" id="devChInt" min="0" max="100" value="${Math.round(cd.intensity * 100)}"><span class="val" id="devChIntVal">${Math.round(cd.intensity * 100)}%</span></div>
+                    <div class="row"><label>Speed</label><input type="range" id="devChSpd" min="25" max="400" value="${Math.round(cd.speed * 100)}"><span class="val" id="devChSpdVal">${cd.speed.toFixed(2)}x</span></div>
+                    <div class="row"><label>Floor</label><input type="range" id="devChFlr" min="0" max="100" value="${Math.round(cd.startupFloor * 100)}"><span class="val" id="devChFlrVal">${Math.round(cd.startupFloor * 100)}%</span></div>
+                    <div class="row"><label>Ceiling</label><input type="range" id="devChCeil" min="0" max="100" value="${Math.round(cd.ceiling * 100)}"><span class="val" id="devChCeilVal">${Math.round(cd.ceiling * 100)}%</span></div>
+                    <div class="row"><label>Pattern</label><select id="devChPat" style="flex:1;"><option value="">Follow Master</option>${patOptsHtml}</select></div>
+                </div>
+            </div>
         `;
-        container.appendChild(row);
-    });
+        container.appendChild(card);
+
+        card.querySelector("#devChSetBtn")?.addEventListener("click", () => {
+            deviceChSettingsOpen = !deviceChSettingsOpen;
+            renderMotors(true);
+        });
+        card.querySelector("#devChOnBtn")?.addEventListener("click", () => {
+            channelEnabled[ch] = !(channelEnabled[ch] !== false);
+            if (channelDetails[ch]) channelDetails[ch].on = channelEnabled[ch];
+            pushChannelEnabled();
+            renderMotors(true);
+        });
+        card.querySelector("#devChSyncBtn")?.addEventListener("click", () => {
+            cd.synced = !cd.synced;
+            sendSingleChannelPatch(ch, { synced: cd.synced });
+            renderMotors(true);
+        });
+        card.querySelector("#devChInt")?.addEventListener("input", (e) => {
+            cd.intensity = Number(e.target.value) / 100;
+            cd.synced = false;
+            card.querySelector("#devChIntVal").textContent = `${Math.round(cd.intensity * 100)}%`;
+            sendSingleChannelPatch(ch, { synced: false, intensity: cd.intensity });
+        });
+        card.querySelector("#devChSpd")?.addEventListener("input", (e) => {
+            cd.speed = Number(e.target.value) / 100;
+            cd.synced = false;
+            card.querySelector("#devChSpdVal").textContent = `${cd.speed.toFixed(2)}x`;
+            sendSingleChannelPatch(ch, { synced: false, speed: cd.speed });
+        });
+        card.querySelector("#devChFlr")?.addEventListener("input", (e) => {
+            cd.startupFloor = Number(e.target.value) / 100;
+            cd.synced = false;
+            card.querySelector("#devChFlrVal").textContent = `${Math.round(cd.startupFloor * 100)}%`;
+            sendSingleChannelPatch(ch, { synced: false, startupFloor: cd.startupFloor });
+        });
+        card.querySelector("#devChCeil")?.addEventListener("input", (e) => {
+            cd.ceiling = Number(e.target.value) / 100;
+            cd.synced = false;
+            card.querySelector("#devChCeilVal").textContent = `${Math.round(cd.ceiling * 100)}%`;
+            sendSingleChannelPatch(ch, { synced: false, ceiling: cd.ceiling });
+        });
+        card.querySelector("#devChPat")?.addEventListener("change", (e) => {
+            cd.patternOverride = e.target.value;
+            cd.synced = false;
+            sendSingleChannelPatch(ch, { synced: false, patternOverride: cd.patternOverride });
+            renderMotors(true);
+        });
+    } else {
+        activeMotors.forEach((pin, idx) => {
+            const pinNum = Number.isFinite(Number(pin)) ? Number(pin) : -1;
+            const row = document.createElement("div");
+            row.className = "motor-row";
+            row.style.cssText = "display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;";
+            const slotLabel = labels[idx] || `Pin ${idx}`;
+            const chIdx = logicalChannelForSlot(kind, idx);
+            const showToggle = chIdx >= 0 && isChannelToggleSlot(kind, idx);
+            const chOn = chIdx >= 0 ? (channelEnabled[chIdx] !== false) : true;
+            const toggleHtml = showToggle
+                ? `<label style="display:flex; align-items:center; gap:4px; font-size:11px; margin:0; min-width:52px;">
+                    <input type="checkbox" class="motor-output-enable" data-ch="${chIdx}" ${chOn ? "checked" : ""} style="width:auto; margin:0;">
+                    <span class="hint">${chOn ? "On" : "Off"}</span>
+                   </label>`
+                : `<span style="min-width:52px; font-size:10px; color:#777;">${chIdx >= 0 ? `Ch ${chIdx}` : ""}</span>`;
+            const pinOptsHtml = allPins.map(p => {
+                const usedByOther = activeMotors.some((otherP, otherIdx) => otherIdx !== idx && Number(otherP) === p);
+                const reason = unavailMap.get(p) || (usedByOther ? "Used by another Ch" : "");
+                const isCur = (p === pinNum);
+                if (reason && !isCur) {
+                    return `<option value="${p}" disabled>GPIO ${p} (${reason})</option>`;
+                }
+                return `<option value="${p}" ${isCur ? "selected" : ""}>GPIO ${p}${reason ? ` (${reason})` : ""}</option>`;
+            }).join("");
+            row.innerHTML = `
+                <span style="font-size: 11px; min-width: 66px;">${slotLabel}</span>
+                ${toggleHtml}
+                <select class="motor-pin" data-index="${idx}" style="flex:1; min-width:140px;">
+                    <option value="-1" ${pinNum < 0 ? "selected" : ""}>Unassigned (-1)</option>
+                    ${pinOptsHtml}
+                </select>
+            `;
+            container.appendChild(row);
+        });
+    }
+    if (unavailMap.size > 0) {
+        const note = document.createElement("div");
+        note.style.cssText = "font-size:10px; color:#666; margin-top:4px; line-height:1.4;";
+        const items = [...unavailMap.entries()].map(([p, r]) => `GPIO ${p}: ${r}`).join(" · ");
+        note.textContent = `Unavailable pins — ${items}`;
+        container.appendChild(note);
+    }
 }
 
 function renderKnobs() {
@@ -1983,7 +2211,7 @@ document.getElementById("motorsContainer")?.addEventListener("change", (e) => {
     if (e.target.classList.contains("motor-pin")) {
         const idx = parseInt(e.target.getAttribute("data-index"), 10);
         activeMotors[idx] = parseInt(e.target.value, 10);
-        renderMotors();
+        renderMotors(true);
     } else if (e.target.classList.contains("motor-output-enable")) {
         const ch = parseInt(e.target.getAttribute("data-ch"), 10);
         channelEnabled[ch] = e.target.checked;
@@ -2210,3 +2438,49 @@ addSerialLog("[BLE Portal] Initialized. Click CONNECT BLE to link your hardware.
         });
     }
 })();
+
+// --- Device Mini-Tabs, Play Pattern Stepper & Per-Channel Patch ---
+function sendSingleChannelPatch(chIdx, obj) {
+    const arr = Array.from({ length: 8 }, (_, i) => (i === chIdx ? obj : {}));
+    sendStateUpdate({ channels: arr });
+}
+
+document.querySelectorAll(".dev-subtab").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const target = btn.getAttribute("data-devpane");
+        document.querySelectorAll(".dev-subtab").forEach(b => {
+            const act = (b === btn);
+            b.classList.toggle("active", act);
+            b.style.background = act ? "var(--black)" : "var(--cream)";
+            b.style.color = act ? "#fff" : "var(--black)";
+        });
+        document.querySelectorAll(".dev-pane").forEach(pane => {
+            pane.style.display = (pane.id === "dev-pane-" + target) ? "block" : "none";
+        });
+    });
+});
+
+function syncPlayPatternLabel() {
+    const patNameEl = document.getElementById("cydPatName");
+    if (patNameEl && typeof activePattern === "object" && activePattern) {
+        patNameEl.textContent = activePattern.name || activePattern.id || "Sine";
+    }
+}
+
+function stepPlayPattern(delta) {
+    if (!Array.isArray(PATTERNS) || PATTERNS.length === 0) return;
+    const curId = activePattern?.id || PATTERNS[0].id;
+    let idx = PATTERNS.findIndex(p => p.id === curId);
+    if (idx < 0) idx = 0;
+    idx = (idx + delta + PATTERNS.length) % PATTERNS.length;
+    const next = PATTERNS[idx];
+    activePattern = next;
+    const vLabel = document.getElementById("patternName");
+    if (vLabel) vLabel.textContent = next.name || next.id;
+    sendStateUpdate({ pattern: next.id });
+    syncPlayPatternLabel();
+}
+
+document.getElementById("cydPatPrev")?.addEventListener("click", () => stepPlayPattern(-1));
+document.getElementById("cydPatNext")?.addEventListener("click", () => stepPlayPattern(1));
+syncPlayPatternLabel();

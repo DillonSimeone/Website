@@ -163,8 +163,16 @@
                                 </div>
 
                                 <!-- PLAY TAB -->
+                                <!-- PLAY TAB -->
                                 <div class="tab-content" id="tab-play">
-                                    <h3>Quick Control Panel</h3>
+                                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+                                        <h3 style="margin:0;">Quick Control Panel</h3>
+                                        <div style="display:flex; align-items:center; gap:4px; border:2px solid var(--black); background:var(--cream); padding:2px 4px; box-shadow:2px 2px 0 var(--black);">
+                                            <button type="button" class="btn" id="cydPatPrev" style="padding:2px 8px; box-shadow:none;">&lt;</button>
+                                            <span id="cydPatName" style="min-width:110px; text-align:center; font-weight:700; font-size:12px;">Sine</span>
+                                            <button type="button" class="btn" id="cydPatNext" style="padding:2px 8px; box-shadow:none;">&gt;</button>
+                                        </div>
+                                    </div>
 
                                     <div class="row">
                                         <label>Master Intensity</label>
@@ -306,241 +314,199 @@ wave(t * (freq * 0.05))
                                     </p>
                                 </div>
 
-                                <!-- DEVICE TAB -->
+                                <!-- DEVICE TAB (ORGANIZED INTO 4 COMPACT BAUHAUS MINI-TABS) -->
                                 <div class="tab-content" id="tab-device" style="display:none">
-                                    <h3>Hardware Calibration</h3>
-                                    <div class="calib-section">
-                                        <h4>Device Identity</h4>
-                                        <div class="row">
-                                            <label>WiFi / BLE Name</label>
-                                            <input type="text" id="deviceSsid" maxlength="31" value="Haxel" placeholder="Haxel-MyDevice">
-                                        </div>
-                                        <p class="hint" style="font-size: 10px; color: #555; margin-top: 5px;">
-                                            Used for both the WiFi SSID and Bluetooth device name after saving and rebooting. Names are kept under the Haxel prefix for browser discovery.
-                                        </p>
-                                    </div>
-                                    
-                                    <!-- Driver Section -->
-                                    <div class="calib-section">
-                                        <h4>Actuator Driver Output</h4>
-                                        <div class="row">
-                                            <label>Driver IC</label>
-                                            <select id="drvChip">
-                                                <option value="L298N">L298N (Dual H-Bridge)</option>
-                                                <option value="DRV2605L">DRV2605L (I2C Low-Latency)</option>
-                                                <option value="DRV8833">DRV8833 (Dual PWM H-Bridge)</option>
-                                                <option value="MOSFET" selected>Raw MOSFET (Direct PWM Output)</option>
-                                                <option value="MINI_HBRIDGE">Mini H-Bridge (2-pin)</option>
-                                            </select>
-                                        </div>
-                                        <div class="row">
-                                            <label>Actuator Type</label>
-                                            <select id="actuatorType">
-                                                <option value="LRA">Linear Resonant Actuator (LRA)</option>
-                                                <option value="ERM" selected>Eccentric Rotating Mass (ERM)</option>
-                                                <option value="Solenoid">High-Amplitude Solenoid</option>
-                                            </select>
-                                        </div>
-                                        <div class="row">
-                                            <label>PWM Freq (Hz)</label>
-                                            <select id="pwmHz">
-                                                <option value="50">50 Hz (Solenoid default)</option>
-                                                <option value="1000">1000 Hz</option>
-                                                <option value="10000">10000 Hz</option>
-                                                <option value="20000" selected>20000 Hz (Ultrasonic / Silent)</option>
-                                            </select>
-                                        </div>
-                                        
-                                        <!-- Motor channels: enable toggle + GPIO pin per row -->
-                                        <div style="margin-top: 15px;">
-                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                                                <h5>Motor Channels</h5>
-                                                <button class="btn" id="addMotorBtn" style="padding: 2px 8px; font-size: 11px; cursor: pointer;">+ Add Motor</button>
-                                            </div>
-                                            <p class="hint" style="font-size: 10px; color: #555; margin-top: 0;">
-                                                Enable/disable each channel and assign GPIO pins. Values sync from the device on connect.
-                                            </p>
-                                            <div id="motorsContainer">
-                                                <!-- Dynamically rendered motor rows -->
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- I2C Bus Section -->
-                                    <div class="calib-section">
-                                        <h4>I2C Interface Configuration</h4>
-                                        <div class="row">
-                                            <label>SDA Pin</label>
-                                            <select id="pinSDA">
-                                                <option value="-1" selected>Unassigned (-1)</option>
-                                                <option value="1">GPIO 1</option>
-                                                <option value="3">GPIO 3</option>
-                                                <option value="4">GPIO 4</option>
-                                                <option value="5">GPIO 5</option>
-                                                <option value="6">GPIO 6</option>
-                                                <option value="7">GPIO 7</option>
-                                                <option value="10">GPIO 10</option>
-                                            </select>
-                                        </div>
-                                        <div class="row">
-                                            <label>SCL Pin</label>
-                                            <select id="pinSCL">
-                                                <option value="-1" selected>Unassigned (-1)</option>
-                                                <option value="1">GPIO 1</option>
-                                                <option value="2">GPIO 2</option>
-                                                <option value="3">GPIO 3</option>
-                                                <option value="4">GPIO 4</option>
-                                                <option value="5">GPIO 5</option>
-                                                <option value="6">GPIO 6</option>
-                                                <option value="7">GPIO 7</option>
-                                                <option value="10">GPIO 10</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Audio Input Section -->
-                                    <div class="calib-section">
-                                        <h4>Audio Reactive Input</h4>
-                                        <div class="row">
-                                            <label>Audio Enabled</label>
-                                            <input type="checkbox" id="audioEnabled" style="width:auto; margin:0;">
-                                        </div>
-                                        <div class="row">
-                                            <label>Input Source</label>
-                                            <select id="audioSource">
-                                                <option value="0">Simulated / Synth</option>
-                                                <option value="1">Analog ADC Mic</option>
-                                                <option value="2" selected>I2S MEMS Mic (INMP441)</option>
-                                            </select>
-                                        </div>
-                                        <div id="i2sPinsContainer">
-                                            <div class="row">
-                                                <label>I2S BCLK Pin</label>
-                                                <select id="audioBclk">
-                                                    <option value="-1" selected>Unassigned (-1)</option>
-                                                    <option value="0">GPIO 0</option>
-                                                    <option value="1">GPIO 1</option>
-                                                    <option value="2">GPIO 2</option>
-                                                    <option value="3">GPIO 3</option>
-                                                    <option value="4">GPIO 4</option>
-                                                    <option value="5">GPIO 5</option>
-                                                    <option value="6">GPIO 6</option>
-                                                    <option value="7">GPIO 7</option>
-                                                    <option value="10">GPIO 10</option>
-                                                </select>
-                                            </div>
-                                            <div class="row">
-                                                <label>I2S WS Pin</label>
-                                                <select id="audioWs">
-                                                    <option value="-1" selected>Unassigned (-1)</option>
-                                                    <option value="0">GPIO 0</option>
-                                                    <option value="1">GPIO 1</option>
-                                                    <option value="2">GPIO 2</option>
-                                                    <option value="3">GPIO 3</option>
-                                                    <option value="4">GPIO 4</option>
-                                                    <option value="5">GPIO 5</option>
-                                                    <option value="6">GPIO 6</option>
-                                                    <option value="7">GPIO 7</option>
-                                                    <option value="10">GPIO 10</option>
-                                                </select>
-                                            </div>
-                                            <div class="row">
-                                                <label>I2S SD Pin</label>
-                                                <select id="audioSd">
-                                                    <option value="-1" selected>Unassigned (-1)</option>
-                                                    <option value="0">GPIO 0</option>
-                                                    <option value="1">GPIO 1</option>
-                                                    <option value="2">GPIO 2</option>
-                                                    <option value="3">GPIO 3</option>
-                                                    <option value="4">GPIO 4</option>
-                                                    <option value="5">GPIO 5</option>
-                                                    <option value="6">GPIO 6</option>
-                                                    <option value="7">GPIO 7</option>
-                                                    <option value="10">GPIO 10</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div id="adcPinsContainer" style="display:none;">
-                                            <div class="row">
-                                                <label>ADC Analog Pin</label>
-                                                <select id="audioAdc">
-                                                    <option value="-1" selected>Unassigned (-1)</option>
-                                                    <option value="0">GPIO 0 / A0</option>
-                                                    <option value="1">GPIO 1 / A1</option>
-                                                    <option value="2">GPIO 2 / A2</option>
-                                                    <option value="3">GPIO 3 / A3</option>
-                                                    <option value="4">GPIO 4 / A4</option>
-                                                    <option value="5">GPIO 5 / A5</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- LED Section -->
-                                    <div class="calib-section">
-                                        <h4>FastLED Reactivity</h4>
-                                        <div class="row">
-                                            <label>LEDs Enabled</label>
-                                            <input type="checkbox" id="ledEnabled" checked style="width:auto; margin:0;">
-                                        </div>
-                                        <div class="row">
-                                            <label>Feedback Pin</label>
-                                            <select id="ledPin">
-                                                <option value="-1" selected>Unassigned (-1)</option>
-                                                <option value="2">GPIO 2</option>
-                                                <option value="3">GPIO 3</option>
-                                                <option value="4">GPIO 4</option>
-                                                <option value="5">GPIO 5</option>
-                                                <option value="6">GPIO 6</option>
-                                                <option value="7">GPIO 7</option>
-                                                <option value="10">GPIO 10</option>
-                                            </select>
-                                        </div>
-                                        <div class="row">
-                                            <label>Feedback Count</label>
-                                            <input type="number" id="ledCount" min="1" max="300" step="1" value="20">
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Knobs Section -->
-                                    <div class="calib-section">
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                                            <h4>Analog Knob Controls</h4>
-                                            <button class="btn" id="addKnobBtn" style="padding: 2px 8px; font-size: 11px; cursor: pointer;">+ Add Knob</button>
-                                        </div>
-                                        <div id="knobsContainer">
-                                            <!-- Dynamically rendered knob rows -->
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- OLED Section -->
-                                    <div class="calib-section">
-                                        <h4>OLED Status Display</h4>
-                                        <div class="row">
-                                            <label>OLED Enabled</label>
-                                            <input type="checkbox" id="oledEnabled" style="width:auto; margin:0;">
-                                        </div>
-                                        <p class="hint" style="font-size: 10px; color: #555; margin-top: 5px; margin-bottom: 0;">
-                                            Note: The OLED screen shares the main I2C interface bus pins configured in the I2C section above.
-                                        </p>
-                                    </div>
-                                    
-                                    <div class="row">
-                                        <label>Phone Haptics</label>
-                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                            <input type="checkbox" id="phoneHapticsToggle" checked style="width: auto; margin: 0;">
-                                            <span style="font-size: 0.85rem; color: #475569;" id="hapticsStatusText">Enabled</span>
-                                        </label>
+                                    <div class="dev-subtabs" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-bottom:14px;">
+                                        <button type="button" class="btn dev-subtab active" data-devpane="channels" style="padding:6px 4px; font-size:11px; font-weight:700; background:var(--black); color:#fff;">Channels</button>
+                                        <button type="button" class="btn dev-subtab" data-devpane="audio" style="padding:6px 4px; font-size:11px; font-weight:700; background:var(--cream); color:var(--black);">Audio &amp; I2C</button>
+                                        <button type="button" class="btn dev-subtab" data-devpane="io" style="padding:6px 4px; font-size:11px; font-weight:700; background:var(--cream); color:var(--black);">LED &amp; IO</button>
+                                        <button type="button" class="btn dev-subtab" data-devpane="identity" style="padding:6px 4px; font-size:11px; font-weight:700; background:var(--cream); color:var(--black);">Identity</button>
                                     </div>
 
-                                    <div class="diag-specs">
-                                        <div class="diag-line"><span>Firmware Version</span> <span id="fwVersionLabel">v1.2.0-dev</span></div>
-                                        <div class="diag-line"><span>FreeRTOS Core Jitter</span> <span>&lt; 1.4 ms</span></div>
-                                        <div class="diag-line"><span>ESP32-C3 Uptime</span> <span id="uptime">0s</span></div>
+                                    <!-- MINI-TAB 1: CHANNELS & DRIVER -->
+                                    <div class="dev-pane" id="dev-pane-channels">
+                                        <div class="calib-section" style="margin-top:0;">
+                                            <h4>Actuator Driver Output</h4>
+                                            <div class="row">
+                                                <label>Driver IC</label>
+                                                <select id="drvChip">
+                                                    <option value="L298N">L298N (Dual H-Bridge)</option>
+                                                    <option value="DRV2605L">DRV2605L (I2C Low-Latency)</option>
+                                                    <option value="DRV8833">DRV8833 (Dual PWM H-Bridge)</option>
+                                                    <option value="MOSFET" selected>Raw MOSFET (Direct PWM Output)</option>
+                                                    <option value="MINI_HBRIDGE">Mini H-Bridge (2-pin)</option>
+                                                </select>
+                                            </div>
+                                            <div class="row">
+                                                <label>Actuator Type</label>
+                                                <select id="actuatorType">
+                                                    <option value="LRA">Linear Resonant Actuator (LRA)</option>
+                                                    <option value="ERM" selected>Eccentric Rotating Mass (ERM)</option>
+                                                    <option value="Solenoid">High-Amplitude Solenoid</option>
+                                                </select>
+                                            </div>
+                                            <div class="row">
+                                                <label>PWM Freq (Hz)</label>
+                                                <select id="pwmHz">
+                                                    <option value="50">50 Hz (Solenoid default)</option>
+                                                    <option value="1000">1000 Hz</option>
+                                                    <option value="10000">10000 Hz</option>
+                                                    <option value="20000" selected>20000 Hz (Ultrasonic / Silent)</option>
+                                                </select>
+                                            </div>
+
+                                            <div style="margin-top: 12px;">
+                                                <h5 style="margin:0 0 4px;">Motor Channels (Pins &amp; Per-Channel Settings)</h5>
+                                                <p class="hint" style="font-size: 10px; color: #555; margin-top: 0;">
+                                                    Select a channel (1-8) to assign its GPIO pin, toggle ON/OFF, or configure independent settings.
+                                                </p>
+                                                <div id="motorsContainer">
+                                                    <!-- Dynamically rendered CYD-style channel selector & card -->
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    
-                                    <div style="margin-top: 20px; display: flex; justify-content: flex-end; width: 100%;">
-                                        <button class="btn primary" id="saveHardwareBtn" style="padding: 10px 20px; font-size: 13px; font-weight: bold; cursor: pointer; width: 100%; text-align: center;">Save Hardware Configuration & Reboot</button>
+
+                                    <!-- MINI-TAB 2: AUDIO & I2C -->
+                                    <div class="dev-pane" id="dev-pane-audio" style="display:none;">
+                                        <div class="calib-section" style="margin-top:0;">
+                                            <h4>Audio Reactive Input</h4>
+                                            <div class="row">
+                                                <label>Audio Enabled</label>
+                                                <input type="checkbox" id="audioEnabled" style="width:auto; margin:0;">
+                                            </div>
+                                            <div class="row">
+                                                <label>Input Source</label>
+                                                <select id="audioSource">
+                                                    <option value="0">Simulated / Synth</option>
+                                                    <option value="1">Analog ADC Mic</option>
+                                                    <option value="2" selected>I2S MEMS Mic (INMP441)</option>
+                                                </select>
+                                            </div>
+                                            <div id="i2sPinsContainer">
+                                                <div class="row">
+                                                    <label>I2S BCLK Pin</label>
+                                                    <select id="audioBclk">
+                                                        <option value="-1" selected>Unassigned (-1)</option>
+                                                        <option value="0">GPIO 0</option><option value="1">GPIO 1</option><option value="2">GPIO 2</option><option value="3">GPIO 3</option><option value="4">GPIO 4</option><option value="5">GPIO 5</option><option value="6">GPIO 6</option><option value="7">GPIO 7</option><option value="10">GPIO 10</option>
+                                                    </select>
+                                                </div>
+                                                <div class="row">
+                                                    <label>I2S WS Pin</label>
+                                                    <select id="audioWs">
+                                                        <option value="-1" selected>Unassigned (-1)</option>
+                                                        <option value="0">GPIO 0</option><option value="1">GPIO 1</option><option value="2">GPIO 2</option><option value="3">GPIO 3</option><option value="4">GPIO 4</option><option value="5">GPIO 5</option><option value="6">GPIO 6</option><option value="7">GPIO 7</option><option value="10">GPIO 10</option>
+                                                    </select>
+                                                </div>
+                                                <div class="row">
+                                                    <label>I2S SD Pin</label>
+                                                    <select id="audioSd">
+                                                        <option value="-1" selected>Unassigned (-1)</option>
+                                                        <option value="0">GPIO 0</option><option value="1">GPIO 1</option><option value="2">GPIO 2</option><option value="3">GPIO 3</option><option value="4">GPIO 4</option><option value="5">GPIO 5</option><option value="6">GPIO 6</option><option value="7">GPIO 7</option><option value="10">GPIO 10</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div id="adcPinsContainer" style="display:none;">
+                                                <div class="row">
+                                                    <label>ADC Analog Pin</label>
+                                                    <select id="audioAdc">
+                                                        <option value="-1" selected>Unassigned (-1)</option>
+                                                        <option value="0">GPIO 0 / A0</option><option value="1">GPIO 1 / A1</option><option value="2">GPIO 2 / A2</option><option value="3">GPIO 3 / A3</option><option value="4">GPIO 4 / A4</option><option value="5">GPIO 5 / A5</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="calib-section">
+                                            <h4>I2C Interface Configuration</h4>
+                                            <div class="row">
+                                                <label>SDA Pin</label>
+                                                <select id="pinSDA">
+                                                    <option value="-1" selected>Unassigned (-1)</option>
+                                                    <option value="1">GPIO 1</option><option value="3">GPIO 3</option><option value="4">GPIO 4</option><option value="5">GPIO 5</option><option value="6">GPIO 6</option><option value="7">GPIO 7</option><option value="10">GPIO 10</option>
+                                                </select>
+                                            </div>
+                                            <div class="row">
+                                                <label>SCL Pin</label>
+                                                <select id="pinSCL">
+                                                    <option value="-1" selected>Unassigned (-1)</option>
+                                                    <option value="1">GPIO 1</option><option value="2">GPIO 2</option><option value="3">GPIO 3</option><option value="4">GPIO 4</option><option value="5">GPIO 5</option><option value="6">GPIO 6</option><option value="7">GPIO 7</option><option value="10">GPIO 10</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- MINI-TAB 3: LED & IO -->
+                                    <div class="dev-pane" id="dev-pane-io" style="display:none;">
+                                        <div class="calib-section" style="margin-top:0;">
+                                            <h4>FastLED Reactivity</h4>
+                                            <div class="row">
+                                                <label>LEDs Enabled</label>
+                                                <input type="checkbox" id="ledEnabled" checked style="width:auto; margin:0;">
+                                            </div>
+                                            <div class="row">
+                                                <label>Feedback Pin</label>
+                                                <select id="ledPin">
+                                                    <option value="-1" selected>Unassigned (-1)</option>
+                                                    <option value="2">GPIO 2</option><option value="3">GPIO 3</option><option value="4">GPIO 4</option><option value="5">GPIO 5</option><option value="6">GPIO 6</option><option value="7">GPIO 7</option><option value="10">GPIO 10</option>
+                                                </select>
+                                            </div>
+                                            <div class="row">
+                                                <label>Feedback Count</label>
+                                                <input type="number" id="ledCount" min="1" max="300" step="1" value="20">
+                                            </div>
+                                        </div>
+
+                                        <div class="calib-section">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                                <h4>Analog Knob Controls</h4>
+                                                <button class="btn" id="addKnobBtn" style="padding: 2px 8px; font-size: 11px; cursor: pointer;">+ Add Knob</button>
+                                            </div>
+                                            <div id="knobsContainer"></div>
+                                        </div>
+
+                                        <div class="calib-section">
+                                            <h4>OLED Status Display</h4>
+                                            <div class="row">
+                                                <label>OLED Enabled</label>
+                                                <input type="checkbox" id="oledEnabled" style="width:auto; margin:0;">
+                                            </div>
+                                            <p class="hint" style="font-size: 10px; color: #555; margin-top: 5px; margin-bottom: 0;">
+                                                Note: The OLED screen shares the main I2C interface bus pins configured in Audio &amp; I2C.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <!-- MINI-TAB 4: IDENTITY & DIAGNOSTICS -->
+                                    <div class="dev-pane" id="dev-pane-identity" style="display:none;">
+                                        <div class="calib-section" style="margin-top:0;">
+                                            <h4>Device Identity</h4>
+                                            <div class="row">
+                                                <label>WiFi / BLE Name</label>
+                                                <input type="text" id="deviceSsid" maxlength="31" value="Haxel" placeholder="Haxel-MyDevice">
+                                            </div>
+                                            <p class="hint" style="font-size: 10px; color: #555; margin-top: 5px;">
+                                                Used for both the WiFi SSID and Bluetooth device name after saving and rebooting.
+                                            </p>
+                                        </div>
+
+                                        <div class="row">
+                                            <label>Phone Haptics</label>
+                                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                                <input type="checkbox" id="phoneHapticsToggle" checked style="width: auto; margin: 0;">
+                                                <span style="font-size: 0.85rem; color: #475569;" id="hapticsStatusText">Enabled</span>
+                                            </label>
+                                        </div>
+
+                                        <div class="diag-specs">
+                                            <div class="diag-line"><span>Firmware Version</span> <span id="fwVersionLabel">v1.2.0-dev</span></div>
+                                            <div class="diag-line"><span>FreeRTOS Core Jitter</span> <span>&lt; 1.4 ms</span></div>
+                                            <div class="diag-line"><span>ESP32-C3 Uptime</span> <span id="uptime">0s</span></div>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-top: 14px; display: flex; justify-content: flex-end; width: 100%;">
+                                        <button class="btn primary" id="saveHardwareBtn" style="padding: 10px 20px; font-size: 13px; font-weight: bold; cursor: pointer; width: 100%; text-align: center;">Save Hardware Configuration &amp; Reboot</button>
                                     </div>
                                 </div>
                             </div>

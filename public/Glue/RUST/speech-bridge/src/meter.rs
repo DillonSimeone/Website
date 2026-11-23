@@ -96,6 +96,7 @@ pub fn list_input_devices() -> Vec<String> {
             }
         }
     }
+    names.push("ESP32-BLE Hub (UDP :47100)".to_string());
     names
 }
 
@@ -530,9 +531,53 @@ fn run_multi_mic_capture(
             stats.push(MicSignalStats::new(name));
         }
     }
+
+    // Bind local UDP IPC receiver for esp32-mic-hub (127.0.0.1:47100)
+    let esp_base_idx = stats.len();
+    let esp_udp_ok = if let Ok(sock) = std::net::UdpSocket::bind("127.0.0.1:47100") {
+        let _ = sock.set_read_timeout(Some(Duration::from_millis(50)));
+        for ch in 1..=3 {
+            stats.push(MicSignalStats::new(format!("ESP32-BLE CH {ch}")));
+        }
+        let tx_udp = frame_tx.clone();
+        let stop_udp = Arc::clone(stop);
+        let gen_udp = Arc::clone(config_gen);
+        thread::spawn(move || {
+            let mut buf = [0u8; 1024];
+            let mut pcm_in = [0i16; 480];
+            let mut resamplers = [
+                StreamResampler::new(1, 16_000),
+                StreamResampler::new(1, 16_000),
+                StreamResampler::new(1, 16_000),
+            ];
+            while !stop_udp.load(Ordering::Relaxed) && gen_udp.load(Ordering::Acquire) == my_gen {
+                let Ok((len, _)) = sock.recv_from(&mut buf) else {
+                    continue;
+                };
+                if len < 9 + 2 || &buf[0..4] != b"EMIC" {
+                    continue;
+                }
+                let slot = (buf[4] as usize).min(2);
+                let sample_count = ((len - 9) / 2).min(480);
+                for (i, chunk) in buf[9..9 + sample_count * 2].chunks_exact(2).enumerate() {
+                    pcm_in[i] = i16::from_le_bytes([chunk[0], chunk[1]]);
+                }
+                let mic_idx = esp_base_idx + slot;
+                resamplers[slot].push_i16(&pcm_in[..sample_count], |chunk| {
+                    let _ = tx_udp.try_send(MicFrame {
+                        mic_idx,
+                        pcm: *chunk,
+                    });
+                });
+            }
+        });
+        true
+    } else {
+        false
+    };
     drop(frame_tx);
 
-    if streams.is_empty() {
+    if streams.is_empty() && !esp_udp_ok {
         return;
     }
 

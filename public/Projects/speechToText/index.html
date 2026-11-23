@@ -21,10 +21,28 @@
         <a href="#benchmarks">Benchmarks</a>
         <a href="#glossary">Plain-English Glossary</a>
         <a href="#rust-vs-python">Why Rust?</a>
+        <a href="#diy-mic">DIY Mic!</a>
+        <a href="#voice-cloner">Voice Cloner</a>
         <a href="../../index.html">← Portfolio</a>
       </div>
     </div>
   </nav>
+
+  <!-- Fixed Upper-Right "Have Dillon read aloud to you!" Widget -->
+  <aside id="dillonPlayer" class="dillon-player" aria-label="Have Dillon read aloud to you">
+    <div class="dp-title">Have Dillon read aloud to you!</div>
+    <div class="dp-voice-row">
+      <button id="dpPrevVoice" class="dp-arrow" type="button" aria-label="Previous cloned voice" title="Previous voice">&larr;</button>
+      <span id="dpVoiceName" class="dp-voice-name">Alan-Dillon</span>
+      <button id="dpNextVoice" class="dp-arrow" type="button" aria-label="Next cloned voice" title="Next voice">&rarr;</button>
+    </div>
+    <div class="dp-controls">
+      <button id="dpPlayStop" class="dp-btn dp-play" type="button">Play</button>
+      <button id="dpRestart" class="dp-btn" type="button">Restart</button>
+    </div>
+    <div id="dpStatus" class="dp-status">Ready · Real OpenVoice v2 clone</div>
+    <audio id="dpAudio" preload="metadata"></audio>
+  </aside>
 
   <main class="container">
     <!-- HERO -->
@@ -79,8 +97,19 @@
           <div class="setup-badge">CLICK 01 · GET THE FOLDER</div>
           <h3>Download Speech Bridge</h3>
           <p>
-            Grab the <code>speech-bridge</code> folder containing <code>speech-bridge.exe</code>, <code>Setup.bat</code>, <code>setup.ps1</code>, and your customizable <code>hotwords.txt</code> glossary (Windows 10/11 64-bit; NVIDIA GPU recommended, CPU fallback supported).
+            Bundle <code>speech-bridge.exe</code>, <code>Setup.bat</code>, <code>setup.ps1</code>, and <code>hotwords.txt</code> into a single ZIP (Windows 10/11 64-bit; NVIDIA GPU recommended, CPU fallback supported).
           </p>
+          <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+            <button id="sbBtnZip" class="dp-btn dp-play" type="button">Download SpeechBridge.zip</button>
+            <div id="sbZipStatus" class="vc-status" style="font-size:11.5px;"></div>
+            <div style="font-family:var(--mono); font-size:11.5px; color:var(--muted); line-height:1.6;">
+              Direct files:
+              <a class="ref-link" href="../../Glue/RUST/speech-bridge/speech-bridge.exe" download>speech-bridge.exe</a> ·
+              <a class="ref-link" href="../../Glue/RUST/speech-bridge/Setup.bat" download>Setup.bat</a> ·
+              <a class="ref-link" href="../../Glue/RUST/speech-bridge/setup.ps1" download>setup.ps1</a> ·
+              <a class="ref-link" href="../../Glue/RUST/speech-bridge/hotwords.txt" download>hotwords.txt</a>
+            </div>
+          </div>
         </div>
 
         <div class="setup-step step-2">
@@ -161,12 +190,10 @@
     <!-- INTERACTIVE REPLICA -->
     <section id="replica">
       <div class="sec-tag">// 02 :: INTERACTIVE WEB REPLICA</div>
-      <h2>Try Speech Bridge Right Here (Hover Any Button for Tooltips)</h2>
+      <h2>Examine the Speech Bridge UI (Hover Any Button for Tooltips)</h2>
       <p class="sec-intro">
-        This is a working web replica of the native Rust Win32 desktop app. <strong>Hover any button or badge</strong>
-        to see what it does (just like the real app), switch noisy-room scenarios below to see how Legacy CPU captions
-        compare against our GPU neural pipeline, or type a reply on the right to hear browser TTS trigger the automatic
-        <strong>TTS Echo Gate</strong> while <strong>bolding and underlining each word as it is spoken</strong>.
+        This is a <strong>simulated, non-working UI replica</strong> of the native Rust Win32 desktop app so you can explore the layout in your browser (it does not run the real offline CUDA neural captioner or cloned voices).
+        <strong>Hover any button or badge</strong> to read what it does, switch the pre-scripted noisy-room scenarios below to preview how Legacy CPU captions compare against the GPU neural pipeline, or type a reply on the right to see the <strong>TTS Echo Gate</strong> and word-by-word highlighting in action. To run the real app, download <code>SpeechBridge.zip</code> above.
       </p>
 
       <div class="scenario-bar" role="group" aria-label="Simulation scenarios">
@@ -577,6 +604,195 @@
             Eliminated <code>active_mic_name.clone()</code> on every 30 Hz meter paint tick by formatting directly into a
             reusable <strong><code>health_buf: String</code></strong> under the short lock.
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DIY MIC -->
+    <section id="diy-mic">
+      <div class="sec-tag">// 06 :: DIY MIC! (~$4 WIRELESS BLE MICROPHONE)</div>
+      <h2>Build Your Own Wireless Table Mic for ~$4</h2>
+      <p class="sec-intro">
+        Laptop microphones are great for solo use, but in a noisy restaurant or around a group table, placing a tiny wireless mic
+        directly next to each speaker dramatically boosts signal-to-noise ratio. Instead of spending $100+ on commercial conference pucks,
+        you can solder a complete <strong>Bluetooth Low Energy (BLE) microphone</strong> in two minutes for about <strong>$4</strong>.
+      </p>
+
+      <div class="two-col">
+        <div class="panel">
+          <h3>Bill of Materials (~$4 Total)</h3>
+          <div class="table-wrap" style="margin-top:12px;">
+            <table aria-label="DIY BLE Microphone Bill of Materials">
+              <thead>
+                <tr>
+                  <th>Part</th>
+                  <th>Est. Cost</th>
+                  <th>Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><a class="ref-link" href="https://www.aliexpress.us/w/wholesale-esp32-supermini-c3.html?spm=a2g0o.productlist.search.0" target="_blank" rel="noopener noreferrer">ESP32-C3 SuperMini</a></td>
+                  <td>~$3.00</td>
+                  <td>RISC-V MCU with 12-bit SAR ADC DMA &amp; BLE 5.0 radio</td>
+                </tr>
+                <tr>
+                  <td><a class="ref-link" href="https://www.aliexpress.us/w/wholesale-max4466.html?spm=a2g0o.productlist.search.0" target="_blank" rel="noopener noreferrer">MAX4466 Electret Mic</a></td>
+                  <td>~$1.00</td>
+                  <td>Adjustable-gain analog electret mic preamp</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 style="margin-top:20px;">3-Wire Pinout (Direct Solder)</h3>
+          <div class="table-wrap" style="margin-top:10px;">
+            <table aria-label="ESP32-C3 SuperMini to MAX4466 Pinout">
+              <thead>
+                <tr>
+                  <th>MAX4466 Pin</th>
+                  <th>ESP32-C3 SuperMini Pin</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>VCC</code></td>
+                  <td><code>3.3V</code></td>
+                  <td>Clean 3.3V regulated supply</td>
+                </tr>
+                <tr>
+                  <td><code>GND</code></td>
+                  <td><code>GPIO 4</code></td>
+                  <td>Soft ground driven <code>OUTPUT LOW</code> before ADC/BLE init</td>
+                </tr>
+                <tr>
+                  <td><code>OUT</code></td>
+                  <td><code>GPIO 3</code> (<code>ADC1_CH3</code>)</td>
+                  <td>16 kHz continuous DMA sampling (ADC1 only; avoids ADC2/radio conflict)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 style="margin-top:20px;">Why This Low-Cost Approach Wins</h3>
+          <ul>
+            <li><strong>Zero Driver Bloat &amp; Multi-Mic Ready:</strong> Drop three ~$4 mics across a dinner table for ~$12 total; Speech Bridge automatically locks onto whichever person is speaking clearest.</li>
+            <li><strong>Plug-and-Flash Simplicity:</strong> <code>esp32-mic-hub.exe</code> auto-detects newly plugged-in ESP32-C3 boards and flashes firmware in one click, then idles in the system tray with near-zero battery impact.</li>
+          </ul>
+        </div>
+
+        <div class="panel">
+          <h3>How the BLE Audio &amp; IPC Pipeline Works</h3>
+          <ul>
+            <li><strong>16 kHz DMA + 80 Hz High-Pass:</strong> The ESP32-C3 samples <code>GPIO 3</code> via hardware <code>adc_digi</code> DMA (2x oversampled at 32 kHz), removes DC bias, and strips low-frequency BLE TX/room rumble with a single-pole 80 Hz high-pass filter.</li>
+            <li><strong>4-Bit IMA-ADPCM over BLE 5.0:</strong> Every 30 ms (480 samples) is compressed 4:1 into a 246-byte packet with a 2-byte sequence counter and streamed over a custom GATT Notify characteristic (<code>C3-BLE-MIC</code>) at 33.3 packets/sec—achieving <strong>0.00% packet loss</strong>.</li>
+            <li><strong>ESP32-Mic Hub → Speech Bridge:</strong> Our lightweight native Rust tray utility (<code>esp32-mic-hub.exe</code>, ~390 KB) shows nearby mics sorted by RSSI signal strength with live VU meters, lets you click up to 3 mics to connect, and pipes decoded 16 kHz PCM frames over loopback UDP (<code>127.0.0.1:47100</code>) straight into <code>speech-bridge.exe</code>'s active-SNR multi-mic switcher—no virtual audio drivers required.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:18px;">
+        <h3>Possible Improvements</h3>
+        <ul>
+          <li><strong>Untethered Battery + USB-C Charging:</strong> Add a compact 1S LiPo cell with a USB-C charge/protection board (such as a TP4056 module) so each mic puck runs cord-free on a cafe or dinner table for hours.</li>
+          <li><strong>Custom 3D-Printed Enclosure via ProtoTray:</strong> Design a fitted tray to hold the ESP32-C3 SuperMini, MAX4466, battery, and charger neatly together using the <a class="ref-link" href="https://dillonsimeone.com/Projects/ParametricModeling/23-ProtoTray/index.html" target="_blank" rel="noopener noreferrer">Parametric ProtoTray Generator</a>, then 3D print a snap-fit lid or desk puck.</li>
+          <li><strong>Acoustic &amp; Power Polish:</strong> Add a small foam windscreen over the electret capsule to cut AC/breeze plosives, plus a slide switch or BLE-idle deep-sleep mode to stretch battery life between outings.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- VOICE CLONER: RUSTYVOICECLONER REPLICA, SETUP GUIDE & BLOOPER -->
+    <section id="voice-cloner">
+      <div class="sec-tag">// 08 :: VOICE CLONING FOR DEAF MAKERS (RUSTYVOICECLONER + OPENVOICE V2)</div>
+      <h2>Clone Your Own Voice by Matching Soundwaves Visually</h2>
+      <p class="sec-intro">
+        As someone who is completely deaf and never learned to speak, hearing a voice prompt isn't an option.
+        <strong>RustyVoiceCloner</strong> solves this by showing three real-time visual graphs: <strong>Loudness Envelope</strong>, <strong>Pitch (F<sub>0</sub>)</strong>, and <strong>24-Band Vowel Spectrum</strong>, so you can mimic target soundwaves by eye until you hit a green match, then transfer your vocal timbre onto Speech Bridge's offline neural voices.
+      </p>
+
+      <div class="hero-callout" style="margin-bottom:22px;">
+        <strong>Interactive Web Replica Only:</strong> The widget below is a browser-based replica of <code>RustyVoiceCloner</code> so you can try matching soundwaves right here.
+        To actually extract your voice profile (<code>.pth</code>) and use it in Speech Bridge, you must download and run the native Windows app (<strong><code>RustyVoiceCloner.exe</code></strong>) alongside <strong><code>openvoice_worker\Setup.bat</code></strong> on your PC.
+      </div>
+
+      <!-- Interactive RustyVoiceCloner Web Replica -->
+      <div class="vc-replica">
+        <div class="vc-topbar">
+          <div class="vc-brand">RUSTYVOICECLONER // WEB REPLICA</div>
+          <div class="vc-match-pill" id="vcMatchPill">LIVE MATCH: <span id="vcMatchPct">0%</span></div>
+        </div>
+
+        <div class="vc-grid">
+          <div class="vc-cards" id="vcCardList" aria-label="Sound cards"></div>
+
+          <div class="vc-stage">
+            <div class="vc-cue" id="vcCueBox">How it feels: Close your lips gently and hum.</div>
+            <div class="vc-plot-label">1. Loudness / Wave Shape (Cyan = Target, Amber/Green = Live Mic)</div>
+            <canvas id="vcEnvCanvas" width="760" height="105"></canvas>
+            <div class="vc-plot-label">2. Pitch / Tone (High vs Low) - <span id="vcPitchReadout">Target: 110 Hz | Live: -</span></div>
+            <canvas id="vcPitchCanvas" width="760" height="95"></canvas>
+            <div class="vc-plot-label">3. Vowel Shape / 24-Band Frequency Spectrum</div>
+            <canvas id="vcSpecCanvas" width="760" height="110"></canvas>
+
+            <div class="vc-actions">
+              <button id="vcBtnMic" class="dp-btn dp-play" type="button">Enable Live Mic</button>
+              <button id="vcBtnSim" class="dp-btn" type="button">Simulate Good Match</button>
+              <button id="vcBtnLock" class="dp-btn" type="button">Save Best Take</button>
+              <span id="vcStageStatus" class="vc-status">Pick a sound card and enable your mic (or click Simulate).</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3-Step Setup Guide for Deaf Makers -->
+      <h3 style="margin-top:34px; font-family:var(--mono); color:var(--cyan);">Setup Guide: Clone Your Voice in 3 Steps</h3>
+      <div class="setup-steps" style="margin-top:12px;">
+        <div class="setup-step">
+          <div class="setup-badge">STEP 01 · DOWNLOAD THE APP</div>
+          <h3>Get <code>RustyVoiceCloner</code></h3>
+          <p>
+            Click below to bundle <code>RustyVoiceCloner.exe</code> and the <code>openvoice_worker/</code> files into a single ZIP, then extract it next to your <code>speech-bridge</code> folder.
+          </p>
+          <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+            <button id="vcBtnZip" class="dp-btn dp-play" type="button">Download RustyVoiceCloner.zip</button>
+            <div id="vcZipStatus" class="vc-status" style="font-size:11.5px;"></div>
+            <div style="font-family:var(--mono); font-size:11.5px; color:var(--muted); line-height:1.6;">
+              Direct files:
+              <a class="ref-link" href="../../Glue/RUST/RustyVoiceCloner/RustyVoiceCloner.exe" download>RustyVoiceCloner.exe</a> ·
+              <a class="ref-link" href="../../Glue/RUST/RustyVoiceCloner/openvoice_worker/Setup.bat" download>Setup.bat</a> ·
+              <a class="ref-link" href="../../Glue/RUST/RustyVoiceCloner/openvoice_worker/Setup.ps1" download>Setup.ps1</a> ·
+              <a class="ref-link" href="../../Glue/RUST/RustyVoiceCloner/openvoice_worker/worker.py" download>worker.py</a>
+            </div>
+          </div>
+        </div>
+        <div class="setup-step step-2">
+          <div class="setup-badge">STEP 02 · RUN OPENVOICE SETUP</div>
+          <h3>Double-Click <code>openvoice_worker\Setup.bat</code></h3>
+          <p>
+            <code>Setup.bat</code> creates an isolated Python 3.11 environment with PyTorch CUDA and downloads the OpenVoice v2 converter checkpoints from HuggingFace (~200 MB) without touching your system Python.
+          </p>
+        </div>
+        <div class="setup-step step-3">
+          <div class="setup-badge">STEP 03 · MIMIC &amp; GENERATE</div>
+          <h3>Match 9 Cards &amp; Click Generate</h3>
+          <p>
+            Open <code>RustyVoiceCloner.exe</code>, hold <code>Spacebar</code> to match each soundwave until it turns green, then click <strong>Generate My Cloned Voices</strong>. Restart <code>speech-bridge.exe</code> to speak with your new voices!
+          </p>
+        </div>
+      </div>
+
+      <!-- Blooper Section -->
+      <div class="panel" style="margin-top:24px;">
+        <h3>Behind the Scenes: Full Voice-Cloning Session (Blooper Reel)</h3>
+        <p style="color:var(--text-soft); margin-top:0;">
+          <code>RustyVoiceCloner</code> continuously records the microphone from the moment you open the app until you generate your voice, capturing every trial, error, and wave-matching attempt along the way.
+        </p>
+        <video class="blooper-video" controls preload="metadata" src="./media/dillon_voice_cloning_blooper.mp4">
+          Your browser does not support HTML5 video.
+        </video>
+        <div style="margin-top:10px; font-family:var(--mono); font-size:13px;">
+          <a class="ref-link" href="./media/dillon_voice_cloning_blooper.mp4" download>Download Blooper MP4 (dillon_voice_cloning_blooper.mp4)</a>
         </div>
       </div>
     </section>

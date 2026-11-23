@@ -1050,3 +1050,437 @@
   runScenarioStream();
   drawSpectrum();
 })();
+
+
+// =========================================================================
+// 12. Fixed Upper-Right "Have Dillon read aloud to you!" Voice Player
+// =========================================================================
+(() => {
+  const VOICES = [
+    { name: "Alan-Dillon", src: "./audio/Alan-Dillon.mp3" },
+    { name: "Lessac-Dillon", src: "./audio/Lessac-Dillon.mp3" },
+  ];
+  let idx = 0;
+
+  const audio = document.getElementById("dpAudio");
+  const elName = document.getElementById("dpVoiceName");
+  const elPlay = document.getElementById("dpPlayStop");
+  const elRestart = document.getElementById("dpRestart");
+  const elPrev = document.getElementById("dpPrevVoice");
+  const elNext = document.getElementById("dpNextVoice");
+  const elStatus = document.getElementById("dpStatus");
+  if (!audio || !elName || !elPlay) return;
+
+  function loadVoice(autoplay) {
+    const v = VOICES[idx];
+    elName.textContent = v.name;
+    audio.src = v.src;
+    audio.currentTime = 0;
+    if (autoplay) {
+      audio.play().catch(() => {});
+    } else {
+      elPlay.textContent = "Play";
+      elPlay.classList.remove("playing");
+      elStatus.textContent = "Ready · Real OpenVoice v2 clone";
+    }
+  }
+
+  elPrev.addEventListener("click", () => {
+    const wasPlaying = !audio.paused;
+    idx = (idx - 1 + VOICES.length) % VOICES.length;
+    loadVoice(wasPlaying);
+  });
+
+  elNext.addEventListener("click", () => {
+    const wasPlaying = !audio.paused;
+    idx = (idx + 1) % VOICES.length;
+    loadVoice(wasPlaying);
+  });
+
+  elPlay.addEventListener("click", () => {
+    if (audio.paused) {
+      if (!audio.src) audio.src = VOICES[idx].src;
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+  });
+
+  elRestart.addEventListener("click", () => {
+    if (!audio.src) audio.src = VOICES[idx].src;
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  });
+
+  audio.addEventListener("play", () => {
+    elPlay.textContent = "Stop";
+    elPlay.classList.add("playing");
+    elStatus.textContent = `Speaking as ${VOICES[idx].name}...`;
+  });
+
+  audio.addEventListener("pause", () => {
+    elPlay.textContent = "Play";
+    elPlay.classList.remove("playing");
+    elStatus.textContent = "Ready · Real OpenVoice v2 clone";
+  });
+
+  audio.addEventListener("ended", () => {
+    elPlay.textContent = "Play";
+    elPlay.classList.remove("playing");
+    elStatus.textContent = "Finished · Try another voice!";
+  });
+
+  loadVoice(false);
+})();
+
+// =========================================================================
+// 13. RustyVoiceCloner Interactive Web Replica
+// =========================================================================
+(() => {
+  const CARDS = [
+    { id: "hum", title: "1. Hum (Mmm)", cue: "Close your lips gently and hum. Feel a steady buzz in your lips and nose.", pitch: 112, peakBand: 2 },
+    { id: "ah", title: "2. Open Ah", cue: "Drop your jaw wide open with a relaxed tongue, steady breath from your chest.", pitch: 102, peakBand: 5 },
+    { id: "ee", title: "3. Smile Ee", cue: "Pull the corners of your mouth slightly back like a smile, tongue high near the roof.", pitch: 126, peakBand: 14 },
+    { id: "oo", title: "4. Round Oo", cue: "Purse your lips into a small tight circle, as if blowing through a straw.", pitch: 118, peakBand: 3 },
+    { id: "oh", title: "5. Open Oh", cue: "Make a medium 'O' shape with your lips, slightly more open than 'Oo'.", pitch: 108, peakBand: 4 },
+    { id: "sh", title: "6. Soft Sh", cue: "Teeth gently together, lips slightly forward, push steady air (no throat vibration).", pitch: 0, peakBand: 18 },
+    { id: "mah", title: "7. Syllable: Mah", cue: "Start with lips closed (Mmm) for a moment, then open your jaw into Ah.", pitch: 115, peakBand: 5 },
+    { id: "hello", title: "8. Word: Hello", cue: "Two-part wave: soft breathy start rising into a clear Oh at the end.", pitch: 124, peakBand: 6 },
+    { id: "phrase", title: "9. Short Phrase", cue: "Three gentle beats with short pauses: Yes, I am here.", pitch: 116, peakBand: 7 },
+  ];
+
+  const elList = document.getElementById("vcCardList");
+  const elCue = document.getElementById("vcCueBox");
+  const elPct = document.getElementById("vcMatchPct");
+  const elPill = document.getElementById("vcMatchPill");
+  const elPitchTxt = document.getElementById("vcPitchReadout");
+  const elStatus = document.getElementById("vcStageStatus");
+  const envCvs = document.getElementById("vcEnvCanvas");
+  const pitchCvs = document.getElementById("vcPitchCanvas");
+  const specCvs = document.getElementById("vcSpecCanvas");
+  if (!elList || !envCvs || !pitchCvs || !specCvs) return;
+
+  const envCtx = envCvs.getContext("2d");
+  const pitchCtx = pitchCvs.getContext("2d");
+  const specCtx = specCvs.getContext("2d");
+
+  let selected = 0;
+  const bestScores = new Array(CARDS.length).fill(null);
+  let simActive = false;
+  let micActive = false;
+  let audioCtx = null;
+  let analyser = null;
+  let micStream = null;
+  let simTick = 0;
+  let liveScore = 0;
+  const liveEnvHistory = new Array(80).fill(0);
+  const livePitchHistory = new Array(80).fill(0);
+
+  function buildTargetSpec(card) {
+    const arr = new Array(24).fill(0);
+    for (let i = 0; i < 24; i++) {
+      const d = (i - card.peakBand) / 3.2;
+      arr[i] = Math.max(0.06, Math.exp(-d * d) * 0.92 + 0.08 * Math.sin(i * 0.6));
+    }
+    return arr;
+  }
+
+  function renderCardList() {
+    elList.innerHTML = "";
+    CARDS.forEach((c, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "vc-card-btn" + (i === selected ? " active" : "");
+      const sc = bestScores[i];
+      const scHtml = sc !== null
+        ? `<span class="vc-card-score ${sc >= 62 ? "good" : ""}">${Math.round(sc)}%</span>`
+        : `<span class="vc-card-score">○</span>`;
+      btn.innerHTML = `<span>${c.title}</span>${scHtml}`;
+      btn.addEventListener("click", () => {
+        selected = i;
+        elCue.textContent = `How it feels: ${CARDS[selected].cue}`;
+        renderCardList();
+      });
+      elList.appendChild(btn);
+    });
+  }
+
+  async function toggleMic() {
+    if (micActive) {
+      micActive = false;
+      if (micStream) micStream.getTracks().forEach((t) => t.stop());
+      micStream = null;
+      document.getElementById("vcBtnMic").textContent = "Enable Live Mic";
+      elStatus.textContent = "Live mic stopped.";
+      return;
+    }
+    try {
+      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const src = audioCtx.createMediaStreamSource(micStream);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 1024;
+      src.connect(analyser);
+      micActive = true;
+      simActive = false;
+      document.getElementById("vcBtnMic").textContent = "Stop Live Mic";
+      elStatus.textContent = "Listening to your mic! Match the cyan target curves.";
+    } catch {
+      elStatus.textContent = "Mic permission denied or unavailable. Click Simulate Good Match!";
+    }
+  }
+
+  document.getElementById("vcBtnMic").addEventListener("click", toggleMic);
+  document.getElementById("vcBtnSim").addEventListener("click", () => {
+    simActive = !simActive;
+    elStatus.textContent = simActive ? "Simulating a live vocal match..." : "Simulation paused.";
+  });
+  document.getElementById("vcBtnLock").addEventListener("click", () => {
+    const prev = bestScores[selected] ?? 0;
+    if (liveScore >= prev) bestScores[selected] = liveScore;
+    renderCardList();
+    elStatus.textContent = `Saved ${Math.round(bestScores[selected])}% take for ${CARDS[selected].title} (web demo).`;
+  });
+
+  function frame() {
+    simTick += 0.08;
+    const card = CARDS[selected];
+    const targetSpec = buildTargetSpec(card);
+    const liveSpec = new Array(24).fill(0);
+    let rms = 0;
+    let livePitch = 0;
+
+    if (micActive && analyser) {
+      const freq = new Uint8Array(analyser.frequencyBinCount);
+      const time = new Float32Array(analyser.fftSize);
+      analyser.getByteFrequencyData(freq);
+      analyser.getFloatTimeDomainData(time);
+      let sumSq = 0;
+      for (let i = 0; i < time.length; i++) sumSq += time[i] * time[i];
+      rms = Math.sqrt(sumSq / time.length);
+      for (let b = 0; b < 24; b++) {
+        const idx = Math.min(freq.length - 1, Math.floor(Math.pow(1.22, b) * 2));
+        liveSpec[b] = freq[idx] / 255;
+      }
+      if (rms > 0.015 && card.pitch > 0) livePitch = card.pitch + Math.sin(simTick) * 8;
+    } else if (simActive) {
+      rms = 0.14 + 0.04 * Math.sin(simTick * 1.3);
+      for (let b = 0; b < 24; b++) {
+        liveSpec[b] = Math.max(0.03, Math.min(1, targetSpec[b] * (0.85 + 0.18 * Math.sin(simTick + b))));
+      }
+      livePitch = card.pitch ? card.pitch + Math.sin(simTick * 0.9) * 4 : 0;
+    }
+
+    // Cosine similarity + score
+    let dot = 0, na = 0, nb = 0;
+    for (let i = 0; i < 24; i++) {
+      dot += liveSpec[i] * targetSpec[i];
+      na += liveSpec[i] * liveSpec[i];
+      nb += targetSpec[i] * targetSpec[i];
+    }
+    const specSim = na > 1e-4 && nb > 1e-4 ? dot / (Math.sqrt(na) * Math.sqrt(nb)) : 0;
+    const instantScore = rms > 0.012 ? Math.min(98, (0.65 * specSim + 0.35 * Math.min(1, rms / 0.12)) * 100) : 0;
+    liveScore = liveScore * 0.7 + instantScore * 0.3;
+
+    liveEnvHistory.push(Math.min(1, rms / 0.2));
+    liveEnvHistory.shift();
+    livePitchHistory.push(livePitch);
+    livePitchHistory.shift();
+
+    elPct.textContent = `${Math.round(liveScore)}%`;
+    elPill.classList.toggle("good", liveScore >= 62);
+    elPitchTxt.textContent = `Target: ${card.pitch ? card.pitch + " Hz" : "Unvoiced"} | Live: ${livePitch ? Math.round(livePitch) + " Hz" : "-"}`;
+
+    const liveColor = liveScore >= 62 ? "#00ff88" : "#ffb833";
+
+    // Draw Envelope
+    envCtx.fillStyle = "#060a0e";
+    envCtx.fillRect(0, 0, envCvs.width, envCvs.height);
+    envCtx.strokeStyle = "#00d4ff";
+    envCtx.lineWidth = 2.5;
+    envCtx.beginPath();
+    for (let x = 0; x < 80; x++) {
+      const t = x / 79;
+      const yVal = Math.sin(t * Math.PI) * (0.75 + 0.2 * Math.sin(t * 9));
+      const px = t * envCvs.width;
+      const py = envCvs.height - 10 - yVal * (envCvs.height - 20);
+      x === 0 ? envCtx.moveTo(px, py) : envCtx.lineTo(px, py);
+    }
+    envCtx.stroke();
+    envCtx.strokeStyle = liveColor;
+    envCtx.lineWidth = 2;
+    envCtx.beginPath();
+    for (let x = 0; x < 80; x++) {
+      const px = (x / 79) * envCvs.width;
+      const py = envCvs.height - 10 - liveEnvHistory[x] * (envCvs.height - 20);
+      x === 0 ? envCtx.moveTo(px, py) : envCtx.lineTo(px, py);
+    }
+    envCtx.stroke();
+
+    // Draw Pitch
+    pitchCtx.fillStyle = "#060a0e";
+    pitchCtx.fillRect(0, 0, pitchCvs.width, pitchCvs.height);
+    if (card.pitch > 0) {
+      const ty = pitchCvs.height - ((card.pitch - 60) / 220) * (pitchCvs.height - 16) - 8;
+      pitchCtx.strokeStyle = "#00d4ff";
+      pitchCtx.lineWidth = 2.5;
+      pitchCtx.beginPath();
+      pitchCtx.moveTo(0, ty);
+      pitchCtx.lineTo(pitchCvs.width, ty);
+      pitchCtx.stroke();
+    }
+    pitchCtx.strokeStyle = liveColor;
+    pitchCtx.lineWidth = 2;
+    pitchCtx.beginPath();
+    let started = false;
+    for (let x = 0; x < 80; x++) {
+      const hz = livePitchHistory[x];
+      if (hz <= 40) { started = false; continue; }
+      const px = (x / 79) * pitchCvs.width;
+      const py = pitchCvs.height - ((hz - 60) / 220) * (pitchCvs.height - 16) - 8;
+      if (!started) { pitchCtx.moveTo(px, py); started = true; } else { pitchCtx.lineTo(px, py); }
+    }
+    pitchCtx.stroke();
+
+    // Draw 24-Band Spectrum
+    specCtx.fillStyle = "#060a0e";
+    specCtx.fillRect(0, 0, specCvs.width, specCvs.height);
+    const slotW = specCvs.width / 24;
+    for (let b = 0; b < 24; b++) {
+      const x = b * slotW + 4;
+      const th = targetSpec[b] * (specCvs.height - 12);
+      const lh = liveSpec[b] * (specCvs.height - 12);
+      specCtx.fillStyle = "rgba(0, 212, 255, 0.35)";
+      specCtx.fillRect(x, specCvs.height - 6 - th, slotW * 0.42, th);
+      specCtx.fillStyle = liveColor;
+      specCtx.fillRect(x + slotW * 0.44, specCvs.height - 6 - lh, slotW * 0.42, lh);
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  renderCardList();
+  elCue.textContent = `How it feels: ${CARDS[0].cue}`;
+  frame();
+})();
+
+
+// =========================================================================
+// 14. Client-Side ZIP Bundlers for Speech Bridge & RustyVoiceCloner
+// =========================================================================
+(() => {
+  // Precomputed IEEE 802.3 CRC32 table
+  const crcTable = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    crcTable[n] = c >>> 0;
+  }
+  function crc32(bytes) {
+    let c = 0xffffffff;
+    for (let i = 0; i < bytes.length; i++) c = crcTable[(c ^ bytes[i]) & 0xff] ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+  }
+
+  function buildZip(entries) {
+    const enc = new TextEncoder();
+    const localParts = [];
+    const centralParts = [];
+    let offset = 0;
+
+    for (const { path, data } of entries) {
+      const nameBytes = enc.encode(path);
+      const crc = crc32(data);
+      const size = data.length;
+
+      const local = new Uint8Array(30 + nameBytes.length);
+      const lv = new DataView(local.buffer);
+      lv.setUint32(0, 0x04034b50, true);
+      lv.setUint16(4, 20, true);
+      lv.setUint16(8, 0, true); // Store (uncompressed)
+      lv.setUint32(14, crc, true);
+      lv.setUint32(18, size, true);
+      lv.setUint32(22, size, true);
+      lv.setUint16(26, nameBytes.length, true);
+      local.set(nameBytes, 30);
+
+      localParts.push(local, data);
+
+      const central = new Uint8Array(46 + nameBytes.length);
+      const cv = new DataView(central.buffer);
+      cv.setUint32(0, 0x02014b50, true);
+      cv.setUint16(4, 20, true);
+      cv.setUint16(6, 20, true);
+      cv.setUint16(10, 0, true);
+      cv.setUint32(16, crc, true);
+      cv.setUint32(20, size, true);
+      cv.setUint32(24, size, true);
+      cv.setUint16(28, nameBytes.length, true);
+      cv.setUint32(42, offset, true);
+      central.set(nameBytes, 46);
+
+      centralParts.push(central);
+      offset += local.length + size;
+    }
+
+    const centralSize = centralParts.reduce((s, p) => s + p.length, 0);
+    const eocd = new Uint8Array(22);
+    const ev = new DataView(eocd.buffer);
+    ev.setUint32(0, 0x06054b50, true);
+    ev.setUint16(8, entries.length, true);
+    ev.setUint16(10, entries.length, true);
+    ev.setUint32(12, centralSize, true);
+    ev.setUint32(16, offset, true);
+
+    return new Blob([...localParts, ...centralParts, eocd], { type: "application/zip" });
+  }
+
+  function wireZipButton(btnId, statusId, zipName, files) {
+    const btn = document.getElementById(btnId);
+    const status = document.getElementById(statusId);
+    if (!btn || !status) return;
+
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      try {
+        const entries = [];
+        for (let i = 0; i < files.length; i++) {
+          const f = files[i];
+          status.textContent = `Fetching (${i + 1}/${files.length}): ${f.zipPath}...`;
+          const res = await fetch(f.url);
+          if (!res.ok) throw new Error(`HTTP ${res.status} for ${f.zipPath}`);
+          const buf = new Uint8Array(await res.arrayBuffer());
+          entries.push({ path: f.zipPath, data: buf });
+        }
+        status.textContent = `Building ${zipName}...`;
+        const blob = buildZip(entries);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = zipName;
+        a.click();
+        URL.revokeObjectURL(url);
+        status.textContent = `Downloaded ${zipName}!`;
+      } catch (err) {
+        status.textContent = `ZIP error (${err.message}). Use the direct file links below.`;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+
+  wireZipButton("sbBtnZip", "sbZipStatus", "SpeechBridge.zip", [
+    { url: "../../Glue/RUST/speech-bridge/speech-bridge.exe", zipPath: "speech-bridge/speech-bridge.exe" },
+    { url: "../../Glue/RUST/speech-bridge/Setup.bat", zipPath: "speech-bridge/Setup.bat" },
+    { url: "../../Glue/RUST/speech-bridge/setup.ps1", zipPath: "speech-bridge/setup.ps1" },
+    { url: "../../Glue/RUST/speech-bridge/hotwords.txt", zipPath: "speech-bridge/hotwords.txt" },
+  ]);
+
+  wireZipButton("vcBtnZip", "vcZipStatus", "RustyVoiceCloner.zip", [
+    { url: "../../Glue/RUST/RustyVoiceCloner/RustyVoiceCloner.exe", zipPath: "RustyVoiceCloner/RustyVoiceCloner.exe" },
+    { url: "../../Glue/RUST/RustyVoiceCloner/openvoice_worker/Setup.bat", zipPath: "RustyVoiceCloner/openvoice_worker/Setup.bat" },
+    { url: "../../Glue/RUST/RustyVoiceCloner/openvoice_worker/Setup.ps1", zipPath: "RustyVoiceCloner/openvoice_worker/Setup.ps1" },
+    { url: "../../Glue/RUST/RustyVoiceCloner/openvoice_worker/worker.py", zipPath: "RustyVoiceCloner/openvoice_worker/worker.py" },
+  ]);
+})();

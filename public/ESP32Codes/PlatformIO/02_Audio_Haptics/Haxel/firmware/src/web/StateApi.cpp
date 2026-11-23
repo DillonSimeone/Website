@@ -143,7 +143,16 @@ void serializeState(JsonObject root, Engine* engine) {
     for (int i = 0; i < s.channelCount; ++i) {
         auto c = ch.add<JsonObject>();
         c["on"] = s.channels[i].on;
+        c["synced"] = s.channels[i].synced;
         c["intensity"] = s.channels[i].intensity;
+        c["speed"] = s.channels[i].speed;
+        c["startupFloor"] = s.channels[i].startupFloor;
+        c["ceiling"] = s.channels[i].ceiling;
+        char chPat[32] = "";
+        if (s.channels[i].patternOverride) {
+            PatternRegistry::instance().copyIdIfValid(s.channels[i].patternOverride, chPat, sizeof(chPat));
+        }
+        c["patternOverride"] = chPat;
     }
     auto info = root["info"].to<JsonObject>();
     info["version"] = HAXEL_VERSION_STR;
@@ -310,7 +319,32 @@ void applyStatePatch(JsonObjectConst patch, Engine* engine, Config* config) {
             } else if (v.is<JsonObjectConst>()) {
                 JsonObjectConst o = v.as<JsonObjectConst>();
                 if (o["on"].is<bool>()) s.channels[i].on = o["on"].as<bool>();
-                if (o["intensity"].is<float>()) s.channels[i].intensity = o["intensity"].as<float>();
+                if (o["synced"].is<bool>()) s.channels[i].synced = o["synced"].as<bool>();
+                if (o["intensity"].is<float>()) {
+                    float val = o["intensity"].as<float>();
+                    s.channels[i].intensity = val < 0.0f ? 0.0f : (val > 1.0f ? 1.0f : val);
+                }
+                if (o["speed"].is<float>()) {
+                    float val = o["speed"].as<float>();
+                    s.channels[i].speed = val < 0.25f ? 0.25f : (val > 4.0f ? 4.0f : val);
+                }
+                if (o["startupFloor"].is<float>()) {
+                    float val = o["startupFloor"].as<float>();
+                    s.channels[i].startupFloor = val < 0.0f ? 0.0f : (val > 1.0f ? 1.0f : val);
+                }
+                if (o["ceiling"].is<float>()) {
+                    float val = o["ceiling"].as<float>();
+                    s.channels[i].ceiling = val < 0.0f ? 0.0f : (val > 1.0f ? 1.0f : val);
+                }
+                if (o["patternOverride"].is<const char*>()) {
+                    const char* pid = o["patternOverride"].as<const char*>();
+                    if (!pid || pid[0] == '\0' || strcmp(pid, "none") == 0 || strcmp(pid, "master") == 0) {
+                        s.channels[i].patternOverride = nullptr;
+                    } else {
+                        IPattern* cp = PatternRegistry::instance().find(pid);
+                        if (cp) s.channels[i].patternOverride = cp;
+                    }
+                }
             }
             ++i;
         }
