@@ -128,7 +128,11 @@
     ],
     btnReplay: [
       "REPLAY STREAMING SIMULATION",
-      "Re-runs the active noisy-room scenario word-by-word so you can compare how different engines, denoisers, and LLM polish behave in real time.",
+      "Re-runs the active noisy-room scenario (with audio if Room Audio is ON) so you can hear the room track and compare engines, denoisers, and LLM polish in real time.",
+    ],
+    btnScenAudio: [
+      "PLAY / MUTE SCENARIO AUDIO TRACK",
+      "Toggles the real mixed audio track (Piper voices + calibrated cafe babble or restaurant music/dishes) so visitors can hear how noisy the room actually is while captions stream.",
     ],
   };
 
@@ -156,12 +160,17 @@
 
   const SCENARIOS = {
     cafe_babble: {
+      audioSrc: "./audio/cafe_babble.mp3",
+      audioLabel: "Loud Cafe Babble (-5 dB)",
+      durationSec: 14.19,
       snrLabel: "DROWNED (-5dB)",
       healthCls: "drowned",
       noiseLevel: 0.72,
       turns: [
         {
           spk: 1,
+          startSec: 0.45,
+          endSec: 9.65,
           legacy: "Hey can I get a nice boat milk lot they and to blue berry... actually make that... patio.",
           win11: "Hey can I get a iced oat late and two berry muffins? Jordan is joining in fifteen.",
           distil: "Hey, can I get an iced oat milk latte and two blueberry muffins? Actually make that three because Jordan is joining us in 15 minutes near the patio.",
@@ -170,6 +179,8 @@
         },
         {
           spk: 1,
+          startSec: 10.30,
+          endSec: 13.44,
           legacy: "Do you want me to grab a table outside or... [inaudible]",
           win11: "Do you want to grab a table outside or stay by the window?",
           distil: "Do you want me to grab a table outside or stay near the window?",
@@ -179,12 +190,17 @@
       ],
     },
     restaurant: {
+      audioSrc: "./audio/restaurant.mp3",
+      audioLabel: "Restaurant Music & Dishes (0 dB)",
+      durationSec: 13.28,
       snrLabel: "NOISY (+0dB)",
       healthCls: "noisy",
       noiseLevel: 0.48,
       turns: [
         {
           spk: 1,
+          startSec: 0.45,
+          endSec: 4.08,
           legacy: "Did everyone get a chance to check the train... for tomorrow morning?",
           win11: "Did everyone check the train schedule tomorrow morning?",
           distil: "Did everyone get a chance to check the train schedule for tomorrow morning?",
@@ -193,6 +209,8 @@
         },
         {
           spk: 2,
+          startSec: 4.73,
+          endSec: 12.53,
           legacy: "Yeah the express leaves at eight four five platform seven so meet outside by eight twenty.",
           win11: "Yeah the express leaves at 8:45 platform 7, meet outside by 8:20.",
           distil: "Yeah, the express leaves at 8:45 from platform 7, so we should meet outside the station by 8:20.",
@@ -202,12 +220,17 @@
       ],
     },
     group: {
+      audioSrc: "./audio/group.mp3",
+      audioLabel: "Group Table (3 Speakers, +5 dB)",
+      durationSec: 22.12,
       snrLabel: "NOISY (+5dB)",
       healthCls: "noisy",
       noiseLevel: 0.36,
       turns: [
         {
           spk: 1,
+          startSec: 0.45,
+          endSec: 4.23,
           legacy: "Did everyone check the train schedule for tomorrow morning?",
           win11: "Did everyone get a chance to check the train schedule for tomorrow morning?",
           distil: "Did everyone get a chance to check the train schedule for tomorrow morning?",
@@ -216,6 +239,8 @@
         },
         {
           spk: 2,
+          startSec: 4.88,
+          endSec: 12.64,
           legacy: "Yeah express leaves eight forty five platform seven meet outside station.",
           win11: "Yeah, the express leaves at 8:45 from platform 7 so meet outside by 8:20.",
           distil: "Yeah, the express leaves at 8:45 from platform 7, so we should meet outside the station by 8:20.",
@@ -224,6 +249,8 @@
         },
         {
           spk: 3,
+          startSec: 13.29,
+          endSec: 17.57,
           legacy: "Sounds good I'll grab coffee for the table before we head over.",
           win11: "Sounds good to me. I'll grab coffee for the table before we head over.",
           distil: "Sounds good to me. I will grab coffee for the table before we head over.",
@@ -232,6 +259,8 @@
         },
         {
           spk: 1,
+          startSec: 18.22,
+          endSec: 21.37,
           legacy: "Perfect text me if traffic slows you on the bridge.",
           win11: "Perfect, text me if traffic slows you down on the bridge.",
           distil: "Perfect, text me if traffic slows you down on the bridge.",
@@ -241,12 +270,17 @@
       ],
     },
     quiet: {
+      audioSrc: "./audio/quiet.mp3",
+      audioLabel: "Quiet Room (Clean)",
+      durationSec: 10.64,
       snrLabel: "CLEAR (+18dB)",
       healthCls: "clear",
       noiseLevel: 0.12,
       turns: [
         {
           spk: 1,
+          startSec: 0.45,
+          endSec: 9.89,
           legacy: "Hey can I get an iced oat milk latte and two blueberry muffins? Actually make that three.",
           win11: "Hey, can I get an iced oat milk latte and two blueberry muffins? Actually make that three muffins.",
           distil: "Hey, can I get an iced oat milk latte and two blueberry muffins? Actually, make that three muffins because Jordan is joining us in 15 minutes near the back patio.",
@@ -277,6 +311,9 @@
     heard: [],
     replies: [{ time: nowHms(), text: "Testing, do you understand me?" }],
     streamTimer: null,
+    audioSyncTimer: null,
+    roomAudioOn: true,
+    audioPlaying: false,
     speakingCardIdx: -1,
     speakingWordIdx: -1,
     ttsWordTimer: null,
@@ -291,6 +328,8 @@
   const elHealth = $("rHealth");
   const elLeftHdr = $("rLeftHdr");
   const elReplyInput = $("replyInput");
+  const elScenAudioBtn = $("btnScenAudio");
+  const elScenAudioNote = $("scenAudioNote");
   const tooltip = $("cyberTooltip");
   const ttTitle = $("ttTitle");
   const ttDesc = $("ttDesc");
@@ -510,28 +549,221 @@
   }
 
   // =========================================================================
-  // 6. LocalAgreement-2 Simulated Streaming Playback
+  // 6. Scenario Audio Track + LocalAgreement-2 Synchronized Streaming
   // =========================================================================
+  const scenarioAudio = new Audio();
+  scenarioAudio.preload = "auto";
+  let audioCtx = null;
+  let audioAnalyser = null;
+  let audioFreqData = null;
+
+  function ensureAudioAnalyser() {
+    // Only connect Web Audio AnalyserNode over http/https (avoids file:// CORS silence in Chromium)
+    if (audioAnalyser || window.location.protocol === "file:") return;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      audioCtx = new AC();
+      const src = audioCtx.createMediaElementSource(scenarioAudio);
+      audioAnalyser = audioCtx.createAnalyser();
+      audioAnalyser.fftSize = 128;
+      audioAnalyser.smoothingTimeConstant = 0.72;
+      src.connect(audioAnalyser);
+      audioAnalyser.connect(audioCtx.destination);
+      audioFreqData = new Uint8Array(audioAnalyser.frequencyBinCount);
+    } catch {
+      audioAnalyser = null;
+    }
+  }
+
+  function fmtSec(sec) {
+    const s = Math.max(0, Math.floor(sec || 0));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  }
+
+  function updateRoomAudioUi(customNote, isPlaying = false) {
+    if (elScenAudioBtn) {
+      elScenAudioBtn.textContent = state.roomAudioOn ? "🔊 ROOM AUDIO: ON" : "🔇 ROOM AUDIO: OFF";
+      elScenAudioBtn.classList.toggle("active", state.roomAudioOn);
+      elScenAudioBtn.classList.toggle("muted", !state.roomAudioOn);
+      elScenAudioBtn.setAttribute("aria-pressed", String(state.roomAudioOn));
+    }
+    if (elScenAudioNote && customNote !== undefined) {
+      elScenAudioNote.textContent = customNote;
+      elScenAudioNote.classList.toggle("playing", isPlaying);
+    }
+  }
+
+  function stopScenarioAudio() {
+    if (state.audioSyncTimer) {
+      clearInterval(state.audioSyncTimer);
+      state.audioSyncTimer = null;
+    }
+    state.audioPlaying = false;
+    try {
+      scenarioAudio.pause();
+      scenarioAudio.currentTime = 0;
+    } catch {}
+  }
+
   function stopStream() {
     if (state.streamTimer) {
       clearTimeout(state.streamTimer);
       state.streamTimer = null;
     }
+    stopScenarioAudio();
   }
 
-  function runScenarioStream() {
+  function runScenarioStream(fromUserGesture = false) {
     stopStream();
     if (state.liveMicActive) return;
     state.heard = [];
     renderHeard();
     syncControls();
-    if (!state.armed) return;
+    if (!state.armed) {
+      updateRoomAudioUi("RX paused (click RX: OFF to resume)", false);
+      return;
+    }
 
     const eng = ENGINES[state.engIdx];
     const dns = DENOISERS[state.dnsIdx];
+    const sc = SCENARIOS[state.scenario];
     elStatus.textContent = `>> RX LIVE [${eng.status}]`;
 
-    const turns = SCENARIOS[state.scenario].turns;
+    // Start real scenario audio track when Room Audio is enabled and triggered by a user click
+    if (state.roomAudioOn && fromUserGesture && sc.audioSrc) {
+      startAudioSyncedStream(sc, eng, dns);
+      return;
+    }
+
+    if (!state.roomAudioOn) {
+      updateRoomAudioUi("Room audio muted (click ROOM AUDIO to listen while captions stream)", false);
+    } else {
+      updateRoomAudioUi("Click any scenario, Replay Stream, or ROOM AUDIO to hear the noisy room track", false);
+    }
+    runTimerFallbackStream(sc, eng, dns);
+  }
+
+  function startAudioSyncedStream(sc, eng, dns) {
+    const turns = sc.turns;
+    const committed = new Array(turns.length).fill(false);
+    const runId = Date.now() + Math.random();
+    state._runId = runId;
+
+    ensureAudioAnalyser();
+    if (audioCtx && audioCtx.state === "suspended") {
+      audioCtx.resume().catch(() => {});
+    }
+
+    scenarioAudio.src = sc.audioSrc;
+    scenarioAudio.currentTime = 0;
+
+    const commitTurn = (idx) => {
+      if (committed[idx]) return;
+      committed[idx] = true;
+      const t = turns[idx];
+      if (dns.id === "voxlock" && state.scenario === "group" && t.spk !== 1) return;
+      const rawText =
+        eng.id === "legacy" ? t.legacy :
+        eng.id === "win11" ? t.win11 :
+        eng.id === "distil" ? t.distil :
+        t.parakeetRaw;
+      const cardObj = {
+        time: nowHms(),
+        spk: t.spk,
+        text: rawText,
+        polished: false,
+      };
+      state.heard.push(cardObj);
+      renderHeard();
+
+      if (state.llmOn && eng.id === "parakeet" && t.parakeetLlm !== rawText) {
+        setTimeout(() => {
+          if (state._runId !== runId) return;
+          cardObj.text = t.parakeetLlm;
+          cardObj.polished = true;
+          renderHeard();
+        }, 220);
+      }
+    };
+
+    const syncTick = () => {
+      if (state._runId !== runId || !state.armed || state.liveMicActive) {
+        stopScenarioAudio();
+        return;
+      }
+      const now = scenarioAudio.currentTime || 0;
+      const dur = Number.isFinite(scenarioAudio.duration) && scenarioAudio.duration > 0
+        ? scenarioAudio.duration
+        : sc.durationSec;
+
+      if (!scenarioAudio.paused && !scenarioAudio.ended) {
+        updateRoomAudioUi(`♪ Playing: ${sc.audioLabel} [${fmtSec(now)} / ${fmtSec(dur)}]`, true);
+      }
+
+      let activeStable = "";
+      let activeDraft = "";
+
+      for (let i = 0; i < turns.length; i++) {
+        const t = turns[i];
+        if (now >= t.endSec || scenarioAudio.ended) {
+          commitTurn(i);
+          continue;
+        }
+        if (now >= t.startSec && now < t.endSec) {
+          if (dns.id === "voxlock" && state.scenario === "group" && t.spk !== 1) {
+            break;
+          }
+          const rawText =
+            eng.id === "legacy" ? t.legacy :
+            eng.id === "win11" ? t.win11 :
+            eng.id === "distil" ? t.distil :
+            t.parakeetRaw;
+          const words = rawText.split(" ");
+          const span = Math.max(0.2, t.endSec - t.startSec);
+          const frac = Math.min(1, Math.max(0, (now - t.startSec) / span));
+          const cursor = Math.min(words.length, Math.max(1, Math.ceil(frac * words.length)));
+          const lockedCount = Math.max(0, cursor - 2);
+          activeStable = words.slice(0, lockedCount).join(" ");
+          activeDraft = words.slice(lockedCount, cursor).join(" ");
+          break;
+        }
+      }
+
+      if (activeStable || activeDraft) {
+        renderHeard(activeStable, activeDraft);
+      } else if (scenarioAudio.ended) {
+        state.audioPlaying = false;
+        clearInterval(state.audioSyncTimer);
+        state.audioSyncTimer = null;
+        renderHeard();
+        updateRoomAudioUi(`✓ Finished: ${sc.audioLabel} (click Replay Stream to hear again)`, false);
+      }
+    };
+
+    const playPromise = scenarioAudio.play();
+    if (playPromise && typeof playPromise.then === "function") {
+      playPromise
+        .then(() => {
+          if (state._runId !== runId) return;
+          state.audioPlaying = true;
+          updateRoomAudioUi(`♪ Playing: ${sc.audioLabel} [0:00 / ${fmtSec(sc.durationSec)}]`, true);
+          state.audioSyncTimer = setInterval(syncTick, 60);
+        })
+        .catch(() => {
+          if (state._runId !== runId) return;
+          state.audioPlaying = false;
+          updateRoomAudioUi("Browser blocked autoplay (click any scenario or ROOM AUDIO to hear the track)", false);
+          runTimerFallbackStream(sc, eng, dns);
+        });
+    } else {
+      state.audioPlaying = true;
+      state.audioSyncTimer = setInterval(syncTick, 60);
+    }
+  }
+
+  function runTimerFallbackStream(sc, eng, dns) {
+    const turns = sc.turns;
     let turnIdx = 0;
 
     function playTurn() {
@@ -632,6 +864,10 @@
 
   function speakOut(text, cardIdx) {
     stopTtsWordTimer();
+    if (state.audioPlaying) {
+      stopScenarioAudio();
+      updateRoomAudioUi("Room track paused during outbound TTS (click Replay Stream to resume)", false);
+    }
     state.testingVoices = false;
     state.speakingCardIdx = cardIdx;
     state.speakingWordIdx = 0;
@@ -724,6 +960,10 @@
     const sample = elReplyInput.value.trim() || "Testing voice clarity for Speech Bridge.";
     const list = state.voices.slice(0, 4);
     if (!list.length) return;
+    if (state.audioPlaying) {
+      stopScenarioAudio();
+      updateRoomAudioUi("Room track paused during voice audition", false);
+    }
     state.testingVoices = true;
     state.ttsMuted = true;
     syncControls();
@@ -822,13 +1062,24 @@
     const baseEnergy = !state.armed ? 0.03 : state.ttsMuted ? 0.08 : sc.noiseLevel;
     let peak = 0;
 
+    const useRealFft = Boolean(state.audioPlaying && audioAnalyser && audioFreqData && !state.ttsMuted && state.armed);
+    if (useRealFft) {
+      audioAnalyser.getByteFrequencyData(audioFreqData);
+    }
+
     for (let i = 0; i < 24; i++) {
-      const voiceBell = Math.exp(-Math.pow((i - 9) / 5.5, 2));
-      const target = Math.min(
-        0.96,
-        baseEnergy * (0.35 + 0.45 * Math.abs(Math.sin(phase * 0.7 + i * 0.55))) +
-          (state.armed && !state.ttsMuted ? voiceBell * (0.28 + 0.42 * Math.abs(Math.sin(phase * 1.4 + i * 0.3))) : 0)
-      );
+      let target;
+      if (useRealFft) {
+        const bin = Math.min(audioFreqData.length - 1, Math.floor((i / 24) * (audioFreqData.length * 0.72)));
+        target = Math.min(0.98, Math.max(0.04, (audioFreqData[bin] / 255) * 1.15));
+      } else {
+        const voiceBell = Math.exp(-Math.pow((i - 9) / 5.5, 2));
+        target = Math.min(
+          0.96,
+          baseEnergy * (0.35 + 0.45 * Math.abs(Math.sin(phase * 0.7 + i * 0.55))) +
+            (state.armed && !state.ttsMuted ? voiceBell * (0.28 + 0.42 * Math.abs(Math.sin(phase * 1.4 + i * 0.3))) : 0)
+        );
+      }
       bands[i] = target > bands[i] ? target : bands[i] * 0.78 + target * 0.22;
       peak = Math.max(peak, bands[i]);
 
@@ -856,15 +1107,16 @@
     if (!state.armed) {
       stopStream();
       elStatus.textContent = ">> STANDBY";
+      updateRoomAudioUi("RX paused (click RX: OFF to resume)", false);
       renderHeard();
     } else {
-      runScenarioStream();
+      runScenarioStream(true);
     }
     syncControls();
   });
   $("rBtnEngine").addEventListener("click", () => {
     state.engIdx = (state.engIdx + 1) % ENGINES.length;
-    runScenarioStream();
+    runScenarioStream(true);
   });
   $("rBtnInput").addEventListener("click", () => {
     state.micIdx = (state.micIdx + 1) % MICS.length;
@@ -873,7 +1125,7 @@
   });
   $("rBtnDenoise").addEventListener("click", () => {
     state.dnsIdx = (state.dnsIdx + 1) % DENOISERS.length;
-    runScenarioStream();
+    runScenarioStream(true);
   });
   $("rBtnSpk").addEventListener("click", () => {
     state.spkOn = !state.spkOn;
@@ -882,7 +1134,7 @@
   });
   $("rBtnLlm").addEventListener("click", () => {
     state.llmOn = !state.llmOn;
-    runScenarioStream();
+    runScenarioStream(true);
   });
   $("rBtnFontDown").addEventListener("click", () => {
     state.fontPx = Math.max(13, state.fontPx - 2);
@@ -952,8 +1204,23 @@
       finishSpeak();
     }
   });
-  $("rReplayBtn").addEventListener("click", runScenarioStream);
-  $("btnLiveMic").addEventListener("click", toggleLiveMic);
+  $("rReplayBtn").addEventListener("click", () => runScenarioStream(true));
+  const btnLiveMicEl = $("btnLiveMic");
+  if (btnLiveMicEl) btnLiveMicEl.addEventListener("click", toggleLiveMic);
+
+  if (elScenAudioBtn) {
+    elScenAudioBtn.addEventListener("click", () => {
+      state.roomAudioOn = !state.roomAudioOn;
+      if (!state.roomAudioOn) {
+        stopScenarioAudio();
+        updateRoomAudioUi("Room audio muted (click ROOM AUDIO to listen while captions stream)", false);
+        runScenarioStream(false);
+      } else {
+        updateRoomAudioUi();
+        runScenarioStream(true);
+      }
+    });
+  }
 
   document.querySelectorAll(".scen-btn[data-scen]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -961,7 +1228,7 @@
       document.querySelectorAll(".scen-btn[data-scen]").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       state.scenario = btn.dataset.scen;
-      runScenarioStream();
+      runScenarioStream(true);
     });
   });
 
