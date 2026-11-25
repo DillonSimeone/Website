@@ -1,16 +1,17 @@
 //! Local Text-to-Speech supporting Windows 11 WinRT voices + local Piper neural voices,
 //! plus a sequential Voice Benchmark mode.
 
+use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use std::fs;
 use std::io::{BufRead, BufReader, Write};
 use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use windows::core::HSTRING;
 use windows::Media::SpeechSynthesis::{SpeechSynthesizer, VoiceInformation};
 use windows::Storage::Streams::{DataReader, IInputStream};
@@ -80,17 +81,41 @@ pub struct VoiceEntry {
 }
 
 enum TtsCommand {
+    Prewarm {
+        voice: Option<VoiceEntry>,
+        rate: f64,
+    },
     Speak {
         text: String,
         voice: Option<VoiceEntry>,
         rate: f64,
+        output_device: Option<String>,
+        gate_stt: bool,
     },
     Benchmark {
         voices: Vec<VoiceEntry>,
         sample_text: Option<String>,
         rate: f64,
+        output_device: Option<String>,
     },
     Stop,
+}
+
+/// Enumerates all Windows WASAPI audio output devices (speakers, headphones, VB-Cable virtual mics, etc.).
+pub fn list_output_devices() -> Vec<String> {
+    let host = cpal::default_host();
+    let Ok(devices) = host.output_devices() else {
+        return Vec::new();
+    };
+    let mut names = Vec::new();
+    for dev in devices {
+        if let Ok(name) = dev.name() {
+            if !names.contains(&name) {
+                names.push(name);
+            }
+        }
+    }
+    names
 }
 
 /// Tracks real-time word-by-word progress during TTS WAV playback so the UI can
@@ -155,11 +180,10 @@ impl TtsWordTracker {
     }
 }
 
-/// Inspects an in-memory PCM WAV buffer to find the active speech span `(start_ms, end_ms)`,
-/// trimming leading/trailing synthesis silence so word highlights stay tightly synced to audio.
-fn parse_wav_speech_span_ms(wav: &[u8]) -> (u64, u64) {
+/// Parses a RIFF/WAVE PCM buffer into `(sample_rate, channels, bits_per_sample, data_bytes)`.
+fn parse_pcm_wav(wav: &[u8]) -> Option<(u32, u16, u16, &[u8])> {
     if wav.len() < 44 || &wav[0..4] != b"RIFF" || &wav[8..12] != b"WAVE" {
-        return (0, 0);
+        return None;
     }
     let mut pos = 12usize;
     let mut sample_rate = 0u32;
@@ -189,8 +213,17 @@ fn parse_wav_speech_span_ms(wav: &[u8]) -> (u64, u64) {
     }
 
     if sample_rate == 0 || bits_per_sample == 0 || data_slice.is_empty() {
-        return (0, 0);
+        return None;
     }
+    Some((sample_rate, channels, bits_per_sample, data_slice))
+}
+
+/// Inspects an in-memory PCM WAV buffer to find the active speech span `(start_ms, end_ms)`,
+/// trimming leading/trailing synthesis silence so word highlights stay tightly synced to audio.
+fn parse_wav_speech_span_ms(wav: &[u8]) -> (u64, u64) {
+    let Some((sample_rate, channels, bits_per_sample, data_slice)) = parse_pcm_wav(wav) else {
+        return (0, 0);
+    };
     let bytes_per_frame = ((bits_per_sample as usize / 8) * channels as usize).max(1);
     let total_frames = data_slice.len() / bytes_per_frame;
     let total_ms = (total_frames as u64 * 1000) / sample_rate as u64;
@@ -310,18 +343,42 @@ impl TtsEngine {
         self.word_tracker.current_word_index()
     }
 
-    /// Queues text to be spoken with the given optional voice and speaking rate.
-    pub fn speak(&self, text: String, voice: Option<VoiceEntry>, rate: f64) {
+    /// Pre-loads Piper + OpenVoice CUDA models in the background so pressing Enter speaks immediately.
+    pub fn prewarm(&self, voice: Option<VoiceEntry>, rate: f64) {
+        let _ = self.tx.send(TtsCommand::Prewarm { voice, rate });
+    }
+
+    /// Queues text to be spoken with the given optional voice, speaking rate, and target output device.
+    pub fn speak(
+        &self,
+        text: String,
+        voice: Option<VoiceEntry>,
+        rate: f64,
+        output_device: Option<String>,
+        gate_stt: bool,
+    ) {
         self.cancel_flag.store(true, Ordering::Relaxed);
         self.word_tracker.clear();
         unsafe {
             let _ = PlaySoundW(None, None, SND_ASYNC);
         }
-        let _ = self.tx.send(TtsCommand::Speak { text, voice, rate });
+        let _ = self.tx.send(TtsCommand::Speak {
+            text,
+            voice,
+            rate,
+            output_device,
+            gate_stt,
+        });
     }
 
-    /// Runs a sequential audition across all voices.
-    pub fn benchmark(&self, voices: Vec<VoiceEntry>, sample_text: Option<String>, rate: f64) {
+    /// Runs a sequential audition across all voices on the chosen output device.
+    pub fn benchmark(
+        &self,
+        voices: Vec<VoiceEntry>,
+        sample_text: Option<String>,
+        rate: f64,
+        output_device: Option<String>,
+    ) {
         self.cancel_flag.store(true, Ordering::Relaxed);
         self.word_tracker.clear();
         unsafe {
@@ -331,6 +388,7 @@ impl TtsEngine {
             voices,
             sample_text,
             rate,
+            output_device,
         });
     }
 
@@ -435,9 +493,11 @@ fn winrt_voice_to_entry(voice: &VoiceInformation) -> Option<VoiceEntry> {
     })
 }
 
+#[allow(clippy::too_many_arguments)]
 fn synthesize_voice(
     synth: Option<&SpeechSynthesizer>,
     piper_exe: Option<&Path>,
+    piper_daemon: &mut Option<PiperDaemon>,
     openvoice: &mut Option<OpenVoiceDaemon>,
     voice: Option<&VoiceEntry>,
     text: &str,
@@ -452,7 +512,8 @@ fn synthesize_voice(
             let Some(exe) = piper_exe else {
                 return Vec::new();
             };
-            let Ok(piper_wav) = synthesize_piper_wav(exe, model_path, text, rate) else {
+            let Ok(piper_wav) = synthesize_piper_cached(exe, piper_daemon, model_path, text, rate)
+            else {
                 return Vec::new();
             };
             if openvoice.is_none() {
@@ -467,7 +528,7 @@ fn synthesize_voice(
             piper_wav
         }
         Some(VoiceKind::Piper { model_path }) => piper_exe
-            .and_then(|exe| synthesize_piper_wav(exe, model_path, text, rate).ok())
+            .and_then(|exe| synthesize_piper_cached(exe, piper_daemon, model_path, text, rate).ok())
             .unwrap_or_default(),
         other => {
             let Some(synth) = synth else {
@@ -502,11 +563,26 @@ fn tts_worker_loop(
     let _com = ComGuard::mta();
     let synth = SpeechSynthesizer::new().ok();
     let piper_exe = find_piper_exe();
+    let mut piper_daemon: Option<PiperDaemon> = None;
     let mut openvoice: Option<OpenVoiceDaemon> = None;
     let mut active_wav: Vec<u8> = Vec::new();
 
     while let Ok(cmd) = rx.recv() {
         match cmd {
+            TtsCommand::Prewarm { voice, rate } => {
+                if let Some(ref v) = voice {
+                    // Warm up persistent Piper + OpenVoice CUDA converter & SE caches silently.
+                    let _ = synthesize_voice(
+                        synth.as_ref(),
+                        piper_exe.as_deref(),
+                        &mut piper_daemon,
+                        &mut openvoice,
+                        Some(v),
+                        "Ready.",
+                        rate,
+                    );
+                }
+            }
             TtsCommand::Stop => {
                 cancel_bg.store(true, Ordering::Relaxed);
                 word_tracker.clear();
@@ -517,25 +593,36 @@ fn tts_worker_loop(
                 active_wav.clear();
                 post_app_msg(notify_hwnd, WM_APP_TTS_STATUS, 0);
             }
-            TtsCommand::Speak { text, voice, rate } => {
+            TtsCommand::Speak {
+                text,
+                voice,
+                rate,
+                output_device,
+                gate_stt,
+            } => {
                 cancel_bg.store(false, Ordering::Relaxed);
                 handle_speak(
                     notify_hwnd,
                     synth.as_ref(),
                     piper_exe.as_deref(),
+                    &mut piper_daemon,
                     &mut openvoice,
+                    &cancel_bg,
                     &echo_gate,
                     &word_tracker,
                     &mut active_wav,
                     &text,
                     voice.as_ref(),
                     rate,
+                    output_device.as_deref(),
+                    gate_stt,
                 );
             }
             TtsCommand::Benchmark {
                 voices,
                 sample_text,
                 rate,
+                output_device,
             } => {
                 cancel_bg.store(false, Ordering::Relaxed);
                 word_tracker.clear();
@@ -543,6 +630,7 @@ fn tts_worker_loop(
                     notify_hwnd,
                     synth.as_ref(),
                     piper_exe.as_deref(),
+                    &mut piper_daemon,
                     &mut openvoice,
                     &cancel_bg,
                     &status_bg,
@@ -551,11 +639,15 @@ fn tts_worker_loop(
                     &voices,
                     sample_text.as_deref(),
                     rate,
+                    output_device.as_deref(),
                 );
             }
         }
     }
 
+    if let Some(mut pd) = piper_daemon.take() {
+        pd.shutdown();
+    }
     if let Some(mut ov) = openvoice.take() {
         ov.shutdown();
     }
@@ -571,31 +663,38 @@ fn handle_speak(
     notify_hwnd: isize,
     synth: Option<&SpeechSynthesizer>,
     piper_exe: Option<&Path>,
+    piper_daemon: &mut Option<PiperDaemon>,
     openvoice: &mut Option<OpenVoiceDaemon>,
+    cancel_bg: &AtomicBool,
     echo_gate: &TtsEchoGate,
     word_tracker: &TtsWordTracker,
     active_wav: &mut Vec<u8>,
     text: &str,
     voice: Option<&VoiceEntry>,
     rate: f64,
+    output_device: Option<&str>,
+    gate_stt: bool,
 ) {
     post_app_msg(notify_hwnd, WM_APP_TTS_STATUS, 1);
-    let wav = synthesize_voice(synth, piper_exe, openvoice, voice, text, rate);
-    if !wav.is_empty() {
-        echo_gate.set_speaking(true);
-        word_tracker.begin(text, &wav);
-        unsafe {
-            let _ = PlaySoundW(None, None, SND_ASYNC);
-            *active_wav = wav;
-            let _ = PlaySoundW(
-                windows::core::PCWSTR(active_wav.as_ptr() as *const u16),
-                None,
-                SND_MEMORY | SND_SYNC | SND_NODEFAULT,
-            );
-            active_wav.clear();
+    let wav = synthesize_voice(
+        synth,
+        piper_exe,
+        piper_daemon,
+        openvoice,
+        voice,
+        text,
+        rate,
+    );
+    if !wav.is_empty() && !cancel_bg.load(Ordering::Relaxed) {
+        if gate_stt {
+            echo_gate.set_speaking(true);
         }
+        word_tracker.begin(text, &wav);
+        play_wav_routed(&wav, output_device, cancel_bg, active_wav);
         word_tracker.clear();
-        echo_gate.set_speaking(false);
+        if gate_stt {
+            echo_gate.set_speaking(false);
+        }
     }
     post_app_msg(notify_hwnd, WM_APP_TTS_STATUS, 0);
 }
@@ -605,6 +704,7 @@ fn handle_benchmark(
     notify_hwnd: isize,
     synth: Option<&SpeechSynthesizer>,
     piper_exe: Option<&Path>,
+    piper_daemon: &mut Option<PiperDaemon>,
     openvoice: &mut Option<OpenVoiceDaemon>,
     cancel_bg: &AtomicBool,
     status_bg: &Mutex<String>,
@@ -613,6 +713,7 @@ fn handle_benchmark(
     voices: &[VoiceEntry],
     sample_text: Option<&str>,
     rate: f64,
+    output_device: Option<&str>,
 ) {
     let total = voices.len();
     for (idx, v) in voices.iter().enumerate() {
@@ -629,32 +730,308 @@ fn handle_benchmark(
             ),
         };
         let t0 = Instant::now();
-        let wav = synthesize_voice(synth, piper_exe, openvoice, Some(v), &phrase, rate);
+        let wav = synthesize_voice(
+            synth,
+            piper_exe,
+            piper_daemon,
+            openvoice,
+            Some(v),
+            &phrase,
+            rate,
+        );
         let ms = t0.elapsed().as_millis();
         if cancel_bg.load(Ordering::Relaxed) {
             break;
         }
 
         if let Ok(mut g) = status_bg.lock() {
-            *g = format!(">> BENCH [{}/{}]: {} ({} ms)", idx + 1, total, v.display_name, ms);
+            *g = format!(">> TEST [{}/{}]: {} ({} ms)", idx + 1, total, v.display_name, ms);
         }
         post_app_msg(notify_hwnd, WM_APP_BENCH_PROGRESS, 1);
 
         if !wav.is_empty() {
             echo_gate.set_speaking(true);
-            unsafe {
-                *active_wav = wav;
-                let _ = PlaySoundW(
-                    windows::core::PCWSTR(active_wav.as_ptr() as *const u16),
-                    None,
-                    SND_MEMORY | SND_SYNC | SND_NODEFAULT,
-                );
-                active_wav.clear();
-            }
+            play_wav_routed(&wav, output_device, cancel_bg, active_wav);
             echo_gate.set_speaking(false);
         }
     }
     post_app_msg(notify_hwnd, WM_APP_BENCH_PROGRESS, 0);
+}
+
+/// Plays PCM WAV bytes to a specific WASAPI output device via `cpal` (e.g. VB-Audio Virtual Cable
+/// `CABLE Input` for Discord/Zoom/Meet), or falls back to `PlaySoundW` for System Default.
+fn play_wav_routed(
+    wav: &[u8],
+    output_device: Option<&str>,
+    cancel: &AtomicBool,
+    active_wav: &mut Vec<u8>,
+) {
+    if play_wav_cpal(wav, output_device, cancel) {
+        return;
+    }
+    // Fallback to Windows default audio playback if cpal device open failed.
+    if output_device.is_none() {
+        unsafe {
+            let _ = PlaySoundW(None, None, SND_ASYNC);
+            *active_wav = wav.to_vec();
+            let _ = PlaySoundW(
+                windows::core::PCWSTR(active_wav.as_ptr() as *const u16),
+                None,
+                SND_MEMORY | SND_SYNC | SND_NODEFAULT,
+            );
+            active_wav.clear();
+        }
+    }
+}
+
+fn play_wav_cpal(wav: &[u8], output_device: Option<&str>, cancel: &AtomicBool) -> bool {
+    let Some((src_rate, src_ch, bits, data_bytes)) = parse_pcm_wav(wav) else {
+        return false;
+    };
+    if bits != 16 {
+        return false;
+    }
+    let host = cpal::default_host();
+    let device = match output_device {
+        Some(wanted) => host
+            .output_devices()
+            .ok()
+            .and_then(|mut devs| devs.find(|d| d.name().map(|n| n == wanted).unwrap_or(false))),
+        None => host.default_output_device(),
+    };
+    let Some(device) = device else {
+        return false;
+    };
+    let Ok(def_cfg) = device.default_output_config() else {
+        return false;
+    };
+
+    let dst_rate = def_cfg.sample_rate().0.max(8000);
+    let dst_ch = def_cfg.channels().max(1) as usize;
+    let sample_fmt = def_cfg.sample_format();
+    let stream_cfg: cpal::StreamConfig = def_cfg.into();
+
+    let src_frames = data_bytes.len() / (2 * src_ch.max(1) as usize);
+    if src_frames == 0 {
+        return true;
+    }
+    // Convert source PCM16 to mono f32 once, then resample to device sample rate.
+    let mut mono = Vec::with_capacity(src_frames);
+    let ch_usize = src_ch.max(1) as usize;
+    for f in 0..src_frames {
+        let mut sum = 0.0f32;
+        for c in 0..ch_usize {
+            let off = (f * ch_usize + c) * 2;
+            let s = i16::from_le_bytes([data_bytes[off], data_bytes[off + 1]]) as f32 / 32768.0;
+            sum += s;
+        }
+        mono.push(sum / ch_usize as f32);
+    }
+
+    let out_frames = ((src_frames as u64 * dst_rate as u64) / src_rate.max(1) as u64).max(1) as usize;
+    let mut resampled = Vec::with_capacity(out_frames);
+    let ratio = src_rate as f64 / dst_rate as f64;
+    for i in 0..out_frames {
+        let pos = i as f64 * ratio;
+        let idx = (pos as usize).min(mono.len() - 1);
+        let frac = (pos - idx as f64) as f32;
+        let a = mono[idx];
+        let b = mono[(idx + 1).min(mono.len() - 1)];
+        resampled.push(a + (b - a) * frac);
+    }
+    // Add 80ms trailing silence so WASAPI hardware ring buffer flushes the final syllable cleanly.
+    resampled.resize(out_frames + (dst_rate as usize / 12), 0.0);
+
+    let samples_arc = Arc::new(resampled);
+    let cursor = Arc::new(AtomicUsize::new(0));
+    let done = Arc::new(AtomicBool::new(false));
+    let total_frames = samples_arc.len();
+
+    let stream = match sample_fmt {
+        cpal::SampleFormat::F32 => {
+            let s_cb = Arc::clone(&samples_arc);
+            let cur_cb = Arc::clone(&cursor);
+            let done_cb = Arc::clone(&done);
+            device.build_output_stream(
+                &stream_cfg,
+                move |out: &mut [f32], _| {
+                    let mut pos = cur_cb.load(Ordering::Relaxed);
+                    for frame in out.chunks_mut(dst_ch) {
+                        let v = if pos < s_cb.len() { s_cb[pos] } else { 0.0 };
+                        for ch in frame.iter_mut() {
+                            *ch = v;
+                        }
+                        pos = pos.saturating_add(1);
+                    }
+                    cur_cb.store(pos, Ordering::Relaxed);
+                    if pos >= s_cb.len() {
+                        done_cb.store(true, Ordering::Release);
+                    }
+                },
+                |_| {},
+                None,
+            )
+        }
+        cpal::SampleFormat::I16 => {
+            let s_cb = Arc::clone(&samples_arc);
+            let cur_cb = Arc::clone(&cursor);
+            let done_cb = Arc::clone(&done);
+            device.build_output_stream(
+                &stream_cfg,
+                move |out: &mut [i16], _| {
+                    let mut pos = cur_cb.load(Ordering::Relaxed);
+                    for frame in out.chunks_mut(dst_ch) {
+                        let v = if pos < s_cb.len() {
+                            (s_cb[pos].clamp(-1.0, 1.0) * 32767.0) as i16
+                        } else {
+                            0
+                        };
+                        for ch in frame.iter_mut() {
+                            *ch = v;
+                        }
+                        pos = pos.saturating_add(1);
+                    }
+                    cur_cb.store(pos, Ordering::Relaxed);
+                    if pos >= s_cb.len() {
+                        done_cb.store(true, Ordering::Release);
+                    }
+                },
+                |_| {},
+                None,
+            )
+        }
+        _ => return false,
+    };
+
+    let Ok(stream) = stream else {
+        return false;
+    };
+    if stream.play().is_err() {
+        return false;
+    }
+
+    let max_wait = Duration::from_millis(((total_frames as u64 * 1000) / dst_rate as u64) + 1500);
+    let start = Instant::now();
+    while !done.load(Ordering::Acquire)
+        && !cancel.load(Ordering::Relaxed)
+        && start.elapsed() < max_wait
+    {
+        thread::sleep(Duration::from_millis(15));
+    }
+    drop(stream);
+    true
+}
+
+/// Persistent `piper.exe --json-input` daemon keeping the 63 MB ONNX voice model warm in RAM
+/// (~110 ms/sentence instead of ~500+ ms cold process spawns).
+struct PiperDaemon {
+    model_path: PathBuf,
+    rate_key: i32,
+    child: Child,
+    stdin: ChildStdin,
+    stdout: BufReader<ChildStdout>,
+}
+
+impl PiperDaemon {
+    fn spawn(piper_exe: &Path, model_path: &Path, rate: f64) -> std::io::Result<Self> {
+        let rate_key = (rate.clamp(0.5, 2.0) * 100.0).round() as i32;
+        let length_scale = (1.0 / rate.clamp(0.5, 2.0)).to_string();
+        let mut child = Command::new(piper_exe)
+            .arg("--model")
+            .arg(model_path)
+            .arg("--length_scale")
+            .arg(&length_scale)
+            .arg("--json-input")
+            .arg("--quiet")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .creation_flags(CREATE_NO_WINDOW)
+            .spawn()?;
+
+        let stdin = child
+            .stdin
+            .take()
+            .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::Other, "Missing piper stdin"))?;
+        let stdout_raw = child
+            .stdout
+            .take()
+            .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::Other, "Missing piper stdout"))?;
+        Ok(Self {
+            model_path: model_path.to_path_buf(),
+            rate_key,
+            child,
+            stdin,
+            stdout: BufReader::new(stdout_raw),
+        })
+    }
+
+    fn matches(&self, model_path: &Path, rate: f64) -> bool {
+        let rate_key = (rate.clamp(0.5, 2.0) * 100.0).round() as i32;
+        self.model_path == model_path && self.rate_key == rate_key
+    }
+
+    fn synthesize(&mut self, text: &str) -> std::io::Result<Vec<u8>> {
+        let out_wav = std::env::temp_dir().join(format!("sb_piper_live_{}.wav", now_epoch_ms()));
+        let clean_text = text.replace('\r', " ").replace('\n', " ");
+        let line = format!(
+            "{{\"text\":\"{}\",\"output_file\":\"{}\"}}\n",
+            json_escape(&clean_text),
+            json_escape(&out_wav.to_string_lossy()),
+        );
+        self.stdin.write_all(line.as_bytes())?;
+        self.stdin.flush()?;
+
+        let mut resp = String::new();
+        let n = self.stdout.read_line(&mut resp)?;
+        if n == 0 {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::UnexpectedEof,
+                "piper daemon exited",
+            ));
+        }
+        let bytes = fs::read(&out_wav)?;
+        let _ = fs::remove_file(&out_wav);
+        Ok(bytes)
+    }
+
+    fn shutdown(&mut self) {
+        let _ = self.child.kill();
+        let _ = self.child.wait();
+    }
+}
+
+fn synthesize_piper_cached(
+    piper_exe: &Path,
+    cache: &mut Option<PiperDaemon>,
+    model_path: &Path,
+    text: &str,
+    rate: f64,
+) -> std::io::Result<Vec<u8>> {
+    let need_spawn = match cache {
+        Some(pd) if pd.matches(model_path, rate) => false,
+        _ => true,
+    };
+    if need_spawn {
+        if let Some(mut old) = cache.take() {
+            old.shutdown();
+        }
+        if let Ok(pd) = PiperDaemon::spawn(piper_exe, model_path, rate) {
+            *cache = Some(pd);
+        }
+    }
+    if let Some(pd) = cache.as_mut() {
+        if let Ok(wav) = pd.synthesize(text) {
+            if !wav.is_empty() {
+                return Ok(wav);
+            }
+        }
+        // Daemon died or errored: clear cache and fall back to one-shot spawn
+        if let Some(mut old) = cache.take() {
+            old.shutdown();
+        }
+    }
+    synthesize_piper_wav(piper_exe, model_path, text, rate)
 }
 
 pub fn synthesize_piper_wav(
@@ -781,12 +1158,22 @@ impl OpenVoiceDaemon {
         let mut stdout = BufReader::new(stdout_raw);
 
         let mut ready_line = String::new();
-        stdout
-            .read_line(&mut ready_line)
-            .map_err(|e| format!("Failed reading OpenVoice ready line: {e}"))?;
-        if !ready_line.contains("\"ready\"") {
-            let _ = child.kill();
-            return Err(format!("OpenVoice failed to start: {ready_line}"));
+        loop {
+            ready_line.clear();
+            let n = stdout
+                .read_line(&mut ready_line)
+                .map_err(|e| format!("Failed reading OpenVoice ready line: {e}"))?;
+            if n == 0 {
+                let _ = child.kill();
+                return Err("OpenVoice exited before becoming ready".to_string());
+            }
+            if ready_line.contains("\"ready\"") {
+                break;
+            }
+            if ready_line.contains("\"error\"") {
+                let _ = child.kill();
+                return Err(format!("OpenVoice failed to start: {ready_line}"));
+            }
         }
 
         Ok(Self {

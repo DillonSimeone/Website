@@ -251,15 +251,21 @@ impl WorkerResources {
             self.gtcrn_denoiser =
                 NeuralDenoiser::load(Arc::clone(&rt), DenoiserKind::Gtcrn, false).ok();
         }
-        if self.dpdf_denoiser.is_none() {
-            self.dpdf_denoiser =
-                NeuralDenoiser::load(Arc::clone(&rt), DenoiserKind::DpdfNet8, false).ok();
-        }
         if self.speaker_id.is_none() {
             self.speaker_id = WeSpeakerTracker::load(Arc::clone(&rt)).ok();
         }
         self.sherpa_rt = Some(Arc::clone(&rt));
         Ok(rt)
+    }
+
+    fn ensure_dpdf(&mut self) {
+        if self.dpdf_denoiser.is_some() {
+            return;
+        }
+        if let Some(ref rt) = self.sherpa_rt {
+            self.dpdf_denoiser =
+                NeuralDenoiser::load(Arc::clone(rt), DenoiserKind::DpdfNet8, false).ok();
+        }
     }
 
     fn ensure_voxlock(&mut self) {
@@ -272,9 +278,17 @@ impl WorkerResources {
         }
     }
 
-    fn ensure_llm_worker(&mut self, events: &Arc<SttEventQueue>) {
+    fn ensure_llm_worker(&mut self, events: &Arc<SttEventQueue>, prewarm: bool) {
         if self.llm_worker.is_none() {
-            self.llm_worker = Some(AsyncLlmPolisher::spawn_worker(Arc::clone(events)));
+            let worker = AsyncLlmPolisher::spawn_worker(Arc::clone(events));
+            if prewarm {
+                worker.prewarm();
+            }
+            self.llm_worker = Some(worker);
+        } else if prewarm {
+            if let Some(ref worker) = self.llm_worker {
+                worker.prewarm();
+            }
         }
     }
 
@@ -282,9 +296,58 @@ impl WorkerResources {
         if self.parakeet.is_some() {
             return Ok(());
         }
-        let rt = self.ensure_sherpa_stack()?;
-        let model = ParakeetAsr::load(rt, true)?;
-        self.parakeet = Some(model);
+        let rt = match self.sherpa_rt {
+            Some(ref existing) => Arc::clone(existing),
+            None => {
+                let loaded = SherpaRuntime::load()?;
+                self.sherpa_rt = Some(Arc::clone(&loaded));
+                loaded
+            }
+        };
+
+        // Load heavy 1.2 GB Parakeet FP16 CUDA model in parallel with lightweight VAD/GTCRN/Speaker models.
+        let need_vad = self.silero_vad.is_none();
+        let need_gtcrn = self.gtcrn_denoiser.is_none();
+        let need_spk = self.speaker_id.is_none();
+
+        let (parakeet_res, (vad_res, gtcrn_res, spk_res)) = std::thread::scope(|s| {
+            let rt_p = Arc::clone(&rt);
+            let h_parakeet = s.spawn(move || ParakeetAsr::load(rt_p, true));
+            let h_aux = s.spawn(move || {
+                let vad = if need_vad {
+                    SileroVad::load(Arc::clone(&rt), 0.35).ok()
+                } else {
+                    None
+                };
+                let gtcrn = if need_gtcrn {
+                    NeuralDenoiser::load(Arc::clone(&rt), DenoiserKind::Gtcrn, false).ok()
+                } else {
+                    None
+                };
+                let spk = if need_spk {
+                    WeSpeakerTracker::load(Arc::clone(&rt)).ok()
+                } else {
+                    None
+                };
+                (vad, gtcrn, spk)
+            });
+            let p_res = h_parakeet
+                .join()
+                .unwrap_or_else(|_| Err("Parakeet loader thread panicked".to_string()));
+            let aux = h_aux.join().unwrap_or((None, None, None));
+            (p_res, aux)
+        });
+
+        if self.silero_vad.is_none() {
+            self.silero_vad = vad_res;
+        }
+        if self.gtcrn_denoiser.is_none() {
+            self.gtcrn_denoiser = gtcrn_res;
+        }
+        if self.speaker_id.is_none() {
+            self.speaker_id = spk_res;
+        }
+        self.parakeet = Some(parakeet_res?);
         Ok(())
     }
 
@@ -331,7 +394,9 @@ fn stt_worker(
             SttCommand::Stop => {}
             SttCommand::SetDenoise(m) => {
                 denoise_mode = m;
-                if m == DenoiseMode::VoxLock {
+                if m == DenoiseMode::Strong {
+                    res.ensure_dpdf();
+                } else if m == DenoiseMode::VoxLock {
                     res.ensure_voxlock();
                 }
             }
@@ -339,7 +404,7 @@ fn stt_worker(
             SttCommand::SetLlmPolish(en) => {
                 llm_polish = en;
                 if en {
-                    res.ensure_llm_worker(&events);
+                    res.ensure_llm_worker(&events, true);
                 }
             }
             SttCommand::ResetSpeakers => {
@@ -403,11 +468,13 @@ fn stt_worker(
                     events.push(SttEvent::Stopped);
                     continue;
                 }
-                if denoise_mode == DenoiseMode::VoxLock {
+                if denoise_mode == DenoiseMode::Strong {
+                    res.ensure_dpdf();
+                } else if denoise_mode == DenoiseMode::VoxLock {
                     res.ensure_voxlock();
                 }
                 if llm_polish {
-                    res.ensure_llm_worker(&events);
+                    res.ensure_llm_worker(&events, true);
                 }
 
                 let outcome = run_neural_streaming_session(
@@ -508,7 +575,9 @@ fn run_neural_streaming_session(
                 Ok(SttCommand::SetDenoise(mode)) => {
                     *denoise_mode = mode;
                     decoder.denoise_mode = mode;
-                    if mode == DenoiseMode::VoxLock {
+                    if mode == DenoiseMode::Strong {
+                        res.ensure_dpdf();
+                    } else if mode == DenoiseMode::VoxLock {
                         res.ensure_voxlock();
                     }
                     if let Some(ref mut d) = res.gtcrn_denoiser {
@@ -521,14 +590,14 @@ fn run_neural_streaming_session(
                         d.reset();
                     }
                 }
-                Ok(SttCommand::SetSpeakerLabels(enabled)) => {
-                    *speaker_labels = enabled;
-                    decoder.speaker_labels = enabled;
+                Ok(SttCommand::SetSpeakerLabels(en)) => {
+                    *speaker_labels = en;
+                    decoder.speaker_labels = en;
                 }
                 Ok(SttCommand::SetLlmPolish(enabled)) => {
                     *llm_polish = enabled;
                     if enabled {
-                        res.ensure_llm_worker(events);
+                        res.ensure_llm_worker(events, true);
                     }
                 }
                 Ok(SttCommand::ResetSpeakers) => {
@@ -581,6 +650,7 @@ fn run_neural_streaming_session(
                     events.push(SttEvent::Error(err));
                     return SessionExit::Stop;
                 }
+                meter.speech_activity.mark_speech(decoder.is_in_speech());
 
                 for ev in out_events.drain(..) {
                     match ev {

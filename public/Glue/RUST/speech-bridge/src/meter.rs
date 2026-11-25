@@ -8,7 +8,7 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::mpsc::{self, Receiver, SyncSender};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use crate::tts::TtsEchoGate;
 use crate::ui::WM_APP_METER_TICK;
@@ -17,6 +17,60 @@ use crate::win_util::{post_app_msg, AUDIO_CHUNK_SAMPLES, AUDIO_SAMPLE_RATE};
 pub const BANDS: usize = 24;
 const SAMPLE_RATE: f32 = AUDIO_SAMPLE_RATE as f32;
 const CHUNK_SAMPLES: usize = AUDIO_CHUNK_SAMPLES; // 512 samples = 32 ms @ 16 kHz
+
+pub fn now_epoch_ms() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0)
+}
+
+/// Lock-free conversational turn-taking tracker: monitors whether anyone is currently talking
+/// (or stopped speaking within `gap_ms`) so outbound TTS can wait for a natural pause.
+pub struct SpeechActivity {
+    speaking: AtomicBool,
+    last_speech_ms: AtomicU64,
+}
+
+impl SpeechActivity {
+    pub fn new() -> Arc<Self> {
+        Arc::new(Self {
+            speaking: AtomicBool::new(false),
+            last_speech_ms: AtomicU64::new(0),
+        })
+    }
+
+    /// Updates speech state; `authoritative` comes from Silero VAD, while non-authoritative
+    /// updates come from the SNR meter when Silero is inactive.
+    pub fn mark_speech(&self, active: bool) {
+        self.speaking.store(active, Ordering::Release);
+        if active {
+            self.last_speech_ms.store(now_epoch_ms(), Ordering::Release);
+        }
+    }
+
+    /// Returns `true` if someone is actively speaking or stopped less than `gap_ms` ago.
+    pub fn is_talking_or_recent(&self, gap_ms: u64) -> bool {
+        if self.speaking.load(Ordering::Acquire) {
+            return true;
+        }
+        let last = self.last_speech_ms.load(Ordering::Acquire);
+        last > 0 && now_epoch_ms().saturating_sub(last) < gap_ms
+    }
+
+    /// Returns milliseconds since the last detected speech (or `u64::MAX` if silent so far).
+    pub fn silence_ms(&self) -> u64 {
+        if self.speaking.load(Ordering::Acquire) {
+            return 0;
+        }
+        let last = self.last_speech_ms.load(Ordering::Acquire);
+        if last == 0 {
+            u64::MAX
+        } else {
+            now_epoch_ms().saturating_sub(last)
+        }
+    }
+}
 
 /// Fixed stack-allocated 32 ms audio frame (zero heap allocation inside real-time WASAPI callbacks).
 pub type AudioFrame = [i16; AUDIO_CHUNK_SAMPLES];
@@ -110,6 +164,7 @@ pub fn default_input_device_name() -> Option<String> {
 /// Background audio capture handle feeding both the spectrum meter and STT pipeline.
 pub struct MicMeter {
     pub data: Arc<Mutex<MeterData>>,
+    pub speech_activity: Arc<SpeechActivity>,
     audio_tx: Arc<Mutex<Option<SyncSender<AudioFrame>>>>,
     config: Arc<Mutex<CaptureConfig>>,
     config_gen: Arc<AtomicU64>,
@@ -119,6 +174,7 @@ pub struct MicMeter {
 impl MicMeter {
     pub fn start(notify_hwnd: isize, echo_gate: Arc<TtsEchoGate>) -> Self {
         let data = Arc::new(Mutex::new(MeterData::default()));
+        let speech_activity = SpeechActivity::new();
         let audio_tx: Arc<Mutex<Option<SyncSender<AudioFrame>>>> = Arc::new(Mutex::new(None));
         let default_mic = default_input_device_name();
         let initial_mics = default_mic.into_iter().collect();
@@ -134,6 +190,7 @@ impl MicMeter {
         let cfg_bg = Arc::clone(&config);
         let gen_bg = Arc::clone(&config_gen);
         let stop_bg = Arc::clone(&stop_flag);
+        let act_bg = Arc::clone(&speech_activity);
 
         thread::spawn(move || {
             supervisor_loop(
@@ -144,11 +201,13 @@ impl MicMeter {
                 gen_bg,
                 stop_bg,
                 echo_gate,
+                act_bg,
             )
         });
 
         Self {
             data,
+            speech_activity,
             audio_tx,
             config,
             config_gen,
@@ -211,6 +270,7 @@ fn supervisor_loop(
     config_gen: Arc<AtomicU64>,
     stop: Arc<AtomicBool>,
     echo_gate: Arc<TtsEchoGate>,
+    speech_activity: Arc<SpeechActivity>,
 ) {
     let coeffs = precompute_goertzel();
     while !stop.load(Ordering::Relaxed) {
@@ -234,6 +294,7 @@ fn supervisor_loop(
                     &config_gen,
                     &stop,
                     &echo_gate,
+                    &speech_activity,
                     &coeffs,
                 );
             }
@@ -245,6 +306,7 @@ fn supervisor_loop(
                     gen,
                     &config_gen,
                     &stop,
+                    &speech_activity,
                     &coeffs,
                 );
             }
@@ -494,6 +556,7 @@ fn run_multi_mic_capture(
     config_gen: &Arc<AtomicU64>,
     stop: &Arc<AtomicBool>,
     echo_gate: &Arc<TtsEchoGate>,
+    speech_activity: &Arc<SpeechActivity>,
     coeffs: &[f32; BANDS],
 ) {
     let host = cpal::default_host();
@@ -650,6 +713,9 @@ fn run_multi_mic_capture(
 
         let active_stat = &stats[active_idx];
         let health = active_stat.classify_status(tts_gated);
+        if !tts_gated && audio_tx.lock().map(|g| g.is_none()).unwrap_or(true) {
+            speech_activity.mark_speech(active_stat.snr_db > 6.5 && smoothed_peak > 0.025);
+        }
         publish_meter(
             notify_hwnd,
             data,
@@ -674,6 +740,7 @@ fn run_loopback_capture(
     my_gen: u64,
     config_gen: &Arc<AtomicU64>,
     stop: &Arc<AtomicBool>,
+    speech_activity: &Arc<SpeechActivity>,
     coeffs: &[f32; BANDS],
 ) {
     let host = cpal::default_host();
@@ -688,6 +755,7 @@ fn run_loopback_capture(
     let src_rate = out_cfg.sample_rate().0;
     let data_cb = Arc::clone(data);
     let tx_cb = Arc::clone(audio_tx);
+    let act_cb = Arc::clone(speech_activity);
     let coeffs_copy = *coeffs;
 
     let mut resampler = StreamResampler::new(channels, src_rate);
@@ -708,7 +776,20 @@ fn run_loopback_capture(
                     &mut smoothed,
                     &mut smoothed_peak,
                 );
-                forward_pcm(&tx_cb, chunk);
+                let has_sink = tx_cb
+                    .lock()
+                    .map(|g| {
+                        if let Some(ref tx) = *g {
+                            let _ = tx.try_send(*chunk);
+                            true
+                        } else {
+                            false
+                        }
+                    })
+                    .unwrap_or(false);
+                if !has_sink {
+                    act_cb.mark_speech(stat.snr_db > 6.5 && smoothed_peak > 0.025);
+                }
                 let health = stat.classify_status(false);
                 publish_meter(
                     notify_hwnd,

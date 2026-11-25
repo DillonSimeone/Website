@@ -48,7 +48,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
 use crate::meter::{list_input_devices, AudioSource, MicMeter, SignalStatus, BANDS};
 use crate::stream_decoder::DenoiseMode;
 use crate::stt::{SttBackend, SttEngine, SttEvent, SttEventQueue};
-use crate::tts::{list_local_voices, TtsEchoGate, TtsEngine, VoiceEntry};
+use crate::tts::{list_local_voices, list_output_devices, TtsEchoGate, TtsEngine, VoiceEntry};
 use crate::win_util::to_wide;
 
 pub const WM_APP_STT_EVENT: u32 = WM_APP + 1;
@@ -120,6 +120,8 @@ enum HitTarget {
     HealthBadge,
     MeterBadge,
     BtnVoice,
+    BtnOutputDevice,
+    BtnGapWait,
     BtnTestVoices,
     BtnRate,
     BtnPin,
@@ -155,6 +157,9 @@ pub struct AppState {
     brush_input: HBRUSH,
     voices: Vec<VoiceEntry>,
     selected_voice: usize,
+    output_device: Option<String>,
+    wait_for_gap: bool,
+    queued_reply: Option<(usize, String)>,
     rate_idx: usize,
     pinned: bool,
     source: AudioSource,
@@ -196,6 +201,8 @@ pub struct AppState {
     rect_meter: RECT,
     // Row 2 controls (TTS & Session)
     rect_voice: RECT,
+    rect_output: RECT,
+    rect_gap: RECT,
     rect_bench: RECT,
     rect_rate: RECT,
     rect_pin: RECT,
@@ -222,6 +229,23 @@ impl AppState {
             .get(self.selected_voice)
             .map(|v| v.display_name.as_str())
             .unwrap_or("Default")
+    }
+
+    fn short_output_label(&self) -> String {
+        let Some(ref dev) = self.output_device else {
+            return "OUT: SPK \u{25BE}".to_string();
+        };
+        let trimmed = dev
+            .strip_prefix("CABLE Input (")
+            .map(|_| "CABLE In")
+            .or_else(|| dev.strip_prefix("Speakers ("))
+            .unwrap_or(dev.as_str());
+        let short: String = if trimmed.chars().count() <= 8 {
+            trimmed.to_string()
+        } else {
+            trimmed.chars().take(7).collect::<String>() + "\u{2026}"
+        };
+        format!("OUT: {short} \u{25BE}")
     }
 
     fn current_rate(&self) -> f64 {
@@ -447,6 +471,8 @@ impl AppState {
 
     fn cycle_rate(&mut self) {
         self.rate_idx = (self.rate_idx + 1) % RATES.len();
+        self.tts
+            .prewarm(self.selected_voice_entry(), self.current_rate());
         self.status_text = format!(">> RATE: {}x", self.current_rate());
         self.redraw();
     }
@@ -474,7 +500,24 @@ impl AppState {
         self.tts_speaking = false;
         self.bench_active = false;
         self.active_reply_idx = None;
+        self.queued_reply = None;
         self.status_text = ">> TTS STOPPED".to_string();
+        self.redraw();
+    }
+
+    fn toggle_gap_wait(&mut self) {
+        self.wait_for_gap = !self.wait_for_gap;
+        if !self.wait_for_gap {
+            if let Some((idx, text)) = self.queued_reply.take() {
+                self.speak_text(text, Some(idx));
+                return;
+            }
+        }
+        self.status_text = if self.wait_for_gap {
+            ">> GAP WAIT ON (waits for 650ms pause before speaking)".to_string()
+        } else {
+            ">> GAP WAIT OFF (speaks immediately)".to_string()
+        };
         self.redraw();
     }
 
@@ -493,24 +536,73 @@ impl AppState {
         } else {
             Some(sample)
         };
-        self.status_text = format!(">> BENCHMARKING {} VOICES...", self.voices.len());
-        self.tts
-            .benchmark(self.voices.clone(), sample_opt, self.current_rate());
+        self.status_text = format!(">> AUDITIONING {} VOICES...", self.voices.len());
+        self.tts.benchmark(
+            self.voices.clone(),
+            sample_opt,
+            self.current_rate(),
+            self.output_device.clone(),
+        );
         self.redraw();
+    }
+
+    fn should_gate_stt(&self) -> bool {
+        // When piping TTS to a virtual cable (e.g. CABLE Input for Discord) while listening via
+        // System Loopback, our own TTS doesn't play on local speakers so keep captions live!
+        !(self.source == AudioSource::Loopback && self.output_device.is_some())
     }
 
     fn speak_text(&mut self, text: String, card_idx: Option<usize>) {
         self.bench_active = false;
+        self.queued_reply = None;
         self.active_reply_idx = card_idx;
         let voice = self.selected_voice_entry();
-        self.tts.speak(text, voice, self.current_rate());
+        self.tts.speak(
+            text,
+            voice,
+            self.current_rate(),
+            self.output_device.clone(),
+            self.should_gate_stt(),
+        );
         self.redraw();
+    }
+
+    fn queue_or_speak(&mut self, text: String, card_idx: usize, force_now: bool) {
+        const GAP_SILENCE_MS: u64 = 650;
+        if !force_now
+            && self.wait_for_gap
+            && (self.tts_speaking || self.meter.speech_activity.is_talking_or_recent(GAP_SILENCE_MS))
+        {
+            self.queued_reply = Some((card_idx, text));
+            self.status_text = ">> QUEUED: WAITING FOR SPEECH GAP...".to_string();
+            self.redraw();
+        } else {
+            self.speak_text(text, Some(card_idx));
+        }
+    }
+
+    fn check_gap_queue(&mut self) {
+        const GAP_SILENCE_MS: u64 = 650;
+        if self.tts_speaking {
+            return;
+        }
+        if let Some((_, _)) = self.queued_reply {
+            if !self.meter.speech_activity.is_talking_or_recent(GAP_SILENCE_MS) {
+                if let Some((idx, text)) = self.queued_reply.take() {
+                    self.speak_text(text, Some(idx));
+                }
+            }
+        }
     }
 
     fn submit_speak(&mut self) {
         let text = get_window_text(self.edit_input);
         let trimmed = text.trim();
         if trimmed.is_empty() {
+            // Pressing Enter/Speak with empty input while a reply is queued speaks it immediately.
+            if let Some((idx, queued)) = self.queued_reply.take() {
+                self.speak_text(queued, Some(idx));
+            }
             return;
         }
         let owned = trimmed.to_string();
@@ -521,7 +613,7 @@ impl AppState {
         let idx = self.reply_items.len() - 1;
         set_window_text(self.edit_input, "");
         self.right_scroll = i32::MAX;
-        self.speak_text(owned, Some(idx));
+        self.queue_or_speak(owned, idx, false);
         unsafe {
             let _ = SetFocus(self.edit_input);
         }
@@ -580,11 +672,80 @@ impl AppState {
         self.draft_hypothesis.clear();
         self.reply_items.clear();
         self.active_reply_idx = None;
+        self.queued_reply = None;
         self.left_scroll = 0;
         self.right_scroll = 0;
         self.stt.reset_speakers();
         self.status_text = ">> CLEARED (SPEAKERS RESET)".to_string();
         self.redraw();
+    }
+
+    fn show_output_device_menu(&mut self) {
+        let devices = list_output_devices();
+        let has_cable = devices.iter().any(|d| {
+            let l = d.to_ascii_lowercase();
+            l.contains("cable input") || l.contains("voicemeeter") || l.contains("virtual")
+        });
+        unsafe {
+            let Ok(menu) = CreatePopupMenu() else {
+                return;
+            };
+            let def_w = to_wide("Default Speakers (Local Audio)");
+            let def_flags = MF_STRING
+                | if self.output_device.is_none() {
+                    MF_CHECKED
+                } else {
+                    MF_UNCHECKED
+                };
+            let _ = AppendMenuW(menu, def_flags, 1, PCWSTR(def_w.as_ptr()));
+            let _ = AppendMenuW(menu, MF_SEPARATOR, 0, PCWSTR::null());
+
+            for (i, dev) in devices.iter().enumerate() {
+                let checked = self.output_device.as_deref() == Some(dev.as_str());
+                let flags = MF_STRING | if checked { MF_CHECKED } else { MF_UNCHECKED };
+                let wide = to_wide(dev);
+                let _ = AppendMenuW(menu, flags, i + 2, PCWSTR(wide.as_ptr()));
+            }
+
+            if !has_cable {
+                let _ = AppendMenuW(menu, MF_SEPARATOR, 0, PCWSTR::null());
+                let tip_w = to_wide("Discord Tip: Install VB-Cable (vb-audio.com) for Virtual Mic");
+                let _ = AppendMenuW(menu, MF_STRING, 9999, PCWSTR(tip_w.as_ptr()));
+            }
+
+            let mut pt = POINT {
+                x: self.rect_output.left,
+                y: self.rect_output.bottom + 2,
+            };
+            let _ = ClientToScreen(self.hwnd, &mut pt);
+            let cmd = TrackPopupMenu(
+                menu,
+                TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RETURNCMD,
+                pt.x,
+                pt.y,
+                0,
+                self.hwnd,
+                None,
+            );
+            let _ = DestroyMenu(menu);
+            if cmd.0 == 1 {
+                self.output_device = None;
+                self.status_text = ">> TTS OUT: Default Speakers".to_string();
+                self.redraw();
+            } else if cmd.0 == 9999 {
+                let _ = copy_to_clipboard(self.hwnd, "https://vb-audio.com/Cable/");
+                self.status_text = ">> COPIED vb-audio.com/Cable/ URL (pick CABLE Input in OUT:)".to_string();
+                self.redraw();
+            } else if cmd.0 >= 2 {
+                let idx = (cmd.0 as usize) - 2;
+                if let Some(dev) = devices.get(idx) {
+                    self.output_device = Some(dev.clone());
+                    let short = short_mic_name(dev);
+                    self.status_text = format!(">> TTS OUT: {short}");
+                    self.redraw();
+                }
+            }
+        }
     }
 
     fn show_voice_menu(&mut self) {
@@ -626,6 +787,8 @@ impl AppState {
                 let idx = (cmd.0 as usize) - 1;
                 if idx < self.voices.len() {
                     self.selected_voice = idx;
+                    self.tts
+                        .prewarm(self.selected_voice_entry(), self.current_rate());
                     self.redraw();
                 }
             }
@@ -735,21 +898,25 @@ impl AppState {
             bottom: row1_y + row_h,
         };
 
-        // --- Row 2: Voice | Bench | Rate | Pin | Export | Clear | Status Readout ---
+        // --- Row 2: Voice | Output Device | Gap Wait | Test | Rate | Pin | Export | Clear | Status ---
         let mut x2 = pad;
-        self.rect_voice = RECT { left: x2, top: row2_y, right: x2 + 168, bottom: row2_y + row_h };
-        x2 = self.rect_voice.right + 6;
-        self.rect_bench = RECT { left: x2, top: row2_y, right: x2 + 64, bottom: row2_y + row_h };
-        x2 = self.rect_bench.right + 6;
-        self.rect_rate = RECT { left: x2, top: row2_y, right: x2 + 54, bottom: row2_y + row_h };
-        x2 = self.rect_rate.right + 6;
-        self.rect_pin = RECT { left: x2, top: row2_y, right: x2 + 58, bottom: row2_y + row_h };
-        x2 = self.rect_pin.right + 6;
-        self.rect_export = RECT { left: x2, top: row2_y, right: x2 + 58, bottom: row2_y + row_h };
-        x2 = self.rect_export.right + 6;
-        self.rect_clear = RECT { left: x2, top: row2_y, right: x2 + 58, bottom: row2_y + row_h };
+        self.rect_voice = RECT { left: x2, top: row2_y, right: x2 + 152, bottom: row2_y + row_h };
+        x2 = self.rect_voice.right + 5;
+        self.rect_output = RECT { left: x2, top: row2_y, right: x2 + 132, bottom: row2_y + row_h };
+        x2 = self.rect_output.right + 5;
+        self.rect_gap = RECT { left: x2, top: row2_y, right: x2 + 72, bottom: row2_y + row_h };
+        x2 = self.rect_gap.right + 5;
+        self.rect_bench = RECT { left: x2, top: row2_y, right: x2 + 54, bottom: row2_y + row_h };
+        x2 = self.rect_bench.right + 5;
+        self.rect_rate = RECT { left: x2, top: row2_y, right: x2 + 48, bottom: row2_y + row_h };
+        x2 = self.rect_rate.right + 5;
+        self.rect_pin = RECT { left: x2, top: row2_y, right: x2 + 50, bottom: row2_y + row_h };
+        x2 = self.rect_pin.right + 5;
+        self.rect_export = RECT { left: x2, top: row2_y, right: x2 + 50, bottom: row2_y + row_h };
+        x2 = self.rect_export.right + 5;
+        self.rect_clear = RECT { left: x2, top: row2_y, right: x2 + 50, bottom: row2_y + row_h };
         self.rect_status = RECT {
-            left: self.rect_clear.right + 10,
+            left: self.rect_clear.right + 8,
             top: row2_y,
             right: w - pad,
             bottom: row2_y + row_h,
@@ -836,6 +1003,12 @@ impl AppState {
         }
         if pt_in_rect(pt, self.rect_voice) {
             return HitTarget::BtnVoice;
+        }
+        if pt_in_rect(pt, self.rect_output) {
+            return HitTarget::BtnOutputDevice;
+        }
+        if pt_in_rect(pt, self.rect_gap) {
+            return HitTarget::BtnGapWait;
         }
         if pt_in_rect(pt, self.rect_bench) {
             return HitTarget::BtnTestVoices;
@@ -981,7 +1154,7 @@ impl AppState {
             self.draw_signal_health(mem_dc);
             self.draw_freq_meter(mem_dc);
 
-            // Row 2: TTS Voice + Test Voices + Rate + Pin + Export + Clear + Status
+            // Row 2: TTS Voice + Output Device + Gap Wait + Test Voices + Rate + Pin + Export + Clear + Status
             let short_voice = self
                 .selected_voice_label()
                 .strip_prefix("Microsoft ")
@@ -993,6 +1166,24 @@ impl AppState {
                 self.hover == HitTarget::BtnVoice,
                 C_CYAN,
                 false,
+            );
+            let out_lbl = self.short_output_label();
+            let out_custom = self.output_device.is_some();
+            self.draw_button(
+                mem_dc,
+                self.rect_output,
+                &out_lbl,
+                self.hover == HitTarget::BtnOutputDevice,
+                if out_custom { C_GREEN } else { C_CYAN },
+                out_custom,
+            );
+            self.draw_button(
+                mem_dc,
+                self.rect_gap,
+                if self.wait_for_gap { "GAP: ON" } else { "GAP:OFF" },
+                self.hover == HitTarget::BtnGapWait,
+                if self.wait_for_gap { C_AMBER } else { C_MUTED },
+                self.wait_for_gap,
             );
             self.draw_button(
                 mem_dc,
@@ -1634,8 +1825,12 @@ impl AppState {
                 if card_rc.bottom >= pane.top && card_rc.top <= pane.bottom {
                     let is_hovered = self.hover == HitTarget::ReplyCard(i);
                     let is_active = self.tts_speaking && self.active_reply_idx == Some(i);
+                    let is_queued = !is_active
+                        && self.queued_reply.as_ref().map(|(qi, _)| *qi == i).unwrap_or(false);
                     let (fill_c, border_c) = if is_active {
                         (C_CARD_ACTIVE, C_GREEN)
+                    } else if is_queued {
+                        (C_AMBER_BG, C_AMBER)
                     } else if is_hovered {
                         (C_CARD_HOVER, C_GREEN)
                     } else {
@@ -1646,12 +1841,14 @@ impl AppState {
                     FillRect(hdc, &card_rc, cbr);
                     let _ = DeleteObject(cbr);
                     draw_border(hdc, card_rc, border_c);
-                    draw_accent_stripe(hdc, card_rc, C_GREEN);
+                    draw_accent_stripe(hdc, card_rc, if is_queued { C_AMBER } else { C_GREEN });
 
                     SelectObject(hdc, self.font_small);
                     SetTextColor(
                         hdc,
-                        if is_hovered || is_active {
+                        if is_queued {
+                            C_AMBER
+                        } else if is_hovered || is_active {
                             C_GREEN
                         } else {
                             C_GREEN_DIM
@@ -1671,13 +1868,15 @@ impl AppState {
                     );
 
                     let hdr_right = RECT {
-                        left: card_rc.right - 150,
+                        left: card_rc.right - 170,
                         top: card_rc.top + 5,
                         right: card_rc.right - 10,
                         bottom: card_rc.top + 22,
                     };
                     let tag = if is_active {
                         "\u{25B6} SPEAKING..."
+                    } else if is_queued {
+                        "\u{23F3} WAIT GAP (CLICK NOW)"
                     } else if is_hovered {
                         "\u{25B6} CLICK TO SPEAK"
                     } else {
@@ -1848,6 +2047,8 @@ pub unsafe extern "system" fn main_wnd_proc(
                     HitTarget::BtnFontDown => st.adjust_caption_font(-2),
                     HitTarget::BtnFontUp => st.adjust_caption_font(2),
                     HitTarget::BtnVoice => st.show_voice_menu(),
+                    HitTarget::BtnOutputDevice => st.show_output_device_menu(),
+                    HitTarget::BtnGapWait => st.toggle_gap_wait(),
                     HitTarget::BtnTestVoices => st.toggle_benchmark(),
                     HitTarget::BtnRate => st.cycle_rate(),
                     HitTarget::BtnPin => st.toggle_pin(),
@@ -1856,9 +2057,10 @@ pub unsafe extern "system" fn main_wnd_proc(
                     HitTarget::BtnSpeak => st.submit_speak(),
                     HitTarget::HeardCard(idx) => st.copy_heard_card(idx),
                     HitTarget::ReplyCard(idx) => {
+                        let is_queued = st.queued_reply.as_ref().map(|(qi, _)| *qi == idx).unwrap_or(false);
                         if let Some(item) = st.reply_items.get(idx) {
                             let text = item.text.clone();
-                            st.speak_text(text, Some(idx));
+                            st.queue_or_speak(text, idx, is_queued);
                         }
                     }
                     HitTarget::HealthBadge | HitTarget::MeterBadge | HitTarget::None => {}
@@ -1949,6 +2151,7 @@ pub unsafe extern "system" fn main_wnd_proc(
             if let Some(st) = get_state(hwnd) {
                 let _ = InvalidateRect(hwnd, Some(&st.rect_meter), false);
                 let _ = InvalidateRect(hwnd, Some(&st.rect_health), false);
+                st.check_gap_queue();
                 if st.tts_speaking {
                     let cur = st.tts.current_word_index();
                     if cur != st.active_tts_word {
@@ -2109,6 +2312,9 @@ unsafe fn create_app_state(hwnd: HWND) -> Box<AppState> {
     );
     let tts = TtsEngine::new(hwnd_raw, echo_gate);
 
+    // Pre-warm Piper + OpenVoice CUDA TTS in the background on startup so Enter speaks instantly!
+    tts.prewarm(voices.first().cloned(), RATES[1]);
+
     // Auto-engage RTX GPU Parakeet TDT 0.6B v2 on startup!
     stt.start(initial_backend);
 
@@ -2124,6 +2330,9 @@ unsafe fn create_app_state(hwnd: HWND) -> Box<AppState> {
         brush_input,
         voices,
         selected_voice: 0,
+        output_device: None,
+        wait_for_gap: false,
+        queued_reply: None,
         rate_idx: 1,
         pinned: false,
         source: AudioSource::Mic,
@@ -2163,6 +2372,8 @@ unsafe fn create_app_state(hwnd: HWND) -> Box<AppState> {
         rect_health: RECT::default(),
         rect_meter: RECT::default(),
         rect_voice: RECT::default(),
+        rect_output: RECT::default(),
+        rect_gap: RECT::default(),
         rect_bench: RECT::default(),
         rect_rate: RECT::default(),
         rect_pin: RECT::default(),
@@ -2223,7 +2434,15 @@ fn tooltip_for(target: HitTarget) -> Option<(&'static str, &'static str)> {
         )),
         HitTarget::BtnVoice => Some((
             "OUTBOUND TTS VOICE PICKER",
-            "Choose which local neural Piper or Windows voice speaks aloud when you type a reply and press Enter.",
+            "Choose which local cloned, neural Piper, or Windows voice speaks aloud when you type a reply and press Enter.",
+        )),
+        HitTarget::BtnOutputDevice => Some((
+            "TTS AUDIO OUTPUT DEVICE (DISCORD / MEET)",
+            "Route your spoken TTS voice to Default Speakers OR a Virtual Audio Cable (e.g. CABLE Input) so Discord/Zoom/Meet hears it as your mic! Pair with SRC: SYS to caption the meeting.",
+        )),
+        HitTarget::BtnGapWait => Some((
+            "WAIT FOR CONVERSATION GAP (AUTO-TURN)",
+            "When ON, pressing Enter while someone is talking queues your reply and waits for a 650 ms pause before speaking so you never talk over people. Click the queued card to speak immediately.",
         )),
         HitTarget::BtnTestVoices => Some((
             "AUDITION ALL VOICES (FOR LISTENERS)",

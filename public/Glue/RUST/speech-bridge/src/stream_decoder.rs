@@ -244,6 +244,10 @@ impl StreamDecoder {
         }
     }
 
+    pub fn is_in_speech(&self) -> bool {
+        self.in_speech
+    }
+
     pub fn reset(&mut self) {
         self.pre_roll_raw.clear();
         self.pre_roll_clean.clear();

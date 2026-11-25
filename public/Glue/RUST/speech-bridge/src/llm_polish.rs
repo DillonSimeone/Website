@@ -170,6 +170,7 @@ impl Drop for LlmPolisher {
 }
 
 enum PolishCmd {
+    Prewarm,
     Polish {
         card_id: u64,
         raw_text: String,
@@ -189,6 +190,10 @@ impl AsyncLlmPolisher {
         let (tx, rx) = mpsc::channel::<PolishCmd>();
         thread::spawn(move || polish_worker_loop(rx, events));
         Self { tx }
+    }
+
+    pub fn prewarm(&self) {
+        let _ = self.tx.send(PolishCmd::Prewarm);
     }
 
     pub fn submit(
@@ -220,6 +225,14 @@ fn polish_worker_loop(rx: Receiver<PolishCmd>, events: Arc<SttEventQueue>) {
     while let Ok(cmd) = rx.recv() {
         match cmd {
             PolishCmd::Shutdown => break,
+            PolishCmd::Prewarm => {
+                if engine.is_none() && !init_failed {
+                    match LlmPolisher::spawn() {
+                        Ok(p) => engine = Some(p),
+                        Err(_) => init_failed = true,
+                    }
+                }
+            }
             PolishCmd::Polish {
                 card_id,
                 raw_text,
