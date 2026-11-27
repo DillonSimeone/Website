@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gothic Mysticism Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=MedievalSharp&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="gothic-container">
+    <header class="gothic-header">
+      <a href="../index.html" class="nav-back">† RETURN TO HUB †</a>
+      <h1 class="gothic-title">GOTHIC MYSTICISM</h1>
+      <div class="stars-divider">★  ★  ★</div>
+      <p class="gothic-subtitle">Celestial orbits, gold-ink icons, and dark velvet grids.</p>
+    </header>
+
+    <main class="gothic-grid">
+      <!-- Info Card -->
+      <section class="gothic-card info-card">
+        <div class="card-border-line"></div>
+        <h2>THE COSMOS</h2>
+        <p>Gothic mysticism blends dark, rich medieval textures with celestial iconography. It relies on deep blacks, rich purples, and gold ink trims to evoke an ancient, astrological atmosphere.</p>
+      </section>
+
+      <!-- Interactive Tarot Deck -->
+      <section class="gothic-card tarot-card">
+        <div class="card-border-line"></div>
+        <h2>CELESTIAL DRAW</h2>
+        <p>Draw an astronomical card from the ancient deck to reveal its cosmic sign.</p>
+        
+        <div class="tarot-wrapper">
+          <div class="tarot-card-visual" id="tarot-card-trigger">
+            <div class="card-back-pattern">
+              <span class="moon-phase">☾</span>
+            </div>
+            <div class="card-front-face" id="tarot-face">
+              <div class="tarot-symbol" id="tarot-symbol">☉</div>
+              <div class="tarot-title" id="tarot-name">THE SUN</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="gothic-btn" id="btn-draw">DRAW CARD</button>
+      </section>
+
+      <!-- Art Card -->
+      <section class="gothic-card scripture-card">
+        <div class="card-border-line"></div>
+        <h2>THE SCRIPTURE</h2>
+        <p class="gothic-quote">“There are more things in Heaven and Earth, Horatio, than are dreamt of in your philosophy.”</p>
+        <cite>— William Shakespeare</cite>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

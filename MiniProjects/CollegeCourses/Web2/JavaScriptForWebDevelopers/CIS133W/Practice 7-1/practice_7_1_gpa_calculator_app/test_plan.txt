@@ -1,0 +1,11 @@
+Test Case 1
+Input: A,B,C
+Expected Output: You entered 3 courses. GPA: 3.00
+
+Test Case 2
+Input: A,B,C,A,F
+Expected Output: You entered 5 courses. GPA: 2.60
+
+Test Case 3
+Input: A,A,B,B
+Expected Output: You entered 4 courses. GPA: 3.50

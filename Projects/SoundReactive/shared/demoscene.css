@@ -1,0 +1,300 @@
+/* demoscene.css - 64Kb Demoscene Unified Cinema HUD & Letterbox Styling */
+
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Space+Grotesk:wght@400;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #020205;
+  font-family: 'Space Grotesk', -apple-system, sans-serif;
+  color: #fff;
+  user-select: none;
+}
+
+#viewport-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 2.39:1 Cinematic Letterbox Bars */
+.cinema-bars {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: inset 0 6vh 0 #000, inset 0 -6vh 0 #000;
+  transition: box-shadow 0.4s ease;
+}
+
+/* Sub-bass screen flash */
+.hud-flash {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle, rgba(255, 0, 85, 0.4) 0%, rgba(255, 0, 85, 0) 80%);
+  pointer-events: none;
+  z-index: 15;
+  opacity: 0;
+  transition: opacity 0.08s ease-out;
+}
+
+/* HUD Overlay */
+.demoscene-hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px 32px;
+  transition: opacity 0.3s ease;
+}
+
+/* Top Bar */
+.hud-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: all;
+  background: linear-gradient(180deg, rgba(8, 8, 12, 0.85) 0%, rgba(8, 8, 12, 0) 100%);
+  padding: 12px 20px;
+  border-radius: 4px;
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hud-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.hud-back-btn {
+  color: #ff0055;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-decoration: none;
+  background: rgba(255, 0, 85, 0.1);
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 0, 85, 0.4);
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.hud-back-btn:hover {
+  background: #ff0055;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(255, 0, 85, 0.6);
+}
+
+.hud-title {
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 2px;
+  color: #fff;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+}
+
+.hud-badge {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.75rem;
+  background: rgba(0, 229, 255, 0.12);
+  color: #00e5ff;
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  padding: 3px 8px;
+  border-radius: 2px;
+  letter-spacing: 1px;
+}
+
+.hud-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hud-telemetry-chip {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.75rem;
+  color: #8899aa;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px 8px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hud-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ddd;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 2px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
+}
+
+.hud-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-color: #00e5ff;
+}
+
+/* Bottom Transport Bar */
+.hud-bottom-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: all;
+  background: linear-gradient(0deg, rgba(8, 8, 12, 0.92) 0%, rgba(8, 8, 12, 0.6) 80%, rgba(8, 8, 12, 0) 100%);
+  padding: 16px 20px 8px 20px;
+  border-radius: 4px;
+  backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hud-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hud-ctrl-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ccc;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 2px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
+}
+
+.hud-ctrl-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.hud-ctrl-btn.active {
+  background: #00e5ff;
+  color: #050b14;
+  border-color: #00e5ff;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+}
+
+.hud-act-name {
+  flex-grow: 1;
+  text-align: center;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.8rem;
+  color: #ff0055;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.hud-audio-group {
+  display: flex;
+  gap: 6px;
+}
+
+/* Timeline Track & Scrubber */
+.hud-timeline-container {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  cursor: pointer;
+  overflow: visible;
+  transition: height 0.2s ease;
+}
+
+.hud-timeline-container:hover {
+  height: 12px;
+}
+
+.hud-timeline-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #ff0055 0%, #00e5ff 100%);
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+}
+
+.hud-timeline-scrubber {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border: 2px solid #00e5ff;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #00e5ff;
+  pointer-events: none;
+}
+
+.hud-act-markers {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.hud-marker {
+  position: absolute;
+  top: -3px;
+  width: 3px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.4);
+  pointer-events: all;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hud-marker:hover {
+  background: #ff0055;
+  transform: scaleY(1.3);
+  box-shadow: 0 0 8px #ff0055;
+}

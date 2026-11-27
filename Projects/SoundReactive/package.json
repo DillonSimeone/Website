@@ -1,0 +1,21 @@
+{
+  "name": "sound-reactive-arts",
+  "version": "1.0.0",
+  "description": "Sound-Reactive Arts HUD and Live Projection Mapping Suite",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "serve": "node server.js"
+  },
+  "keywords": [
+    "webgl",
+    "threejs",
+    "audio-reactive",
+    "shaders",
+    "glsl",
+    "demoscene"
+  ],
+  "author": "Antigravity",
+  "license": "MIT"
+}

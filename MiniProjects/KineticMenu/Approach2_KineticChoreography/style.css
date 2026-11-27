@@ -1,0 +1,152 @@
+:root {
+    --mouseX: 0;
+    --mouseY: 0;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    overflow: hidden;
+    background-color: #050505;
+    color: #fff;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+canvas {
+    display: block;
+}
+
+/* ── Canvas mount ── */
+#canvas-mount {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+}
+
+/* ── UI Overlay ── */
+.ui-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 2rem;
+    transform: translate(calc(var(--mouseX) * 10px), calc(var(--mouseY) * 10px));
+}
+
+/* ── Header ── */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    transform: translate(calc(var(--mouseX) * 20px), calc(var(--mouseY) * 15px));
+}
+
+.header-left {
+    border-left: 4px solid #00ffff;
+    padding-left: 1rem;
+}
+
+.header-left h1 {
+    font-size: 2rem;
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: -0.05em;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+#pose-label {
+    color: #00ffff;
+    font-weight: bold;
+    font-size: 0.85rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-top: 0.25rem;
+}
+
+.header-right {
+    text-align: right;
+    font-size: 0.65rem;
+    opacity: 0.4;
+    text-transform: uppercase;
+    letter-spacing: -0.03em;
+    line-height: 1.6;
+}
+
+/* ── Menu Buttons ── */
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 18rem;
+    pointer-events: auto;
+    transform: translate(calc(var(--mouseX) * -30px), calc(var(--mouseY) * -20px));
+}
+
+.menu-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: none;
+    border: none;
+    color: #fff;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: left;
+    padding: 0;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.menu-btn:hover {
+    transform: translateX(0.5rem);
+}
+
+.menu-btn .number {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    font-size: 0.75rem;
+    font-weight: bold;
+    flex-shrink: 0;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.menu-btn:hover .number {
+    background: #fff;
+    color: #000;
+}
+
+.menu-btn .label {
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+.menu-btn:hover .label {
+    opacity: 1;
+}
+
+.menu-btn.active .number {
+    background: #00ffff;
+    color: #000;
+    border-color: #00ffff;
+}
+
+.menu-btn.active .label {
+    opacity: 1;
+    color: #00ffff;
+}

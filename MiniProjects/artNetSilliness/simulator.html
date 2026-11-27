@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Art-Net 1:1 Light Tube Digital Twin Simulator</title>
+    <meta name="description" content="1:1 Digital Clone Simulator for DMT PixelStrip P25 MKII tubes with live Art-Net DMX ingest, audio transient detection, and custom code sandbox.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #090a0f;
+            --surface: rgba(18, 20, 29, 0.75);
+            --surface-hover: rgba(28, 32, 48, 0.85);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-highlight: rgba(0, 240, 255, 0.3);
+            --primary: #00f0ff;
+            --primary-glow: rgba(0, 240, 255, 0.4);
+            --secondary: #ff007b;
+            --secondary-glow: rgba(255, 0, 123, 0.4);
+            --accent: #7928ca;
+            --text: #f0f3f8;
+            --text-dim: #7e8b9b;
+            --tube-chassis: #121316;
+            --tube-diffuser: rgba(230, 240, 255, 0.15);
+            --terminal-bg: #050508;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(ellipse at 15% 0%, rgba(121, 40, 202, 0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 85% 100%, rgba(0, 240, 255, 0.12) 0%, transparent 60%);
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 1.25rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            background: rgba(9, 10, 15, 0.85);
+            backdrop-filter: blur(12px);
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .brand-badge {
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .brand h1 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(90deg, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .nav-link {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            color: #fff;
+            border-color: var(--primary);
+            background: rgba(0, 240, 255, 0.05);
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ffaa00;
+            box-shadow: 0 0 8px #ffaa00;
+            transition: all 0.3s;
+        }
+
+        .status-dot.live {
+            background: #00ff88;
+            box-shadow: 0 0 10px #00ff88;
+        }
+
+        /* Main Workspace Layout */
+        .workspace {
+            display: flex;
+            flex: 1;
+            padding: 1.5rem 2rem;
+            gap: 2rem;
+            max-width: 1700px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        @media (max-width: 1200px) {
+            .workspace {
+                flex-direction: column;
+            }
+        }
+
+        /* Left/Center: Rig Visualizer Stage */
+        .stage-pane {
+            flex: 1.4;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .rig-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 1.75rem;
+            backdrop-filter: blur(16px);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .rig-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        }
+
+        .rig-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .rig-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .rig-specs {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        /* 1:1 Light Tube Physical Digital Clones */
+        .tubes-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            padding: 1rem 0;
+            background: #050608;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8);
+        }
+
+        .tube-wrapper {
+            position: relative;
+            padding: 0 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .tube-label-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-dim);
+        }
+
+        .tube-meta-tag {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .tube-hardware {
+            position: relative;
+            height: 38px;
+            background: #111216;
+            border-radius: 19px;
+            display: flex;
+            align-items: center;
+            padding: 0 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 
+                0 4px 12px rgba(0, 0, 0, 0.8),
+                inset 0 1px 2px rgba(255, 255, 255, 0.2),
+                inset 0 -2px 6px rgba(0, 0, 0, 0.7);
+        }
+
+        /* Frosted polycarbonate light diffuser layer */
+        .tube-diffuser-cover {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            bottom: 2px;
+            border-radius: 17px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.02) 60%, rgba(0, 0, 0, 0.3) 100%);
+            pointer-events: none;
+            z-index: 5;
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05);
+        }
+
+        /* Aluminum end caps */
+        .tube-cap {
+            position: absolute;
+            width: 12px;
+            height: 34px;
+            background: #242730;
+            border: 1px solid #3c404d;
+            border-radius: 4px;
+            z-index: 6;
+        }
+        .tube-cap.left { left: -4px; border-radius: 6px 0 0 6px; }
+        .tube-cap.right { right: -4px; border-radius: 0 6px 6px 0; }
+
+        /* Status LEDs on tube spine */
+        .tube-status-leds {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            position: absolute;
+            left: 14px;
+            top: -16px;
+            font-size: 0.65rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .mini-led {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #333;
+        }
+        .mini-led.pwr { background: #00ff66; box-shadow: 0 0 6px #00ff66; }
+        .mini-led.data { background: #00f0ff; box-shadow: 0 0 6px #00f0ff; }
+        .mini-led.data.blink { animation: blinkLed 0.1s infinite alternate; }
+        @keyframes blinkLed { from { opacity: 0.2; } to { opacity: 1; } }
+
+        /* The 40 Pixels inside the tube */
+        .pixels-strip {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            position: relative;
+            z-index: 2;
+        }
+
+        .pixel-node {
+            width: 8px;
+            height: 18px;
+            border-radius: 3px;
+            background: #111;
+            transition: background-color 0.04s, box-shadow 0.04s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .pixel-node:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 26px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000;
+            color: #00f0ff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            padding: 3px 6px;
+            border-radius: 4px;
+            border: 1px solid var(--primary);
+            white-space: nowrap;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        /* Inspector & Signal Trace Details */
+        .inspector-panel {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1.25rem;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .inspect-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .inspect-val {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Right Panel: Controls, Sound Analysis & Code Sandbox */
+        .control-pane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .panel-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.25rem;
+            backdrop-filter: blur(16px);
+        }
+
+        .panel-box-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Audio & Sound Analysis Card */
+        .mic-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #00f0ff, #0070f3);
+            border: none;
+            color: #000;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 0.75rem;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            margin-bottom: 0.75rem;
+        }
+
+        .mic-btn:hover {
+            box-shadow: 0 0 20px var(--primary-glow);
+            transform: translateY(-1px);
+        }
+
+        .mic-btn.active {
+            background: linear-gradient(135deg, #ff007b, #7928ca);
+            color: #fff;
+        }
+
+        /* Audio Transient Meter */
+        .transient-bar-wrapper {
+            margin-top: 0.6rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .meter-container {
+            height: 10px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .meter-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00ff88, #ffaa00, #ff0055);
+            transition: width 0.05s ease-out;
+        }
+
+        .impact-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-dim);
+            transition: all 0.1s;
+        }
+
+        .impact-badge.fired {
+            background: #ff0055;
+            color: #fff;
+            box-shadow: 0 0 14px #ff0055;
+            transform: scale(1.05);
+        }
+
+        /* Virtual Percussion Test Pads */
+        .pads-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .pad-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.6rem 0.2rem;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.1s;
+        }
+
+        .pad-btn:active {
+            background: var(--secondary);
+            color: #fff;
+            transform: scale(0.96);
+            box-shadow: 0 0 12px var(--secondary-glow);
+        }
+
+        /* Animation Presets Grid */
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.4rem;
+        }
+
+        .preset-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 0.5rem 0.2rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .preset-btn:hover {
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .preset-btn.active {
+            background: var(--primary);
+            color: #000;
+            border-color: var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        /* Live Code Sandbox */
+        .code-area {
+            width: 100%;
+            height: 140px;
+            background: var(--terminal-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: #00f0ff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            padding: 0.75rem;
+            resize: vertical;
+            outline: none;
+            line-height: 1.4;
+            tab-size: 2;
+        }
+
+        .code-area:focus {
+            border-color: var(--primary);
+        }
+
+        .code-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+        }
+
+        .action-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .action-btn.run {
+            background: #00ff88;
+            color: #000;
+            border: none;
+        }
+
+        /* Canvas mini oscilloscope */
+        #audioCanvas {
+            width: 100%;
+            height: 50px;
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.4);
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="brand">
+            <span class="brand-badge">Hardware Twin</span>
+            <h1>DMT PixelStrip MKII 1:1 Art-Net Simulator</h1>
+        </div>
+        <div class="header-actions">
+            <div class="status-pill">
+                <span class="status-dot" id="streamDot"></span>
+                <span id="streamStatus">Checking Art-Net Link...</span>
+            </div>
+            <a href="index.html" class="nav-link">Control Center</a>
+        </div>
+    </header>
+
+    <main class="workspace">
+        <!-- Visualizer Rig Display -->
+        <section class="stage-pane">
+            <div class="rig-card">
+                <div class="rig-header">
+                    <div class="rig-title">
+                        <span>Physical Rig Simulator</span>
+                        <span style="font-size: 0.8rem; color: var(--text-dim);">(4x 1M Tubes / 160 Pixels)</span>
+                    </div>
+                    <div class="rig-specs" id="activeTopologyLabel">
+                        4x DMT PixelStrip P25 MKII (160 Pixels / 480 Channels)
+                    </div>
+                </div>
+
+                <!-- The 4 Light Tubes -->
+                <div class="tubes-container" id="tubesContainer">
+                    <!-- Tube 1 -->
+                    <div class="tube-wrapper" id="tubeWrap1">
+                        <div class="tube-label-bar">
+                            <span>FIXTURE #1: <span class="tube-meta-tag">DMT P25 MKII (40 LEDs)</span></span>
+                            <span>UNIVERSE 0: CH 1 - 120</span>
+                        </div>
+                        <div class="tube-hardware">
+                            <div class="tube-status-leds">
+                                <span class="mini-led pwr" title="24V Power Good"></span>
+                                <span class="mini-led data blink" id="tubeLed1" title="DMX Signal Link"></span>
+                            </div>
+                            <div class="tube-cap left"></div>
+                            <div class="tube-diffuser-cover"></div>
+                            <div class="pixels-strip" id="pixelsTube1"></div>
+                            <div class="tube-cap right"></div>
+                        </div>
+                    </div>
+
+                    <!-- Tube 2 -->
+                    <div class="tube-wrapper" id="tubeWrap2">
+                        <div class="tube-label-bar">
+                            <span>FIXTURE #2: <span class="tube-meta-tag">DMT P25 MKII (40 LEDs)</span></span>
+                            <span>UNIVERSE 0: CH 121 - 240</span>
+                        </div>
+                        <div class="tube-hardware">
+                            <div class="tube-status-leds">
+                                <span class="mini-led pwr" title="24V Power Good"></span>
+                                <span class="mini-led data blink" id="tubeLed2" title="DMX Signal Link"></span>
+                            </div>
+                            <div class="tube-cap left"></div>
+                            <div class="tube-diffuser-cover"></div>
+                            <div class="pixels-strip" id="pixelsTube2"></div>
+                            <div class="tube-cap right"></div>
+                        </div>
+                    </div>
+
+                    <!-- Tube 3 -->
+                    <div class="tube-wrapper" id="tubeWrap3">
+                        <div class="tube-label-bar">
+                            <span>FIXTURE #3: <span class="tube-meta-tag">DMT P25 MKII (40 LEDs)</span></span>
+                            <span>UNIVERSE 0: CH 241 - 360</span>
+                        </div>
+                        <div class="tube-hardware">
+                            <div class="tube-status-leds">
+                                <span class="mini-led pwr" title="24V Power Good"></span>
+                                <span class="mini-led data blink" id="tubeLed3" title="DMX Signal Link"></span>
+                            </div>
+                            <div class="tube-cap left"></div>
+                            <div class="tube-diffuser-cover"></div>
+                            <div class="pixels-strip" id="pixelsTube3"></div>
+                            <div class="tube-cap right"></div>
+                        </div>
+                    </div>
+
+                    <!-- Tube 4 -->
+                    <div class="tube-wrapper" id="tubeWrap4">
+                        <div class="tube-label-bar">
+                            <span>FIXTURE #4: <span class="tube-meta-tag">DMT P25 MKII (40 LEDs)</span></span>
+                            <span id="tube4ChannelLabel">UNIVERSE 0: CH 361 - 480</span>
+                        </div>
+                        <div class="tube-hardware">
+                            <div class="tube-status-leds">
+                                <span class="mini-led pwr" title="24V Power Good"></span>
+                                <span class="mini-led data blink" id="tubeLed4" title="DMX Signal Link"></span>
+                            </div>
+                            <div class="tube-cap left"></div>
+                            <div class="tube-diffuser-cover"></div>
+                            <div class="pixels-strip" id="pixelsTube4"></div>
+                            <div class="tube-cap right"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inspector readout -->
+                <div class="inspector-panel">
+                    <div class="inspect-col">
+                        <span>HOVER PIXEL: <span class="inspect-val" id="inspectPixel">#0 (Global #0)</span></span>
+                        <span>FIXTURE: <span class="inspect-val" id="inspectFixture">Tube 1 (Port 1)</span></span>
+                    </div>
+                    <div class="inspect-col">
+                        <span>DMX ADDRESS: <span class="inspect-val" id="inspectDmx">Univ 0 : Ch 1-3</span></span>
+                        <span>RGB VALUE: <span class="inspect-val" id="inspectRgb">rgb(0, 0, 0) #000000</span></span>
+                    </div>
+                    <div class="inspect-col">
+                        <span>TRANSIENT HIT: <span class="inspect-val" id="inspectTransient">None (0.00)</span></span>
+                        <span>FRAME RATE: <span class="inspect-val" id="inspectFps">45 FPS</span></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Control & Sandbox Pane -->
+        <section class="control-pane">
+            <!-- Audio Input & Percussive Transient Radar -->
+            <div class="panel-box">
+                <div class="panel-box-title">
+                    <span>Audio & Transient Sensor</span>
+                    <span class="impact-badge" id="impactBadge">TRANSIENT IDLE</span>
+                </div>
+                <button class="mic-btn" id="btnMic">
+                    <span>🎤</span>
+                    <span id="micBtnText">START UNFILTERED MIC INPUT</span>
+                </button>
+
+                <div class="transient-bar-wrapper">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>INSTANT TRANSIENT HIT (TABLE TAPS & STICKS):</span>
+                        <span id="transientVal" style="color: var(--primary);">0%</span>
+                    </div>
+                    <div class="meter-container">
+                        <div class="meter-fill" id="transientMeter"></div>
+                    </div>
+                </div>
+
+                <canvas id="audioCanvas"></canvas>
+
+                <div style="margin-top: 0.75rem; font-size: 0.75rem; color: var(--text-dim);">
+                    Test Percussion Triggers (Simulate Stick Strikes):
+                </div>
+                <div class="pads-container">
+                    <button class="pad-btn" id="padClack">🥢 Stick Clack</button>
+                    <button class="pad-btn" id="padTable">💥 Table Tap</button>
+                    <button class="pad-btn" id="padKick">🥁 Bass Kick</button>
+                    <button class="pad-btn" id="padClap">👏 Hand Clap</button>
+                </div>
+            </div>
+
+            <!-- Animation Presets Grid -->
+            <div class="panel-box">
+                <div class="panel-box-title">
+                    <span>Built-In Animation Patterns</span>
+                </div>
+                <div class="preset-grid">
+                    <button class="preset-btn active" data-preset="spectrum">Spectrum</button>
+                    <button class="preset-btn" data-preset="bass">Bass</button>
+                    <button class="preset-btn" data-preset="vu">VU Meter</button>
+                    <button class="preset-btn" data-preset="wave">Wave</button>
+                    <button class="preset-btn" data-preset="rainbow">Rainbow</button>
+                    <button class="preset-btn" data-preset="fire">Fire</button>
+                    <button class="preset-btn" data-preset="sparkle">Sparkle</button>
+                    <button class="preset-btn" data-preset="plasma">Plasma</button>
+                    <button class="preset-btn" data-preset="matrix">Matrix</button>
+                    <button class="preset-btn" data-preset="pulse">Ripple</button>
+                    <button class="preset-btn" data-preset="chaser">Comet</button>
+                    <button class="preset-btn" data-preset="custom">Custom Code</button>
+                </div>
+            </div>
+
+            <!-- Custom Art-Net Pixel Script Sandbox -->
+            <div class="panel-box">
+                <div class="panel-box-title">
+                    <span>Live Art-Net Code Sandbox</span>
+                    <span style="font-size: 0.7rem; color: var(--text-dim);">Pixelblaze / JS</span>
+                </div>
+                <textarea class="code-area" id="codeSandbox" spellcheck="false">// Custom Pixel Shader: return [R, G, B] for pixel i (0-159)
+// Available vars: i (0-159), tube (0-3), t (time), bass, mid, treble, rms, impact
+function renderPixel(i, tube, t, bass, mid, treble, rms, impact) {
+  let hue = (i / 160 + t * 0.2 + bass * 0.5) % 1.0;
+  let wave = Math.sin(i * 0.15 - t * 3.0 + impact * 2.0) * 0.5 + 0.5;
+  let brightness = Math.min(1.0, 0.15 + rms * 1.5 + impact * 0.8) * wave;
+  return hsvToRgb(hue, 0.9, brightness);
+}</textarea>
+                <div class="code-actions">
+                    <button class="action-btn" id="btnTemplateWave">Template: Wave</button>
+                    <button class="action-btn" id="btnTemplateStrobe">Template: Strobe</button>
+                    <button class="action-btn run" id="btnRunCode">▶ Run Custom Script</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // ==============================================================================
+        // 1:1 DMT PIXELSTRIP DIGITAL CLONE SIMULATOR ENGINE
+        // ==============================================================================
+        const NUM_TUBES = 4;
+        const PIXELS_PER_TUBE = 40;
+        const TOTAL_PIXELS = NUM_TUBES * PIXELS_PER_TUBE; // 160 pixels
+        const FPS = 45;
+
+        // Current Hardware State
+        let currentPreset = 'spectrum';
+        let liveArtNetActive = false;
+        let lastArtNetPacketTime = 0;
+
+        // Buffer holding raw RGB for all 160 pixels [ [r, g, b], ... ]
+        const pixelBuffer = [];
+        for (let i = 0; i < TOTAL_PIXELS; i++) {
+            pixelBuffer.push([0, 0, 0]);
+        }
+
+        // Initialize DOM Light Tubes and 40 Pixels per tube
+        const tubeElements = [];
+        for (let t = 0; t < NUM_TUBES; t++) {
+            const container = document.getElementById(`pixelsTube${t + 1}`);
+            const tubePixels = [];
+            for (let p = 0; p < PIXELS_PER_TUBE; p++) {
+                const globalIdx = t * PIXELS_PER_TUBE + p;
+                const node = document.createElement('div');
+                node.className = 'pixel-node';
+                node.dataset.tube = t;
+                node.dataset.local = p;
+                node.dataset.global = globalIdx;
+
+                // Tooltip info
+                node.addEventListener('mouseenter', () => updateInspector(t, p, globalIdx));
+                container.appendChild(node);
+                tubePixels.push(node);
+            }
+            tubeElements.push(tubePixels);
+        }
+
+        function updateInspector(tubeIdx, localIdx, globalIdx) {
+            const rgb = pixelBuffer[globalIdx] || [0, 0, 0];
+            const hex = '#' + rgb.map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase();
+            
+            document.getElementById('inspectPixel').textContent = `#${localIdx} (Global #${globalIdx})`;
+            document.getElementById('inspectFixture').textContent = `Tube ${tubeIdx + 1} (Port 1)`;
+            
+            const startCh = (globalIdx * 3) + 1;
+            document.getElementById('inspectDmx').textContent = `Univ 0 : Ch ${startCh}-${startCh + 2}`;
+            document.getElementById('inspectRgb').textContent = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]}) ${hex}`;
+        }
+
+        // ==============================================================================
+        // AUDIO & TRANSIENT ONSET ENGINE (MATCHING audio_artnet.py)
+        // ==============================================================================
+        let audioCtx = null;
+        let analyser = null;
+        let micStream = null;
+        let isMicActive = false;
+
+        let soundState = {
+            rms: 0.0,
+            bass: 0.0,
+            mid: 0.0,
+            treble: 0.0,
+            impact: 0.0,
+            impactEnergy: 0.0,
+            time: 0.0,
+            hue: 0.0,
+            vu: 0.0,
+            vuPeak: 0.0,
+            phase: 0.0
+        };
+
+        const btnMic = document.getElementById('btnMic');
+        btnMic.addEventListener('click', async () => {
+            if (!isMicActive) {
+                try {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    // UNFILTERED microphone capturing stick strikes & table thumps:
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false
+                        },
+                        video: false
+                    });
+                    micStream = audioCtx.createMediaStreamSource(stream);
+                    analyser = audioCtx.createAnalyser();
+                    analyser.fftSize = 512;
+                    micStream.connect(analyser);
+
+                    isMicActive = true;
+                    btnMic.classList.add('active');
+                    document.getElementById('micBtnText').textContent = 'MIC LIVE (UNFILTERED TRANSIENT MODE)';
+                } catch (err) {
+                    alert('Microphone access denied: ' + err.message);
+                }
+            } else {
+                if (micStream && micStream.mediaStream) {
+                    micStream.mediaStream.getTracks().forEach(t => t.stop());
+                }
+                if (audioCtx) audioCtx.close();
+                isMicActive = false;
+                btnMic.classList.remove('active');
+                document.getElementById('micBtnText').textContent = 'START UNFILTERED MIC INPUT';
+            }
+        });
+
+        // Virtual Percussion Soundboard for instant testing
+        function triggerVirtualImpact(type) {
+            if (type === 'clack') {
+                soundState.impact = 1.0;
+                soundState.treble = 0.9;
+                soundState.rms = 0.7;
+            } else if (type === 'table') {
+                soundState.impact = 1.0;
+                soundState.bass = 1.0;
+                soundState.rms = 0.8;
+            } else if (type === 'kick') {
+                soundState.impact = 0.8;
+                soundState.bass = 1.0;
+                soundState.rms = 0.9;
+            } else if (type === 'clap') {
+                soundState.impact = 1.0;
+                soundState.mid = 0.9;
+                soundState.treble = 0.8;
+                soundState.rms = 0.75;
+            }
+        }
+
+        document.getElementById('padClack').addEventListener('click', () => triggerVirtualImpact('clack'));
+        document.getElementById('padTable').addEventListener('click', () => triggerVirtualImpact('table'));
+        document.getElementById('padKick').addEventListener('click', () => triggerVirtualImpact('kick'));
+        document.getElementById('padClap').addEventListener('click', () => triggerVirtualImpact('clap'));
+
+        // Mini Audio Oscilloscope Canvas
+        const audioCanvas = document.getElementById('audioCanvas');
+        const audioCanvasCtx = audioCanvas.getContext('2d');
+
+        function updateAudioAnalysis() {
+            soundState.time += 0.035;
+
+            if (isMicActive && analyser) {
+                const timeData = new Uint8Array(analyser.fftSize);
+                const freqData = new Uint8Array(analyser.frequencyBinCount);
+                analyser.getByteTimeDomainData(timeData);
+                analyser.getByteFrequencyData(freqData);
+
+                // 1. Time-Domain Instantaneous Peak Amplitude (latest 512 samples)
+                let instantPeak = 0;
+                let sumSq = 0;
+                for (let i = 0; i < timeData.length; i++) {
+                    const norm = (timeData[i] - 128) / 128.0;
+                    const absVal = Math.abs(norm);
+                    if (absVal > instantPeak) instantPeak = absVal;
+                    sumSq += norm * norm;
+                }
+                const rawRms = Math.sqrt(sumSq / timeData.length);
+                const effectiveVol = Math.max(rawRms, instantPeak * 0.45);
+                soundState.rms = Math.min(1.0, effectiveVol * 4.5);
+
+                // 2. Instant Percussive Transient Onset
+                const scaledInstant = Math.min(1.0, instantPeak * 3.5);
+                if (scaledInstant > soundState.impactEnergy + 0.08 && scaledInstant > 0.04) {
+                    const onset = Math.min(1.0, (scaledInstant - soundState.impactEnergy) * 2.5);
+                    soundState.impact = Math.max(soundState.impact, onset);
+                } else {
+                    soundState.impact *= 0.80; // Fast decay
+                }
+                soundState.impactEnergy = soundState.impactEnergy * 0.88 + scaledInstant * 0.12;
+
+                // 3. Frequency bands
+                let bSum = 0; for (let i = 0; i < 4; i++) bSum += freqData[i];
+                soundState.bass = (bSum / 4.0 / 255.0) * 1.8;
+
+                let mSum = 0; for (let i = 4; i < 20; i++) mSum += freqData[i];
+                soundState.mid = (mSum / 16.0 / 255.0) * 1.6;
+
+                let tSum = 0; for (let i = 20; i < 60; i++) tSum += freqData[i];
+                soundState.treble = (tSum / 40.0 / 255.0) * 2.0;
+
+                // Render oscilloscope waveform
+                audioCanvasCtx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                audioCanvasCtx.fillRect(0, 0, audioCanvas.width, audioCanvas.height);
+                audioCanvasCtx.lineWidth = 1.5;
+                audioCanvasCtx.strokeStyle = soundState.impact > 0.3 ? '#ff0055' : '#00f0ff';
+                audioCanvasCtx.beginPath();
+                const sliceWidth = audioCanvas.width / timeData.length;
+                let x = 0;
+                for (let i = 0; i < timeData.length; i++) {
+                    const v = timeData[i] / 128.0;
+                    const y = (v * audioCanvas.height) / 2;
+                    if (i === 0) audioCanvasCtx.moveTo(x, y);
+                    else audioCanvasCtx.lineTo(x, y);
+                    x += sliceWidth;
+                }
+                audioCanvasCtx.stroke();
+            } else {
+                // Decay synthetic/virtual impacts
+                soundState.impact *= 0.85;
+                soundState.rms = Math.max(0, soundState.rms * 0.90);
+                soundState.bass = Math.max(0, soundState.bass * 0.90);
+                soundState.treble = Math.max(0, soundState.treble * 0.90);
+                soundState.mid = Math.max(0, soundState.mid * 0.90);
+            }
+
+            // Update UI Transient Meters
+            const pct = Math.round(soundState.impact * 100);
+            document.getElementById('transientVal').textContent = `${pct}%`;
+            document.getElementById('transientMeter').style.width = `${pct}%`;
+            const badge = document.getElementById('impactBadge');
+            if (soundState.impact > 0.25) {
+                badge.textContent = '⚡ IMPACT HIT DETECTED!';
+                badge.classList.add('fired');
+            } else {
+                badge.textContent = 'TRANSIENT IDLE';
+                badge.classList.remove('fired');
+            }
+            document.getElementById('inspectTransient').textContent = soundState.impact > 0.1 ? `Impact (${soundState.impact.toFixed(2)})` : 'None (0.00)';
+        }
+
+        // ==============================================================================
+        // ANIMATION GENERATOR (1:1 PYTHON EQUIVALENTS)
+        // ==============================================================================
+        let fireHeat = new Array(TOTAL_PIXELS).fill(0);
+        let sparkLevels = new Array(TOTAL_PIXELS).fill(0);
+        let matrixDrops = [];
+        let ripples = [];
+        let comets = [];
+        let chaserCanvas = new Array(TOTAL_PIXELS).fill(null).map(() => [0, 0, 0]);
+
+        function hsvToRgb(h, s, v) {
+            h = ((h % 1) + 1) % 1;
+            s = Math.max(0, Math.min(1, s));
+            v = Math.max(0, Math.min(1, v));
+            const i = Math.floor(h * 6);
+            const f = h * 6 - i;
+            const p = v * (1 - s);
+            const q = v * (1 - f * s);
+            const t = v * (1 - (1 - f) * s);
+            const mod = i % 6;
+            const r = [v, q, p, p, t, v][mod];
+            const g = [t, v, v, q, p, p][mod];
+            const b = [p, p, t, v, v, q][mod];
+            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+        }
+
+        function generateFrame(preset) {
+            const n = TOTAL_PIXELS;
+            soundState.hue = (soundState.hue + 0.002) % 1.0;
+
+            switch (preset) {
+                case 'spectrum': {
+                    for (let i = 0; i < n; i++) {
+                        const bandRatio = i / n;
+                        const level = Math.sin(bandRatio * Math.PI) * (0.3 + soundState.rms * 0.7);
+                        const hue = bandRatio * 0.75;
+                        pixelBuffer[i] = hsvToRgb(hue, 0.95, level);
+                    }
+                    break;
+                }
+
+                case 'bass': {
+                    const center = n / 2;
+                    const hit = Math.max(soundState.bass, soundState.impact * 0.85);
+                    for (let i = 0; i < n; i++) {
+                        const dist = (i - center) / center;
+                        const bloom = Math.exp(-3.5 * dist * dist);
+                        const val = Math.min(1.0, 0.04 + hit * bloom * 1.4);
+                        pixelBuffer[i] = hsvToRgb(soundState.hue, 1.0, val);
+                    }
+                    break;
+                }
+
+                case 'vu': {
+                    const targetVu = Math.min(1.0, Math.max(0.06, soundState.rms * 1.5, soundState.impact * 0.95));
+                    soundState.vu += (targetVu - soundState.vu) * (targetVu >= soundState.vu ? 0.75 : 0.14);
+                    soundState.vuPeak = Math.max(soundState.vu, soundState.vuPeak - 0.012);
+                    for (let i = 0; i < n; i++) {
+                        const dist = Math.abs((i / (n - 1)) - 0.5) * 2.0;
+                        const edge = 2.0 / n;
+                        let val = Math.max(0.0, Math.min(1.0, (soundState.vu - dist) / edge));
+                        let hue = 0.33 * (1.0 - dist); // green center -> red tips
+                        const isPeak = Math.abs(dist - soundState.vuPeak) < (1.8 / n) && soundState.vuPeak > 0.05;
+                        let sat = 1.0;
+                        if (isPeak) {
+                            val = 1.0;
+                            sat = 0.15; // White-hot peak marker
+                        } else {
+                            val = Math.max(0.03, val);
+                        }
+                        pixelBuffer[i] = hsvToRgb(hue, sat, val);
+                    }
+                    break;
+                }
+
+                case 'wave': {
+                    soundState.phase += 0.35 + soundState.rms * 1.6 + soundState.impact * 1.2;
+                    for (let i = 0; i < n; i++) {
+                        const dist = Math.abs(i - (n - 1) / 2.0);
+                        const wave = 0.5 + 0.5 * Math.sin((dist - soundState.phase) * 0.35);
+                        const hue = ((0.55 + soundState.mid * 0.35 + (dist / n) * 0.2) % 1.0 + 1.0) % 1.0;
+                        const val = Math.max(0.08, Math.min(1.0, (0.15 + soundState.rms * 0.85 + soundState.impact * 0.5) * (0.3 + 0.7 * wave)));
+                        pixelBuffer[i] = hsvToRgb(hue, 0.9, val);
+                    }
+                    break;
+                }
+
+                case 'rainbow': {
+                    soundState.phase += 0.2 + soundState.bass * 2.2 + soundState.impact * 1.8;
+                    for (let i = 0; i < n; i++) {
+                        const hue = ((i / n + soundState.phase / 48.0) % 1.0 + 1.0) % 1.0;
+                        const shimmer = 0.72 + 0.28 * Math.sin(i * 0.17 + soundState.phase * 0.15);
+                        const val = Math.max(0.12, Math.min(1.0, (0.2 + 0.8 * soundState.rms + soundState.impact * 0.4) * shimmer));
+                        pixelBuffer[i] = hsvToRgb(hue, 1.0, val);
+                    }
+                    break;
+                }
+
+                case 'fire': {
+                    const drive = Math.min(1.0, Math.max(soundState.rms * 1.6, soundState.bass * 1.3, soundState.impact * 1.8));
+                    // Upward convection
+                    for (let i = n - 1; i > 0; i--) {
+                        fireHeat[i] = fireHeat[i - 1] * 0.88 + fireHeat[i] * 0.10;
+                    }
+                    fireHeat[0] *= 0.7;
+                    // Cooling
+                    for (let i = 0; i < n; i++) {
+                        fireHeat[i] = Math.max(0, fireHeat[i] - (0.015 + (1.0 - drive) * 0.035));
+                    }
+                    // Sparks
+                    const sparks = Math.min(n, Math.max(2, Math.floor(2 + drive * 24)));
+                    for (let i = 0; i < sparks; i++) {
+                        fireHeat[i] = Math.max(fireHeat[i], (0.65 + Math.random() * 0.35) * (0.5 + 0.5 * drive));
+                    }
+                    if (drive > 0.20) {
+                        const bursts = Math.floor(drive * 14);
+                        for (let b = 0; b < bursts; b++) {
+                            const idx = Math.floor(Math.random() * (drive * n * 0.85));
+                            fireHeat[idx] = Math.max(fireHeat[idx], 0.65 + Math.random() * 0.35);
+                        }
+                    }
+                    for (let i = 0; i < n; i++) {
+                        const h = Math.max(0, Math.min(1, fireHeat[i]));
+                        const r = Math.min(255, Math.floor(Math.min(1, h * 3) * 255));
+                        const g = Math.min(255, Math.floor(Math.max(0, h * 3 - 1) * 255));
+                        const b = Math.min(255, Math.floor(Math.max(0, h * 3 - 2) * 255));
+                        pixelBuffer[i] = [r, g, b];
+                    }
+                    break;
+                }
+
+                case 'sparkle': {
+                    const energy = Math.max(soundState.rms * 1.5, soundState.treble * 1.6, soundState.impact * 2.0);
+                    if (energy > 0.04) {
+                        const count = Math.max(1, Math.min(n / 3, Math.floor(energy * n * 0.18)));
+                        for (let s = 0; s < count; s++) {
+                            sparkLevels[Math.floor(Math.random() * n)] = 0.75 + Math.random() * 0.25;
+                        }
+                    } else if (Math.random() < 0.15) {
+                        sparkLevels[Math.floor(Math.random() * n)] = 0.3 + Math.random() * 0.4;
+                    }
+                    for (let i = 0; i < n; i++) {
+                        sparkLevels[i] *= 0.82;
+                        const bg = hsvToRgb(soundState.hue, 0.85, 0.04 + soundState.mid * 0.08);
+                        const k = sparkLevels[i];
+                        pixelBuffer[i] = [
+                            Math.round(bg[0] * (1 - k) + 255 * k),
+                            Math.round(bg[1] * (1 - k) + 255 * k),
+                            Math.round(bg[2] * (1 - k) + 240 * k)
+                        ];
+                    }
+                    break;
+                }
+
+                case 'plasma': {
+                    const plasmaT = soundState.time * 0.8 + soundState.bass * 1.5 + soundState.impact * 2.0;
+                    for (let i = 0; i < n; i++) {
+                        const x = (i / n) * 8.0;
+                        const v1 = Math.sin(x + plasmaT * 0.8);
+                        const v2 = Math.sin(x * 1.6 - plasmaT * 0.6);
+                        const v3 = Math.sin((x * 0.5 + v1 + v2) * 1.4 + plasmaT);
+                        const plasma = (v1 + v2 + v3) / 3.0;
+
+                        const hue = ((0.55 + plasma * 0.35 + soundState.rms * 0.25) % 1 + 1) % 1;
+                        const sat = Math.max(0.25, 0.85 - soundState.impact * 0.45);
+                        const val = Math.max(0.15, Math.min(1.0, 0.25 + 0.75 * (plasma * 0.5 + 0.5) * (0.4 + soundState.rms * 0.6) + soundState.impact * 0.55));
+                        pixelBuffer[i] = hsvToRgb(hue, sat, val);
+                    }
+                    break;
+                }
+
+                case 'matrix': {
+                    if (Math.random() < (0.15 + soundState.rms * 0.45 + soundState.impact * 0.85)) {
+                        matrixDrops.push({
+                            pos: 0,
+                            speed: 0.9 + Math.random() * 1.5 + soundState.impact * 1.8,
+                            length: Math.floor(6 + Math.random() * 14),
+                            hue: [0.33, 0.36, 0.48, 0.82][Math.floor(Math.random() * 4)]
+                        });
+                    }
+                    const cV = new Array(n).fill(0.04);
+                    const cH = new Array(n).fill(0.33);
+                    const cS = new Array(n).fill(1.0);
+
+                    matrixDrops.forEach(d => {
+                        d.pos += d.speed;
+                        const head = Math.floor(d.pos);
+                        for (let k = 0; k < d.length; k++) {
+                            const p = head - k;
+                            if (p >= 0 && p < n) {
+                                const fade = 1.0 - (k / d.length);
+                                if (k === 0 || (k === 1 && soundState.impact > 0.2)) {
+                                    cV[p] = 1.0;
+                                    cS[p] = 0.15; // white
+                                    cH[p] = d.hue;
+                                } else if (cV[p] < fade) {
+                                    cV[p] = fade * (0.4 + soundState.rms * 0.6);
+                                    cS[p] = 0.95;
+                                    cH[p] = d.hue;
+                                }
+                            }
+                        }
+                    });
+                    matrixDrops = matrixDrops.filter(d => Math.floor(d.pos) - d.length < n);
+                    for (let i = 0; i < n; i++) pixelBuffer[i] = hsvToRgb(cH[i], cS[i], cV[i]);
+                    break;
+                }
+
+                case 'pulse': {
+                    if (soundState.impact > 0.22 || (soundState.bass > 0.55 && Math.random() < 0.3)) {
+                        ripples.push({
+                            center: n / 2,
+                            radius: 0,
+                            speed: 1.8 + soundState.impact * 2.2,
+                            hue: Math.random(),
+                            intensity: 1.0
+                        });
+                    }
+                    const rRGB = new Array(n).fill(null).map(() => [0, 0, 0]);
+                    ripples.forEach(r => {
+                        r.radius += r.speed;
+                        r.intensity *= 0.91;
+                        for (let i = 0; i < n; i++) {
+                            const dist = Math.abs(Math.abs(i - r.center) - r.radius);
+                            const ring = Math.exp(-0.35 * dist * dist) * r.intensity;
+                            if (ring > 0.01) {
+                                const rgb = hsvToRgb(r.hue, 0.9, ring);
+                                rRGB[i][0] = Math.min(255, rRGB[i][0] + rgb[0]);
+                                rRGB[i][1] = Math.min(255, rRGB[i][1] + rgb[1]);
+                                rRGB[i][2] = Math.min(255, rRGB[i][2] + rgb[2]);
+                            }
+                        }
+                    });
+                    ripples = ripples.filter(r => r.intensity > 0.03 && r.radius < n);
+                    for (let i = 0; i < n; i++) {
+                        const bg = hsvToRgb(i / n, 0.8, 0.04 + soundState.rms * 0.15);
+                        pixelBuffer[i] = [
+                            Math.min(255, rRGB[i][0] + bg[0]),
+                            Math.min(255, rRGB[i][1] + bg[1]),
+                            Math.min(255, rRGB[i][2] + bg[2])
+                        ];
+                    }
+                    break;
+                }
+
+                case 'chaser': {
+                    if (soundState.impact > 0.18 || Math.random() < (0.04 + soundState.rms * 0.22)) {
+                        const dir = Math.random() > 0.3 ? 1 : -1;
+                        comets.push({
+                            pos: dir === 1 ? 0 : n - 1,
+                            vel: (2.5 + Math.random() * 2.5 + soundState.impact * 2.5) * dir,
+                            hue: Math.random()
+                        });
+                    }
+                    for (let i = 0; i < n; i++) {
+                        chaserCanvas[i][0] *= 0.84;
+                        chaserCanvas[i][1] *= 0.84;
+                        chaserCanvas[i][2] *= 0.84;
+                    }
+                    comets.forEach(c => {
+                        c.pos += c.vel;
+                        const p = Math.floor(c.pos);
+                        if (p >= 0 && p < n) {
+                            const head = hsvToRgb(c.hue, 0.2, 1.0);
+                            chaserCanvas[p][0] = Math.max(chaserCanvas[p][0], head[0]);
+                            chaserCanvas[p][1] = Math.max(chaserCanvas[p][1], head[1]);
+                            chaserCanvas[p][2] = Math.max(chaserCanvas[p][2], head[2]);
+                        }
+                    });
+                    comets = comets.filter(c => c.pos >= 0 && c.pos < n);
+                    for (let i = 0; i < n; i++) {
+                        const bg = hsvToRgb(0.7, 0.9, 0.03 + soundState.bass * 0.1);
+                        pixelBuffer[i] = [
+                            Math.min(255, Math.round(chaserCanvas[i][0] + bg[0])),
+                            Math.min(255, Math.round(chaserCanvas[i][1] + bg[1])),
+                            Math.min(255, Math.round(chaserCanvas[i][2] + bg[2]))
+                        ];
+                    }
+                    break;
+                }
+
+                case 'custom': {
+                    runCustomSandbox(n);
+                    break;
+                }
+
+                default: {
+                    // Default fallback
+                    for (let i = 0; i < n; i++) pixelBuffer[i] = [20, 20, 40];
+                    break;
+                }
+            }
+        }
+
+        // Custom Code Sandbox Executor
+        let customRenderFn = null;
+        function compileCustomCode() {
+            try {
+                const code = document.getElementById('codeSandbox').value;
+                const fn = new Function('i', 'tube', 't', 'bass', 'mid', 'treble', 'rms', 'impact', 'hsvToRgb', `
+                    ${code}
+                    return renderPixel(i, tube, t, bass, mid, treble, rms, impact);
+                `);
+                customRenderFn = fn;
+            } catch (err) {
+                console.error('Custom code compile error:', err);
+            }
+        }
+        compileCustomCode();
+
+        function runCustomSandbox(n) {
+            if (!customRenderFn) return;
+            for (let i = 0; i < n; i++) {
+                const tube = Math.floor(i / PIXELS_PER_TUBE);
+                try {
+                    const rgb = customRenderFn(i, tube, soundState.time, soundState.bass, soundState.mid, soundState.treble, soundState.rms, soundState.impact, hsvToRgb);
+                    if (Array.isArray(rgb) && rgb.length === 3) {
+                        pixelBuffer[i] = rgb;
+                    }
+                } catch (e) {
+                    // Fallback
+                    pixelBuffer[i] = [255, 0, 50];
+                }
+            }
+        }
+
+        document.getElementById('btnRunCode').addEventListener('click', () => {
+            compileCustomCode();
+            setPreset('custom');
+        });
+
+        // Template buttons
+        document.getElementById('btnTemplateWave').addEventListener('click', () => {
+            document.getElementById('codeSandbox').value = `function renderPixel(i, tube, t, bass, mid, treble, rms, impact) {
+  let hue = (i / 160 + t * 0.2 + bass * 0.5) % 1.0;
+  let wave = Math.sin(i * 0.15 - t * 3.0 + impact * 2.0) * 0.5 + 0.5;
+  let brightness = Math.min(1.0, 0.15 + rms * 1.5 + impact * 0.8) * wave;
+  return hsvToRgb(hue, 0.9, brightness);
+}`;
+            compileCustomCode();
+            setPreset('custom');
+        });
+
+        document.getElementById('btnTemplateStrobe').addEventListener('click', () => {
+            document.getElementById('codeSandbox').value = `function renderPixel(i, tube, t, bass, mid, treble, rms, impact) {
+  if (impact > 0.4) {
+    // Pure brilliant white electrical flash on transient hit
+    return [255, 255, 255];
+  }
+  let chase = ((i - Math.floor(t * 50)) % 40 + 40) % 40;
+  let val = chase < 5 ? 1.0 : 0.05;
+  return hsvToRgb(tube * 0.25, 1.0, val * (0.3 + rms * 0.7));
+}`;
+            compileCustomCode();
+            setPreset('custom');
+        });
+
+        // ==============================================================================
+        // HARDWARE DIGITAL TWIN RENDER LOOP
+        // ==============================================================================
+        function renderTubes() {
+            for (let t = 0; t < NUM_TUBES; t++) {
+                const tubeLed = document.getElementById(`tubeLed${t + 1}`);
+                tubeLed.classList.add('blink');
+                tubeLed.style.background = '#00f0ff';
+
+                for (let p = 0; p < PIXELS_PER_TUBE; p++) {
+                    const globalIdx = t * PIXELS_PER_TUBE + p;
+                    const node = tubeElements[t][p];
+                    const [r, g, b] = pixelBuffer[globalIdx] || [0, 0, 0];
+
+                    // Render physical pixel node
+                    const rgbStr = `rgb(${r}, ${g}, ${b})`;
+                    node.style.backgroundColor = rgbStr;
+
+                    // Volumetric glow calculation
+                    const sum = r + g + b;
+                    if (sum > 40) {
+                        const alpha = Math.min(0.7, sum / 600.0);
+                        node.style.boxShadow = `0 0 10px rgba(${r}, ${g}, ${b}, ${alpha}), 0 0 18px rgba(${r}, ${g}, ${b}, ${alpha * 0.5})`;
+                    } else {
+                        node.style.boxShadow = 'none';
+                    }
+
+                    node.dataset.tooltip = `Tube ${t + 1} | Px #${p} | rgb(${r},${g},${b})`;
+                }
+            }
+        }
+
+        function mainLoop() {
+            updateAudioAnalysis();
+
+            // If real Art-Net packets are NOT arriving over SSE, generate the digital twin frame locally
+            if (!liveArtNetActive || Date.now() - lastArtNetPacketTime > 1500) {
+                generateFrame(currentPreset);
+                if (liveArtNetActive) {
+                    liveArtNetActive = false;
+                    document.getElementById('streamDot').classList.remove('live');
+                    document.getElementById('streamStatus').textContent = 'Local Engine (Ready for Art-Net)';
+                }
+            }
+
+            renderTubes();
+            requestAnimationFrame(mainLoop);
+        }
+
+        // ==============================================================================
+        // LIVE ART-NET SSE INGEST (CONNECTS TO server.js /api/artnet-stream)
+        // ==============================================================================
+        function connectLiveArtNet() {
+            try {
+                const sse = new EventSource('/api/artnet-stream');
+                sse.onopen = () => {
+                    console.log('[+] Connected to local Art-Net SSE stream');
+                    document.getElementById('streamDot').classList.add('live');
+                    document.getElementById('streamStatus').textContent = 'Live Art-Net UDP 6454 Ingest: Active';
+                };
+                sse.onmessage = (event) => {
+                    try {
+                        const packet = JSON.parse(event.data);
+                        liveArtNetActive = true;
+                        lastArtNetPacketTime = Date.now();
+                        document.getElementById('streamDot').classList.add('live');
+                        document.getElementById('streamStatus').textContent = `Art-Net Univ ${packet.universe} (${packet.length} bytes)`;
+
+                        // Map incoming DMX channels to digital tube clones
+                        const dmx = packet.data;
+                        const univ = packet.universe;
+
+                        if (univ === 0) {
+                            // Tubes 1, 2, 3, and 4 (160 pixels / 480 channels)
+                            const pixelsToMap = Math.min(TOTAL_PIXELS, Math.floor(dmx.length / 3));
+                            for (let i = 0; i < pixelsToMap; i++) {
+                                pixelBuffer[i] = [dmx[i * 3], dmx[i * 3 + 1], dmx[i * 3 + 2]];
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Error parsing Art-Net SSE packet:', e);
+                    }
+                };
+                sse.onerror = () => {
+                    document.getElementById('streamDot').classList.remove('live');
+                    document.getElementById('streamStatus').textContent = 'Local Engine (Ready for Art-Net)';
+                };
+            } catch (e) {
+                console.log('Standalone mode: no local SSE server found.');
+            }
+        }
+        connectLiveArtNet();
+
+        // Preset button handlers
+        function setPreset(name) {
+            currentPreset = name;
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.preset === name);
+            });
+        }
+
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => setPreset(btn.dataset.preset));
+        });
+
+        // Start animation loop
+        requestAnimationFrame(mainLoop);
+    </script>
+</body>
+</html>

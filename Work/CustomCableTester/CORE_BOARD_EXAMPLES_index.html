@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STM32H743IIT6 Core Board Examples</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container" id="main-container">
+        <h1>STM32H743IIT6 Core Board Examples</h1>
+        <!-- Demo cards will be inserted here -->
+    </div>
+    <script>
+        const demos = {
+            "Basic Examples": {
+                base_path: "FK_STM32H743IIT6_CoreBoard_Examples/2.参考例程/1.基础例程",
+                examples: [
+                    { name: "LED Blink", folder: "1.LED闪烁", description: "A simple example to blink an LED." },
+                    { name: "Serial Port Print Test", folder: "2.串口打印测试", description: "Demonstrates how to send messages via UART." },
+                    { name: "LTDC LCD Driver (480x272)", folder: "3.LTDC液晶驱动-基于480x272分辨率", description: "Driver for a 480x272 resolution LCD screen." },
+                    { name: "LTDC LCD Driver (800x480)", folder: "4.LTDC液晶驱动-基于800x480分辨率", description: "Driver for an 800x480 resolution LCD screen." },
+                    { name: "LTDC LCD Driver (AT070TN83)", folder: "5.LTDC液晶驱动-基于AT070TN83", description: "Driver for the AT070TN83 LCD screen." },
+                    { name: "ADC Internal Temperature Sensor", folder: "ADC-内部温度传感器实验", description: "Reading the internal temperature sensor of the MCU." },
+                    { name: "DAC DC Voltage Output", folder: "DAC-输出直流电压", description: "Output a stable DC voltage using the DAC." },
+                    { name: "FMC SDRAM Test", folder: "FMC—SDRAM测试", description: "A test for the SDRAM connected via FMC." },
+                    { name: "JPEG Hardware Decoding (480x272)", folder: "JPEG硬件解码-基于480x272分辨率", description: "Hardware-accelerated JPEG decoding for 480x272 displays." },
+                    { name: "JPEG Hardware Decoding (800x480)", folder: "JPEG硬件解码-基于800x480分辨率", description: "Hardware-accelerated JPEG decoding for 800x480 displays." },
+                    { name: "QSPI W25Q64 Direct Read/Write", folder: "QSPI-W25Q64使用HAL库直接读写", description: "Using the HAL library to directly interface with a W25Q64 QSPI flash." },
+                    { name: "QSPI W25Q64 MDMA Read", folder: "QSPI-W25Q64使用MDMA读取", description: "Reading from the W25Q64 QSPI flash using MDMA." },
+                    { name: "QSPI W25Q64 Memory Mapped Mode", folder: "QSPI-W25Q64内存映射模式", description: "Accessing the QSPI flash in memory-mapped mode." },
+                    { name: "QSPI W25Q64 with FatFs", folder: "QSPI-W25Q64移植Fatfs（HAL库直接读写）", description: "Porting the FatFs file system to the W25Q64 QSPI flash." },
+                    { name: "RTC Experiment", folder: "RTC实验", description: "A real-time clock implementation." },
+                    { name: "SDIO Basic Read/Write", folder: "SDIO-基本数据读写", description: "Basic data read and write operations using SDIO." },
+                    { name: "SDIO with FatFs", folder: "SDIO-移植FatFs", description: "Porting the FatFs file system to an SD card using SDIO." },
+                    { name: "TIM Simple Interrupt", folder: "TIM简单中断实验", description: "A simple timer interrupt experiment." },
+                    { name: "USB QSPI Flash as U-Disk", folder: "USB-QSPI Flash模拟U盘", description: "Emulating a USB mass storage device using the QSPI flash." },
+                    { name: "USB Virtual Serial Port", folder: "USB-虚拟串口", description: "Creating a virtual serial port over USB." }
+                ]
+            },
+            "emWin Examples (480x272)": {
+                base_path: "FK_STM32H743IIT6_CoreBoard_Examples/2.参考例程/2.emWin例程-基于480x272分辨率",
+                examples: [
+                    { name: "Basic Project", folder: "1.基础工程", description: "A basic emWin project setup." },
+                    { name: "Official Examples", folder: "2.官方例程", description: "The official emWin demo examples." },
+                    { name: "JPG Image Decoding", folder: "图片解码JPG", description: "Decoding and displaying JPG images." },
+                    { name: "Chinese Font (SIF on SD)", folder: "汉字显示-SIF格式字库（存储在SD卡）", description: "Displaying Chinese characters using an SIF font file from an SD card." },
+                    { name: "Chinese Font (XBF on QSPI)", folder: "汉字显示-XBF格式字库（存储在QSPI Flash）", description: "Displaying Chinese characters using an XBF font file from QSPI flash." },
+                    { name: "Copy XBF from SD to QSPI", folder: "汉字显示-从SD卡拷贝XBF字库文件到QSPI Flash", description: "A utility to copy the XBF font file from an SD card to the QSPI flash." },
+                    { name: "Chinese Font (From C file)", folder: "汉字显示-基于C文件", description: "Displaying Chinese characters from a font embedded in a C file." }
+                ]
+            },
+            "emWin Examples (800x480)": {
+                base_path: "FK_STM32H743IIT6_CoreBoard_Examples/2.参考例程/3.emWin例程-基于800x480分辨率",
+                examples: [
+                    { name: "Basic Project", folder: "1.基础工程", description: "A basic emWin project setup for 800x480 displays." },
+                    { name: "Official Examples", folder: "2.官方DEMO", description: "The official emWin demo examples for 800x480 displays." },
+                    { name: "JPG Image Decoding", folder: "图片解码JPG", description: "Decoding and displaying JPG images." },
+                    { name: "Clock Face", folder: "时钟界面", description: "A demonstration of an analog clock face." },
+                    { name: "Chinese Font (SIF on SD)", folder: "汉字显示-SIF格式字库（存储在SD卡）", description: "Displaying Chinese characters using an SIF font file from an SD card." },
+                    { name: "Chinese Font (XBF on QSPI)", folder: "汉字显示-XBF格式字库（存储在QSPI Flash）", description: "Displaying Chinese characters using an XBF font file from QSPI flash." },
+                    { name: "Copy XBF from SD to QSPI", folder: "汉字显示-从SD卡拷贝XBF字库文件到QSPI Flash", description: "A utility to copy the XBF font file from an SD card to the QSPI flash." },
+                    { name: "Chinese Font (From C file)", folder: "汉字显示-基于C文件", description: "Displaying Chinese characters from a font embedded in a C file." }
+                ]
+            },
+            "LittleVGL Examples (480x272)": {
+                base_path: "FK_STM32H743IIT6_CoreBoard_Examples/2.参考例程/4.littleVGL例程-基于480x272分辨率",
+                examples: [
+                    { name: "Benchmark", folder: "基准测试", description: "A performance benchmark for LittleVGL." },
+                    { name: "Widget Demo", folder: "窗口控件演示", description: "A demonstration of various LittleVGL widgets." },
+                    { name: "Music Player", folder: "音乐播放器", description: "A music player UI demo." }
+                ]
+            },
+            "LittleVGL Examples (800x480)": {
+                base_path: "FK_STM32H743IIT6_CoreBoard_Examples/2.参考例程/5.littleVGL例程-基于800x480分辨率",
+                examples: [
+                    { name: "Benchmark", folder: "基准测试", description: "A performance benchmark for LittleVGL on 800x480 displays." },
+                    { name: "Widget Demo", folder: "窗口控件演示", description: "A demonstration of various LittleVGL widgets on 800x480 displays." },
+                    { name: "Music Player", folder: "音乐播放器", description: "A music player UI demo on 800x480 displays." }
+                ]
+            },
+            "TouchGFX Examples (480x272)": {
+                base_path: "FK_STM32H743IIT6_CoreBoard_Examples/2.参考例程/6.TouchGFX例程-基于480x272分辨率",
+                examples: [
+                    { name: "Basic (On-chip Flash)", folder: "基础工程-使用片内Flash存储UI资源.zip", description: "A basic TouchGFX project with UI resources stored in the internal flash." },
+                    { name: "Basic (External W25Q64)", folder: "基础工程-使用片外W25Q64存储UI资源.zip", description: "A basic TouchGFX project with UI resources stored on an external W25Q64 flash." }
+                ]
+            },
+            "TouchGFX Examples (800x480)": {
+                base_path: "FK_STM32H743IIT6_CoreBoard_Examples/2.参考例程/7.TouchGFX例程-基于800x480分辨率",
+                examples: [
+                    { name: "Basic (On-chip Flash)", folder: "基础工程-使用片内Flash存储UI资源.zip", description: "A basic TouchGFX project with UI resources stored in the internal flash for 800x480 displays." },
+                    { name: "Basic (External W25Q64)", folder: "基础工程-使用片外W25Q64存储UI资源.zip", description: "A basic TouchGFX project with UI resources stored on an external W25Q64 flash for 800x480 displays." }
+                ]
+            }
+        };
+
+        const mainContainer = document.getElementById('main-container');
+
+        for (const category in demos) {
+            const categoryContainer = document.createElement('div');
+            categoryContainer.classList.add('category-container');
+
+            const categoryTitle = document.createElement('h2');
+            categoryTitle.classList.add('category-title');
+            categoryTitle.textContent = category;
+            categoryContainer.appendChild(categoryTitle);
+
+            const cardGrid = document.createElement('div');
+            cardGrid.classList.add('card-grid');
+
+            demos[category].examples.forEach(demo => {
+                const cardLink = document.createElement('a');
+                cardLink.classList.add('card');
+                const path = `${demos[category].base_path}/${demo.folder}`;
+                cardLink.href = path.replace(/ /g, '%20'); // Handle spaces in paths
+                
+                const cardTitle = document.createElement('h3');
+                cardTitle.textContent = demo.name;
+                cardLink.appendChild(cardTitle);
+                
+                const cardDescription = document.createElement('p');
+                cardDescription.textContent = demo.description;
+                cardLink.appendChild(cardDescription);
+
+                cardGrid.appendChild(cardLink);
+            });
+
+            categoryContainer.appendChild(cardGrid);
+            mainContainer.appendChild(categoryContainer);
+        }
+    </script>
+</body>
+</html>

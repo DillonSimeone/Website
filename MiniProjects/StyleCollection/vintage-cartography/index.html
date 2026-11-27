@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vintage Cartography Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,700;1,400&family=Special+Elite&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Coordinate grid overlays -->
+  <div class="map-grid-overlay"></div>
+
+  <div class="map-workspace" id="map-board">
+    
+    <!-- Compass Rose background decal -->
+    <div class="compass-rose">🧭</div>
+
+    <header class="map-header">
+      <a href="../index.html" class="nav-back">← HUB-DEPOT</a>
+      <h1 class="map-title">CARTOGRAPHY</h1>
+      <p class="map-subtitle">AGED CHART PARCHMENT & COORDINATE MAPPERS</p>
+    </header>
+
+    <main class="map-grid">
+      <!-- Map info card -->
+      <section class="map-card" style="--rot: -0.5deg;">
+        <h2>THE CHART</h2>
+        <p>A style capturing the aesthetics of 17th-century navigation maps. It utilizes aged parchment tones, line guides, coordinates, compass icons, and faded typewriter ink.</p>
+      </section>
+
+      <!-- Pin placer card -->
+      <section class="map-card" style="--rot: 1deg;">
+        <h2>MAP MAKER ACTIVE</h2>
+        <p>Click anywhere on the brown parchment canvas to stamp down a red coordinate pin showing latitude/longitude readings.</p>
+        <button class="clear-btn" id="btn-clear-pins">Reset Markers</button>
+      </section>
+    </main>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

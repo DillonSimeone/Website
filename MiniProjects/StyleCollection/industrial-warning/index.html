@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Industrial Warning HUD Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Blinking red alarm screen cover -->
+  <div class="alarm-siren-overlay" id="siren-overlay"></div>
+
+  <div class="hazard-container">
+    <header class="hazard-header">
+      <div class="stripe-bar"></div>
+      <a href="../index.html" class="nav-back">← HUB-GRID</a>
+      <h1 class="hazard-title">WARNING</h1>
+      <p class="hazard-subtitle">HAZARD SECTOR_04 // SYSTEM STATUS MONITOR</p>
+    </header>
+
+    <main class="hazard-grid">
+      
+      <!-- Status Readout Slab -->
+      <section class="hazard-card read-slab">
+        <div class="card-warning-stripe"></div>
+        <h2>SYSTEM METRICS</h2>
+        <table class="metrics-table">
+          <tr>
+            <td>CORE TEMP:</td>
+            <td class="alert-text">840°C // HIGH</td>
+          </tr>
+          <tr>
+            <td>PRESSURE:</td>
+            <td>12.4 PSI // NORM</td>
+          </tr>
+          <tr>
+            <td>SHIELDING:</td>
+            <td>SECTOR_04 ACTIVE</td>
+          </tr>
+        </table>
+      </section>
+
+      <!-- Alarm Activator Widget -->
+      <section class="hazard-card control-slab">
+        <div class="card-warning-stripe"></div>
+        <h2>ALARM CONTROL</h2>
+        <p>Triggering the emergency test siren initiates full-screen warning flasher overlays and synthesizes industrial sound pulses.</p>
+        <button class="siren-btn" id="btn-siren">ACTIVATE ALARM</button>
+      </section>
+
+      <!-- Ventilator fan animation widget -->
+      <section class="hazard-card fan-slab">
+        <div class="card-warning-stripe"></div>
+        <h2>VENTILATION</h2>
+        <div class="fan-widget">
+          <div class="fan-blade" id="vent-fan"></div>
+        </div>
+        <p class="fan-status">FAN SPEED: 4200 RPM</p>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

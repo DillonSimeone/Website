@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>30W Parametric Light Mount Configurator</title>
+    <!-- Browser Import Map for resolving 'three' bare specifiers -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/jsm/"
+        }
+      }
+    </script>
+    <!-- Google Fonts for Technical Aesthetic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="blueprint-border"></div>
+
+    <!-- Drawing Title Block -->
+    <header style="justify-content: center;">
+        <h1 style="text-align: center; margin: 0;">30W PARAMETRIC LIGHT MOUNT CONFIGURATOR</h1>
+    </header>
+
+    <!-- Main Workspace -->
+    <main>
+        <!-- Left Panel: Parameter Controls -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">1. Assembly Specifications</span>
+            </div>
+            <div class="panel-content">
+                <!-- Section: Hinge Geometry -->
+                <div class="control-group">
+                    <div class="control-group-title">Hinge Pivot Joint</div>
+                    
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Hinge Knuckle Width</span><span class="param-value"><span id="val-hingeWidth">20.0</span> mm</span></div>
+                        <input type="range" id="input-hingeWidth" min="10.0" max="40.0" step="1.0" value="20.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Hinge Pin Hole ⌀</span><span class="param-value"><span id="val-hingePinDiameter">8.0</span> mm</span></div>
+                        <input type="range" id="input-hingePinDiameter" min="3.0" max="12.0" step="0.1" value="8.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Knuckle Outer Radius</span><span class="param-value"><span id="val-hingeKnuckleRadius">8.0</span> mm</span></div>
+                        <input type="range" id="input-hingeKnuckleRadius" min="5.0" max="15.0" step="0.5" value="8.0">
+                    </div>
+                </div>
+
+                <!-- Section: Wall Bracket Geometry -->
+                <div class="control-group">
+                    <div class="control-group-title">Drywall Wall Plate</div>
+                    
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Plate Width</span><span class="param-value"><span id="val-wallPlateWidth">45.0</span> mm</span></div>
+                        <input type="range" id="input-wallPlateWidth" min="30.0" max="80.0" step="1.0" value="45.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Plate Height</span><span class="param-value"><span id="val-wallPlateHeight">70.0</span> mm</span></div>
+                        <input type="range" id="input-wallPlateHeight" min="50.0" max="120.0" step="1.0" value="70.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Plate Thickness</span><span class="param-value"><span id="val-wallPlateThickness">5.0</span> mm</span></div>
+                        <input type="range" id="input-wallPlateThickness" min="3.0" max="10.0" step="0.5" value="5.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Anchor Spacing</span><span class="param-value"><span id="val-screwSpacing">45.0</span> mm</span></div>
+                        <input type="range" id="input-screwSpacing" min="30.0" max="100.0" step="1.0" value="45.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Screw Hole ⌀</span><span class="param-value"><span id="val-screwHoleDiameter">4.5</span> mm</span></div>
+                        <input type="range" id="input-screwHoleDiameter" min="2.0" max="6.0" step="0.1" value="4.5">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Countersink ⌀</span><span class="param-value"><span id="val-screwHeadDiameter">8.5</span> mm</span></div>
+                        <input type="range" id="input-screwHeadDiameter" min="5.0" max="12.0" step="0.1" value="8.5">
+                    </div>
+                </div>
+
+                <!-- Section: Fits and Clearances -->
+                <div class="control-group">
+                    <div class="control-group-title">Tolerance & Wall Clearance</div>
+                    
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Wall Track Tolerance</span><span class="param-value"><span id="val-wallClearance">0.25</span> mm</span></div>
+                        <input type="range" id="input-wallClearance" min="0.05" max="0.80" step="0.05" value="0.25">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Arm Length (Wall→Pivot)</span><span class="param-value"><span id="val-lightOffset">100.0</span> mm</span></div>
+                        <input type="range" id="input-lightOffset" min="60.0" max="200.0" step="5.0" value="100.0">
+                    </div>
+                </div>
+
+                <!-- Section: Alignment Tweaks -->
+                <div class="control-group">
+                    <div class="control-group-title">Hinge Position Tuning</div>
+                    <p style="font-size: 0.65rem; color: rgba(224, 251, 252, 0.5); line-height: 1.3; margin-bottom: 10px;">
+                        Tweak the exact position of the hinge knuckle on the back of the STL.
+                    </p>
+                    
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Offset X</span><span class="param-value"><span id="val-hingeOffsetX">0.0</span> mm</span></div>
+                        <input type="range" id="input-hingeOffsetX" min="-20.0" max="20.0" step="0.5" value="0.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Offset Y</span><span class="param-value"><span id="val-hingeOffsetY">0.0</span> mm</span></div>
+                        <input type="range" id="input-hingeOffsetY" min="-20.0" max="20.0" step="0.5" value="0.0">
+                    </div>
+
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Offset Z</span><span class="param-value"><span id="val-hingeOffsetZ">0.0</span> mm</span></div>
+                        <input type="range" id="input-hingeOffsetZ" min="-20.0" max="20.0" step="0.5" value="0.0">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Middle Panel: Viewport -->
+        <div id="viewport-container">
+            <div id="canvas3d"></div>
+            <svg id="dimensions-overlay"></svg>
+        </div>
+
+        <!-- Right Panel: Controls & Rendering -->
+        <div class="panel panel-right">
+            <div class="panel-header">
+                <span class="panel-title">2. Preview & Export</span>
+            </div>
+            <div class="panel-content">
+                <!-- Articulation Preview -->
+                <div class="control-group">
+                    <div class="control-group-title">Articulation Preview</div>
+                    
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Hinge Tilt Angle</span><span class="param-value"><span id="val-hingeAngle">0</span>°</span></div>
+                        <input type="range" id="input-hingeAngle" min="-45" max="90" step="1" value="0">
+                    </div>
+                    
+                    <div class="param-row" style="color: #ffaa00;">
+                        <div class="param-info"><span class="param-label">Exploded View</span><span class="param-value"><span id="val-explodedView">0</span>%</span></div>
+                        <input type="range" id="input-explodedView" min="0" max="100" step="1" value="0">
+                    </div>
+                </div>
+
+                <!-- Visibilities -->
+                <div class="control-group">
+                    <div class="control-group-title">Show/Hide Parts</div>
+                    <div class="toggle-row">
+                        <span>Show Modified Frame</span>
+                        <input type="checkbox" id="show-lightFrame" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Show Hinge Connector</span>
+                        <input type="checkbox" id="show-hingeConnector" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Show Wall Plate</span>
+                        <input type="checkbox" id="show-wallPlate" checked>
+                    </div>
+                    <div class="toggle-row" style="color: #ffaa00;">
+                        <span>Show Hinge Bolt</span>
+                        <input type="checkbox" id="show-bolt" checked>
+                    </div>
+                    <div class="toggle-row" style="color: #ffaa00;">
+                        <span>Show Hinge Nut</span>
+                        <input type="checkbox" id="show-nut" checked>
+                    </div>
+                </div>
+
+                <!-- Display Settings -->
+                <div class="control-group">
+                    <div class="control-group-title">Display Settings</div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Solid Opacity</span><span class="param-value"><span id="val-opacity">90</span>%</span></div>
+                        <input type="range" id="input-opacity" min="10" max="100" step="5" value="90">
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <span class="param-label" style="display:block; margin-bottom: 6px; font-size: 0.75rem;">Render Mode</span>
+                        <div class="btn-group">
+                            <button class="btn" id="btn-render-mode">Neon Render</button>
+                            <button class="btn active" id="btn-blueprint-mode">Blueprint</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STL Export Block -->
+                <div class="control-group">
+                    <div class="control-group-title">Export STL Files</div>
+                    <div style="font-size: 0.65rem; color: rgba(0, 243, 255, 0.65); line-height: 1.3; margin-bottom: 12px; font-family: 'Share Tech Mono', monospace;">
+                        * PARTS ARE SPEC'D IN MM FOR DIRECT 3D PRINTER SLICER COMPATIBILITY.
+                    </div>
+                    
+                    <button class="btn btn-accent rainbow-btn" id="btn-export-all" style="margin-bottom: 12px; font-weight: bold; border-width: 2px;">EXPORT ALL PARTS</button>
+                    
+                    <button class="btn btn-accent" id="btn-export-light-frame" style="border-color: #00f3ff; color: #00f3ff; text-shadow: 0 0 4px rgba(0,243,255,0.4);">Export Modified Frame</button>
+                    <button class="btn btn-accent" id="btn-export-hinge-connector" style="margin-top: 10px; border-color: #ff007f; color: #ff007f; text-shadow: 0 0 4px rgba(255,0,127,0.4);">Export Hinge Connector</button>
+                    <button class="btn btn-accent" id="btn-export-wall-plate" style="margin-top: 10px; border-color: #c8ff00; color: #c8ff00; text-shadow: 0 0 4px rgba(200,255,0,0.4);">Export Wall Plate</button>
+                    <button class="btn btn-accent" id="btn-export-bolt" style="margin-top: 10px; border-color: #ffaa00; color: #ffaa00; text-shadow: 0 0 4px rgba(255,170,0,0.4);">Export Hinge Bolt</button>
+                    <button class="btn btn-accent" id="btn-export-nut" style="margin-top: 10px; border-color: #ffaa00; color: #ffaa00; text-shadow: 0 0 4px rgba(255,170,0,0.4);">Export Hinge Nut</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Status -->
+    <footer>
+        <div class="status-left">
+            <div class="status-dot"></div>
+            <span>GEOMETRY KERNEL:</span>
+            <span id="kernel-status">OFFLINE</span>
+        </div>
+        <div style="text-align: center; letter-spacing: 1px;">30W LIGHT MOUNT SYSTEM CONFIGURATOR</div>
+        <div style="text-align: right;">v1.0.0 (2026)</div>
+    </footer>
+
+    <!-- Main Script Entry -->
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>

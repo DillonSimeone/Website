@@ -1,0 +1,146 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface version="1.2">
+  <object class="tk.Toplevel" id="mainwindow">
+    <property name="title" translatable="yes">Name Popularity Browser</property>
+    <property name="width">750</property>
+    <containerlayout manager="grid">
+      <property type="col" id="0" name="pad">5</property>
+      <property type="col" id="0" name="weight">1</property>
+      <property type="row" id="0" name="pad">5</property>
+      <property type="row" id="0" name="weight">0</property>
+      <property type="row" id="1" name="pad">5</property>
+      <property type="row" id="1" name="weight">0</property>
+      <property type="row" id="2" name="pad">5</property>
+      <property type="row" id="2" name="weight">1</property>
+    </containerlayout>
+    <child>
+      <object class="ttk.Label" id="welcome_label">
+        <property name="text" translatable="yes">Welcome to the Name Popularity Browser! Enter a name and select a gender to view yearly popularity.</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="padx">10</property>
+          <property name="pady">8</property>
+          <property name="row">0</property>
+          <property name="sticky">w</property>
+        </layout>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Frame" id="controls_frame">
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="padx">10</property>
+          <property name="pady">5</property>
+          <property name="row">1</property>
+          <property name="sticky">ew</property>
+        </layout>
+        <containerlayout manager="grid">
+          <property type="col" id="1" name="pad">10</property>
+          <property type="col" id="3" name="pad">5</property>
+          <property type="col" id="4" name="pad">10</property>
+        </containerlayout>
+        <child>
+          <object class="ttk.Label" id="name_label">
+            <property name="text" translatable="yes">Enter a name:</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Entry" id="name_entry">
+            <property name="width">20</property>
+            <bind sequence="&lt;KeyRelease&gt;" handler="on_name_changed" add="" />
+            <bind sequence="&lt;Return&gt;" handler="on_search" add="" />
+            <layout manager="grid">
+              <property name="column">1</property>
+              <property name="padx">5</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="gender_label">
+            <property name="text" translatable="yes">Gender:</property>
+            <layout manager="grid">
+              <property name="column">2</property>
+              <property name="padx">5</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Radiobutton" id="male_radio">
+            <property name="command" type="command" cbtype="simple" args="">on_gender_changed</property>
+            <property name="text" translatable="yes">Male</property>
+            <property name="value">M</property>
+            <property name="variable">string:gender</property>
+            <layout manager="grid">
+              <property name="column">3</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Radiobutton" id="female_radio">
+            <property name="command" type="command" cbtype="simple" args="">on_gender_changed</property>
+            <property name="text" translatable="yes">Female</property>
+            <property name="value">F</property>
+            <property name="variable">string:gender</property>
+            <layout manager="grid">
+              <property name="column">4</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="search_button">
+            <property name="command" type="command" cbtype="simple" args="">on_search</property>
+            <property name="text" translatable="yes">Search</property>
+            <layout manager="grid">
+              <property name="column">5</property>
+              <property name="padx">5</property>
+              <property name="row">0</property>
+              <property name="sticky">e</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="pygubu.builder.widgets.scrollbarhelper" id="table_scrollbar">
+        <property name="scrolltype">vertical</property>
+        <property name="usemousewheel">false</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="padx">10</property>
+          <property name="pady">8</property>
+          <property name="row">2</property>
+          <property name="sticky">nsew</property>
+        </layout>
+        <containerlayout manager="grid">
+          <property type="col" id="0" name="weight">1</property>
+          <property type="row" id="0" name="weight">1</property>
+        </containerlayout>
+        <child>
+          <object class="ttk.Treeview" id="name_treeview">
+            <property name="height">15</property>
+            <property name="selectmode">browse</property>
+            <property name="show">headings</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="row">0</property>
+              <property name="sticky">nsew</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

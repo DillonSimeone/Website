@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TENSTAR CH32V003F4P6 Board Guide</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090d0c;
+      --panel: #111816;
+      --panel-2: #17221e;
+      --line: #294238;
+      --text: #edf8f2;
+      --muted: #9ab2a8;
+      --accent: #66f2a4;
+      --accent-2: #ffd166;
+      --danger: #ff7b72;
+      --code: #07110d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 15% 0%, #173328 0, transparent 34rem),
+        linear-gradient(180deg, #0b100e, var(--bg));
+      color: var(--text);
+      font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    main { width: min(1080px, calc(100% - 32px)); margin: 0 auto; padding: 48px 0 80px; }
+    header { padding: 28px 0 36px; border-bottom: 1px solid var(--line); }
+    h1 { margin: 8px 0 12px; font-size: clamp(2.3rem, 7vw, 5rem); line-height: .95; letter-spacing: -.05em; }
+    h2 { margin-top: 48px; font-size: 1.65rem; }
+    h3 { margin: 0 0 8px; }
+    p { color: var(--muted); }
+    a { color: var(--accent); }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    code { color: var(--accent-2); }
+    pre {
+      overflow-x: auto;
+      padding: 18px;
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: #d8fbe7;
+    }
+    .eyebrow { color: var(--accent); text-transform: uppercase; letter-spacing: .14em; font-weight: 800; }
+    .lede { max-width: 760px; font-size: 1.18rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+    .card {
+      padding: 20px;
+      background: linear-gradient(145deg, var(--panel-2), var(--panel));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+    .value { color: var(--accent); font-size: 1.7rem; font-weight: 800; }
+    .callout {
+      padding: 18px 20px;
+      border-left: 4px solid var(--accent-2);
+      background: #211d10;
+      border-radius: 0 12px 12px 0;
+    }
+    .danger { border-left-color: var(--danger); background: #241313; }
+    table { width: 100%; border-collapse: collapse; background: var(--panel); }
+    th, td { padding: 11px 12px; border: 1px solid var(--line); text-align: left; }
+    th { color: var(--accent); background: var(--panel-2); }
+    .steps { counter-reset: step; display: grid; gap: 12px; }
+    .step { position: relative; padding: 18px 18px 18px 62px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+    .step::before {
+      counter-increment: step; content: counter(step);
+      position: absolute; left: 18px; top: 17px; width: 28px; height: 28px;
+      display: grid; place-items: center; border-radius: 50%;
+      background: var(--accent); color: #06100b; font-weight: 900;
+    }
+    footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Board reference · TENSTAR minimum system board</div>
+    <h1>CH32V003F4P6</h1>
+    <p class="lede">A tiny 48 MHz RISC-V controller with enough ADC, timers and serial hardware for sensors, motors, LEDs and low-cost dedicated controllers.</p>
+  </header>
+
+  <section>
+    <h2>What is on this board?</h2>
+    <div class="grid">
+      <article class="card"><div class="value">48 MHz</div><h3>QingKe RISC-V2A</h3><p>32-bit RV32EC core with hardware interrupt support.</p></article>
+      <article class="card"><div class="value">16 KB</div><h3>Flash</h3><p>Small by modern standards—prefer compact C and avoid large frameworks.</p></article>
+      <article class="card"><div class="value">2 KB</div><h3>SRAM</h3><p>Use static buffers carefully. There is no room for large dynamic allocations.</p></article>
+      <article class="card"><div class="value">10-bit</div><h3>ADC</h3><p>Eight external analog channels plus internal sources.</p></article>
+      <article class="card"><div class="value">2 timers</div><h3>Hardware PWM</h3><p>One advanced and one general-purpose 16-bit timer.</p></article>
+      <article class="card"><div class="value">SPI · I²C · UART</div><h3>Serial buses</h3><p>One peripheral of each type, multiplexed across the GPIO pins.</p></article>
+    </div>
+  </section>
+
+  <section>
+    <h2>LEDs: what can you control?</h2>
+    <div class="callout">
+      <strong>Confirmed: use an external LED on PC3.</strong>
+      No controllable onboard LED was found on this board revision. The PC3 sanity test produces three quick flashes followed by a pause.
+    </div>
+    <p>Connect <code>PC3 → 220Ω–1kΩ resistor → LED anode (+)</code>, then connect the LED cathode (−) to <code>GND</code>. Do not omit the resistor. PD7 was tested and produced a continuously lit LED because it is also <code>NRST</code>: driving it low resets the MCU.</p>
+  </section>
+
+  <section>
+    <h2>USB-C and the V pins</h2>
+    <div class="callout danger">
+      <strong>Use only one power source. Confirmed on this board:</strong>
+      the center programming pad labeled <code>V</code> (the "3.3 V" programming pin) outputs about <strong>5 V while USB-C is plugged in</strong>. Every <code>V</code> pad is the same rail. Do not connect USB-C power and the WCH-LinkE 3V3 output at the same time.
+    </div>
+    <p>The CH32V003 supports a VDD range of approximately 2.7–5.5 V, so the board runs fine at 5 V. On this minimal board, all pins marked <code>V</code> are one shared VCC rail. When powered from USB-C they sit near USB VBUS (~5 V); when powered only from the LinkE 3V3 pin they are ~3.3 V.</p>
+    <p>Practical consequence: at 5 V VDD, every GPIO high level and the ADC full-scale reference are 5 V. Power the MAX4466 from the same rail so its output cannot exceed VDD.</p>
+    <table>
+      <thead><tr><th>Power arrangement</th><th>Expected V rail</th><th>Safe practice</th></tr></thead>
+      <tbody>
+        <tr><td>USB-C only</td><td>About 5 V</td><td>Leave LinkE 3V3 disconnected; keep SWD and GND connected</td></tr>
+        <tr><td>WCH-LinkE only</td><td>About 3.3 V</td><td>Connect LinkE 3V3, GND and SWD; unplug USB-C</td></tr>
+        <tr><td>External regulated supply</td><td>3.3 V or 5 V</td><td>Stay within MCU and peripheral ratings</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Programming header</h2>
+    <p>The three center pads on the underside are the programming header. The pad marked <code>SWD</code> is the board’s label for the CH32V003 single-wire <code>PD1/SWIO</code> signal.</p>
+    <table>
+      <thead><tr><th>WCH-LinkE RISC-V header</th><th>Board center pad</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>SWDIO / TMS</td><td>SWD</td><td>Single-wire programming and debugging</td></tr>
+        <tr><td>3V3</td><td>V</td><td>Target power only when USB-C is disconnected</td></tr>
+        <tr><td>GND</td><td>G</td><td>Common ground</td></tr>
+      </tbody>
+    </table>
+    <div class="callout danger">
+      <strong>RX and TX do not flash the chip.</strong>
+      They are the LinkE’s USB-to-UART bridge. For optional serial output, connect LinkE <code>RX</code> to MCU <code>PD5/TX</code>; only connect LinkE <code>TX</code> to <code>PD6/RX</code> if the firmware needs incoming serial.
+    </div>
+  </section>
+
+  <section>
+    <h2>Useful pin map</h2>
+    <table>
+      <thead><tr><th>Function</th><th>Practical default pins</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Debug</td><td>PD1 / center SWD pad</td><td>Reserve while developing</td></tr>
+        <tr><td>UART</td><td>PD5 TX, PD6 RX</td><td>PD6 may also drive the user LED</td></tr>
+        <tr><td>SPI</td><td>PC5 SCK, PC6 MOSI, PC7 MISO</td><td>Choose an available GPIO for chip select</td></tr>
+        <tr><td>I²C</td><td>PC1 SDA, PC2 SCL</td><td>External pull-ups are normally required</td></tr>
+        <tr><td>Analog</td><td>PA2 A0, PA1 A1, PC4 A2, PD2 A3, PD3 A4, PD5 A5, PD6 A6, PD4 A7</td><td>ADC input must remain between GND and VDD</td></tr>
+        <tr><td>PWM examples</td><td>PC3 TIM1_CH3, PD2 TIM1_CH1, PD3 TIM2_CH2</td><td>Volume LED plus bidirectional haptics</td></tr>
+        <tr><td>Reset</td><td>PD7 / NRST</td><td>Reset function depends on option-byte configuration</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Best first sanity test</h2>
+    <div class="steps">
+      <div class="step">Install both WCH-Link and WCH-LinkSER Windows drivers.</div>
+      <div class="step">Put the LinkE in RISC-V mode. The expected USB VID:PID is <code>1A86:8010</code>.</div>
+      <div class="step">With USB-C disconnected, connect <code>SWDIO→SWD</code>, <code>3V3→V</code> and <code>GND→G</code>.</div>
+      <div class="step">Open <code>PlatformIO/01_Starters_Tests/CH32V003SanityTest</code> and run <code>upload.bat</code>.</div>
+      <div class="step">Connect a 3 mm LED: <code>PC3 → resistor → LED +</code> and <code>LED − → GND</code>. Do not use PD7.</div>
+      <div class="step">Look for a repeating “three quick flashes, pause” pattern on the external LED.</div>
+    </div>
+    <pre>cd PlatformIO\01_Starters_Tests\CH32V003SanityTest
+pio run
+pio run -t upload</pre>
+  </section>
+
+  <section>
+    <h2>Current haptics wiring</h2>
+    <table>
+      <thead><tr><th>Part</th><th>Board pin</th><th>Function</th></tr></thead>
+      <tbody>
+        <tr><td>MAX4466 OUT</td><td>PC4 / A2</td><td>10-bit ADC audio input</td></tr>
+        <tr><td>External LED + resistor</td><td>PC3 / TIM1_CH3</td><td>Hardware-PWM microphone volume</td></tr>
+        <tr><td>H-bridge IN1</td><td>PD2 / TIM1_CH1</td><td>Forward motor PWM</td></tr>
+        <tr><td>H-bridge IN2</td><td>PD3 / TIM2_CH2</td><td>Reverse motor PWM</td></tr>
+      </tbody>
+    </table>
+    <p>PC3 and PD2 share TIM1 but use separate capture/compare channels, so LED brightness does not alter motor duty. PD3 uses TIM2 independently.</p>
+  </section>
+
+  <section>
+    <h2>Important limitations</h2>
+    <ul>
+      <li>No native USB, Wi-Fi or Bluetooth.</li>
+      <li>Only 2 KB RAM: large Arduino libraries and floating-point buffers are poor fits.</li>
+      <li>The board can run at 3.3 V or 5 V, but connected modules must be voltage-compatible.</li>
+      <li>Never power a motor from a GPIO or the LinkE’s 3.3 V output.</li>
+      <li>PD1 is both a GPIO and the only programming/debug data pin; reserve it until the project is stable.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <a href="https://www.aliexpress.us/item/3256808674030586.html">Seller listing</a>
+    · <a href="https://www.wch-ic.com/products/CH32V003.html">Official CH32V003 resources</a>
+    · Local firmware guide: <code>README.md</code>
+  </footer>
+</main>
+</body>
+</html>

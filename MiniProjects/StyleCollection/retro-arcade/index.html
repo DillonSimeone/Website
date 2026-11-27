@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retro Arcade Console Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="arcade-cabinet">
+    <!-- Cabinet Header -->
+    <div class="marquee">
+      <div class="marquee-text">NEON ARCADE</div>
+    </div>
+
+    <!-- Screen Area -->
+    <div class="screen-container">
+      <div class="crt-overlay"></div>
+      <div class="screen-content">
+        <div class="screen-header">
+          <span class="score-label">SCORE: <span id="score-val">004200</span></span>
+          <span class="hi-score-label">HI-SCORE: 999990</span>
+        </div>
+        <div class="screen-body">
+          <div class="glitch-title">INSERT COIN</div>
+          <p class="desc-text">Retro cabinet style featuring a curved CRT viewport overlay, scanlines, neon borders, and synthesised Web Audio bleeps.</p>
+          <div class="status-msg" id="status-display">READY PLAYER ONE</div>
+        </div>
+        <div class="screen-footer">
+          <span>CREDITS: 04</span>
+          <span>© 1982 RETROTECH</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controller Panel -->
+    <div class="control-panel">
+      <!-- Back button -->
+      <a href="../index.html" class="nav-back">HUB</a>
+
+      <!-- Joystick -->
+      <div class="joystick-wrapper">
+        <div class="joystick-base">
+          <div class="joystick-shaft" id="joystick">
+            <div class="joystick-knob"></div>
+          </div>
+        </div>
+        <div class="joystick-label">MOVE</div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <div class="btn-group">
+          <button class="arcade-btn btn-fire" id="btn-fire">FIRE</button>
+          <button class="arcade-btn btn-jump" id="btn-jump">JUMP</button>
+        </div>
+        <div class="btn-group">
+          <button class="arcade-btn btn-coin" id="btn-coin">COIN</button>
+          <button class="arcade-btn btn-start" id="btn-start">START</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

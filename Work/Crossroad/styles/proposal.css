@@ -1,0 +1,23 @@
+nav {
+    display: none;
+}
+
+@media only screen and (max-width: 1450px) {
+    #banner {
+        align-items: center;
+    }
+
+    #banner div {
+        margin: auto;
+    }
+
+    #intro h1 {
+        font-size: 2.5rem;
+        margin-left: -25px;
+        margin-bottom: 0;
+    }
+
+    .why {
+        font-size: 1.5rem;
+    }
+}

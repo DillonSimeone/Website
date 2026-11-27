@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>🌿 Grass Study Lab — Real-Time Shared Meadow Engine</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="stylesheet" href="lab.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+        }
+    }
+    </script>
+</head>
+<body>
+    <canvas id="lab-canvas"></canvas>
+
+    <div id="stats">
+        <div id="stats-main">🌿 Initializing Meadow...</div>
+        <div id="stats-sub">⚡ -- FPS | Density: --%</div>
+    </div>
+
+    <div id="quick-mode-bar"></div>
+    <button id="drawer-toggle-btn">✕ Close</button>
+    <div id="toast"></div>
+
+    <div id="controls">
+        <h2>🌿 Grass Study Lab</h2>
+
+        <div class="legend-bar">
+            <span style="color:#38bdf8; font-weight:600;">🔵 Blue: Live Uniform (Instant)</span>
+            <span style="color:#ef4444; font-weight:600;">🔴 Red: Rebuilds on Idle</span>
+        </div>
+
+        <div class="btn-group">
+            <button id="sim-player-btn" class="btn-accent" style="flex:1.3;">🏎️ Simulate Player</button>
+            <button id="randomize-terrain-btn" title="Randomize terrain seed and raycast camera safely above ground">🌄 Random Terrain</button>
+            <button id="reset-cam-btn">🎥 Reset Camera</button>
+        </div>
+        <div class="btn-group">
+            <button id="save-config-btn" class="btn-primary" style="display:none; flex:1;" title="Save directly to three.js/configure/grass.json">💾 Save Config</button>
+            <button id="copy-json-btn" title="Copy grass.json formatted string to clipboard">📋 Copy JSON</button>
+            <button id="capture-btn">📸 Screenshot</button>
+        </div>
+
+        <div class="cam-hint-bar">
+            <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; user-select:none;">
+                <input type="checkbox" id="cam-follow-cb"> 🎥 Follow Car
+            </label>
+            <span style="font-size:10px; color:#64748b;">Drag: Orbit | Pinch/R: Zoom/Pan | WASD: Fly</span>
+        </div>
+
+        <h3>🎨 Visual Theme & Performance</h3>
+        <div class="ctrl-row">
+            <label>Visual Mode</label>
+            <select id="visualModeSelect"></select>
+        </div>
+        <div class="ctrl-row">
+            <label>Target FPS / Density</label>
+            <select id="perfModeSelect">
+                <option value="auto">⚡ Auto (Target 60 FPS)</option>
+                <option value="ultra">💎 Ultra (100% Pool)</option>
+                <option value="high">🟢 High (78% Pool)</option>
+                <option value="medium">🟡 Medium (50% Pool)</option>
+                <option value="low">🔋 Low / Battery (25% Pool)</option>
+            </select>
+        </div>
+
+        <h3>🌾 Botanical & Floral Presets</h3>
+        <div class="ctrl-row">
+            <label>Species Preset</label>
+            <select id="speciesPresetSelect"></select>
+        </div>
+        <div class="ctrl-row">
+            <label>Floral Palette</label>
+            <select id="floraPresetSelect"></select>
+        </div>
+
+        <h3>🌐 Meadow View Mode</h3>
+        <div class="ctrl-row">
+            <label>Display Mode</label>
+            <select id="meadowViewMode">
+                <option value="ALL">Full Concentric Meadow (All 6 Rings)</option>
+                <option value="SINGLE">Single Ring Isolated</option>
+            </select>
+        </div>
+        <div class="ctrl-row">
+            <label>Coord System</label>
+            <select id="coordMode">
+                <option value="GAME_MODULO">🎮 Game Mode (Player-Centric Modulo)</option>
+                <option value="STATIC_FIELD">🌍 Static World Meadow</option>
+            </select>
+        </div>
+        <div class="ctrl-row">
+            <label>Selected Ring</label>
+            <select id="ringSelect">
+                <option value="0">Ring 1 (Ultra Carpet 0-52m)</option>
+                <option value="1">Ring 2 (Fine Meadow 24-108m)</option>
+                <option value="2">Ring 3 (Mid Meadow 68-180m)</option>
+                <option value="3">Ring 4 (Far-Mid 122-280m)</option>
+                <option value="4">Ring 5 (Distant 195-410m)</option>
+                <option value="5">Ring 6 (Horizon 300-550m)</option>
+            </select>
+        </div>
+
+        <h3>⚡ Real-time Blade Geometry</h3>
+        <div class="ctrl-row">
+            <label>Max Height (m)</label>
+            <input type="range" id="maxBladeHeight_range" class="slider-blue" min="0.10" max="3.00" step="0.05" value="1.00">
+            <input type="number" id="maxBladeHeight" class="compact num-blue" step="0.05" value="1.00">
+        </div>
+        <div class="ctrl-row">
+            <label>Blade Width (m)</label>
+            <input type="range" id="bladeWidth_range" class="slider-blue" min="0.005" max="0.280" step="0.002" value="0.044">
+            <input type="number" id="bladeWidth" class="compact num-blue" step="0.001" value="0.044">
+        </div>
+        <div class="ctrl-row">
+            <label>Blade Curvature</label>
+            <input type="range" id="curvature_range" class="slider-blue" min="0.00" max="1.00" step="0.02" value="0.35">
+            <input type="number" id="curvature" class="compact num-blue" step="0.01" value="0.35">
+        </div>
+        <div class="ctrl-row">
+            <label>Blade Stiffness</label>
+            <input type="range" id="stiffness_range" class="slider-blue" min="0.10" max="2.50" step="0.05" value="1.00">
+            <input type="number" id="stiffness" class="compact num-blue" step="0.05" value="1.00">
+        </div>
+        <div class="ctrl-row">
+            <label>SSS Translucency</label>
+            <input type="range" id="translucency_range" class="slider-blue" min="0.00" max="1.50" step="0.05" value="0.65">
+            <input type="number" id="translucency" class="compact num-blue" step="0.05" value="0.65">
+        </div>
+        <div class="ctrl-row">
+            <label>Field Patchiness</label>
+            <input type="range" id="patchiness_range" class="slider-blue" min="0.00" max="1.00" step="0.02" value="0.40">
+            <input type="number" id="patchiness" class="compact num-blue" step="0.02" value="0.40">
+        </div>
+
+        <h3>🏗️ Structural Mesh Parameters</h3>
+        <div class="ctrl-row">
+            <label>Cell Size (m)</label>
+            <input type="range" id="cellSize_range" class="slider-red" min="0.18" max="3.00" step="0.02" value="0.34">
+            <input type="number" id="cellSize" class="compact num-red" step="0.01" value="0.34">
+        </div>
+        <div class="ctrl-row">
+            <label>Blades/Tuft</label>
+            <input type="range" id="bladesPerTuft_range" class="slider-red" min="1" max="10" step="1" value="4">
+            <input type="number" id="bladesPerTuft" class="compact num-red" step="1" value="4">
+        </div>
+        <div class="ctrl-row">
+            <label>Segments</label>
+            <input type="range" id="segments_range" class="slider-red" min="1" max="4" step="1" value="2">
+            <input type="number" id="segments" class="compact num-red" step="1" value="2">
+        </div>
+
+        <h3>🎛️ Ring Cross-Fade & Density Envelope</h3>
+        <div class="ctrl-row">
+            <label>Fade-In Start (m)</label>
+            <input type="range" id="fadeInMin_range" class="slider-blue" min="0" max="600" step="1" value="0">
+            <input type="number" id="fadeInMin" class="compact num-blue" step="1" value="0" min="0" max="1000">
+        </div>
+        <div class="ctrl-row">
+            <label>Fade-In Peak (m)</label>
+            <input type="range" id="fadeInMax_range" class="slider-blue" min="0" max="600" step="1" value="0">
+            <input type="number" id="fadeInMax" class="compact num-blue" step="1" value="0" min="0" max="1000">
+        </div>
+        <div class="ctrl-row">
+            <label>Fade-Out Start (m)</label>
+            <input type="range" id="fadeOutMin_range" class="slider-blue" min="5" max="800" step="1" value="18">
+            <input type="number" id="fadeOutMin" class="compact num-blue" step="1" value="18" min="0" max="1200">
+        </div>
+        <div class="ctrl-row">
+            <label>Fade-Out End (m)</label>
+            <input type="range" id="fadeOutMax_range" class="slider-blue" min="10" max="900" step="1" value="56">
+            <input type="number" id="fadeOutMax" class="compact num-blue" step="1" value="56" min="0" max="1400">
+        </div>
+        <div class="ctrl-row">
+            <label>Patch Size (m)</label>
+            <input type="range" id="patchSize_range" class="slider-red" min="40" max="1600" step="10" value="165">
+            <input type="number" id="patchSize" class="compact num-red" step="5" value="165" min="20" max="2000">
+        </div>
+
+        <h3>🌊 Seam Blending & Drop-Off</h3>
+        <div class="ctrl-row">
+            <label>Density Drop-off</label>
+            <input type="range" id="densityDropoff_range" class="slider-blue" min="0.15" max="2.50" step="0.05" value="1.00">
+            <input type="number" id="densityDropoff" class="compact num-blue" step="0.05" value="1.00" min="0.1" max="4.0">
+        </div>
+        <div class="ctrl-row">
+            <label>Radial Jitter (m)</label>
+            <input type="range" id="radialJitterAmp_range" class="slider-blue" min="0.0" max="15.0" step="0.2" value="6.5">
+            <input type="number" id="radialJitterAmp" class="compact num-blue" step="0.1" value="6.5" min="0.0" max="25.0">
+        </div>
+        <div class="ctrl-row">
+            <label>Boundary Margin (m)</label>
+            <input type="range" id="boundaryMargin_range" class="slider-blue" min="0.0" max="25.0" step="0.5" value="8.0">
+            <input type="number" id="boundaryMargin" class="compact num-blue" step="0.5" value="8.0" min="0.0" max="50.0">
+        </div>
+
+        <h3>Lean & Curvature Variances</h3>
+        <div class="ctrl-row"><label>Lean Min/Max</label><input type="number" id="leanMin" step="0.01" value="0.05"><input type="number" id="leanMax" step="0.01" value="0.30"></div>
+        <div class="ctrl-row"><label>Curve Min/Max</label><input type="number" id="curveMin" step="0.01" value="0.15"><input type="number" id="curveMax" step="0.01" value="0.40"></div>
+        <div class="ctrl-row"><label>Height Scale Min/Max</label><input type="number" id="hScaleMin" step="0.05" value="0.40"><input type="number" id="hScaleMax" step="0.05" value="1.20"></div>
+
+        <h3>Adaptive Density & Tri Budgets</h3>
+        <div class="ctrl-row"><label>Adaptive Density</label><input type="checkbox" id="adaptiveEnabled" checked></div>
+        <div class="ctrl-row"><label>Target Tris/Ring</label><input type="number" id="targetTris" step="100000" value="1200000"></div>
+        <div class="ctrl-row"><label>Cull Compensation</label><input type="number" id="cullComp" step="0.05" value="1.35"></div>
+
+        <h3>✨ Flora Shading FX</h3>
+        <div class="ctrl-row">
+            <label>Shading Mode</label>
+            <select id="floraShadingFx">
+                <option value="0">🌿 Natural Organic (PBR Translucency & AO)</option>
+                <option value="1">🌈 Iridescent Opal Sheen (Spectral Fresnel)</option>
+                <option value="2">🌊 Bioluminescent Waves (Pulse Ripples)</option>
+                <option value="3">🔮 Cyberpunk Neon Synth (Emission & Scanlines)</option>
+                <option value="4">🎵 Sound-Reactive Beats (Sonic Bloom)</option>
+                <option value="5">🎨 Toon Ghibli Cel-Bands</option>
+            </select>
+        </div>
+
+        <div id="sound-controls">
+            <div style="color:#c59bff; font-weight:600; margin-bottom:5px; font-size:11px;">🎵 Audio Reactive Engine</div>
+            <div class="btn-group">
+                <button id="beat-synth-btn" class="btn-primary" style="background:#4a1e78; border-color:#7b38c4; flex:1;">▶️ Start Beat Pulse (130 BPM)</button>
+                <button id="mic-input-btn" style="background:#1b4d6b; border-color:#2a82b8; flex:1;">🎤 Use Mic Input</button>
+            </div>
+            <div class="ctrl-row" style="margin-top:5px;">
+                <label style="color:#aaa;">Audio Sensitivity</label>
+                <input type="number" id="audioSensitivity" step="0.1" value="1.2" min="0.1" max="3.0">
+            </div>
+            <div style="font-size:10px; color:#88aaff; font-family:'Consolas',monospace; margin-top:4px;" id="audio-levels">
+                Bass: 0.00 | Treble: 0.00
+            </div>
+        </div>
+
+        <h3>⏳ Time-Reactive Palette Morphing</h3>
+        <div class="ctrl-row"><label>Enable Time Morph</label><input type="checkbox" id="timeMorphEnabled"></div>
+        <div class="ctrl-row">
+            <label>Morph Palette</label>
+            <select id="timeMorphPalette">
+                <option value="0">🌸 Spring Blossom</option>
+                <option value="1">☀️ Summer Solstice</option>
+                <option value="2">🍂 Autumn Sunset</option>
+                <option value="3">🌌 Cosmic Nebula</option>
+            </select>
+        </div>
+        <div class="ctrl-row"><label>Morph Speed (s)</label><input type="number" id="timeMorphSpeed" step="5" value="25" min="5" max="180"></div>
+
+        <h3>🌺 Flower Blossom Colors</h3>
+        <div class="ctrl-row"><label>Poppy Crimson</label><input type="color" id="flowerCol0" value="#f23c34"></div>
+        <div class="ctrl-row"><label>Buttercup Yellow</label><input type="color" id="flowerCol1" value="#fed022"></div>
+        <div class="ctrl-row"><label>Cornflower Azure</label><input type="color" id="flowerCol2" value="#3488f2"></div>
+        <div class="ctrl-row"><label>Daisy White</label><input type="color" id="flowerCol3" value="#fefefe"></div>
+
+        <h3>Color Gradient (Root ➔ Tip)</h3>
+        <div class="ctrl-row"><label>Root Color</label><input type="color" id="colRoot" value="#051402"></div>
+        <div class="ctrl-row"><label>Lower Color</label><input type="color" id="colLower" value="#142d06"></div>
+        <div class="ctrl-row"><label>Mid Color</label><input type="color" id="colMid" value="#2e5c14"></div>
+        <div class="ctrl-row"><label>Upper Color</label><input type="color" id="colUpper" value="#4d7a1e"></div>
+        <div class="ctrl-row"><label>Tip Color</label><input type="color" id="colTip" value="#6b8528"></div>
+
+        <h3>🌄 Undulating Landscape</h3>
+        <div class="ctrl-row">
+            <label>Terrain Relief</label>
+            <input type="range" id="terrainRelief_range" class="slider-blue" min="0.0" max="3.0" step="0.1" value="1.0">
+            <input type="number" id="terrainRelief" class="compact num-blue" step="0.1" value="1.0" min="0.0" max="3.0">
+        </div>
+
+        <h3>⛈️ Weather & Atmospheric Study</h3>
+        <div class="ctrl-row"><label>🌧️ Rain Simulation</label><input type="checkbox" id="weatherRainEnabled"></div>
+        <div class="ctrl-row"><label>Rain Intensity</label><input type="number" id="weatherRainIntensity" step="0.05" value="0.75" min="0.0" max="1.0"></div>
+        <div class="ctrl-row">
+            <label>Wind Speed (Gale)</label>
+            <input type="range" id="weatherWindSpeed_range" class="slider-blue" min="0.0" max="4.0" step="0.1" value="1.2">
+            <input type="number" id="weatherWindSpeed" class="compact num-blue" step="0.1" value="1.2" min="0.0" max="4.0">
+        </div>
+        <div class="ctrl-row">
+            <label>Cloud Shadow</label>
+            <input type="range" id="weatherCloudShadow_range" class="slider-blue" min="0.00" max="1.00" step="0.05" value="0.45">
+            <input type="number" id="weatherCloudShadow" class="compact num-blue" step="0.05" value="0.45" min="0.0" max="1.0">
+        </div>
+
+        <h3>🌸 Mixed Flora & Species Frequency</h3>
+        <div class="ctrl-row">
+            <label>Wildflowers (%)</label>
+            <input type="range" id="flowerFreq_range" class="slider-red" min="0.00" max="0.50" step="0.01" value="0.08">
+            <input type="number" id="flowerFreq" class="compact num-red" step="0.01" value="0.08" min="0" max="1">
+        </div>
+        <div class="ctrl-row">
+            <label>Clover (%)</label>
+            <input type="range" id="cloverFreq_range" class="slider-red" min="0.00" max="0.50" step="0.01" value="0.10">
+            <input type="number" id="cloverFreq" class="compact num-red" step="0.01" value="0.10" min="0" max="1">
+        </div>
+        <div class="ctrl-row">
+            <label>Wheat / Grain (%)</label>
+            <input type="range" id="wheatFreq_range" class="slider-red" min="0.00" max="0.50" step="0.01" value="0.08">
+            <input type="number" id="wheatFreq" class="compact num-red" step="0.01" value="0.08" min="0" max="1">
+        </div>
+        <div class="ctrl-row">
+            <label>3D Twist Intensity</label>
+            <input type="range" id="twistIntensity_range" class="slider-red" min="0.00" max="2.00" step="0.05" value="0.95">
+            <input type="number" id="twistIntensity" class="compact num-red" step="0.05" value="0.95" min="0" max="2">
+        </div>
+
+        <h3 style="margin-top:14px;">Active Configuration (grass.json)</h3>
+        <textarea id="paramDump" rows="9" readonly></textarea>
+    </div>
+
+    <script type="module" src="js/lab_app.js"></script>
+</body>
+</html>

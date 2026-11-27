@@ -1,0 +1,94 @@
+{
+    "id": "lighting",
+    "title": "Lighting & Effects",
+    "tags": [
+        {
+            "id": "sunlight",
+            "label": "sunlight",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "shadow",
+            "label": "shadow",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "backlighting",
+            "label": "backlighting",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "sidelighting",
+            "label": "sidelighting",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "dim_lighting",
+            "label": "dim lighting",
+            "classes": [
+                "tag-rare"
+            ]
+        },
+        {
+            "id": "light_rays",
+            "label": "light rays",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "bloom",
+            "label": "bloom",
+            "classes": [
+                "tag-rare"
+            ]
+        },
+        {
+            "id": "lens_flare",
+            "label": "lens flare",
+            "classes": [
+                "tag-uncommon"
+            ]
+        },
+        {
+            "id": "glowing",
+            "label": "glowing",
+            "classes": [
+                "tag-popular"
+            ]
+        },
+        {
+            "id": "dramatic_lighting",
+            "label": "dramatic lighting",
+            "classes": []
+        },
+        {
+            "id": "volumetric_lighting",
+            "label": "volumetric lighting",
+            "classes": []
+        },
+        {
+            "id": "candlelight",
+            "label": "candlelight",
+            "classes": []
+        },
+        {
+            "id": "neon_lighting",
+            "label": "neon lighting",
+            "classes": []
+        },
+        {
+            "id": "cinematic_lighting",
+            "label": "cinematic",
+            "classes": []
+        }
+    ]
+}

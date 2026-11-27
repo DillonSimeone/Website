@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForgeCAD - Fan Duct Works</title>
+    <style>
+        :root {
+            --bg-dark: #020617;
+            --accent-brand: #3b82f6;
+            --secondary: #8b5cf6;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+            --font-mono: 'Fira Code', 'JetBrains Mono', monospace;
+        }
+
+        body {
+            margin: 0; padding: 0; background: var(--bg-dark); color: #f8fafc;
+            font-family: 'Inter', system-ui, sans-serif; overflow: hidden;
+            display: flex; height: 100vh;
+        }
+
+        #studio-panel {
+            width: 420px; background: #0f172a; border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; z-index: 100;
+            box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+        }
+
+        .panel-header {
+            padding: 24px; border-bottom: 1px solid var(--border);
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        }
+
+        .logo {
+            font-size: 1.4rem; font-weight: 900; letter-spacing: -1px;
+            display: flex; align-items: center; gap: 12px;
+        }
+
+        .logo-box {
+            width: 32px; height: 32px;
+            background: linear-gradient(to bottom right, var(--accent-brand), var(--secondary));
+            border-radius: 8px; display: grid; place-items: center; font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .panel-content {
+            flex: 1; overflow-y: auto; padding: 18px 24px;
+            display: flex; flex-direction: column; gap: 16px;
+        }
+
+        .section-title {
+            font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px;
+            color: #64748b; margin-top: 10px; margin-bottom: 6px; font-weight: 700;
+        }
+
+        .param-row {
+            padding: 10px 12px; background: var(--glass); border: 1px solid var(--border);
+            border-radius: 10px; transition: all 0.2s ease; margin-bottom: 4px;
+        }
+
+        .ph { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.8rem; font-weight: 600; color: #94a3b8; }
+        .val { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-brand); background: #1e293b; padding: 1px 6px; border-radius: 4px; }
+
+        input[type="range"] { width: 100%; height: 3px; background: #334155; border-radius: 2px; appearance: none; outline: none; margin: 6px 0; }
+        input[type="range"]::-webkit-slider-thumb { appearance: none; width: 12px; height: 12px; background: var(--accent-brand); border-radius: 50%; cursor: pointer; border: 2px solid white; box-shadow: 0 0 8px var(--accent-brand); }
+
+        #viewport-container { flex: 1; position: relative; background: #020617; }
+        #viewer { width: 100%; height: 100%; }
+
+        .viewport-badge {
+            position: absolute; top: 24px; right: 24px;
+            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px);
+            padding: 8px 16px; border-radius: 99px; border: 1px solid var(--border);
+            font-size: 0.8rem; display: flex; align-items: center; gap: 8px; z-index: 1000;
+        }
+
+        .status-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; }
+        
+        button.dl-btn {
+            background: #1e293b; color: white; border: 1px solid var(--border);
+            padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;
+            width: 100%; margin-top: 5px; font-size: 0.75rem; transition: all 0.2s;
+        }
+        button.dl-btn:hover { background: #334155; border-color: var(--accent-brand); }
+        .dl-main { background: var(--accent-brand); color: #111; border: none; }
+        .dl-main:hover { background: #2563eb; }
+
+    </style>
+</head>
+<body>
+    <div id="studio-panel">
+        <div class="panel-header">
+            <div class="logo">
+                <div class="logo-box">D</div>
+                ForgeCAD <span style="font-weight: 300; opacity: 0.5;">Fan Duct Works</span>
+            </div>
+        </div>
+
+        <div class="panel-content">
+            <div class="section-title">Global Settings</div>
+            <div id="params-global"></div>
+
+            <div class="section-title">Fan Dimensions</div>
+            <div id="params-fan"></div>
+
+            <div class="section-title">Duct Geometry</div>
+            <div id="params-duct"></div>
+
+            <div class="section-title">Slot & Tolerance</div>
+            <div id="params-slot"></div>
+
+            <div class="section-title" style="margin-top:20px">Manufacturing Export</div>
+            <button class="dl-btn dl-main" id="dl-model">EXPORT MODEL (.STL)</button>
+        </div>
+    </div>
+
+    <div id="viewport-container">
+        <div id="viewer"></div>
+        <div class="viewport-badge">
+            <div class="status-dot"></div>
+            FORGECAD STUDIO ACTIVE
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
+        import Module from 'https://unpkg.com/manifold-3d/manifold.js';
+
+        let wasm, Manifold;
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(50, (window.innerWidth - 420) / window.innerHeight, 0.1, 2500);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth - 420, window.innerHeight);
+        document.getElementById('viewer').appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        camera.position.set(150, 150, 150);
+        controls.update();
+
+        scene.add(new THREE.HemisphereLight(0xffffff, 0x111827, 0.8));
+        const p1 = new THREE.PointLight(0x3b82f6, 1.5, 1000); p1.position.set(200, 200, 200); scene.add(p1);
+        const p2 = new THREE.PointLight(0x8b5cf6, 1, 1000); p2.position.set(-200, 100, -200); scene.add(p2);
+        
+        const grid = new THREE.GridHelper(400, 40, 0x1e293b, 0x0f172a);
+        grid.position.y = -50;
+        scene.add(grid);
+
+        let currentMeshes = [];
+        let currentModels = {};
+
+        // --- ForgeCAD Param API with localStorage ---
+        const STORAGE_KEY = 'fanDuctWorks_params';
+        const PARAMS = {};
+
+        function loadSavedParams() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
+        }
+        function saveParams() {
+            const data = {};
+            for (const [id, p] of Object.entries(PARAMS)) data[id] = p.value;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+        const savedParams = loadSavedParams();
+
+        const param = (name, defaultValue, options = {}, category = 'global') => {
+            const id = name.replace(/\s+/g, '-').toLowerCase();
+            if (!PARAMS[id]) {
+                const type = options.type ?? 'range';
+                const min = options.min ?? 0;
+                const max = options.max ?? (defaultValue * 3);
+                const step = options.step ?? 1;
+                const saved = savedParams[id];
+                const value = saved !== undefined ? saved : defaultValue;
+                PARAMS[id] = { value, min, max, step, name, category, type };
+                createParamUI(id, category);
+            }
+            return PARAMS[id].value;
+        };
+
+        function createParamUI(id, cat) {
+            const p = PARAMS[id];
+            let container = document.getElementById('params-' + cat) || document.getElementById('params-global');
+            
+            const row = document.createElement('div');
+            row.className = 'param-row';
+            
+            if (p.type === 'checkbox') {
+                row.innerHTML = `
+                    <div class="ph" style="display:flex; justify-content:space-between; align-items:center;">
+                        ${p.name} 
+                        <input type="checkbox" id="input-${id}" ${p.value ? 'checked' : ''} style="width:20px; height:20px; cursor:pointer;">
+                    </div>
+                `;
+                container.appendChild(row);
+                row.querySelector('input').addEventListener('change', (e) => {
+                    PARAMS[id].value = e.target.checked ? 1 : 0;
+                    saveParams();
+                    requestUpdate();
+                });
+            } else {
+                row.innerHTML = `
+                    <div class="ph">${p.name} <span class="val" id="val-${id}">${p.value}</span></div>
+                    <input type="range" id="input-${id}" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.value}">
+                `;
+                container.appendChild(row);
+                row.querySelector('input').addEventListener('input', (e) => {
+                    const val = parseFloat(e.target.value);
+                    PARAMS[id].value = val;
+                    document.getElementById(`val-${id}`).innerText = val;
+                    saveParams();
+                    requestUpdate();
+                });
+            }
+        }
+
+        // --- Modeling Primitive Ops ---
+        const cube = (w, h, d) => Manifold.cube([w, h, d], true);
+        const cylinder = (r, h, s=64) => Manifold.cylinder(h, r, r, s, true);
+
+        // =====================================================================
+        // SUPERELLIPSE TRANSITION - Pure math, zero boolean operations
+        // Interpolates from circle (n=2) to rounded-square (n=high)
+        // =====================================================================
+        function superellipsePoint(theta, r, n) {
+            const c = Math.cos(theta), s = Math.sin(theta);
+            const x = r * Math.sign(c) * Math.pow(Math.abs(c) + 1e-12, 2 / n);
+            const y = r * Math.sign(s) * Math.pow(Math.abs(s) + 1e-12, 2 / n);
+            return [x, y];
+        }
+
+        function buildTransitionGeometry(rStart, rEnd, length, bellPower, segs, ptsPerRing, wall) {
+            const rings = segs + 1;
+            const pp = ptsPerRing;
+            const verts = [];
+            const indices = [];
+
+            // Generate vertex rings for outer (surface=0) and inner (surface=1)
+            for (let surface = 0; surface < 2; surface++) {
+                const wOff = surface === 0 ? wall : 0;
+                for (let i = 0; i < rings; i++) {
+                    const t = i / segs;
+                    const ct = Math.pow(t, bellPower); // bell curve profile
+                    const r = (rStart + wOff) + ((rEnd + wOff) - (rStart + wOff)) * ct;
+                    const n = 2 + 14 * ct; // 2=circle, 16=near-square
+                    for (let j = 0; j < pp; j++) {
+                        const theta = (j / pp) * Math.PI * 2;
+                        const [x, y] = superellipsePoint(theta, r, n);
+                        verts.push(x, y, t * length);
+                    }
+                }
+            }
+
+            const innerOff = rings * pp;
+
+            // Outer surface quads — normals point OUTWARD (away from axis)
+            for (let i = 0; i < segs; i++) {
+                for (let j = 0; j < pp; j++) {
+                    const jn = (j + 1) % pp;
+                    const a = i * pp + j, b = i * pp + jn;
+                    const c = (i + 1) * pp + j, d = (i + 1) * pp + jn;
+                    indices.push(a, b, c, b, d, c);
+                }
+            }
+
+            // Inner surface quads — normals point INWARD (toward axis)
+            for (let i = 0; i < segs; i++) {
+                for (let j = 0; j < pp; j++) {
+                    const jn = (j + 1) % pp;
+                    const a = innerOff + i * pp + j, b = innerOff + i * pp + jn;
+                    const c = innerOff + (i + 1) * pp + j, d = innerOff + (i + 1) * pp + jn;
+                    indices.push(a, c, b, b, c, d);
+                }
+            }
+
+            // End cap at ring 0 (duct end) — normal points -Z
+            for (let j = 0; j < pp; j++) {
+                const jn = (j + 1) % pp;
+                indices.push(j, innerOff + j, jn, jn, innerOff + j, innerOff + jn);
+            }
+
+            // End cap at last ring (fan end) — normal points +Z
+            for (let j = 0; j < pp; j++) {
+                const jn = (j + 1) % pp;
+                const oA = segs * pp + j, oB = segs * pp + jn;
+                const iA = innerOff + segs * pp + j, iB = innerOff + segs * pp + jn;
+                indices.push(oA, oB, iA, oB, iB, iA);
+            }
+
+            const mesh = new wasm.Mesh({
+                numProp: 3,
+                vertProperties: new Float32Array(verts),
+                triVerts: new Uint32Array(indices)
+            });
+            return new Manifold(mesh);
+        }
+
+        function geoToThreeMesh(geo, color, opacity) {
+            const g = new THREE.BufferGeometry();
+            g.setAttribute('position', new THREE.Float32BufferAttribute(geo.vertices, 3));
+            g.setIndex(new THREE.Uint32BufferAttribute(geo.indices, 1));
+            g.computeVertexNormals();
+            const mat = new THREE.MeshPhysicalMaterial({
+                color, transparent: opacity < 1, opacity,
+                metalness: 0.4, roughness: 0.2, side: THREE.DoubleSide
+            });
+            return new THREE.Mesh(g, mat);
+        }
+
+        function manifoldToThreeMesh(model, color, opacity) {
+            const m = model.getMesh();
+            const g = new THREE.BufferGeometry();
+            g.setAttribute('position', new THREE.Float32BufferAttribute(m.vertProperties, 3));
+            g.setIndex(new THREE.Uint32BufferAttribute(m.triVerts, 1));
+            g.computeVertexNormals();
+            const mat = new THREE.MeshPhysicalMaterial({
+                color, transparent: opacity < 1, opacity,
+                metalness: 0.4, roughness: 0.2, side: THREE.DoubleSide
+            });
+            return new THREE.Mesh(g, mat);
+        }
+
+        function addMesh(mesh, offset) {
+            if (offset) mesh.position.set(offset[0], offset[1], offset[2]);
+            scene.add(mesh);
+            currentMeshes.push(mesh);
+        }
+
+        // --- STL Export: pieces laid out on print bed ---
+        function exportAllSTL(name) {
+            let stl = `solid ${name}\n`;
+            for (const mesh of currentMeshes) {
+                if (mesh.userData.isGhost) continue;
+                
+                const pos = mesh.geometry.attributes.position;
+                const idx = mesh.geometry.index;
+                if (!idx) continue;
+
+                // Use bedOffset for print layout (ignores scene split-view position)
+                const bed = mesh.userData.bedOffset || [0, 0, 0];
+                
+                for (let i = 0; i < idx.count; i += 3) {
+                    const verts = [];
+                    for (let k = 0; k < 3; k++) {
+                        const vi = idx.getX(i + k);
+                        verts.push([
+                            pos.getX(vi) + bed[0],
+                            pos.getY(vi) + bed[1],
+                            pos.getZ(vi) + bed[2]
+                        ]);
+                    }
+                    stl += `facet normal 0 0 0\n  outer loop\n`;
+                    for (const v of verts) stl += `    vertex ${v[0]} ${v[1]} ${v[2]}\n`;
+                    stl += `  endloop\nendfacet\n`;
+                }
+            }
+            stl += `endsolid ${name}`;
+            const blob = new Blob([stl], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `${name}.stl`; a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        async function init() {
+            wasm = await Module();
+            wasm.setup();
+            Manifold = wasm.Manifold;
+            requestUpdate();
+            animate();
+        }
+
+        function requestUpdate() {
+            if (!Manifold) return;
+            
+            // Cleanup
+            currentMeshes.forEach(m => scene.remove(m));
+            currentMeshes = [];
+            if (currentModels.housing) { currentModels.housing.delete(); currentModels.housing = null; }
+
+            try {
+                // --- Parameters ---
+                const wall = param("Wall Thick", 2.5, { min: 1, max: 6, step: 0.5 }, "global");
+                const explosion = param("Explosion", 0, { min: 0, max: 100 }, "global") / 100;
+
+                const fanSide = param("Fan Side", 40, { min: 20, max: 120, step: 1 }, "fan");
+                const fanThick = param("Fan Thick", 10, { min: 5, max: 40, step: 1 }, "fan");
+
+                const sepDuct2 = param("Separate Duct 2", 0, { type: 'checkbox' }, "duct");
+                
+                // Register all parameters so they appear in UI
+                const d1_In_D = param("D1 Inner D", 30, { min: 10, max: 100, step: 1 }, "duct");
+                const d1_Ext = param("D1 Extension", 15, { min: 0, max: 80 }, "duct");
+                const d1_Tr = param("D1 Transition", 30, { min: 5, max: 100 }, "duct");
+                const d1_Be = param("D1 Bell Curve", 2.0, { min: 0.3, max: 5, step: 0.1 }, "duct");
+
+                const d2_In_D = param("D2 Inner D", 30, { min: 10, max: 100, step: 1 }, "duct");
+                const d2_Ext = param("D2 Extension", 15, { min: 0, max: 80 }, "duct");
+                const d2_Tr = param("D2 Transition", 30, { min: 5, max: 100 }, "duct");
+                const d2_Be = param("D2 Bell Curve", 2.0, { min: 0.3, max: 5, step: 0.1 }, "duct");
+
+                // Logic assignment
+                const d1InnerD = d1_In_D;
+                const d1Ext = d1_Ext;
+                const d1TransLen = d1_Tr;
+                const d1Bell = d1_Be;
+
+                const d2InnerD = sepDuct2 ? d2_In_D : d1InnerD;
+                const d2Ext = sepDuct2 ? d2_Ext : d1Ext;
+                const d2TransLen = sepDuct2 ? d2_Tr : d1TransLen;
+                const d2Bell = sepDuct2 ? d2_Be : d1Bell;
+
+
+                const tolerance = param("Tolerance", 0.4, { min: 0.1, max: 2, step: 0.1 }, "slot");
+                const slotLip = param("Slot Lip", 3, { min: 1, max: 10, step: 0.5 }, "slot");
+                const splitForPrint = param("Split for Print", 0, { type: 'checkbox' }, "slot");
+                const splitView = param("Split View", 0, { min: 0, max: 100 }, "slot") / 100;
+
+                // Hide Split View when not splitting
+                const svEl = document.getElementById("input-split-view");
+                if (svEl) svEl.closest('.param-row').style.display = splitForPrint ? 'block' : 'none';
+
+                // Dynamic UI visibility for D2
+                const d2Rows = ["d2-inner-d", "d2-extension", "d2-transition", "d2-bell-curve"];
+                d2Rows.forEach(id => {
+                    const el = document.getElementById("input-" + id);
+                    if (el) el.closest('.param-row').style.display = sepDuct2 ? 'block' : 'none';
+                });
+
+                // --- Derived ---
+                const fanActual = fanSide + tolerance * 2;
+                const fanActualT = fanThick + tolerance * 2;
+                const fanHalfInner = fanSide / 2;
+                const housingT = fanActualT + wall * 2;
+                const halfHousing = housingT / 2;
+                const housingW = fanActual + slotLip * 2;
+                const housingH = fanActual + slotLip * 2;
+
+                // ======= 1. BUILD FULL ASSEMBLY =======
+                
+                // --- Transition IN (Side 1) ---
+                const d1InnerR = d1InnerD / 2;
+                const overlap = 1;
+                let trans1 = buildTransitionGeometry(d1InnerR, fanHalfInner, d1TransLen + overlap, d1Bell, 16, 48, wall);
+                trans1 = trans1.translate([0, 0, -halfHousing - d1TransLen]);
+
+                // --- Transition OUT (Side 2) ---
+                const d2InnerR = d2InnerD / 2;
+                let trans2 = buildTransitionGeometry(d2InnerR, fanHalfInner, d2TransLen + overlap, d2Bell, 16, 48, wall);
+                trans2 = trans2.rotate([180, 0, 0]).translate([0, 0, halfHousing + d2TransLen]);
+
+                // --- Duct Extensions ---
+                let fullModel = Manifold.union(trans1, trans2);
+                trans1.delete(); trans2.delete();
+
+                if (d1Ext > 0.1) {
+                    let extO = cylinder(d1InnerR + wall, d1Ext);
+                    let extI = cylinder(d1InnerR, d1Ext + 0.2);
+                    let ext = extO.subtract(extI).translate([0, 0, -halfHousing - d1TransLen - d1Ext / 2]);
+                    extO.delete(); extI.delete();
+                    let old = fullModel; fullModel = Manifold.union(fullModel, ext); old.delete(); ext.delete();
+                }
+
+                if (d2Ext > 0.1) {
+                    let extO = cylinder(d2InnerR + wall, d2Ext);
+                    let extI = cylinder(d2InnerR, d2Ext + 0.2);
+                    let ext = extO.subtract(extI).translate([0, 0, halfHousing + d2TransLen + d2Ext / 2]);
+                    extO.delete(); extI.delete();
+                    let old = fullModel; fullModel = Manifold.union(fullModel, ext); old.delete(); ext.delete();
+                }
+
+                // --- Housing ---
+                let housing = cube(housingW, housingH, housingT);
+                let slot = cube(fanActual, fanActual + housingH, fanActualT).translate([0, housingH / 2, 0]);
+                let airHole = cube(fanSide, fanSide, housingT + 2);
+                housing = housing.subtract(slot).subtract(airHole);
+                slot.delete(); airHole.delete();
+
+                let old = fullModel; fullModel = Manifold.union(fullModel, housing); old.delete(); housing.delete();
+
+                if (splitForPrint) {
+                    // ======= 2. SPLIT AT Y=0 (clamshell halves) =======
+                    const bigBox = 500;
+                    let topHalf = fullModel.intersect(cube(bigBox, bigBox, bigBox).translate([0, bigBox / 2, 0]));
+                    let botHalf = fullModel.intersect(cube(bigBox, bigBox, bigBox).translate([0, -bigBox / 2, 0]));
+                    fullModel.delete();
+
+                    // ======= 3. DOWEL HOLES in both halves =======
+                    const dowelR = Math.min(slotLip, wall) * 0.35;
+                    const dowelDepth = Math.min(5, fanHalfInner * 0.4);
+                    const holeR = dowelR + 0.15;
+                    const dxOff = housingW / 2 - slotLip / 2;
+                    const dzPositions = [housingT / 4, -housingT / 4];
+
+                    let topHoles = null;
+                    let botHoles = null;
+
+                    for (const dz of dzPositions) {
+                        for (const dx of [dxOff, -dxOff]) {
+                            let ht = cylinder(holeR, dowelDepth + 0.5, 16).rotate([90, 0, 0]).translate([dx, dowelDepth / 2, dz]);
+                            topHoles = topHoles ? (() => { let o = topHoles; let r = Manifold.union(topHoles, ht); o.delete(); ht.delete(); return r; })() : ht;
+
+                            let hb = cylinder(holeR, dowelDepth + 0.5, 16).rotate([90, 0, 0]).translate([dx, -dowelDepth / 2, dz]);
+                            botHoles = botHoles ? (() => { let o = botHoles; let r = Manifold.union(botHoles, hb); o.delete(); hb.delete(); return r; })() : hb;
+                        }
+                    }
+
+                    let finalTop = topHalf.subtract(topHoles);
+                    topHalf.delete(); topHoles.delete();
+                    let finalBot = botHalf.subtract(botHoles);
+                    botHalf.delete(); botHoles.delete();
+
+                    // ======= 4. SEPARATE DOWEL PINS =======
+                    const dowelPinLen = dowelDepth * 2 - 0.5;
+                    let allPins = null;
+                    for (const dz of dzPositions) {
+                        for (const dx of [dxOff, -dxOff]) {
+                            let pin = cylinder(dowelR, dowelPinLen, 16).rotate([90, 0, 0]).translate([dx, 0, dz]);
+                            allPins = allPins ? (() => { let o = allPins; let r = Manifold.union(allPins, pin); o.delete(); pin.delete(); return r; })() : pin;
+                        }
+                    }
+
+                    // ======= 5. DISPLAY (SPLIT) =======
+                    const splitOff = splitView * 60;
+                    const bedSpacing = Math.max(housingW, housingH) + 15;
+                    
+                    const mTop = manifoldToThreeMesh(finalTop, 0x3b82f6, 0.8);
+                    mTop.userData.bedOffset = [-bedSpacing, 0, 0];
+                    addMesh(mTop, [0, splitOff, 0]);
+                    
+                    const mBot = manifoldToThreeMesh(finalBot, 0x10b981, 0.8);
+                    mBot.userData.bedOffset = [0, 0, 0];
+                    addMesh(mBot, [0, -splitOff, 0]);
+
+                    const mPins = manifoldToThreeMesh(allPins, 0xf59e0b, 1.0);
+                    mPins.userData.bedOffset = [bedSpacing, 0, 0];
+                    addMesh(mPins, [splitOff > 0 ? housingW + 20 : 0, 0, 0]);
+
+                    finalTop.delete(); finalBot.delete(); allPins.delete();
+                } else {
+                    // ======= DISPLAY (WHOLE) =======
+                    const mFull = manifoldToThreeMesh(fullModel, 0x3b82f6, 0.8);
+                    mFull.userData.bedOffset = [0, 0, 0];
+                    addMesh(mFull);
+                    fullModel.delete();
+                }
+
+                // ======= GHOST FAN =======
+                let fanGhost = cube(fanSide, fanSide, fanThick);
+                const fanMesh = manifoldToThreeMesh(fanGhost, 0x8b5cf6, 0.35);
+                fanMesh.userData.isGhost = true;
+                addMesh(fanMesh, [0, explosion * 120, 0]);
+                fanGhost.delete();
+
+            } catch (e) {
+                console.error("Modeling Error:", e);
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = (window.innerWidth - 420) / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth - 420, window.innerHeight);
+        });
+
+        document.getElementById('dl-model').onclick = () => exportAllSTL("FanDuctWorks_Adapter");
+
+        init();
+    </script>
+</body>
+</html>

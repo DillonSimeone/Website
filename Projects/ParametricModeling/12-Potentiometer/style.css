@@ -1,0 +1,385 @@
+/* Cyberpunk/Retro Blueprint CSS styling for Potentiometer Configurator */
+:root {
+    --bp-bg: #0b0e14;
+    --bp-grid: rgba(0, 243, 255, 0.03);
+    --bp-grid-major: rgba(0, 243, 255, 0.08);
+    --bp-line: #00f3ff;
+    --bp-line-dim: rgba(0, 243, 255, 0.25);
+    --bp-text: #e0fbfc;
+    --bp-accent: #ff007f; /* Neon pink accent */
+    --bp-accent-dim: rgba(255, 0, 127, 0.3);
+    --bp-panel-bg: rgba(11, 14, 20, 0.88);
+    --bp-border: 1px solid rgba(0, 243, 255, 0.2);
+    --bp-border-bright: 1px solid #00f3ff;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bp-bg);
+    background-image: 
+        linear-gradient(var(--bp-grid-major) 1px, transparent 1px),
+        linear-gradient(90deg, var(--bp-grid-major) 1px, transparent 1px),
+        linear-gradient(var(--bp-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--bp-grid) 1px, transparent 1px);
+    background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
+    color: var(--bp-text);
+    font-family: 'Space Mono', monospace;
+    overflow: hidden;
+    height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+}
+
+/* Blueprint Border Frame */
+.blueprint-border {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    border: 2px solid var(--bp-line);
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.4;
+}
+
+/* Header Section */
+header {
+    padding: 12px 20px;
+    background: rgba(11, 14, 20, 0.95);
+    border-bottom: 2px solid var(--bp-line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 20px rgba(0, 243, 255, 0.1);
+    z-index: 10;
+}
+
+.title-block {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.drawing-number {
+    border: 1px solid var(--bp-line);
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    color: var(--bp-line);
+    background: rgba(0, 243, 255, 0.05);
+}
+
+h1 {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.3rem;
+    letter-spacing: 1.5px;
+    color: #fff;
+    text-shadow: 0 0 8px rgba(0, 243, 255, 0.5);
+}
+
+.status-indicator {
+    font-size: 0.8rem;
+    color: var(--bp-line-dim);
+}
+
+/* Workspace Layout */
+main {
+    display: grid;
+    grid-template-columns: 350px 1fr 320px;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Side Panels */
+.panel {
+    background: var(--bp-panel-bg);
+    border-right: 1px solid rgba(0, 243, 255, 0.15);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    z-index: 5;
+    backdrop-filter: blur(10px);
+}
+
+.panel-right {
+    border-right: none;
+    border-left: 1px solid rgba(0, 243, 255, 0.15);
+}
+
+.panel-header {
+    padding: 12px 16px;
+    background: rgba(0, 243, 255, 0.08);
+    border-bottom: 1px solid var(--bp-line-dim);
+    font-family: 'Share Tech Mono', monospace;
+    letter-spacing: 1px;
+}
+
+.panel-title {
+    color: var(--bp-line);
+    font-weight: bold;
+    font-size: 0.95rem;
+}
+
+.panel-content {
+    padding: 16px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* 3D Viewport Container */
+#viewport-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, #151926 0%, #080a10 100%);
+    overflow: hidden;
+}
+
+#canvas3d {
+    width: 100%;
+    height: 100%;
+}
+
+.viewport-hud {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    font-size: 0.7rem;
+    color: var(--bp-line-dim);
+    letter-spacing: 1px;
+    pointer-events: none;
+}
+
+/* Parameter Blocks */
+.control-group {
+    border: var(--bp-border);
+    background: rgba(255, 255, 255, 0.01);
+    padding: 12px;
+    position: relative;
+}
+
+.control-group-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--bp-line);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px dashed rgba(0, 243, 255, 0.1);
+    padding-bottom: 4px;
+}
+
+.param-row {
+    margin-bottom: 12px;
+}
+
+.param-row:last-child {
+    margin-bottom: 0;
+}
+
+.param-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.param-label {
+    font-size: 0.75rem;
+    color: var(--bp-text);
+    opacity: 0.85;
+}
+
+.param-value {
+    font-size: 0.75rem;
+    color: var(--bp-line);
+    font-weight: bold;
+}
+
+/* Slider Controls Styling */
+input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
+    margin: 6px 0;
+}
+
+input[type="range"]:focus {
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    cursor: pointer;
+    background: rgba(0, 243, 255, 0.15);
+    border-radius: 0;
+    border: 0.5px solid rgba(0, 243, 255, 0.2);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    height: 12px;
+    width: 12px;
+    background: var(--bp-line);
+    cursor: pointer;
+    -webkit-appearance: none;
+    margin-top: -4px;
+    border-radius: 0;
+    box-shadow: 0 0 8px var(--bp-line);
+}
+
+input[type="range"]::-moz-range-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(0, 243, 255, 0.15);
+    border: 0.5px solid rgba(0, 243, 255, 0.2);
+}
+
+input[type="range"]::-moz-range-thumb {
+    height: 12px;
+    width: 12px;
+    background: var(--bp-line);
+    cursor: pointer;
+    border-radius: 0;
+    border: none;
+    box-shadow: 0 0 8px var(--bp-line);
+}
+
+/* Custom Cyber Selects & Text Inputs */
+.cyber-input {
+    width: 100%;
+    background: rgba(11, 14, 20, 0.8);
+    border: var(--bp-border);
+    color: var(--bp-text);
+    font-family: inherit;
+    font-size: 0.75rem;
+    padding: 6px 8px;
+    outline: none;
+    border-radius: 0;
+}
+
+.cyber-input:focus {
+    border-color: var(--bp-line);
+    box-shadow: 0 0 5px rgba(0, 243, 255, 0.3);
+}
+
+/* Number Spinners */
+.number-spinner {
+    display: flex;
+    align-items: center;
+}
+
+.num-input {
+    text-align: center;
+    flex: 1;
+}
+
+.spin-btn {
+    background: rgba(0, 243, 255, 0.08);
+    border: var(--bp-border);
+    color: var(--bp-line);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.85rem;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.spin-btn:hover {
+    background: rgba(0, 243, 255, 0.2);
+    border-color: var(--bp-line);
+}
+
+/* Checkbox Toggle Rows */
+.toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 0.75rem;
+}
+
+.toggle-row input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--bp-line-dim);
+    background: transparent;
+    cursor: pointer;
+    outline: none;
+    position: relative;
+}
+
+.toggle-row input[type="checkbox"]:checked {
+    background: var(--bp-accent);
+    border-color: var(--bp-accent);
+    box-shadow: 0 0 5px var(--bp-accent);
+}
+
+.toggle-row input[type="checkbox"]:checked::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 3px;
+    height: 6px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* Cyber Buttons */
+.cyber-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--bp-line);
+    color: var(--bp-line);
+    padding: 8px 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+    border-radius: 0;
+    text-shadow: 0 0 5px rgba(0, 243, 255, 0.4);
+}
+
+.cyber-btn:hover {
+    background: rgba(0, 243, 255, 0.1);
+    box-shadow: 0 0 8px rgba(0, 243, 255, 0.4);
+}
+
+.cyber-btn:active {
+    background: rgba(0, 243, 255, 0.25);
+}
+
+/* Footer Section */
+footer {
+    padding: 6px 20px;
+    background: rgba(11, 14, 20, 0.95);
+    border-top: 1px solid var(--bp-line-dim);
+    font-size: 0.65rem;
+    color: var(--bp-line-dim);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+}
+
+.status-left, .status-right {
+    display: flex;
+    gap: 12px;
+}

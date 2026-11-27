@@ -1,0 +1,17 @@
+{
+  "name": "HAXEL Haptic Telemetry Engine",
+  "version": "1.2.0-dev",
+  "home_page": "https://dillonsimeone.com/Projects/Haxel/index.html",
+  "funding_url": "https://github.com/DillonSimeone/Website",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-C3",
+      "parts": [
+        { "path": "firmware-bin/bootloader.bin", "offset": 0 },
+        { "path": "firmware-bin/partitions.bin", "offset": 32768 },
+        { "path": "firmware-bin/firmware.bin", "offset": 65536 }
+      ]
+    }
+  ]
+}

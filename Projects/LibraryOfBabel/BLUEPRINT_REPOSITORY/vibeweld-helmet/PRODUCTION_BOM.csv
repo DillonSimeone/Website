@@ -1,0 +1,40 @@
+ref_des,part_description,manufacturer,mfg_part_number,lcsc_part_number,jlcpcb_part_number,qty_per_unit,unit_price_usd_qty1k,source_notes
+U1,Kneron KL720 AI SoC (NPU compute),Kneron,KL720,C5368421,C5368421,1,28.50,training-data reference (verify); check Kneron direct or Arrow Electronics
+U2,Intel RealSense D405 Depth Camera Module,Intel,82635D405,N/A,N/A,1,79.00,distributor only (Arrow/Mouser); no LCSC/JLCPCB listing; training-data reference (verify)
+U3,Nordic nRF52840 SoC (802.15.4 radio bridge),Nordic Semiconductor,nRF52840-QIAA,C190794,C190794,1,4.20,training-data reference (verify)
+U4,Espressif ESP32-S3-WROOM-1 (neckband MCU+radio),Espressif,ESP32-S3-WROOM-1-N8,C2913202,C2913202,1,3.10,training-data reference (verify)
+U5,Texas Instruments DRV2605LYZFR (haptic driver),Texas Instruments,DRV2605LYZFR,C167886,C167886,4,1.15,training-data reference (verify); qty 4 per unit
+U6,Renesas ISL9240 Li-ion charger/power path IC,Renesas,ISL9240HRTZ,C2860543,C2860543,1,2.80,best-guess (verify); alt: BQ25895
+U7,Texas Instruments TPS63020 buck-boost regulator,Texas Instruments,TPS63020DSJR,C131661,C131661,1,2.20,training-data reference (verify)
+U8,STMicro STM32G031K8T6 (ADV LDR interface MCU),STMicroelectronics,STM32G031K8T6,C1337816,C1337816,1,1.45,training-data reference (verify)
+U9,NXP PCA9548APW I2C mux (HUD + DRV2605L bus),NXP,PCA9548APW,C130026,C130026,1,0.85,training-data reference (verify)
+D1,Schottky TVS array ESD5V0L4U-LCH (USB3 ESD),Littelfuse,ESD5V0L4U-LCH,C261906,C261906,2,0.28,training-data reference (verify)
+D2,LRA haptic actuator 10mm coin ERE10-030B,Jinlong Machinery,ERE10-030B,C388520,C388520,4,1.80,best-guess (verify); 10 mm LRA for neckband; qty 4 per unit
+D3,Status LED 7-segment 3-digit 0.56in red common-cathode,Kingbright,SC56-11EWA,C225929,C225929,1,0.55,training-data reference (verify)
+C1,100 nF 0402 X5R 10V MLCC (decoupling),Yageo,CC0402KRX5R9BB104,C307331,C307331,40,0.006,training-data reference (verify)
+C2,10 uF 0603 X5R 16V MLCC (bulk decoupling),Samsung,CL10A106KP8NNNC,C19702,C19702,12,0.05,training-data reference (verify)
+C3,47 uF 1210 X5R 10V MLCC (power rail hold-up),TDK,C3225X5R1A476M250AC,C76656,C76656,4,0.35,training-data reference (verify)
+R1,10k 0402 1% thin film resistor (pullup/divider),Yageo,RC0402FR-0710KL,C98220,C98220,30,0.004,training-data reference (verify)
+R2,0R 0402 jumper (configuration),Yageo,RC0402JR-070RL,C17168,C17168,6,0.003,training-data reference (verify)
+L1,4.7 uH 1.5A 0603 shielded inductor (switcher),Murata,LQH15HS4R7M02,C408483,C408483,2,0.22,training-data reference (verify)
+J1,USB-C 3.1 Gen1 vertical receptacle (pod power/data),XKB Connectivity,U262-161N-4BV60,C165948,C165948,1,0.65,training-data reference (verify)
+J2,USB-C 2.0 receptacle neckband charge,XKB Connectivity,U262-161N-4BV60,C165948,C165948,1,0.65,training-data reference (verify); same PN, neckband PCB
+J3,Hirose DF40C-60DS-0.4V connector (D405 flex ribbon),Hirose,DF40C-60DS-0.4V(51),C262264,C262264,1,1.90,training-data reference (verify)
+J4,U.FL-R-SMT-1 coax connector (pod antenna),Hirose,U.FL-R-SMT-1(10),C88374,C88374,1,0.18,training-data reference (verify)
+J5,2-pin JST PH2.0 battery connector (pod Li-ion),JST,B2B-PH-K-S(LF)(SN),C131336,C131336,1,0.12,training-data reference (verify)
+J6,2-pin JST PH2.0 battery connector (neckband LiPo),JST,B2B-PH-K-S(LF)(SN),C131336,C131336,1,0.12,training-data reference (verify)
+BAT1,Li-ion 18650 3000mAh INR18650-30Q cell (pod x2),Samsung SDI,INR18650-30Q,N/A,N/A,2,4.50,distributor only (Mouser/Digi-Key); no LCSC; training-data reference (verify)
+BAT2,LiPo 3.7V 200mAh 401230 (neckband),Generic,401230-200mAh,C702699,C702699,1,2.20,best-guess (verify); verify dimensions for neckband PCB
+F1,Thermal cutoff fuse 72C 2A (Li-ion safety),Bourns,MF-SM020/72-2,C275378,C275378,2,0.30,training-data reference (verify)
+SW1,Tactile switch 6x6x5mm (HMI pod reset),C&K,PTS636 SK43 SMTR LFS,C221531,C221531,1,0.18,training-data reference (verify)
+OPT1,Schott OG550 optical glass longpass filter 25x25x3mm,Schott,OG550-25X25-3,N/A,N/A,1,12.00,specialty optics distributor (Edmund Optics or Schott direct); no LCSC/JLCPCB; training-data reference (verify)
+WIN1,Polysulfone (Udel P-1700) optical window blank 50x40x4mm machined,Solvay/machined,Udel-P1700-custom,N/A,N/A,1,8.50,machine from PSU rod stock; quote from local machine shop; best-guess (verify)
+WIN2,Sacrificial spatter cover film PET 50x40x0.1mm (pack 50),Generic,PET-5040-0.1-50pk,N/A,N/A,1,3.50,lens cover film; same material as weld lens covers; best-guess (verify)
+ADAPT1,ADV cartridge passthrough adapter plate — PSU-machined,Custom,VW-ADV-ADAPT-01,N/A,N/A,1,6.00,custom-machined PSU mechanical adapter; compatible with 3M Speedglas 9100 ADV drop-in slot; best-guess (verify)
+SHELL1,Aftermarket Speedglas 9100-class helmet blank (PSU, no ADV),Third-party OEM,VW-SHELL-PSU-01,N/A,N/A,1,38.00,sourced from aftermarket helmet blank supplier; best-guess (verify); not 3M branded
+PCB1,Compute pod PCB — 4-layer 1.0mm FR4 ENIG 80x60mm,JLCPCB,custom gerber,N/A,C-PCB-001,1,4.20,JLCPCB 4-layer; best-guess price at 1k; verify DFM
+PCB2,Neckband PCB — 2-layer 1.0mm flex-rigid 60x20mm,JLCPCB,custom gerber,N/A,C-PCB-002,1,6.80,JLCPCB flex-rigid; best-guess (verify)
+ANT1,2.4GHz ceramic chip antenna 6x3mm,Taoglas,FXP73.07.0100A,C403044,C403044,2,0.45,training-data reference (verify); one pod one neckband
+BAND1,Neckband TPU-overmold strap with fabric liner 380mm,Custom,VW-BAND-TPU-01,N/A,N/A,1,5.50,injection-molded TPU over silicone pads; best-guess (verify)
+MISC1,Hardware fasteners M2.5 M4 captive screws adhesive kit,Generic,VW-HARDWARE-KIT,N/A,N/A,1,1.20,standard hardware; best-guess (verify)
+MISC2,Graphite heat-spreader sheet 100x80x0.1mm (pod thermal),Panasonic,PGS-100080-01,C476921,C476921,1,2.80,training-data reference (verify)

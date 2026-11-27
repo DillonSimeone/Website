@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAXEL — Dense Electronics Enclosure Configurator</title>
+    <meta name="description" content="Parametric 3D configurator for a dense borg-cube electronics enclosure housing ESP32-C3, TP4056, L298N Mini, LiPo battery, and motors.">
+    <!-- Browser Import Map -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/jsm/"
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <h1>⬡ HAXEL <span class="subtitle">Dense Electronics Enclosure Configurator</span></h1>
+    </header>
+
+    <!-- Main Workspace -->
+    <main>
+        <!-- Left Panel: Component Parameters -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">1. Components</span>
+            </div>
+            <div class="panel-content">
+
+                <!-- Motor -->
+                <div class="control-group">
+                    <div class="control-group-title pink">Motor (Type 130)</div>
+                    <div class="dim-row">
+                        <div class="dim-cell">
+                            <span class="dim-label">Width</span>
+                            <span class="dim-value" id="val-motorW">20.0</span>
+                        </div>
+                        <div class="dim-cell">
+                            <span class="dim-label">Height</span>
+                            <span class="dim-value" id="val-motorH">15.0</span>
+                        </div>
+                        <div class="dim-cell">
+                            <span class="dim-label">Length (shaft axis)</span>
+                            <span class="dim-value" id="val-motorL">27.5</span>
+                        </div>
+                    </div>
+                    <div class="param-row" style="margin-top: 8px;">
+                        <input type="range" id="input-motorW" min="8" max="30" step="0.5" value="20.0">
+                    </div>
+                    <div class="param-row">
+                        <input type="range" id="input-motorH" min="8" max="30" step="0.5" value="15.0">
+                    </div>
+                    <div class="param-row">
+                        <input type="range" id="input-motorL" min="10" max="40" step="0.5" value="27.5">
+                    </div>
+                </div>
+
+                <!-- Motor Clamp -->
+                <div class="control-group">
+                    <div class="control-group-title yellow">Motor Clamp (Half-Ring)</div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Clamp Thickness</span><span class="param-value" id="val-clampThick">3.0</span></div>
+                        <input type="range" id="input-clampThick" min="2" max="6" step="0.5" value="3.0">
+                    </div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">M3 Screw ⌀</span><span class="param-value" id="val-clampScrewDiam">3.2</span></div>
+                        <input type="range" id="input-clampScrewDiam" min="2" max="5" step="0.1" value="3.2">
+                    </div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Screw Count</span><span class="param-value" id="val-clampScrewCount">2</span></div>
+                        <input type="range" id="input-clampScrewCount" min="1" max="4" step="1" value="2">
+                    </div>
+                </div>
+
+                <!-- ESP32-C3 SuperMini -->
+                <div class="control-group">
+                    <div class="control-group-title cyan">ESP32-C3 SuperMini</div>
+                    <div class="dim-row">
+                        <div class="dim-cell">
+                            <span class="dim-label">Width</span>
+                            <span class="dim-value" id="val-espW">18.0</span>
+                        </div>
+                        <div class="dim-cell">
+                            <span class="dim-label">Depth</span>
+                            <span class="dim-value" id="val-espD">22.5</span>
+                        </div>
+                        <div class="dim-cell">
+                            <span class="dim-label">Height</span>
+                            <span class="dim-value" id="val-espH">4.6</span>
+                        </div>
+                    </div>
+                    <div class="param-row" style="margin-top: 8px;">
+                        <input type="range" id="input-espW" min="10" max="30" step="0.5" value="18.0">
+                    </div>
+                    <div class="param-row">
+                        <input type="range" id="input-espD" min="10" max="35" step="0.5" value="22.5">
+                    </div>
+                    <div class="param-row">
+                        <input type="range" id="input-espH" min="2" max="10" step="0.1" value="4.6">
+                    </div>
+                </div>
+
+                <!-- L298N Mini -->
+                <div class="control-group">
+                    <div class="control-group-title pink">L298N Mini H-Bridge</div>
+                    <div class="dim-row">
+                        <div class="dim-cell">
+                            <span class="dim-label">Width</span>
+                            <span class="dim-value" id="val-l298W">24.7</span>
+                        </div>
+                        <div class="dim-cell">
+                            <span class="dim-label">Depth</span>
+                            <span class="dim-value" id="val-l298D">21.0</span>
+                        </div>
+                        <div class="dim-cell">
+                            <span class="dim-label">Height</span>
+                            <span class="dim-value" id="val-l298H">5.0</span>
+                        </div>
+                    </div>
+                    <div class="param-row" style="margin-top: 8px;">
+                        <input type="range" id="input-l298W" min="15" max="35" step="0.5" value="24.7">
+                    </div>
+                    <div class="param-row">
+                        <input type="range" id="input-l298D" min="10" max="35" step="0.5" value="21.0">
+                    </div>
+                    <div class="param-row">
+                        <input type="range" id="input-l298H" min="3" max="15" step="0.5" value="5.0">
+                    </div>
+                </div>
+
+                <!-- TP4056 Charger -->
+                <div class="control-group">
+                    <div class="control-group-title yellow">TP4056 Charger</div>
+                    <div class="dim-row">
+                        <div class="dim-cell">
+                            <span class="dim-label">Width</span>
+                            <span class="dim-value" id="val-tpW">17.2</span>
+                        </div>
+                        <div class="dim-cell">
+                            <span class="dim-label">Depth</span>
+                            <span class="dim-value" id="val-tpD">28.0</span>
+                        </div>
+                        <div class="dim-cell">
+                            <span class="dim-label">Height</span>
+                            <span class="dim-value" id="val-tpH">4.2</span>
+                        </div>
+                    </div>
+                    <div class="param-row" style="margin-top: 8px;">
+                        <input type="range" id="input-tpW" min="10" max="30" step="0.5" value="17.2">
+                    </div>
+                    <div class="param-row">
+                        <input type="range" id="input-tpD" min="15" max="40" step="0.5" value="28.0">
+                    </div>
+                    <div class="param-row">
+                        <input type="range" id="input-tpH" min="2" max="10" step="0.1" value="4.2">
+                    </div>
+                </div>
+
+                <!-- LiPo Battery -->
+                <div class="control-group">
+                    <div class="control-group-title cyan">LiPo Battery</div>
+                    <div class="dim-row">
+                        <div class="dim-cell">
+                            <span class="dim-label">Width</span>
+                            <span class="dim-value" id="val-batW">36.0</span>
+                        </div>
+                        <div class="dim-cell">
+                            <span class="dim-label">Depth</span>
+                            <span class="dim-value" id="val-batD">20.0</span>
+                        </div>
+                        <div class="dim-cell">
+                            <span class="dim-label">Height</span>
+                            <span class="dim-value" id="val-batH">9.0</span>
+                        </div>
+                    </div>
+                    <div class="param-row" style="margin-top: 8px;">
+                        <input type="range" id="input-batW" min="15" max="50" step="0.5" value="36.0">
+                    </div>
+                    <div class="param-row">
+                        <input type="range" id="input-batD" min="10" max="40" step="0.5" value="20.0">
+                    </div>
+                    <div class="param-row">
+                        <input type="range" id="input-batH" min="3" max="15" step="0.5" value="9.0">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Center: 3D Viewport -->
+        <div id="viewport-container">
+            <div id="canvas3d"></div>
+            <div class="perf-badge" id="perf-badge">LOADING WASM...</div>
+        </div>
+
+        <!-- Right Panel: Assembly & Export -->
+        <div class="panel panel-right">
+            <div class="panel-header secondary">
+                <span class="panel-title">2. Assembly</span>
+            </div>
+            <div class="panel-content">
+
+                <!-- Shell Parameters -->
+                <div class="control-group">
+                    <div class="control-group-title">Shell Settings</div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Wall Thickness</span><span class="param-value" id="val-wallThick">2.0</span></div>
+                        <input type="range" id="input-wallThick" min="1.0" max="5.0" step="0.1" value="2.0">
+                    </div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Sled Tolerance</span><span class="param-value" id="val-tolerance">0.3</span></div>
+                        <input type="range" id="input-tolerance" min="0.1" max="1.0" step="0.05" value="0.3">
+                    </div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Pocket Tolerance</span><span class="param-value" id="val-pocketTolerance">0.5</span></div>
+                        <input type="range" id="input-pocketTolerance" min="0.1" max="1.5" step="0.05" value="0.5">
+                    </div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Corner Screw ⌀</span><span class="param-value" id="val-cornerScrewDiam">3.2</span></div>
+                        <input type="range" id="input-cornerScrewDiam" min="2.0" max="5.0" step="0.1" value="3.2">
+                    </div>
+                </div>
+
+                <!-- Explosion -->
+                <div class="control-group">
+                    <div class="control-group-title pink">Exploded View</div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Explosion</span><span class="param-value" id="val-explode">0</span></div>
+                        <input type="range" id="input-explode" min="0" max="100" step="1" value="0">
+                    </div>
+                </div>
+
+                <!-- Visibility -->
+                <div class="control-group">
+                    <div class="control-group-title">Visibility</div>
+                    <div class="toggle-row">
+                        <span>Shell</span>
+                        <input type="checkbox" id="show-shell" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Lid</span>
+                        <input type="checkbox" id="show-lid" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Sled / Tray</span>
+                        <input type="checkbox" id="show-sled" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Motor Clamp</span>
+                        <input type="checkbox" id="show-motorClamp" checked>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Components</span>
+                        <input type="checkbox" id="show-components" checked>
+                    </div>
+                </div>
+
+                <!-- Render Mode -->
+                <div class="control-group">
+                    <div class="control-group-title cyan">Display</div>
+                    <div class="param-row">
+                        <div class="param-info"><span class="param-label">Opacity</span><span class="param-value" id="val-opacity">85</span></div>
+                        <input type="range" id="input-opacity" min="10" max="100" step="5" value="85">
+                    </div>
+                    <div class="btn-group" style="margin-top: 8px;">
+                        <button class="btn active" id="btn-rendered">Solid</button>
+                        <button class="btn" id="btn-xray">X-Ray</button>
+                    </div>
+                </div>
+
+                <!-- Computed Specs -->
+                <div class="control-group">
+                    <div class="control-group-title yellow">Calculated Specs</div>
+                    <div class="spec-item">
+                        <span class="spec-label">Shell (W×D×H):</span>
+                        <span class="spec-val" id="spec-shellW">— mm</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">&nbsp;</span>
+                        <span class="spec-val" id="spec-shellD">— mm</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">&nbsp;</span>
+                        <span class="spec-val" id="spec-shellH">— mm</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Sled (W×D×H):</span>
+                        <span class="spec-val" id="spec-sledW">— mm</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">&nbsp;</span>
+                        <span class="spec-val" id="spec-sledD">— mm</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">&nbsp;</span>
+                        <span class="spec-val" id="spec-sledH">— mm</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Total Volume:</span>
+                        <span class="spec-val" id="spec-volume">— cm³</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Packing Efficiency:</span>
+                        <span class="spec-val highlight" id="spec-efficiency">—%</span>
+                    </div>
+                </div>
+
+                <!-- Export -->
+                <div class="control-group">
+                    <div class="control-group-title">Manufacturing Export</div>
+                    <button class="btn btn-export full" id="btn-export-all">⬡ EXPORT ALL STL</button>
+                    <button class="btn btn-export" id="btn-export-shell" style="background: #222; color: #fff;">Shell</button>
+                    <button class="btn btn-export" id="btn-export-lid" style="background: #444; color: #fff;">Lid</button>
+                    <button class="btn btn-export pink" id="btn-export-sled">Sled / Tray</button>
+                    <button class="btn btn-export yellow" id="btn-export-clamp">Motor Clamp</button>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript Module -->
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>

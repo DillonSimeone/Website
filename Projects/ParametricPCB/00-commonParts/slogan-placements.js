@@ -1,0 +1,244 @@
+/** @typedef {{ minX: number, maxX: number, minY: number, maxY: number }} ObstacleBox */
+
+export const MAX_SLOGAN_ATTEMPTS = 50;
+export const DEFAULT_SLOGAN_PHRASES = "this machine kills facism";
+
+const LED_SIZE = 1.3; // WS2812B-1313 package size in mm
+
+/**
+ * Normalize raw UI/state input to a non-empty phrase string.
+ * @param {string} input
+ * @returns {string}
+ */
+export function resolveSloganPhrases(input) {
+  const trimmed = String(input ?? "").trim();
+  return trimmed || DEFAULT_SLOGAN_PHRASES;
+}
+
+/**
+ * Parse comma-separated slogan phrases. Falls back to the classic default when empty.
+ * @param {string} input
+ * @returns {string[]}
+ */
+export function parseSloganPhrases(input) {
+  return resolveSloganPhrases(input)
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Derive font size and collision footprint for a slogan string.
+ * Long phrases shrink so the default fits on the narrow LED strip.
+ * @param {string} text
+ */
+export function getSloganMetrics(text) {
+  const len = Math.max(1, text.length);
+  const fontSize = Math.min(0.6, Math.max(0.28, 10 / len));
+  const charWidth = fontSize * 0.58;
+  const textWidth = len * charWidth;
+  const textHeight = fontSize * 1.35;
+  return { fontSize, textWidth, textHeight, marginX: 0.6, marginY: 0.35 };
+}
+
+/**
+ * Build axis-aligned keep-out zones for components and fixed silkscreen labels.
+ * @returns {ObstacleBox[]}
+ */
+export function buildSilkscreenObstacles({ boardWidth, boardHeight, ledCount, spacing }) {
+  const obstacles = [];
+
+  const leftEdgeX = -boardWidth / 2;
+  const rightEdgeX = boardWidth / 2;
+  const jBegX = leftEdgeX + 1.0;
+  const jEndX = rightEdgeX - 1.0;
+
+  // Header physical widths (tied directly to dynamic board dimensions)
+  const begHeaderW = Math.min(2.0, boardHeight * 0.6);
+
+  // Vertical header keep-out zones (with 1.5mm safety margin)
+  obstacles.push({
+    minX: leftEdgeX,
+    maxX: leftEdgeX + begHeaderW + 1.5,
+    minY: -boardHeight / 2,
+    maxY: boardHeight / 2
+  });
+  obstacles.push({
+    minX: rightEdgeX - begHeaderW - 1.5,
+    maxX: rightEdgeX,
+    minY: -boardHeight / 2,
+    maxY: boardHeight / 2
+  });
+
+  // J_BEG / J_END pad labels (printed if boardHeight >= 2.5)
+  if (boardHeight >= 2.5) {
+    const labelBegX = jBegX + begHeaderW / 2 + 1.2;
+    const labelEndX = jEndX - begHeaderW / 2 - 1.2;
+    obstacles.push({
+      minX: labelBegX - 0.5,
+      maxX: labelBegX + 3.0,
+      minY: -boardHeight / 2,
+      maxY: boardHeight / 2
+    });
+    obstacles.push({
+      minX: labelEndX - 3.0,
+      maxX: labelEndX + 0.5,
+      minY: -boardHeight / 2,
+      maxY: boardHeight / 2
+    });
+  }
+
+  // LED and intermediate header spacing parameters
+  const startX = -((spacing * (ledCount - 1)) / 2);
+  const midHeaderPadH = Math.min(1.2, boardHeight / 4.5);
+  const midHeaderPadSpacing = boardHeight / 2 - midHeaderPadH / 2;
+
+  for (let i = 1; i <= ledCount; i++) {
+    const ledX = startX + (i - 1) * spacing;
+
+    // LED keep-out box (tied directly to the WS2812B package size with 0.35mm margin)
+    obstacles.push({
+      minX: ledX - (LED_SIZE / 2 + 0.35),
+      maxX: ledX + (LED_SIZE / 2 + 0.35),
+      minY: -(LED_SIZE / 2 + 0.35),
+      maxY: (LED_SIZE / 2 + 0.35)
+    });
+
+    if (i < ledCount) {
+      const midX = ledX + spacing / 2;
+
+      // Intermediate header edge pads keep-out zone
+      obstacles.push({
+        minX: midX - 1.5,
+        maxX: midX + 1.5,
+        minY: midHeaderPadSpacing - midHeaderPadH / 2 - 0.2,
+        maxY: boardHeight / 2
+      });
+      obstacles.push({
+        minX: midX - 1.5,
+        maxX: midX + 1.5,
+        minY: -boardHeight / 2,
+        maxY: -(midHeaderPadSpacing - midHeaderPadH / 2 - 0.2)
+      });
+    }
+  }
+
+  return obstacles;
+}
+
+/** @param {ObstacleBox} a @param {ObstacleBox} b */
+export function boxesOverlap(a, b) {
+  return a.minX < b.maxX && a.maxX > b.minX && a.minY < b.maxY && a.maxY > b.minY;
+}
+
+/**
+ * Estimate a collision box for rotated slogan text (axis-aligned bounds).
+ * @param {string} text
+ * @param {number} rx
+ * @param {number} ry
+ * @param {number} [rotationDeg]
+ */
+export function estimateSloganBox(text, rx, ry, rotationDeg = 0) {
+  const { textWidth, textHeight, marginX, marginY } = getSloganMetrics(text);
+  const hw = textWidth / 2 + marginX;
+  const hh = textHeight / 2 + marginY;
+  const rad = (rotationDeg * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(rad));
+  const sin = Math.abs(Math.sin(rad));
+  const aabbW = hw * cos + hh * sin;
+  const aabbH = hw * sin + hh * cos;
+  return {
+    minX: rx - aabbW,
+    maxX: rx + aabbW,
+    minY: ry - aabbH,
+    maxY: ry + aabbH
+  };
+}
+
+/**
+ * Try to place slogans randomly; skip any slot that collides after MAX_SLOGAN_ATTEMPTS tries.
+ * @param {Object} params
+ * @param {number} params.boardWidth
+ * @param {number} params.boardHeight
+ * @param {number} params.ledCount
+ * @param {number} params.spacing
+ * @param {string[]} params.phrases
+ * @param {number} params.sloganCount
+ * @param {number} [params.seed]
+ * @returns {{ placements: { index: number, text: string, rx: number, ry: number, rotation: number, fontSize: number }[], attemptedCount: number, placedCount: number }}
+ */
+export function computeSloganPlacements({
+  boardWidth,
+  boardHeight,
+  ledCount,
+  spacing,
+  phrases,
+  sloganCount,
+  seed = boardWidth + ledCount + 42
+}) {
+  if (!phrases?.length || sloganCount <= 0) {
+    return { placements: [], attemptedCount: 0, placedCount: 0 };
+  }
+
+  const obstacles = buildSilkscreenObstacles({ boardWidth, boardHeight, ledCount, spacing });
+  const placements = [];
+  let placedCount = 0;
+
+  let rngSeed = seed;
+  const random = () => {
+    const x = Math.sin(rngSeed++) * 10000;
+    return x - Math.floor(x);
+  };
+
+  for (let i = 0; i < sloganCount; i++) {
+    const text = phrases[Math.floor(random() * phrases.length)];
+    const metrics = getSloganMetrics(text);
+    const { textWidth, textHeight, fontSize } = metrics;
+
+    let placed = false;
+    for (let attempt = 0; attempt < MAX_SLOGAN_ATTEMPTS; attempt++) {
+      const rx =
+        random() * Math.max(0, boardWidth - textWidth - 8.0) -
+        boardWidth / 2 +
+        4.0 +
+        textWidth / 2;
+      const ry =
+        random() * Math.max(0, boardHeight - textHeight - 2.5) -
+        boardHeight / 2 +
+        1.25 +
+        textHeight / 2;
+      const rotation = (random() - 0.5) * 60;
+      const box = estimateSloganBox(text, rx, ry, rotation);
+
+      let collision = false;
+      for (const obs of obstacles) {
+        if (boxesOverlap(box, obs)) {
+          collision = true;
+          break;
+        }
+      }
+
+      if (!collision) {
+        placements.push({
+          index: i,
+          text,
+          rx,
+          ry,
+          rotation,
+          fontSize
+        });
+        obstacles.push(box);
+        placed = true;
+        placedCount++;
+        break;
+      }
+    }
+
+    // Self-delete: after 3 failed attempts, abandon this slot silently
+    if (!placed) {
+      continue;
+    }
+  }
+
+  return { placements, attemptedCount: sloganCount, placedCount };
+}

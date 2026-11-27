@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Real-Time Sign-Up Form Check</title>
+
+  <!-- Bootstrap 5.3.7 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    .error {
+      color: var(--bs-danger);
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+    .error:empty { display: none; }
+  </style>
+</head>
+<body>
+
+<header class="bg-light py-4 mb-4">
+  <div class="container text-center">
+    <h1 class="m-0">Sign Up</h1>
+  </div>
+</header>
+
+<main class="container">
+  <form id="signupForm" novalidate>
+    <fieldset class="row g-3">
+      <legend class="visually-hidden">Personal information</legend>
+
+      <section class="col-md-6">
+        <label for="firstName" class="form-label">First name</label>
+        <input id="firstName" name="firstName" type="text"
+               class="form-control" required>
+        <p class="error" id="err-firstName"></p>
+      </section>
+
+      <section class="col-md-6">
+        <label for="lastName" class="form-label">Last name</label>
+        <input id="lastName" name="lastName" type="text"
+               class="form-control" required>
+        <p class="error" id="err-lastName"></p>
+      </section>
+
+      <section class="col-md-6">
+        <label for="email" class="form-label">College email</label>
+        <input id="email" name="email" type="email"
+               class="form-control" required>
+        <p class="error" id="err-email"></p>
+      </section>
+
+      <section class="col-md-6">
+        <label for="phone" class="form-label">Phone (optional)</label>
+        <input id="phone" name="phone" type="tel"
+               class="form-control" placeholder="555-123-4567">
+        <p class="error" id="err-phone"></p>
+      </section>
+
+      <section class="col-md-6">
+        <label for="password" class="form-label">Password</label>
+        <input id="password" name="password" type="password"
+               class="form-control" required>
+        <p class="error" id="err-password"></p>
+      </section>
+
+      <section class="col-md-6">
+        <label for="confirmPassword" class="form-label">Confirm password</label>
+        <input id="confirmPassword" name="confirmPassword" type="password"
+               class="form-control" required>
+        <p class="error" id="err-confirmPassword"></p>
+      </section>
+
+      <section class="col-md-4">
+        <label for="country" class="form-label">Country</label>
+        <select id="country" name="country"
+                class="form-select" required>
+          <option value="">Choose…</option>
+          <option>United States</option>
+          <option>Canada</option>
+          <option>Mexico</option>
+          <option>Other</option>
+        </select>
+        <p class="error" id="err-country"></p>
+      </section>
+
+      <section class="col-12">
+        <div class="form-check">
+          <input id="newsletter" name="newsletter"
+                 type="checkbox" class="form-check-input">
+          <label class="form-check-label" for="newsletter">
+            Sign me up for the newsletter
+          </label>
+        </div>
+      </section>
+    </fieldset>
+
+    <footer class="mt-4">
+      <button id="submitBtn" type="submit"
+              class="btn btn-primary" disabled>
+        Register
+      </button>
+    </footer>
+  </form>
+</main>
+
+<script src="signup.js"></script>
+</body>
+</html>

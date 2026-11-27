@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WifiTracker ? Network Health & Bandwidth Monitor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="glow-bg"></div>
+
+    <header>
+        <div class="logo">
+            <span class="logo-accent">Wifi</span>Tracker
+        </div>
+        <a href="../../index.html" class="btn-github">Back to Portfolio</a>
+    </header>
+
+    <main class="container">
+        <!-- Hero -->
+        <section class="hero">
+            <h1>Autonomous Wi-Fi & Bandwidth Telemetry</h1>
+            <p class="subtitle">A Windows system tray daemon that monitors Wi-Fi physical links, gateway jitter, and real bandwidth speed tests to detect silent throttling and socket congestion.</p>
+        </section>
+
+        <!-- Live Snapshot Cards -->
+        <section class="dashboard-grid">
+            <div class="card">
+                <div class="card-title">Download Bandwidth</div>
+                <div class="metric-value green" id="disp-down">31.4 Mbps</div>
+                <div class="metric-sub">Cloudflare Edge (Dual-stream)</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Upload Bandwidth</div>
+                <div class="metric-value blue" id="disp-up">20.2 Mbps</div>
+                <div class="metric-sub">Non-saturating chunk upload</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Router & DNS Latency</div>
+                <div class="metric-value purple" id="disp-ping">14 ms</div>
+                <div class="metric-sub">Gateway: 30 ms (Jitter: 26 ms)</div>
+            </div>
+        </section>
+
+        <!-- Hop-by-Hop Bottleneck Diagnostics -->
+        <section class="diag-section">
+            <h2>Hop-by-Hop Telemetry Breakdown</h2>
+            <p class="desc">WifiTracker attributes whether network performance degradation is caused by Wi-Fi RF interference, local router bufferbloat, or an active background application.</p>
+
+            <div class="network-hops">
+                <div class="hop-row">
+                    <div class="hop-icon">??</div>
+                    <div class="hop-info">
+                        <div class="hop-name">Wi-Fi Physical Link (Dolphin)</div>
+                        <div class="hop-detail">Channel 10 (2.4 GHz) ? 802.11ac ? Signal: 90% ? Link Rate: 180 Mbps</div>
+                    </div>
+                    <div class="hop-status ok">Link Healthy</div>
+                </div>
+
+                <div class="hop-row">
+                    <div class="hop-icon">??</div>
+                    <div class="hop-info">
+                        <div class="hop-name">Local Gateway Router (192.168.1.1)</div>
+                        <div class="hop-detail">Average RTT: 30.0 ms ? 0% Packet Loss ? Jitter: 26 ms</div>
+                    </div>
+                    <div class="hop-status ok">Normal</div>
+                </div>
+
+                <div class="hop-row">
+                    <div class="hop-icon">?</div>
+                    <div class="hop-info">
+                        <div class="hop-name">Public Edge / Cloudflare DNS (1.1.1.1)</div>
+                        <div class="hop-detail">Ping: 14.0 ms ? 0% Packet Loss</div>
+                    </div>
+                    <div class="hop-status ok">Optimal</div>
+                </div>
+
+                <div class="hop-row">
+                    <div class="hop-icon">??</div>
+                    <div class="hop-info">
+                        <div class="hop-name">Active Network Process Inspection</div>
+                        <div class="hop-detail">Monitors open TCP sockets to detect uncapped torrents or background sync</div>
+                    </div>
+                    <div class="hop-status ok">No Saturation</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- System Architecture Features -->
+        <section class="features-grid">
+            <div class="feature-box">
+                <h3>Dual-Tier Polling Engine</h3>
+                <p>Combines zero-overhead 45-second light RSSI/gateway pings with configurable periodic or anomaly-triggered speed tests to minimize data usage.</p>
+            </div>
+
+            <div class="feature-box">
+                <h3>Root-Cause Anomaly Detection</h3>
+                <p>Instantly flags speed drops below 5 Mbps, determines whether the issue is local RF noise, gateway lag, or an app hogging sockets, and sends a Windows toast alert.</p>
+            </div>
+
+            <div class="feature-box">
+                <h3>1-Click Network Stack Repair</h3>
+                <p>Includes built-in single-click routines to flush DNS caches and reset the Winsock / IP catalog when system network stacks become corrupted.</p>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

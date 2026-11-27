@@ -1,0 +1,42 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Feedback Form</title>
+    <link rel="stylesheet" href="feedback.css" />
+    <script src="feedback.js" defer></script>
+</head>
+<body>
+    <main>
+        <h1>Feedback</h1>
+        <form action="confirm.html" method="get" id="feedback_form">
+            <div><label for="name">Name:</label><input type="text" id="name" /></div>
+            <div><label for="email">Email:</label><input type="text" id="email" /></div>
+            <div>
+                <label for="rating">Rating (1-5):</label>
+                <select id="rating">
+                    <option value="">Select...</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+            <div>
+                <label for="comments">Comments:</label>
+                <textarea id="comments"></textarea>
+            </div>
+            <div>
+                <input type="checkbox" id="terms" />
+                <label for="terms">I agree to the terms</label>
+            </div>
+            <div>
+                <input type="button" id="submit_btn" value="Submit" />
+                <input type="button" id="reset_btn" value="Reset" />
+            </div>
+        </form>
+    </main>
+</body>
+</html>

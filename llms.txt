@@ -1,0 +1,48 @@
+# Dillon Simeone
+
+> Lead Design Engineer & Hardware Artisan based in Oregon specializing in accessibility, Deaf-led hardware, haptic technology, embedded systems, and creative fabrication. Available for custom hardware commissions (invoiced via Square, with local Oregon installation available).
+
+## About
+
+Dillon Simeone is a Deaf technologist, maker, developer, and interface designer with over a decade of experience turning ideas into physical hardware: custom stage hardware, interactive installations, accessible alert systems, wearable haptics, and rapid embedded prototypes.
+
+- **Website:** https://dillonsimeone.com/
+- **Email:** dillonsimeone@gmail.com
+- **GitHub:** https://github.com/DillonSimeone
+- **LinkedIn:** https://linkedin.com/in/dillonsimeone
+- **Google Scholar:** https://scholar.google.com/citations?user=bgwjaP0AAAAJ
+- **YouTube:** https://www.youtube.com/@Dillonsimeone/shorts
+- **Resume:** https://docs.google.com/document/d/17at4VC7BOsuEL0SFwjbOCelqJ94owcdG1yyveG8QO0Y/edit?usp=sharing
+
+## Affiliations & Recognition
+
+- **Universal Music Design / CymaSpace:** Lead Design Engineer building assistive music technology, wearable haptics, and audio-reactive LED visuals.
+- **PDX Makerspace (control+H):** Member and hardware builder.
+- **Oregon Community Foundation Creative Heights Award ($96,000):** Awarded for *Feel the Difference: A Haptic Petting Zoo* (featured at Crowd Supply Teardown 2026 in Portland, OR).
+
+## Flagship & Featured Projects
+
+- [Haptic Petting Zoo](https://dillonsimeone.com/Projects/HapticPettingZoo/index.html): Touring interactive installation translating acoustic frequencies and spatial resonance into tactile vibrations felt through skin and bone.
+- [Motion-Reactive Haptic Light Baton](https://dillonsimeone.com/Projects/LightBaton/index.html): Kinetic performance instrument with 6-axis MPU6050 IMU motion tracking, sub-millisecond broadcast latency, and haptic feedback.
+- **GeLu (GestoLumina) Bracers:** Research-grade wearable haptic interface for gesture input, fingertip haptics, and audio-reactive lighting designed for the Deaf and Hard-of-Hearing community.
+- **PULSE: Haptic Ecosystem:** Hardware and software framework for tactile feedback using an ESP32 Leader unit and durable Haptic Saucers.
+- **Deaf Ringbell Detector:** Non-invasive acoustic ESP-NOW visual alert system that detects existing doorbells for Deaf/HoH accessibility.
+- **Haxel Telemetry Engine:** Unified Hardware Abstraction Layer (HAL) and captive portal for LRAs, ERMs, and solenoid drivers with dynamic back-EMF telemetry.
+- **Ember Bytecode VM:** Stack-based bytecode virtual machine and Pratt compiler for real-time LED pattern generation on the ESP32-C3.
+- **CH32V003 RISC-V Haptic Core:** Field guide and production build log for WCH's 10-cent 32-bit RISC-V microcontroller driving haptic hardware.
+- **Sound-Reactive LED Hypercube:** Five 8x8 WS2812B matrix panels (320 LEDs) engineered for organic, sound-reactive 3D ripples.
+
+## Hardware Commissions & Portfolio Sections
+
+Because `dillonsimeone.com` is a single-page application, section views are navigated via hash routes:
+
+- **Hardware Commissions / Shop:** https://dillonsimeone.com/#shop (Custom hardware built to order: Deaf Ringbell Detector, GeLu Bracers, PULSE Ecosystem, Motion-Reactive Light Baton, Sound-Reactive LED Hypercube, ASL Hand)
+- **Work & Installations:** https://dillonsimeone.com/#work (Haptic Zoo, Universal Music Design, OMSI STEM Kits, BLE Input Switcher, DJ Deaf Wish Stage Suite, CymaSpace Website, client web builds)
+- **Major Projects:** https://dillonsimeone.com/#majorProjects (Universe, Signal Forwarder, CyberDeck Residency, Parametric PCB/Modeling Suite, Sound-Reactive Arts, Library of Babel, Cochlear Emulator, Arc Gun)
+- **ESP32 & Embedded Systems:** https://dillonsimeone.com/#esp32 (Haxel, Ember, DataGlove, PULSE, CH32V003, FFT Haptics, WebFastLED, Smart CO2 Monitor)
+- **Mini-Projects:** https://dillonsimeone.com/#miniProjects (Standalone interactive web tools, visualizers, and experiments under `/MiniProjects/`)
+- **3D Printing & Laser Cutting:** https://dillonsimeone.com/#3dprinting and https://dillonsimeone.com/#laser
+
+## AI & Crawler Policy
+
+AI crawlers, search indexers, and autonomous agents are explicitly welcomed to index, summarize, and cite content from `dillonsimeone.com` (excluding paths disallowed in `/robots.txt`).

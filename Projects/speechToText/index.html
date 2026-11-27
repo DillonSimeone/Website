@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Speech Bridge // GPU Neural Captioning | Accessible Live Speech-to-Text</title>
+  <meta name="description" content="How we built a 100% offline, GPU-accelerated Rust Speech-to-Text and Text-to-Speech desktop bridge for noisy cafes and group conversations, with a 3-click setup, interactive web replica, calibrated WAV+noise benchmarks, and plain-English explanations." />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <nav class="top-nav" aria-label="Primary navigation">
+    <div class="top-nav-inner">
+      <div class="brand">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span>SPEECH_BRIDGE // GPU NEURAL CAPTIONING</span>
+      </div>
+      <div class="nav-links">
+        <a href="#setup">3-Click Setup</a>
+        <a href="#replica">Interactive Demo</a>
+        <a href="#pipeline">How It Works</a>
+        <a href="#benchmarks">Benchmarks</a>
+        <a href="#glossary">Plain-English Glossary</a>
+        <a href="#rust-vs-python">Why Rust?</a>
+        <a href="#diy-mic">DIY Mic!</a>
+        <a href="#voice-cloner">Voice Cloner</a>
+        <a href="#going-beyond">Going Beyond</a>
+        <a href="../../index.html">← Portfolio</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Fixed Upper-Right "Have Dillon read aloud to you!" Widget -->
+  <aside id="dillonPlayer" class="dillon-player" aria-label="Have Dillon read aloud to you">
+    <div class="dp-title">Have Dillon read aloud to you!</div>
+    <div class="dp-voice-row">
+      <button id="dpPrevVoice" class="dp-arrow" type="button" aria-label="Previous cloned voice" title="Previous voice">&larr;</button>
+      <span id="dpVoiceName" class="dp-voice-name">Alan-Dillon</span>
+      <button id="dpNextVoice" class="dp-arrow" type="button" aria-label="Next cloned voice" title="Next voice">&rarr;</button>
+    </div>
+    <div class="dp-controls">
+      <button id="dpPlayStop" class="dp-btn dp-play" type="button">Play</button>
+      <button id="dpRestart" class="dp-btn" type="button">Restart</button>
+    </div>
+    <div id="dpStatus" class="dp-status">Ready · Real OpenVoice v2 clone</div>
+    <audio id="dpAudio" preload="metadata"></audio>
+  </aside>
+
+  <main class="container">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="eyebrow">Major Project · Accessibility Engineering · Pure Rust + GPU CUDA</div>
+      <h1>Live Captions That Actually Survive <span>Loud Cafes &amp; Group Tables</span></h1>
+      <p class="hero-lead">
+        Built by a deaf and mute maker because off-the-shelf captioning tools work fine in a silent bedroom,
+        and collapse the second espresso steam, restaurant music, clattering plates, or nearby conversations enter the room.
+      </p>
+
+      <div class="hero-callout">
+        <strong>The Spark:</strong> Windows 11's built-in speech-to-text app was not pushing hard enough because it runs strictly on the CPU, leaving all of our laptop's graphics silicon completely idle.
+        We decided to leverage every bit of local compute available and built an offline neural speech pipeline that puts the GPU to work inside a <strong>~630 KB native <a class="ref-link" href="https://www.rust-lang.org/" target="_blank" rel="noopener noreferrer">Rust</a> executable</strong>.
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card green">
+          <div class="stat-num">4.2x</div>
+          <div class="stat-label">Lower Error Rate vs. Legacy CPU</div>
+          <div class="stat-sub">24.2% CPU Whisper vs. 5.8% GPU Parakeet at 0 dB</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">~198 ms</div>
+          <div class="stat-label">GPU Inference Speed</div>
+          <div class="stat-sub">Down from 965 ms on CPU (~5x faster)</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-num">~330 ms</div>
+          <div class="stat-label">First-Word Display Latency</div>
+          <div class="stat-sub">Locked steady via LocalAgreement-2 anti-flicker</div>
+        </div>
+        <div class="stat-card violet">
+          <div class="stat-num">~9.6 Watts</div>
+          <div class="stat-label">Measured GPU Power Usage</div>
+          <div class="stat-sub">2.3 to 3.4 GB VRAM during live captioning · 100% offline</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 3-CLICK LOCAL SETUP -->
+    <section id="setup">
+      <div class="sec-tag">// 00 :: QUICK START (3 CLICKS FROM DOWNLOAD TO LIVE CAPTIONS)</div>
+      <h2>Run Speech Bridge Locally on Windows</h2>
+      <p class="sec-intro">
+        The standalone Rust binary (<code>speech-bridge.exe</code>) is only ~630 KB because it dynamically loads its neural speech models and portable <a class="ref-link" href="https://en.wikipedia.org/wiki/CUDA" target="_blank" rel="noopener noreferrer">CUDA</a> libraries from local subfolders.
+        Instead of making you install Python, Conda, or the NVIDIA CUDA Toolkit by hand, we bundled a one-click installer (<code>Setup.bat</code>) so going from download to live captions takes just three clicks:
+      </p>
+
+      <div class="setup-steps">
+        <div class="setup-step">
+          <div class="setup-badge">CLICK 01 · GET THE FOLDER</div>
+          <h3>Download Speech Bridge</h3>
+          <p>
+            Bundle <code>speech-bridge.exe</code>, <code>Setup.bat</code>, <code>setup.ps1</code>, and <code>hotwords.txt</code> into a single ZIP (Windows 10/11 64-bit; NVIDIA GPU recommended, CPU fallback supported).
+          </p>
+          <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+            <button id="sbBtnZip" class="dp-btn dp-play" type="button">Download SpeechBridge.zip</button>
+            <div id="sbZipStatus" class="vc-status" style="font-size:11.5px;"></div>
+            <div style="font-family:var(--mono); font-size:11.5px; color:var(--muted); line-height:1.6;">
+              Direct files:
+              <a class="ref-link" href="../../Glue/RUST/speech-bridge/speech-bridge.exe" download>speech-bridge.exe</a> ·
+              <a class="ref-link" href="../../Glue/RUST/speech-bridge/Setup.bat" download>Setup.bat</a> ·
+              <a class="ref-link" href="../../Glue/RUST/speech-bridge/setup.ps1" download>setup.ps1</a> ·
+              <a class="ref-link" href="../../Glue/RUST/speech-bridge/hotwords.txt" download>hotwords.txt</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="setup-step step-2">
+          <div class="setup-badge">CLICK 02 · RUN SETUP.BAT</div>
+          <h3>Auto-Fetch Models &amp; GPU DLLs</h3>
+          <p>
+            Double-click <strong><code>Setup.bat</code></strong>. It automatically downloads and verifies the portable <a class="ref-link" href="https://github.com/k2-fsa/sherpa-onnx" target="_blank" rel="noopener noreferrer">sherpa-onnx</a> CUDA runtime, NVIDIA CUDA 12 / cuDNN 9 DLLs, neural models, and <a class="ref-link" href="https://github.com/ggml-org/llama.cpp" target="_blank" rel="noopener noreferrer">llama.cpp</a> into local folders, then creates a Desktop shortcut.
+          </p>
+        </div>
+
+        <div class="setup-step step-3">
+          <div class="setup-badge">CLICK 03 · LAUNCH &amp; SPEAK</div>
+          <h3>Open <code>speech-bridge.exe</code></h3>
+          <p>
+            <code>Setup.bat</code> launches <code>speech-bridge.exe</code> automatically once downloads finish (or double-click the new Desktop shortcut anytime). Pin it to your taskbar, verify <code>RX: ARMED</code> is green, and start captioning 100% offline.
+          </p>
+        </div>
+      </div>
+
+      <details class="manifest-details">
+        <summary>
+          <span>▸ Inspect Every Offline Model &amp; Portable Runtime Fetched by Setup.bat (~2.7 GB total, 100% local)</span>
+          <span style="color:var(--muted); font-size:11.5px;">Click to expand</span>
+        </summary>
+        <div class="table-wrap">
+          <table aria-label="Offline models and runtimes fetched by Setup.bat">
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Local Folder</th>
+                <th>Approx. Size</th>
+                <th>Role</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><a class="ref-link" href="https://github.com/k2-fsa/sherpa-onnx" target="_blank" rel="noopener noreferrer">sherpa-onnx CUDA 12 + cuDNN 9 DLLs</a></td>
+                <td><code>runtime/sherpa-cuda/lib/</code></td>
+                <td>~380 MB</td>
+                <td>Portable GPU ONNX Runtime + NVIDIA math libraries (no system CUDA Toolkit needed)</td>
+              </tr>
+              <tr>
+                <td><a class="ref-link" href="https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2" target="_blank" rel="noopener noreferrer">NVIDIA Parakeet TDT 0.6B v2 FP16</a></td>
+                <td><code>models/parakeet/</code></td>
+                <td>~1.20 GB</td>
+                <td>Primary English-only GPU speech-to-text engine</td>
+              </tr>
+              <tr>
+                <td><a class="ref-link" href="https://github.com/snakers4/silero-vad" target="_blank" rel="noopener noreferrer">Silero VAD v5</a></td>
+                <td><code>models/vad/</code></td>
+                <td>2.2 MB</td>
+                <td>Neural human-voice activity gate</td>
+              </tr>
+              <tr>
+                <td><a class="ref-link" href="https://github.com/Xiaobin-Rong/gtcrn" target="_blank" rel="noopener noreferrer">GTCRN</a> &amp; <a class="ref-link" href="https://github.com/k2-fsa/sherpa-onnx/releases/tag/speech-enhancement-models" target="_blank" rel="noopener noreferrer">DPDFNet8</a></td>
+                <td><code>models/denoise/</code></td>
+                <td>14.5 MB</td>
+                <td>Streaming neural background-noise suppressors</td>
+              </tr>
+              <tr>
+                <td><a class="ref-link" href="https://github.com/wenet-e2e/wespeaker" target="_blank" rel="noopener noreferrer">WeSpeaker CAM++</a></td>
+                <td><code>models/speaker/</code></td>
+                <td>28 MB</td>
+                <td>Online voice-fingerprint clustering for <code>[SPK 1..N]</code> labels</td>
+              </tr>
+              <tr>
+                <td><a class="ref-link" href="https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct" target="_blank" rel="noopener noreferrer">Qwen2.5-1.5B Q4_K_M</a> + <a class="ref-link" href="https://github.com/ggml-org/llama.cpp" target="_blank" rel="noopener noreferrer">llama.cpp CUDA</a></td>
+                <td><code>models/llm/</code> &amp; <code>runtime/llama-cuda/</code></td>
+                <td>~1.08 GB</td>
+                <td>Optional safety-guarded phonetic post-correction with custom <code>hotwords.txt</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+
+    <!-- INTERACTIVE REPLICA -->
+    <section id="replica">
+      <div class="sec-tag">// 01 :: INTERACTIVE WEB REPLICA</div>
+      <h2>Examine the Speech Bridge UI (Hover Any Button for Tooltips)</h2>
+      <p class="sec-intro">
+        This is a <strong>simulated, non-working UI replica</strong> of the native Rust Win32 desktop app so you can explore the layout in your browser (it does not run the real offline CUDA neural captioner or cloned voices).
+        <strong>Hover any button or badge</strong> to read what it does, switch the pre-scripted noisy-room scenarios below to preview how Legacy CPU captions compare against the GPU neural pipeline, or type a reply on the right to see the <strong>TTS Echo Gate</strong> and word-by-word highlighting in action. To run the real app, download <code>SpeechBridge.zip</code> above.
+      </p>
+
+      <div class="scenario-bar" role="group" aria-label="Simulation scenarios">
+        <span class="scenario-label">SCENARIO:</span>
+        <button class="scen-btn active" data-scen="cafe_babble">Loud Cafe Babble (-5 dB)</button>
+        <button class="scen-btn" data-scen="restaurant">Restaurant Music &amp; Dishes (0 dB)</button>
+        <button class="scen-btn" data-scen="group">Group Table (3 Speakers)</button>
+        <button class="scen-btn" data-scen="quiet">Quiet Room (Clean)</button>
+        <button class="scen-btn audio-btn active" id="btnScenAudio" data-tip="btnScenAudio" aria-pressed="true">🔊 ROOM AUDIO: ON</button>
+        <span id="scenAudioNote" class="scen-audio-note">Click any scenario to hear the noisy room track</span>
+      </div>
+
+      <div class="app-window" aria-label="Interactive Speech Bridge cyber-terminal replica">
+        <div class="app-titlebar">
+          <div class="app-title-left">
+            <span class="app-icon" aria-hidden="true">S</span>
+            <span>SPEECH_BRIDGE // GPU NEURAL CAPTIONING (INTERACTIVE WEB REPLICA)</span>
+          </div>
+          <span style="color: var(--muted);">Hover controls for tooltips · Ctrl+/- zoom</span>
+        </div>
+
+        <div class="app-body">
+          <!-- Row 1: Inbound STT Controls -->
+          <div class="cmd-row">
+            <button id="rBtnMic" class="cyber-btn on-green" data-tip="btnMic">
+              <span id="rRxDot" class="rx-dot"></span>
+              <span id="rRxTxt">RX: ARMED</span>
+            </button>
+            <button id="rBtnEngine" class="cyber-btn on-green" data-tip="btnEngine">ENG: PARAKEET ▾</button>
+            <button id="rBtnInput" class="cyber-btn on-green" data-tip="btnInput">MIC: 1 ▾</button>
+            <button id="rBtnDenoise" class="cyber-btn on-cyan" data-tip="btnDenoise">DNS: GTCRN</button>
+            <button id="rBtnSpk" class="cyber-btn on-violet" data-tip="btnSpk">SPK: ON</button>
+            <button id="rBtnLlm" class="cyber-btn on-sky" data-tip="btnLlm">LLM: ON</button>
+            <button id="rBtnFontDown" class="cyber-btn" data-tip="btnFontDown">A-</button>
+            <button id="rBtnFontUp" class="cyber-btn" data-tip="btnFontUp">A+</button>
+            <div id="rHealth" class="health-pill noisy" data-tip="health">SIG: NOISY (-5dB)</div>
+            <div class="meter-box" data-tip="meter">
+              <span id="rMeterPct" class="meter-pct">42%</span>
+              <canvas id="spectrumCanvas" width="132" height="20"></canvas>
+            </div>
+          </div>
+
+          <!-- Row 2: Outbound TTS + Session Controls -->
+          <div class="cmd-row">
+            <button id="rBtnVoice" class="cyber-btn" data-tip="btnVoice">VOICE: Neural Alan ▾</button>
+            <button id="rBtnTest" class="cyber-btn" data-tip="btnTest">TEST</button>
+            <button id="rBtnRate" class="cyber-btn" data-tip="btnRate">1x</button>
+            <button id="rBtnPin" class="cyber-btn" data-tip="btnPin">PIN</button>
+            <button id="rBtnExp" class="cyber-btn" data-tip="btnExp">EXP</button>
+            <button id="rBtnClr" class="cyber-btn" data-tip="btnClr">CLR</button>
+            <div id="rStatus" class="status-line">&gt;&gt; RX LIVE [Parakeet TDT 0.6B FP16/CUDA]</div>
+          </div>
+
+          <!-- Dual Panes -->
+          <div class="app-panes">
+            <div>
+              <div id="rLeftHdr" class="pane-hdr">// INBOUND :: HEARD (17px | CLICK CARD TO COPY | CTRL+/- ZOOM)</div>
+              <div id="rHeardFeed" class="feed-box armed" aria-live="polite"></div>
+            </div>
+
+            <div>
+              <div class="pane-hdr">// OUTBOUND :: VOICE_CARDS (AUTO-GATES STT &amp; HIGHLIGHTS SPOKEN WORD | ESC STOP)</div>
+              <div id="rReplyFeed" class="feed-box right"></div>
+              <div class="reply-compose">
+                <div class="compose-input-wrap">
+                  <span class="compose-prompt">&gt;</span>
+                  <textarea id="replyInput" placeholder="Type a reply &amp; press Enter to speak aloud..."></textarea>
+                </div>
+                <button id="rBtnSpeak" class="cyber-btn speak-btn" data-tip="btnSpeak">SPEAK ↵</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="replica-telemetry-strip">
+          <div>Active Config: <strong id="tConfig">Parakeet TDT 0.6B GPU + GTCRN + Qwen2.5-1.5B</strong></div>
+          <div>Scenario WER: <strong id="tWer">6.7%</strong> · 1st Word: <strong id="tLat">351 ms</strong> · Infer: <strong id="tInf">242 ms</strong></div>
+          <div><button id="rReplayBtn" class="cyber-btn" data-tip="btnReplay" style="padding: 3px 9px;">↻ Replay Stream</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS (7-STAGE PIPELINE) -->
+    <section id="pipeline">
+      <div class="sec-tag">// 02 :: SYSTEM ARCHITECTURE</div>
+      <h2>How Sound Becomes Accurate Captions in 7 Stages</h2>
+      <p class="sec-intro">
+        Instead of dumping raw laptop mic audio into a single lightweight CPU model, Speech Bridge processes every
+        <strong>32-millisecond slice of sound</strong> through a zero-allocation <a class="ref-link" href="https://www.rust-lang.org/" target="_blank" rel="noopener noreferrer">Rust</a> pipeline that uses both your CPU
+        and GPU <a class="ref-link" href="https://en.wikipedia.org/wiki/Half-precision_floating-point_format" target="_blank" rel="noopener noreferrer">FP16 Tensor Cores</a> for what each does best.
+      </p>
+
+      <div class="pipeline-track">
+        <div class="pipe-step">
+          <div class="pipe-num">STAGE 01 · CAPTURE</div>
+          <h3>Multi-Mic Active-SNR Fusion</h3>
+          <p>
+            Captures 1 mic or 2+ mics simultaneously via Windows <a class="ref-link" href="https://learn.microsoft.com/en-us/windows/win32/coreaudio/wasapi" target="_blank" rel="noopener noreferrer">WASAPI</a>. Every 32 ms it scores each mic's <a class="ref-link" href="https://en.wikipedia.org/wiki/Signal-to-noise_ratio" target="_blank" rel="noopener noreferrer">SNR</a>
+            and crossfades seamlessly to whichever mic is closest to the active speaker.
+          </p>
+          <span class="pipe-badge">0 heap allocs · [i16; 512]</span>
+        </div>
+
+        <div class="pipe-step">
+          <div class="pipe-num">STAGE 02 · ECHO GUARD</div>
+          <h3>Automatic TTS Echo Gate &amp; Word Tracking</h3>
+          <p>
+            When you type a reply and press <code>Enter</code>, <a class="ref-link" href="https://github.com/rhasspy/piper" target="_blank" rel="noopener noreferrer">Piper TTS</a> speaks aloud while bolding and underlining each spoken word in real time, and an atomic gate mutes incoming mic frames (+320 ms reverb tail) so your own voice never echoes into HEARD.
+          </p>
+          <span class="pipe-badge">Lock-free AtomicBool</span>
+        </div>
+
+        <div class="pipe-step">
+          <div class="pipe-num">STAGE 03 · CLEANUP</div>
+          <h3>Streaming Neural Denoisers</h3>
+          <p>
+            Choose on the fly: <a class="ref-link" href="https://github.com/Xiaobin-Rong/gtcrn" target="_blank" rel="noopener noreferrer"><strong>GTCRN</strong></a> (ultra-fast 0.5 MB cafe cleaner), <a class="ref-link" href="https://github.com/k2-fsa/sherpa-onnx/releases/tag/speech-enhancement-models" target="_blank" rel="noopener noreferrer"><strong>DPDFNet8</strong></a>
+            (deep music &amp; dish clatter suppressor), <a class="ref-link" href="https://github.com/k2-fsa/sherpa-onnx" target="_blank" rel="noopener noreferrer"><strong>VoxLock</strong></a> (target-speaker extraction that locks onto 1 person's voice after 3s),
+            or <strong>OFF</strong> when nearby voices overpower your partner.
+          </p>
+          <span class="pipe-badge">O(1) per 32 ms chunk</span>
+        </div>
+
+        <div class="pipe-step">
+          <div class="pipe-num">STAGE 04 · SPEECH GATE</div>
+          <h3><a class="ref-link" href="https://github.com/snakers4/silero-vad" target="_blank" rel="noopener noreferrer">Silero VAD v5</a></h3>
+          <p>
+            Replaces brittle volume thresholds (which trigger on fans and clattering forks) with a neural <a class="ref-link" href="https://en.wikipedia.org/wiki/Voice_activity_detection" target="_blank" rel="noopener noreferrer">Voice Activity Detection</a> model that opens cleanly with a 320 ms pre-roll so the first syllable is never clipped.
+          </p>
+          <span class="pipe-badge">&lt;0.2 ms · CPU RNN</span>
+        </div>
+
+        <div class="pipe-step">
+          <div class="pipe-num">STAGE 05 · TRANSCRIPTION</div>
+          <h3><a class="ref-link" href="https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2" target="_blank" rel="noopener noreferrer">Parakeet TDT 0.6B FP16 (GPU)</a></h3>
+          <p>
+            Runs NVIDIA's flagship English-only FastConformer-TDT model directly on GPU FP16 Tensor Cores (plus
+            <a class="ref-link" href="https://huggingface.co/distil-whisper/distil-large-v3.5" target="_blank" rel="noopener noreferrer">Distil-Whisper Large-v3.5</a> as an optional challenger). <a class="ref-link" href="https://github.com/ufal/whisper_streaming" target="_blank" rel="noopener noreferrer"><strong>LocalAgreement-2</strong></a> locks confirmed
+            words in bright text while keeping the last 1 to 2 trailing words amber so captions never jump.
+          </p>
+          <span class="pipe-badge">~198 ms · 2.26 GB VRAM</span>
+        </div>
+
+        <div class="pipe-step">
+          <div class="pipe-num">STAGE 06 · GROUP TABLES</div>
+          <h3><a class="ref-link" href="https://github.com/wenet-e2e/wespeaker" target="_blank" rel="noopener noreferrer">WeSpeaker CAM++</a> Speaker ID</h3>
+          <p>
+            When a turn finishes, a 28 MB <a class="ref-link" href="https://en.wikipedia.org/wiki/Speaker_diarisation" target="_blank" rel="noopener noreferrer">speaker diarization</a> network computes an L2-normalized voice embedding and clusters voices
+            online via cosine similarity, coloring each person <code>[SPK 1]</code>, <code>[SPK 2]</code>, <code>[SPK 3]</code>.
+          </p>
+          <span class="pipe-badge">&lt;5 ms · Online Clustering</span>
+        </div>
+
+        <div class="pipe-step">
+          <div class="pipe-num">STAGE 07 · SAFETY-GUARDED POLISH</div>
+          <h3><a class="ref-link" href="https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct" target="_blank" rel="noopener noreferrer">Qwen2.5-1.5B</a> Phonetic Fix</h3>
+          <p>
+            Runs asynchronously via <a class="ref-link" href="https://github.com/ggml-org/llama.cpp" target="_blank" rel="noopener noreferrer">llama.cpp</a> after a sentence commits, using the last 5 turns plus your custom
+            <code>hotwords.txt</code> names list to fix subtle phonetic slips. A deterministic <strong>&le;30% edit-distance
+            guard</strong> rejects any rewrite so the AI can never invent words.
+          </p>
+          <span class="pipe-badge">~120 ms · 1.1 GB VRAM</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- BENCHMARKING -->
+    <section id="benchmarks">
+      <div class="sec-tag">// 03 :: EMPIRICAL WAV + NOISE OVERLAY BENCHMARK</div>
+      <h2>Proving Accuracy With Real Numbers, Not Guesswork</h2>
+      <p class="sec-intro">
+        How do you test speech-to-text accuracy when you cannot hear the room yourself? Our trick: build a standalone
+        Rust harness (<code>speech-bench.exe</code>) that takes clean speech <code>.wav</code> clips with exact known
+        scripts, mathematically mixes <strong>cafe babble</strong> and <strong>restaurant music + dishes</strong>
+        on top at calibrated <a class="ref-link" href="https://en.wikipedia.org/wiki/Signal-to-noise_ratio" target="_blank" rel="noopener noreferrer">Signal-to-Noise Ratios</a> (<code>clean</code>, <code>+10 dB</code>, <code>+5 dB</code>,
+        <code>0 dB</code>, and <code>-5 dB</code>), streams them through the exact live decoder in 32 ms chunks, and scores
+        every word's <a class="ref-link" href="https://en.wikipedia.org/wiki/Word_error_rate" target="_blank" rel="noopener noreferrer">Word Error Rate (WER)</a> and speaking-to-display latency.
+      </p>
+
+      <!-- Exact Laptop Hardware Used for All Benchmarks -->
+      <div class="rig-bar" aria-label="Exact benchmark hardware specifications">
+        <div class="rig-item">
+          <span>Test Laptop CPU</span>
+          <strong>Intel Core i5-13420H (8C / 12T)</strong>
+        </div>
+        <div class="rig-item">
+          <span>Test Laptop GPU</span>
+          <strong>NVIDIA GeForce RTX 3050 6 GB</strong>
+        </div>
+        <div class="rig-item">
+          <span>System Memory &amp; OS</span>
+          <strong>16 GB RAM · Windows 11 x64</strong>
+        </div>
+        <div class="rig-item">
+          <span>GPU Runtime Stack</span>
+          <strong>Portable CUDA 12.4 + cuDNN 9</strong>
+        </div>
+      </div>
+
+      <div class="bench-controls" role="group" aria-label="Benchmark SNR selector">
+        <span class="scenario-label" style="align-self:center;">SELECT NOISE LEVEL (SNR):</span>
+        <button class="scen-btn" data-snr="clean">Clean Room</button>
+        <button class="scen-btn" data-snr="+10dB">+10 dB (Quiet Cafe)</button>
+        <button class="scen-btn" data-snr="+5dB">+5 dB (Busy Cafe)</button>
+        <button class="scen-btn active" data-snr="0dB">0 dB (Noise = Voice Volume)</button>
+        <button class="scen-btn" data-snr="-5dB">-5 dB (Noise Louder Than Voice!)</button>
+      </div>
+
+      <div class="chart-card">
+        <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:14px;">
+          <strong style="font-family:var(--mono); color:var(--cyan);" id="chartTitle">Word Error Rate (WER %) at 0 dB SNR (Lower Is Better)</strong>
+          <span style="font-family:var(--mono); font-size:12px; color:var(--muted);">Measured on Intel i5-13420H + NVIDIA RTX 3050 6 GB Laptop GPU</span>
+        </div>
+        <div id="werChartBars"></div>
+      </div>
+
+      <div class="table-wrap">
+        <table aria-label="Full measured benchmark comparison table">
+          <thead>
+            <tr>
+              <th>Engine + Pipeline</th>
+              <th>Clean WER</th>
+              <th>+10 dB WER</th>
+              <th>+5 dB WER</th>
+              <th>0 dB WER</th>
+              <th>-5 dB WER</th>
+              <th>Avg Infer</th>
+              <th>1st Text</th>
+            </tr>
+          </thead>
+          <tbody id="benchTableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="hero-callout" style="margin-top:20px; border-left-color:var(--cyan);">
+        <strong style="color:var(--cyan);">Four Real Bugs Our Benchmark Caught Before We Shipped:</strong>
+        <ol style="margin:8px 0 0; padding-left:20px; color:var(--text-soft);">
+          <li><strong>O(N²) Re-Denoising Bottleneck:</strong> Early tests ran offline denoising on the entire growing utterance every 350 ms. Switching to O(1)-per-chunk streaming denoising with a contiguous FIFO cut overhead by ~100x.</li>
+          <li><strong><a class="ref-link" href="https://en.wikipedia.org/wiki/Short-time_Fourier_transform" target="_blank" rel="noopener noreferrer">STFT</a> Phase Comb-Filtering:</strong> Mixing 65% delayed denoised audio with 35% undelayed raw audio created a comb filter that <em>raised</em> WER! Pure phase-coherent modes (<code>OFF</code> / <code>GTCRN</code> / <code>DPDF8</code> / <code>VOXLOCK</code>) fixed it immediately.</li>
+          <li><strong>Boundary Overlap Duplication:</strong> Soft-splitting long monologues at 8.5 s duplicated 3 to 4 words at the seam (13.3% fake WER). Raising the split to 14 s and adding suffix/prefix word deduplication dropped clean GTCRN WER to <strong>1.7%</strong>.</li>
+          <li><strong>Competing Human Voices vs. Steady Noise:</strong> Single-channel denoisers excel against steady music and dish clatter, while in loud competing human babble at <code>-5 dB</code>, Parakeet raw (<code>DNS: OFF</code>) + Qwen2.5-1.5B outperformed heavy suppression (<code>23.8% WER</code>) because Parakeet's encoder separates overlapping speech natively.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- PLAIN-ENGLISH GLOSSARY -->
+    <section id="glossary">
+      <div class="sec-tag">// 04 :: ACCESSIBLE GLOSSARY</div>
+      <h2>What Every Technical Term Actually Means</h2>
+      <p class="sec-intro">
+        Speech AI documentation is full of intimidating acronyms. Here is every concept used in Speech Bridge translated
+        into plain, everyday language, with direct links if you want to read deeper.
+      </p>
+
+      <div class="glossary-grid">
+        <div class="gloss-card">
+          <div class="gloss-term"><a class="ref-link" href="https://en.wikipedia.org/wiki/Word_error_rate" target="_blank" rel="noopener noreferrer">WER: Word Error Rate (%)</a></div>
+          <div class="gloss-plain">Plain English: "How many words out of 100 did the AI get wrong?"</div>
+          <p>
+            Counts every substituted, missed, or extra word compared to the true script. <strong>5% WER</strong> means
+            19 out of 20 words are spot-on (easy to follow effortlessly). <strong>45 to 80% WER</strong> means gibberish.
+          </p>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term"><a class="ref-link" href="https://en.wikipedia.org/wiki/Signal-to-noise_ratio" target="_blank" rel="noopener noreferrer">SNR: Signal-to-Noise Ratio (dB)</a></div>
+          <div class="gloss-plain">Plain English: "How loud is the person talking compared to the room?"</div>
+          <p>
+            <strong>+10 dB</strong> = quiet cafe. <strong>0 dB</strong> = background music/chatter is just as loud as the
+            person speaking to you. <strong>-5 dB</strong> = a crowded bar where background noise is noticeably <em>louder</em>
+            than your conversation partner.
+          </p>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term"><a class="ref-link" href="https://en.wikipedia.org/wiki/Voice_activity_detection" target="_blank" rel="noopener noreferrer">VAD: Voice Activity Detection</a></div>
+          <div class="gloss-plain">Plain English: "Is a human actually talking right now, or is that just a fork hitting a plate?"</div>
+          <p>
+            Simple volume triggers constantly mistake HVAC hum or clattering dishes for speech. <a class="ref-link" href="https://github.com/snakers4/silero-vad" target="_blank" rel="noopener noreferrer"><strong>Silero VAD v5</strong></a>
+            uses a tiny neural net trained on thousands of hours of audio to recognize real human vocal chords.
+          </p>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term"><a class="ref-link" href="https://github.com/ufal/whisper_streaming" target="_blank" rel="noopener noreferrer">LocalAgreement-2 (Anti-Flicker)</a></div>
+          <div class="gloss-plain">Plain English: "Do not make text jump around while my eyes are trying to read it!"</div>
+          <p>
+            As someone speaks, the AI updates every ~350 ms. Once two back-to-back passes agree on a word, it
+            <strong>locks in bright crisp text</strong> permanently, leaving only the last 1 to 2 unfinished words amber until complete.
+          </p>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term"><a class="ref-link" href="https://en.wikipedia.org/wiki/Half-precision_floating-point_format" target="_blank" rel="noopener noreferrer">FP16 Tensor Cores &amp; VRAM</a></div>
+          <div class="gloss-plain">Plain English: "Using your graphics card's dedicated AI math engines."</div>
+          <p>
+            CPUs process a few numbers at a time; modern NVIDIA GPUs have specialized <strong>Tensor Cores</strong> that multiply
+            thousands of half-precision (FP16) neural weights at once inside ultra-fast VRAM, running large AI models
+            ~5x faster while sipping ~9.6 Watts of GPU power.
+          </p>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term"><a class="ref-link" href="https://github.com/Xiaobin-Rong/gtcrn" target="_blank" rel="noopener noreferrer">GTCRN</a> / <a class="ref-link" href="https://github.com/k2-fsa/sherpa-onnx/releases/tag/speech-enhancement-models" target="_blank" rel="noopener noreferrer">DPDFNet8</a> vs. <a class="ref-link" href="https://github.com/k2-fsa/sherpa-onnx" target="_blank" rel="noopener noreferrer">VoxLock</a></div>
+          <div class="gloss-plain">Plain English: "Cleaning room noise vs. locking onto one specific human voice."</div>
+          <p>
+            <strong>GTCRN &amp; DPDFNet8</strong> strip non-speech noise (music, fans, dishes). <strong>VoxLock</strong>
+            learns the unique vocal signature of <em>one</em> speaker after 3 seconds and tries to erase <em>other humans</em>
+            talking at nearby tables.
+          </p>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term"><a class="ref-link" href="https://en.wikipedia.org/wiki/Speaker_diarisation" target="_blank" rel="noopener noreferrer">Speaker Diarization (WeSpeaker)</a></div>
+          <div class="gloss-plain">Plain English: "Who said that around the table?"</div>
+          <p>
+            Turns each spoken sentence into a mathematical "voice fingerprint" (embedding). Voices with similar fingerprints
+            keep the same color badge (<code>[SPK 1]</code>, <code>[SPK 2]</code>, <code>[SPK 3]</code>) so group conversations stay readable.
+          </p>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term"><a class="ref-link" href="https://learn.microsoft.com/en-us/windows/win32/coreaudio/wasapi" target="_blank" rel="noopener noreferrer">WASAPI</a> &amp; <a class="ref-link" href="https://en.wikipedia.org/wiki/Goertzel_algorithm" target="_blank" rel="noopener noreferrer">Goertzel Spectrum</a></div>
+          <div class="gloss-plain">Plain English: "Low-latency Windows audio capture and a 24-bar sound visualizer."</div>
+          <p>
+            <strong>WASAPI</strong> lets Speech Bridge read multiple microphones simultaneously with minimal delay, while the
+            <strong>Goertzel algorithm</strong> computes 24 frequency bands (85 Hz to 7.2 kHz) in real time so you can see speech energy without hearing.
+          </p>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-term"><a class="ref-link" href="https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html" target="_blank" rel="noopener noreferrer">Borrow-Checker Appeasement</a></div>
+          <div class="gloss-plain">Plain English: "Lazily copying memory in Rust just to make compiler errors go away."</div>
+          <p>
+            Rust enforces strict memory ownership at compile time. Rushing past it with <code>.clone()</code> or
+            <code>.to_vec()</code> inside 32 ms audio callbacks silently wastes CPU and causes audio stutters, so we
+            audited and eliminated every hot-path copy.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- WHY RUST OVER PYTHON + BORROW CHECKER AUDIT -->
+    <section id="rust-vs-python">
+      <div class="sec-tag">// 05 :: ENGINEERING ARCHITECTURE</div>
+      <h2>Why We Chose Pure Rust Over Python (And Eliminated Borrow-Checker Debt)</h2>
+      <p class="sec-intro">
+        Most AI speech demos are built in Python with PyTorch, Conda environments, and Electron frontends.
+        For a daily accessibility tool that has to open instantly in a noisy coffee shop and run for hours on laptop
+        battery without glitching, native <a class="ref-link" href="https://www.rust-lang.org/" target="_blank" rel="noopener noreferrer">Rust</a> wins decisively.
+      </p>
+
+      <div class="two-col">
+        <div class="panel">
+          <h3>✓ Pure Rust + Native Win32 + Dynamic CUDA FFI</h3>
+          <ul>
+            <li><strong>630 KB Executable:</strong> Compiles to a single tiny native Win32 binary with zero browser/Electron overhead and instant cold launch.</li>
+            <li><strong>Zero Python Version Hell:</strong> Dynamically loads prebuilt C-API shared libraries (<code>sherpa-onnx-c-api.dll</code>) via Win32 <code>LoadLibraryW</code>, working cleanly even on machines with Python 3.14 where PyTorch wheels often break.</li>
+            <li><strong>Deterministic Real-Time Audio:</strong> No Garbage Collector pauses mid-sentence. Fixed <code>[i16; 512]</code> stack arrays cross the WASAPI audio thread with zero heap allocations.</li>
+            <li><strong>100% Shared Live &amp; Benchmark Code:</strong> Both the GUI (<code>speech-bridge.exe</code>) and WAV+noise CLI tester (<code>speech-bench.exe</code>) link the exact same Rust <code>StreamDecoder</code> library.</li>
+          </ul>
+        </div>
+
+        <div class="panel python">
+          <h3>✕ Typical Python / PyTorch / Electron Stack</h3>
+          <ul>
+            <li><strong>3 to 5 GB Environment Sprawl:</strong> Requires pinned Python 3.11/3.12 virtualenvs, pip/Conda dependency trees, and fragile wheel compilation on Windows.</li>
+            <li><strong>Slow Startup &amp; Heavy Idle RAM:</strong> Importing PyTorch + Electron routinely eats 800 MB to 1.5 GB RAM and 5 to 12 seconds before the window even appears.</li>
+            <li><strong>GC &amp; GIL Audio Jitter:</strong> Python's Global Interpreter Lock and garbage collector can stall real-time 32 ms microphone callbacks unless pushed into C extensions anyway.</li>
+            <li><strong>Drift Between Prototype &amp; App:</strong> Often leads to separate Python test scripts that behave slightly differently from the production desktop UI.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3 style="margin-top:28px; font-family:var(--mono); color:var(--cyan); font-size:1.05rem;">
+        Zero-Allocation Ownership Audit (Eliminating Borrow-Checker Appeasement)
+      </h3>
+      <p style="color:var(--text-soft); margin:6px 0 0; max-width:860px;">
+        AI-assisted Rust code often slips in subtle <code>.clone()</code> and <code>.to_vec()</code> calls to appease the
+        borrow checker. We audited every file in <code>src/</code> (verified <strong>0</strong> uses of
+        <code>Rc&lt;RefCell&gt;</code>, <code>Box::leak</code>, or <code>static mut</code>) and removed all 4 real hot-path allocations:
+      </p>
+
+      <div class="audit-list">
+        <div class="audit-item">
+          <div class="tag">01 · src/meter.rs (Real-Time Audio Thread)</div>
+          <div class="fix">
+            Replaced <code>SyncSender&lt;Vec&lt;i16&gt;&gt;</code> + <code>chunk.to_vec()</code> every 32 ms inside the WASAPI callback
+            with stack-allocated <strong><code>[i16; 512]</code> Copy frames</strong> (0 heap allocations in OS audio callbacks).
+          </div>
+        </div>
+        <div class="audit-item">
+          <div class="tag">02 · src/stream_decoder.rs (ASR Buffer)</div>
+          <div class="fix">
+            Replaced per-decode <code>Vec&lt;f32&gt;</code> clones (~640 KB x 3/sec) with a single reusable
+            <strong><code>asr_scratch: Vec&lt;f32&gt;</code></strong> filled in place + <code>copy_within</code> overlap trims.
+          </div>
+        </div>
+        <div class="audit-item">
+          <div class="tag">03 · src/stream_decoder.rs (Idle Pre-Roll)</div>
+          <div class="fix">
+            Replaced <code>VecDeque&lt;Vec&lt;f32&gt;&gt;</code> + idle <code>hp_f32.clone()</code> with fixed
+            <strong><code>[f32; 512]</code> stack rings</strong> and in-place <code>enhance_stream_chunk_into()</code>.
+          </div>
+        </div>
+        <div class="audit-item">
+          <div class="tag">04 · src/ui.rs (30 Hz Meter Repaints)</div>
+          <div class="fix">
+            Eliminated <code>active_mic_name.clone()</code> on every 30 Hz meter paint tick by formatting directly into a
+            reusable <strong><code>health_buf: String</code></strong> under the short lock.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DIY MIC -->
+    <section id="diy-mic">
+      <div class="sec-tag">// 06 :: DIY MIC! (~$4 WIRELESS BLE MICROPHONE)</div>
+      <h2>Build Your Own Wireless Table Mic for ~$4</h2>
+      <p class="sec-intro">
+        Laptop microphones are great for solo use, but in a noisy restaurant or around a group table, placing a tiny wireless mic
+        directly next to each speaker dramatically boosts signal-to-noise ratio. Instead of spending $100+ on commercial conference pucks,
+        you can solder a complete <strong>Bluetooth Low Energy (BLE) microphone</strong> in two minutes for about <strong>$4</strong>.
+      </p>
+
+      <div class="two-col">
+        <div class="panel">
+          <h3>Bill of Materials (~$4 Total)</h3>
+          <div class="table-wrap" style="margin-top:12px;">
+            <table aria-label="DIY BLE Microphone Bill of Materials">
+              <thead>
+                <tr>
+                  <th>Part</th>
+                  <th>Est. Cost</th>
+                  <th>Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><a class="ref-link" href="https://www.aliexpress.us/w/wholesale-esp32-supermini-c3.html?spm=a2g0o.productlist.search.0" target="_blank" rel="noopener noreferrer">ESP32-C3 SuperMini</a></td>
+                  <td>~$3.00</td>
+                  <td>RISC-V MCU with 12-bit SAR ADC DMA &amp; BLE 5.0 radio</td>
+                </tr>
+                <tr>
+                  <td><a class="ref-link" href="https://www.aliexpress.us/w/wholesale-max4466.html?spm=a2g0o.productlist.search.0" target="_blank" rel="noopener noreferrer">MAX4466 Electret Mic</a></td>
+                  <td>~$1.00</td>
+                  <td>Adjustable-gain analog electret mic preamp</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 style="margin-top:20px;">3-Wire Pinout (Direct Solder)</h3>
+          <div class="table-wrap" style="margin-top:10px;">
+            <table aria-label="ESP32-C3 SuperMini to MAX4466 Pinout">
+              <thead>
+                <tr>
+                  <th>MAX4466 Pin</th>
+                  <th>ESP32-C3 SuperMini Pin</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>VCC</code></td>
+                  <td><code>3.3V</code></td>
+                  <td>Clean 3.3V regulated supply</td>
+                </tr>
+                <tr>
+                  <td><code>GND</code></td>
+                  <td><code>GPIO 4</code></td>
+                  <td>Soft ground driven <code>OUTPUT LOW</code> before ADC/BLE init</td>
+                </tr>
+                <tr>
+                  <td><code>OUT</code></td>
+                  <td><code>GPIO 3</code> (<code>ADC1_CH3</code>)</td>
+                  <td>16 kHz continuous DMA sampling (ADC1 only; avoids ADC2/radio conflict)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 style="margin-top:20px;">Why This Low-Cost Approach Wins</h3>
+          <ul>
+            <li><strong>Zero Driver Bloat &amp; Multi-Mic Ready:</strong> Drop three ~$4 mics across a dinner table for ~$12 total; Speech Bridge automatically locks onto whichever person is speaking clearest.</li>
+            <li><strong>Plug-and-Flash Simplicity:</strong> <code>esp32-mic-hub.exe</code> auto-detects newly plugged-in ESP32-C3 boards and flashes firmware in one click, then idles in the system tray with near-zero battery impact.</li>
+          </ul>
+
+          <div style="margin-top:16px; padding:12px 14px; border:1px solid rgba(56,189,248,0.28); border-radius:8px; background:rgba(15,23,42,0.55);">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+              <strong style="font-family:var(--mono); color:var(--cyan); font-size:0.9rem;">Browser USB Flasher (Web Serial / TinyUSB)</strong>
+              <button id="btnWebFlash" class="cyber-btn on-cyan" type="button">⚡ Flash ESP32-C3 (.bin)</button>
+            </div>
+            <div style="margin-top:8px; height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
+              <div id="flashProgressBar" style="width:0%; height:100%; background:var(--cyan); transition:width 0.15s ease;"></div>
+            </div>
+            <div id="flashStatusText" style="margin-top:7px; font-family:var(--mono); font-size:0.78rem; color:var(--text-soft);">
+              Plug in an ESP32-C3 SuperMini over USB-C and click Flash (Chrome / Edge).
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>How the BLE Audio &amp; IPC Pipeline Works</h3>
+          <ul>
+            <li><strong>16 kHz DMA + 80 Hz High-Pass:</strong> The ESP32-C3 samples <code>GPIO 3</code> via hardware <code>adc_digi</code> DMA (2x oversampled at 32 kHz), removes DC bias, and strips low-frequency BLE TX/room rumble with a single-pole 80 Hz high-pass filter.</li>
+            <li><strong>4-Bit IMA-ADPCM over BLE 5.0:</strong> Every 30 ms (480 samples) is compressed 4:1 into a 246-byte packet with a 2-byte sequence counter and streamed over a custom GATT Notify characteristic (<code>C3-BLE-MIC</code>) at 33.3 packets/sec—achieving <strong>0.00% packet loss</strong>.</li>
+            <li><strong>ESP32-Mic Hub → Speech Bridge:</strong> Our lightweight native Rust tray utility (<code>esp32-mic-hub.exe</code>, ~390 KB) shows nearby mics sorted by RSSI signal strength with live VU meters, lets you click up to 3 mics to connect, and pipes decoded 16 kHz PCM frames over loopback UDP (<code>127.0.0.1:47100</code>) straight into <code>speech-bridge.exe</code>'s active-SNR multi-mic switcher—no virtual audio drivers required.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:18px;">
+        <h3>Possible Improvements</h3>
+        <ul>
+          <li><strong>Untethered Battery + USB-C Charging:</strong> Add a compact 1S LiPo cell with a USB-C charge/protection board (such as a TP4056 module) so each mic puck runs cord-free on a cafe or dinner table for hours.</li>
+          <li><strong>Custom 3D-Printed Enclosure via ProtoTray:</strong> Design a fitted tray to hold the ESP32-C3 SuperMini, MAX4466, battery, and charger neatly together using the <a class="ref-link" href="https://dillonsimeone.com/Projects/ParametricModeling/23-ProtoTray/index.html" target="_blank" rel="noopener noreferrer">Parametric ProtoTray Generator</a>, then 3D print a snap-fit lid or desk puck.</li>
+          <li><strong>Acoustic &amp; Power Polish:</strong> Add a small foam windscreen over the electret capsule to cut AC/breeze plosives, plus a slide switch or BLE-idle deep-sleep mode to stretch battery life between outings.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- VOICE CLONER: RUSTYVOICECLONER REPLICA, SETUP GUIDE & BLOOPER -->
+    <section id="voice-cloner">
+      <div class="sec-tag">// 07 :: VOICE CLONING FOR DEAF MAKERS (RUSTYVOICECLONER + OPENVOICE V2)</div>
+      <h2>Clone Your Own Voice by Matching Soundwaves Visually</h2>
+      <p class="sec-intro">
+        Because I am completely deaf and never learned to speak, I can't just read a paragraph out loud into a microphone to clone my voice.
+        Instead, <strong>RustyVoiceCloner</strong> lets me mimic individual vowels and short sounds by eye: it shows three real-time visual graphs (<strong>Loudness Envelope</strong>, <strong>Pitch (F<sub>0</sub>)</strong>, and <strong>24-Band Vowel Spectrum</strong>) so I can practice each sound until my live microphone wave matches the target wave.
+        Once all 9 sounds are captured, OpenVoice v2 extracts my vocal timbre and applies it to Speech Bridge's offline neural voices.
+      </p>
+
+      <!-- Inline Dillon Voice Player (visible on both mobile & PC) -->
+      <div id="dillonPlayerInline" class="dillon-player-inline" aria-label="Have Dillon read aloud to you">
+        <div class="dp-title">Have Dillon read aloud to you!</div>
+        <div class="dp-inline-row">
+          <div class="dp-voice-row" style="margin-bottom:0; gap:10px;">
+            <button id="dpInlinePrevVoice" class="dp-arrow" type="button" aria-label="Previous cloned voice" title="Previous voice">&larr;</button>
+            <span id="dpInlineVoiceName" class="dp-voice-name">Alan-Dillon</span>
+            <button id="dpInlineNextVoice" class="dp-arrow" type="button" aria-label="Next cloned voice" title="Next voice">&rarr;</button>
+          </div>
+          <div class="dp-controls">
+            <button id="dpInlinePlayStop" class="dp-btn dp-play" type="button">Play</button>
+            <button id="dpInlineRestart" class="dp-btn" type="button">Restart</button>
+          </div>
+        </div>
+        <div id="dpInlineStatus" class="dp-status">Ready · Real OpenVoice v2 clone</div>
+      </div>
+
+      <div class="hero-callout" style="margin-bottom:22px;">
+        <strong>Interactive Web Replica Only:</strong> The widget below is a browser-based replica of <code>RustyVoiceCloner</code> so you can try matching soundwaves right here.
+        To actually extract your voice profile (<code>.pth</code>) and use it in Speech Bridge, you must download and run the native Windows app (<strong><code>RustyVoiceCloner.exe</code></strong>) alongside <strong><code>openvoice_worker\Setup.bat</code></strong> on your PC.
+      </div>
+
+      <!-- Interactive RustyVoiceCloner Web Replica -->
+      <div class="vc-replica">
+        <div class="vc-topbar">
+          <div class="vc-brand">RUSTYVOICECLONER // WEB REPLICA</div>
+          <div class="vc-match-pill" id="vcMatchPill">LIVE MATCH: <span id="vcMatchPct">0%</span></div>
+        </div>
+
+        <div class="vc-grid">
+          <div class="vc-cards" id="vcCardList" aria-label="Sound cards"></div>
+
+          <div class="vc-stage">
+            <div class="vc-cue" id="vcCueBox">How it feels: Close your lips gently and hum.</div>
+            <div class="vc-plot-label">1. Loudness / Wave Shape (Cyan = Target, Amber/Green = Live Mic)</div>
+            <canvas id="vcEnvCanvas" width="760" height="105"></canvas>
+            <div class="vc-plot-label">2. Pitch / Tone (High vs Low) - <span id="vcPitchReadout">Target: 110 Hz | Live: -</span></div>
+            <canvas id="vcPitchCanvas" width="760" height="95"></canvas>
+            <div class="vc-plot-label">3. Vowel Shape / 24-Band Frequency Spectrum</div>
+            <canvas id="vcSpecCanvas" width="760" height="110"></canvas>
+
+            <div class="vc-actions">
+              <button id="vcBtnMic" class="dp-btn dp-play" type="button">Enable Live Mic</button>
+              <button id="vcBtnSim" class="dp-btn" type="button">Simulate Good Match</button>
+              <button id="vcBtnLock" class="dp-btn" type="button">Save Best Take</button>
+              <span id="vcStageStatus" class="vc-status">Pick a sound card and enable your mic (or click Simulate).</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3-Step Setup Guide for Deaf Makers -->
+      <h3 style="margin-top:34px; font-family:var(--mono); color:var(--cyan);">Setup Guide: Clone Your Voice in 3 Steps</h3>
+      <div class="setup-steps" style="margin-top:12px;">
+        <div class="setup-step">
+          <div class="setup-badge">STEP 01 · DOWNLOAD THE APP</div>
+          <h3>Get <code>RustyVoiceCloner</code></h3>
+          <p>
+            Click below to bundle <code>RustyVoiceCloner.exe</code> and the <code>openvoice_worker/</code> files into a single ZIP, then extract it next to your <code>speech-bridge</code> folder.
+          </p>
+          <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+            <button id="vcBtnZip" class="dp-btn dp-play" type="button">Download RustyVoiceCloner.zip</button>
+            <div id="vcZipStatus" class="vc-status" style="font-size:11.5px;"></div>
+            <div style="font-family:var(--mono); font-size:11.5px; color:var(--muted); line-height:1.6;">
+              Direct files:
+              <a class="ref-link" href="../../Glue/RUST/RustyVoiceCloner/RustyVoiceCloner.exe" download>RustyVoiceCloner.exe</a> ·
+              <a class="ref-link" href="../../Glue/RUST/RustyVoiceCloner/openvoice_worker/Setup.bat" download>Setup.bat</a> ·
+              <a class="ref-link" href="../../Glue/RUST/RustyVoiceCloner/openvoice_worker/Setup.ps1" download>Setup.ps1</a> ·
+              <a class="ref-link" href="../../Glue/RUST/RustyVoiceCloner/openvoice_worker/worker.py" download>worker.py</a>
+            </div>
+          </div>
+        </div>
+        <div class="setup-step step-2">
+          <div class="setup-badge">STEP 02 · RUN OPENVOICE SETUP</div>
+          <h3>Double-Click <code>openvoice_worker\Setup.bat</code></h3>
+          <p>
+            <code>Setup.bat</code> creates an isolated Python 3.11 environment with PyTorch CUDA and downloads the OpenVoice v2 converter checkpoints from HuggingFace (~200 MB) without touching your system Python.
+          </p>
+        </div>
+        <div class="setup-step step-3">
+          <div class="setup-badge">STEP 03 · MIMIC &amp; GENERATE</div>
+          <h3>Match 9 Cards &amp; Click Generate</h3>
+          <p>
+            Open <code>RustyVoiceCloner.exe</code>, hold <code>Spacebar</code> to match each soundwave until it turns green, then click <strong>Generate My Cloned Voices</strong>. Restart <code>speech-bridge.exe</code> to speak with your new voices!
+          </p>
+        </div>
+      </div>
+
+      <!-- Blooper Section -->
+      <div class="panel" style="margin-top:24px;">
+        <h3>Behind the Scenes: Full Voice-Cloning Session (Blooper Reel)</h3>
+        <p style="color:var(--text-soft); margin-top:0;">
+          <code>RustyVoiceCloner</code> continuously records the microphone from the moment you open the app until you generate your voice, capturing every trial, error, and wave-matching attempt along the way.
+        </p>
+        <video class="blooper-video" controls preload="metadata" src="./media/dillon_voice_cloning_blooper.mp4">
+          Your browser does not support HTML5 video.
+        </video>
+        <div style="margin-top:10px; font-family:var(--mono); font-size:13px;">
+          <a class="ref-link" href="./media/dillon_voice_cloning_blooper.mp4" download>Download Blooper MP4 (dillon_voice_cloning_blooper.mp4)</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- GOING BEYOND: EXPRESSIVE VIBE MODE & VOICESHIFTING -->
+    <section id="going-beyond">
+      <div class="sec-tag">// 08 :: GOING BEYOND</div>
+      <h2>Expressive Vibe Mode &amp; Word-by-Word Voiceshifting</h2>
+      <p class="sec-intro">
+        Cloning your own vocal timbre solves the robotic-voice problem, yet standard Text-to-Speech still reads every sentence
+        with the same flat cadence. A deadpan setup and an excited punchline come out at identical speed, pitch, and energy.
+        To make outbound speech actually match a speaker's personality, we pushed Speech Bridge in two new directions:
+        an <strong>LLM-directed Vibe Engine</strong> and real-time <strong>Word-by-Word Voiceshifting</strong>.
+      </p>
+
+      <div class="two-col">
+        <div class="panel">
+          <h3>0 MB Extra VRAM: Qwen2.5-1.5B Prosody Director</h3>
+          <ul>
+            <li><strong>Why Not Suno Bark?</strong> End-to-end expressive audio models like <a class="ref-link" href="https://github.com/suno-ai/bark" target="_blank" rel="noopener noreferrer">Suno Bark</a> require 8 to 12 GB of VRAM and take several seconds per sentence, which cannot run live alongside Parakeet GPU STT (~2.3 GB) and OpenVoice CUDA (~0.9 GB) on a 6 GB RTX 3050 laptop.</li>
+            <li><strong>Reusing What Is Already Warm:</strong> Speech Bridge already keeps a local <code>Qwen2.5-1.5B</code> CUDA server loaded for phonetic caption polish. When <strong>VIBE: ON</strong> is active, that exact same model doubles as a Prosody Director at <strong>0 MB extra VRAM</strong>.</li>
+            <li><strong>Numbers-Only Direction:</strong> Rust splits your reply into natural spoken beats first, then asks Qwen only for numeric <code>SPEED | PITCH | ENERGY | PAUSE_MS</code> scores per beat so the LLM can never drop or alter a single word.</li>
+            <li><strong>Pure-Rust WSOLA Sculpting:</strong> Each beat is synthesized through Piper + OpenVoice CUDA and sculpted in pure Rust using Waveform Similarity Overlap-Add (WSOLA) time-stretching, independent semitone pitch shifting, soft-limited vocal energy, and dramatic pauses.</li>
+            <li><strong>Editable Vibe Personas:</strong> Click <code>PERSONA ▾</code> next to <code>VIBE:ON/OFF</code> to switch between 5 built-in personas stored in <code>vibes/</code> (<em>Mad Scientist</em>, <em>Deadpan Dry</em>, <em>Warm &amp; Friendly</em>, <em>Hype Storytelling</em>, <em>Calm &amp; Serious</em>) or click <code>+ Add New Persona...</code> to save your own custom style.</li>
+          </ul>
+        </div>
+
+        <div class="panel">
+          <h3>Word-by-Word Voiceshifting (<code>CYCLE-Dillon</code>)</h3>
+          <ul>
+            <li><strong>Every Word, A New Cadence:</strong> Because <code>RustyVoiceCloner</code> maps your single vocal fingerprint onto multiple distinct Piper neural base voices (British, American, crisp, warm, rapid), you end up with a whole ensemble of voices that all share your tone color.</li>
+            <li><strong>Live Seamless Stitching:</strong> Selecting <code>CYCLE-Dillon</code> synthesizes each word through the next voice in the roster, trims silence margins, stitches consecutive words with a <strong>12 ms linear crossfade</strong>, and preserves natural punctuation pauses.</li>
+            <li><strong>Stackable With Vibe Mode:</strong> Voiceshifting runs underneath the Prosody Director, so you can combine rapid per-word voice cycling with LLM-directed pitch arcs, pacing shifts, and comedic pauses in real time.</li>
+            <li><strong>Audition It In The Floating Player Too:</strong> Use the arrows on the <em>Have Dillon read aloud to you!</em> widget in the top-right corner to switch directly to <code>Cycle-Dillon</code> and hear this entire page read in voiceshifting mode.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="panel vibe-showcase-panel" style="margin-top:20px;">
+        <div class="vibe-showcase-head">
+          <div>
+            <h3>A/B/C/D Live Showcase: Flat vs. Vibe Mode &amp; Single vs. Voiceshifting</h3>
+            <p class="vibe-showcase-sub">
+              One continuous recording comparing all four combinations on the same D&amp;D rant, directed live by <code>Qwen2.5-1.5B</code> using the <strong>Mad Scientist</strong> persona. Click any chapter to jump straight to that mode.
+            </p>
+          </div>
+          <a class="ref-link" href="./audio/dillon_vibe_showcase.mp3" download style="font-family:var(--mono); font-size:12.5px; white-space:nowrap;">Download MP3</a>
+        </div>
+
+        <div class="vibe-chapters" id="vibeChapters" role="group" aria-label="Vibe Showcase Chapters">
+          <button type="button" class="vibe-chap-btn active" data-start="0.00">
+            <span class="vc-num">01 · 0:00</span>
+            <span class="vc-name">Flat · Single Voice</span>
+          </button>
+          <button type="button" class="vibe-chap-btn" data-start="36.19">
+            <span class="vc-num">02 · 0:36</span>
+            <span class="vc-name">Flat · Voiceshifting</span>
+          </button>
+          <button type="button" class="vibe-chap-btn" data-start="79.26">
+            <span class="vc-num">03 · 1:19</span>
+            <span class="vc-name">Vibe ON · Single Voice</span>
+          </button>
+          <button type="button" class="vibe-chap-btn" data-start="113.71">
+            <span class="vc-num">04 · 1:54</span>
+            <span class="vc-name">Vibe ON · Voiceshifting</span>
+          </button>
+        </div>
+
+        <audio id="vibeShowcaseAudio" class="vibe-audio" controls preload="metadata" src="./audio/dillon_vibe_showcase.mp3">
+          Your browser does not support HTML5 audio.
+        </audio>
+
+        <blockquote class="vibe-quote">
+          <div class="vibe-quote-label">TEST SCRIPT (MAD SCIENTIST PERSONA)</div>
+          <p>
+            "A bag of flour has always been my weapon of choice in DnD... A cloud of powder is ridiculously versatile and deadly!
+            Even if it's onion flour. Basically all flour is very flammable! And fire solves a lot of problems.
+            Onion flour is probably extra scary, come think of it, due to the amount of sugar in them... Goes hotter and burns longer like sugar water!
+            Borderline improvised napalm!"
+          </p>
+        </blockquote>
+      </div>
+    </section>
+
+    <footer>
+      <span>SPEECH_BRIDGE // BUILT IN RUST FOR REAL-WORLD DEAF &amp; MUTE ACCESSIBILITY</span>
+      <span>100% OFFLINE · PORTABLE CUDA · ZERO CLOUD DEPENDENCIES</span>
+    </footer>
+  </main>
+
+  <div id="cyberTooltip" role="tooltip" aria-hidden="true">
+    <div class="tt-title" id="ttTitle"></div>
+    <div class="tt-desc" id="ttDesc"></div>
+  </div>
+
+  <script src="./app.js"></script>
+  <script type="module" src="./flasher.js"></script>
+</body>
+</html>

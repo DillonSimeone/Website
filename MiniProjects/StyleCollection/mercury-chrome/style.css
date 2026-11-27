@@ -1,0 +1,121 @@
+:root {
+  --mercury-dark: #050508;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--mercury-dark);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.02) 1.5px, transparent 1.5px);
+  background-size: 35px 35px;
+  color: #d3d3d8;
+  font-family: var(--font-display);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+.mercury-container {
+  width: 90%;
+  max-width: 950px;
+  padding: 40px 0;
+}
+
+.mercury-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.nav-back {
+  color: #6c6c7d;
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  border: 1px solid #222;
+  padding: 5px 12px;
+}
+.nav-back:hover {
+  color: #fff;
+  border-color: #fff;
+}
+
+.mercury-title {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 8vw, 5.5rem);
+  font-weight: 700;
+  margin: 20px 0 0 0;
+  letter-spacing: 3px;
+  color: #fff;
+  text-shadow: 0 0 15px rgba(255,255,255,0.1);
+}
+
+.mercury-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  letter-spacing: 2.5px;
+  color: #88939b;
+  margin-top: 10px;
+}
+
+/* Morphing Blob Grid */
+.mercury-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 40px;
+}
+
+/* Fluid mercury cards */
+.mercury-card {
+  position: relative;
+  background: linear-gradient(135deg, #ffffff 0%, #a6b2c3 25%, #464f5c 65%, #0e1115 100%);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  padding: 40px 35px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6),
+              inset 0 0 20px rgba(255,255,255,0.2);
+  transition: transform 0.3s ease;
+  overflow: hidden;
+  /* border-radius values will be continuously updated by JS */
+  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+}
+
+.mercury-card:hover {
+  transform: scale(1.03);
+}
+
+/* Inside silver highlight glow */
+.mercury-reflection {
+  position: absolute;
+  top: 5%;
+  left: 5%;
+  width: 90%;
+  height: 90%;
+  background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.6) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card-content {
+  position: relative;
+  z-index: 2;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+}
+
+.mercury-card h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  margin-top: 0;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.mercury-card p {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: #e2e2eb;
+}

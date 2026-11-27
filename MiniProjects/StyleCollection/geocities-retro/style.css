@@ -1,0 +1,176 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #000000;
+  /* Starry sky repeating tile background */
+  background-image: 
+    radial-gradient(1.5px 1.5px at 20px 30px, #eee, transparent),
+    radial-gradient(1.5px 1.5px at 40px 70px, #fff, transparent),
+    radial-gradient(2px 2px at 90px 10px, #ddd, transparent);
+  background-size: 120px 120px;
+  color: #00ff00; /* Green phosphor look */
+  font-family: "Comic Sans MS", "Arial", sans-serif;
+  line-height: 1.4;
+}
+
+.geocities-container {
+  max-width: 950px;
+  margin: 0 auto;
+  padding: 60px 20px;
+}
+
+.geo-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.nav-back {
+  display: inline-block;
+  color: #ffff00;
+  text-decoration: underline;
+  font-size: 12px;
+  margin-bottom: 25px;
+}
+
+/* Custom scrolling marquee bar */
+.marquee-scroller {
+  width: 100%;
+  overflow: hidden;
+  background-color: #000080; /* Netscape Blue */
+  color: #ffffff;
+  border: 2px inset #c0c0c0;
+  padding: 4px 0;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.scrolling-text {
+  display: inline-block;
+  padding-left: 100%;
+  animation: marquee 12s linear infinite;
+  font-weight: bold;
+}
+
+@keyframes marquee {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-100%, 0, 0); }
+}
+
+.geo-title {
+  font-family: "Times New Roman", Times, serif;
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  color: #ff00ff; /* Hot pink */
+  text-shadow: 2px 2px 0px #00ffff;
+  margin: 20px 0 0 0;
+}
+
+.geo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 30px;
+}
+
+.geo-card {
+  background-color: #000000;
+  border: 3px outset #c0c0c0;
+  padding: 25px;
+  box-shadow: 3px 3px 0px rgba(255,255,255,0.1);
+}
+
+.geo-card h2 {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 1.4rem;
+  color: #ffff00;
+  margin-top: 0;
+}
+
+/* Construction alert bar */
+.construction-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  background: repeating-linear-gradient(
+    -45deg,
+    #ffff00,
+    #ffff00 10px,
+    #000000 10px,
+    #000000 20px
+  );
+  padding: 5px;
+  margin: -25px -25px 20px -25px;
+  border-bottom: 3px outset #c0c0c0;
+}
+
+.construction-header h2 {
+  color: #ffff00;
+  background-color: #000000;
+  padding: 2px 10px;
+  margin: 0;
+  font-size: 12px;
+}
+
+.construction-icon {
+  font-size: 18px;
+}
+
+/* Hits counter box */
+.hit-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.odometer-counter {
+  background-color: #000000;
+  border: 2px inset #ffffff;
+  color: #ff0000; /* Red segment display look */
+  font-family: "Courier New", monospace;
+  font-size: 2rem;
+  font-weight: bold;
+  letter-spacing: 5px;
+  padding: 4px 10px;
+  margin-top: 10px;
+  margin-bottom: 15px;
+}
+
+.modem-btn {
+  background-color: #c0c0c0;
+  color: #000000;
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+  font-family: inherit;
+  font-weight: bold;
+  padding: 8px 16px;
+  cursor: pointer;
+  outline: none;
+}
+
+.modem-btn:active {
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #ffffff;
+  border-right: 2px solid #ffffff;
+}
+
+/* Links */
+.cool-links-list {
+  padding-left: 15px;
+}
+
+.cool-links-list li {
+  margin-bottom: 12px;
+}
+
+.geo-link {
+  color: #0000ff; /* Standard blue active link */
+  text-decoration: underline;
+  font-weight: bold;
+}
+
+.geo-link:visited {
+  color: #551a8b; /* Purple visited link */
+}

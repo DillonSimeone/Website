@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>22 - Haptic Zoo #1 | Monolithic Swamp Biome Plate (216x165x95mm)</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="logo-area">
+            <span class="logo-icon">🌿</span>
+            <div>
+                <h1>HAPTIC ZOO: SWAMP BIOME #1</h1>
+            </div>
+            <span class="badge" id="box-badge">TRANSIT CASE: 216×165×95mm</span>
+            <span class="badge" id="engine-badge" style="border-color:#1abc9c; color:#1abc9c;">HOLLOW OPEN-BOTTOM ANIMALS</span>
+        </div>
+        <div class="header-actions">
+            <button class="ble-btn" id="btn-ble-connect">
+                <span class="ble-indicator" id="ble-status-dot"></span>
+                <span id="ble-btn-text">CONNECT BLUETOOTH</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- 3D Viewport -->
+        <div id="viewport">
+            <div id="canvas-container"></div>
+
+            <div class="viewport-overlay">
+                <div class="telemetry-card">
+                    <div>Enclosure: <strong>216 × 165 × 95 mm</strong> (Smallest Case)</div>
+                    <div>Habitat Plate: <span id="tele-plate-dims">200 × 149 × 4.0 mm</span></div>
+                    <div>Elevation in Box: <strong id="tele-floor-drop">30 mm from bottom (65mm headroom)</strong></div>
+                    <div>Animals: <strong>100% Hollow Shells with Open Bottoms</strong></div>
+                    <div>Motors: <strong>3× 10.4mm Coin Motors Flush at Dorsal Surface</strong></div>
+                </div>
+            </div>
+
+            <div class="view-toggles">
+                <button class="toggle-btn" id="btn-flip-view">🔄 Flip to Underbelly</button>
+                <button class="toggle-btn" id="btn-focus-gator">🐊 Gator Cavity</button>
+                <button class="toggle-btn" id="btn-focus-turtle">🐢 Turtle Cavity</button>
+                <button class="toggle-btn" id="btn-focus-fish">🐟 Fish Cavity</button>
+                <button class="toggle-btn active" id="btn-toggle-box">📦 Box Ghost</button>
+                <button class="toggle-btn active" id="btn-toggle-scenery">🌱 Foliage & Log</button>
+                <button class="toggle-btn active" id="btn-toggle-motors">⚡ Motors & Wires</button>
+                <button class="toggle-btn" id="btn-toggle-xray">🔍 X-Ray Cutaway</button>
+                <button class="toggle-btn" id="btn-reset-cam">🎥 Top Habitat</button>
+            </div>
+        </div>
+
+        <!-- Parametric & Haptic Sidebar -->
+        <aside class="sidebar">
+            <div class="tabs-nav">
+                <button class="tab-btn active" data-tab="tab-haptics">TACTILE BLE CONTROL</button>
+                <button class="tab-btn" data-tab="tab-parametric">PARAMETRIC PLATE</button>
+                <button class="tab-btn" data-tab="tab-exports">STL EXPORTS</button>
+            </div>
+
+            <!-- Tab 1: Web Bluetooth Haptic Controller -->
+            <div class="tab-content active" id="tab-haptics">
+                <div class="section-card">
+                    <div class="section-title">
+                        <span>BLUETOOTH TELEMETRY</span>
+                        <span class="status-pill"><span class="ble-indicator" id="side-status-dot"></span> <span id="side-status-text">Disconnected</span></span>
+                    </div>
+                    <p style="font-size:0.72rem; color:var(--text-dim); line-height:1.4;">
+                        Direct Web Bluetooth (WebBLE) connection to the ESP32-C3 SuperMini. The 5V coin vibration motors are glued flush into vertical tube holes for direct fingertip contact!
+                    </p>
+                </div>
+
+                <!-- Creature 1: Alligator -->
+                <div class="haptic-creature-card" style="border-left: 3px solid #2ecc71;">
+                    <div class="creature-card-header">
+                        <span class="creature-title">🐊 ALLIGATOR <span class="creature-chip">SW CORNER • CH 0</span></span>
+                        <span style="font-size:0.7rem; color:#2ecc71;" id="lbl-gator-val">0%</span>
+                    </div>
+                    <div class="param-row">
+                        <input type="range" id="slider-gator" min="0" max="255" value="0">
+                    </div>
+                    <div class="button-grid">
+                        <button class="action-btn" onclick="triggerHaptic(0, 0, 90)">Basking Hum (35%)</button>
+                        <button class="action-btn burst-btn" onclick="triggerHaptic(0, 1, 255, 25)">Snap Strike (250ms)</button>
+                        <button class="action-btn" onclick="triggerHaptic(0, 3, 180)">Tail Thrash (Wave)</button>
+                        <button class="action-btn stop-btn" onclick="triggerHaptic(0, 4, 0)">Stop Gator</button>
+                    </div>
+                </div>
+
+                <!-- Creature 2: Fish -->
+                <div class="haptic-creature-card" style="border-left: 3px solid #1abc9c;">
+                    <div class="creature-card-header">
+                        <span class="creature-title">🐟 SWAMP FISH <span class="creature-chip">SE CORNER • CH 1</span></span>
+                        <span style="font-size:0.7rem; color:#1abc9c;" id="lbl-fish-val">0%</span>
+                    </div>
+                    <div class="param-row">
+                        <input type="range" id="slider-fish" min="0" max="255" value="0">
+                    </div>
+                    <div class="button-grid">
+                        <button class="action-btn" onclick="triggerHaptic(1, 0, 120)">Fin Flutter (200Hz)</button>
+                        <button class="action-btn burst-btn" onclick="triggerHaptic(1, 1, 220, 15)">Water Flick (150ms)</button>
+                        <button class="action-btn" onclick="triggerHaptic(1, 3, 160)">River Surge (Wave)</button>
+                        <button class="action-btn stop-btn" onclick="triggerHaptic(1, 4, 0)">Stop Fish</button>
+                    </div>
+                </div>
+
+                <!-- Creature 3: Snapping Turtle -->
+                <div class="haptic-creature-card" style="border-left: 3px solid #d4a373;">
+                    <div class="creature-card-header">
+                        <span class="creature-title">🐢 SNAPPING TURTLE <span class="creature-chip">NE CORNER • CH 2</span></span>
+                        <span style="font-size:0.7rem; color:#d4a373;" id="lbl-turtle-val">0%</span>
+                    </div>
+                    <div class="param-row">
+                        <input type="range" id="slider-turtle" min="0" max="255" value="0">
+                    </div>
+                    <div class="button-grid">
+                        <button class="action-btn" onclick="triggerHaptic(2, 0, 140)">Shell Hum (120Hz)</button>
+                        <button class="action-btn border-btn" onclick="triggerHaptic(2, 2, 220)">Heartbeat (66 BPM)</button>
+                        <button class="action-btn burst-btn" onclick="triggerHaptic(2, 1, 255, 30)">Jaw Snap (300ms)</button>
+                        <button class="action-btn stop-btn" onclick="triggerHaptic(2, 4, 0)">Stop Turtle</button>
+                    </div>
+                </div>
+
+                <!-- Master Controls -->
+                <div class="section-card">
+                    <div class="button-grid">
+                        <button class="action-btn burst-btn" style="grid-column: span 1;" onclick="triggerHaptic(255, 1, 230, 40)">🌊 ALL SWAMP PULSE</button>
+                        <button class="action-btn stop-btn" style="grid-column: span 1;" onclick="triggerHaptic(255, 4, 0)">⛔ SILENCE ALL</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Parametric Habitat Plate -->
+            <div class="tab-content" id="tab-parametric">
+                <div class="section-card">
+                    <div class="section-title">TRANSIT CASE FIT & ELEVATION</div>
+                    <div class="param-row">
+                        <div class="param-header">Plate Elevation inside Case <span class="val" id="v-deckDrop">30</span> mm</div>
+                        <input type="range" id="deckDrop" min="15" max="50" step="1" value="30">
+                    </div>
+                    <div class="param-row">
+                        <div class="param-header">Foam Clearance Margin <span class="val" id="v-margin">8</span> mm</div>
+                        <input type="range" id="margin" min="4" max="18" step="0.5" value="8">
+                    </div>
+                    <div class="param-row">
+                        <div class="param-header">Plate Base Thickness <span class="val" id="v-plateT">4.0</span> mm</div>
+                        <input type="range" id="plateT" min="2.5" max="8.0" step="0.5" value="4.0">
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-title">SWAMP TOPOGRAPHY & WATER</div>
+                    <div class="param-row">
+                        <div class="param-header">Water Ripple Amplitude <span class="val" id="v-rippleAmp">2.0</span> mm</div>
+                        <input type="range" id="rippleAmp" min="0.5" max="4.5" step="0.2" value="2.0">
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-title">EXPOSED MOTOR TUBE BORES</div>
+                    <div class="param-row">
+                        <div class="param-header">Through-Hole Tube Bore Diameter <span class="val" id="v-motorD">10.4</span> mm</div>
+                        <input type="range" id="motorD" min="8.0" max="14.0" step="0.2" value="10.4">
+                    </div>
+                    <div class="param-row">
+                        <div class="param-header">Coin Motor Thickness <span class="val" id="v-motorH">3.6</span> mm</div>
+                        <input type="range" id="motorH" min="2.5" max="5.5" step="0.1" value="3.6">
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-title">HOLLOW UNDERSIDE ASSEMBLY</div>
+                    <div style="font-size:0.7rem; color:var(--text-dim); line-height:1.5;">
+                        • <strong>100% Hollow Animals</strong>: All bottom cap faces have been removed. The animals are hollow 3D shells open at the base.<br>
+                        • <strong>Direct View into Shells</strong>: Flip the plate over to look directly up through the plate cutout into the hollow ceiling of the Alligator, Turtle, and Fish.<br>
+                        • <strong>Super Glue Retention</strong>: Drop the 10mm coin motors straight into the tube bores from the backside until flush with the dorsal surface, then secure with a drop of CA glue.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Instant STL Exports -->
+            <div class="tab-content" id="tab-exports">
+                <div class="section-card">
+                    <div class="section-title">MANUFACTURING STL EXPORTS</div>
+                    <p style="font-size:0.72rem; color:var(--text-dim); line-height:1.4;">
+                        Export the complete monolithic habitat plate with hollow animals open on the bottom and vertical tube bores.
+                    </p>
+                    <div class="export-btn-group">
+                        <button class="export-btn" id="btn-export-monolithic" style="background:linear-gradient(135deg, rgba(46,204,113,0.35), rgba(26,188,156,0.45)); border-color:#2ecc71;">
+                            <span>🏆 1. Monolithic Fused Habitat Plate</span>
+                            <span style="font-size:0.65rem; color:#2ecc71;">.STL</span>
+                        </button>
+                        <button class="export-btn" id="btn-export-gator">
+                            <span>🐊 2. Alligator Hollow Shell (SW)</span>
+                            <span style="font-size:0.65rem; color:#2ecc71;">.STL</span>
+                        </button>
+                        <button class="export-btn" id="btn-export-turtle">
+                            <span>🐢 3. Snapping Turtle Hollow Shell (NE)</span>
+                            <span style="font-size:0.65rem; color:#2ecc71;">.STL</span>
+                        </button>
+                        <button class="export-btn" id="btn-export-fish">
+                            <span>🐟 4. Swamp Fish Hollow Shell (SE)</span>
+                            <span style="font-size:0.65rem; color:#2ecc71;">.STL</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-title">PRINTING SPECIFICATIONS</div>
+                    <div style="font-size:0.7rem; color:var(--text-dim); line-height:1.5;">
+                        • <strong>Bed Footprint</strong>: 200 × 149 mm (standard print bed)<br>
+                        • <strong>Supports</strong>: Minimal tree supports inside the underside animal cavities.<br>
+                        • <strong>Infill</strong>: 20% Gyroid for crisp tactile vibration coupling.
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- ES Module App Logic -->
+    <script type="module">
+        import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
+        import { OBJLoader } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/loaders/OBJLoader.js';
+
+        // --- Box Physical Bounds ---
+        const CASE_LEN = 216.0; // mm
+        const CASE_WID = 165.0; // mm
+        const CASE_HGT = 95.0;  // mm
+
+        let scene, camera, renderer, controls;
+        let meshes = {};
+        let rawGeoms = { gator: null, fish: null, turtle: null };
+        let showBox = true, showScenery = true, showMotors = true, isXray = false, isFlipped = false;
+
+        // Bluetooth State
+        const BLE_SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+        const BLE_CHAR_UUID    = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+        let bleDevice = null, bleChar = null;
+
+        // Viewport Setup
+        const container = document.getElementById('canvas-container');
+        scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x090e0c, 0.0016);
+
+        camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 1, 1000);
+        camera.position.set(130, 200, 210);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.target.set(0, 30, 0);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xdcf3e8, 0.75);
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xfff7e6, 0.95);
+        sunLight.position.set(120, 260, 140);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        scene.add(sunLight);
+
+        const lagoonLight = new THREE.PointLight(0x1abc9c, 0.9, 300);
+        lagoonLight.position.set(50, 45, 20);
+        scene.add(lagoonLight);
+
+        // Powerful underbelly light to illuminate the hollow ceiling inside the animals
+        const underbellyLight = new THREE.PointLight(0xffecd2, 1.5, 450);
+        underbellyLight.position.set(0, -10, 0);
+        scene.add(underbellyLight);
+
+        const gridHelper = new THREE.GridHelper(350, 35, 0x1f382b, 0x112019);
+        gridHelper.position.y = -0.5;
+        scene.add(gridHelper);
+
+        // Materials (DoubleSide everywhere so inside hollow shells are brightly visible)
+        const matBoxGhost = new THREE.MeshBasicMaterial({
+            color: 0x2ecc71,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.18
+        });
+
+        const matPlate = new THREE.MeshStandardMaterial({
+            color: 0x1c372b,
+            roughness: 0.65,
+            metalness: 0.1,
+            side: THREE.DoubleSide
+        });
+
+        const matGator = new THREE.MeshStandardMaterial({
+            color: 0x229954,
+            roughness: 0.5,
+            metalness: 0.15,
+            side: THREE.DoubleSide
+        });
+
+        const matFish = new THREE.MeshStandardMaterial({
+            color: 0x2471a3,
+            roughness: 0.3,
+            metalness: 0.45,
+            side: THREE.DoubleSide
+        });
+
+        const matTurtle = new THREE.MeshStandardMaterial({
+            color: 0xba7c3a,
+            roughness: 0.55,
+            metalness: 0.15,
+            side: THREE.DoubleSide
+        });
+
+        const matLilyPad = new THREE.MeshStandardMaterial({
+            color: 0x27ae60,
+            roughness: 0.35,
+            metalness: 0.1,
+            side: THREE.DoubleSide
+        });
+
+        const matLog = new THREE.MeshStandardMaterial({
+            color: 0x5d4037,
+            roughness: 0.85,
+            metalness: 0.05,
+            side: THREE.DoubleSide
+        });
+
+        const matCoinMotor = new THREE.MeshStandardMaterial({
+            color: 0xe67e22,
+            roughness: 0.2,
+            metalness: 0.9,
+            side: THREE.DoubleSide
+        });
+
+        const matSocket = new THREE.MeshStandardMaterial({
+            color: 0x2c3e50,
+            roughness: 0.5,
+            metalness: 0.3,
+            side: THREE.DoubleSide
+        });
+
+        const matWireRed = new THREE.MeshStandardMaterial({
+            color: 0xe74c3c,
+            roughness: 0.4,
+            metalness: 0.1,
+            side: THREE.DoubleSide
+        });
+
+        const matWireBlack = new THREE.MeshStandardMaterial({
+            color: 0x1a1a1a,
+            roughness: 0.5,
+            metalness: 0.1,
+            side: THREE.DoubleSide
+        });
+
+        const matPcb = new THREE.MeshStandardMaterial({
+            color: 0x111827,
+            roughness: 0.4,
+            metalness: 0.6,
+            side: THREE.DoubleSide
+        });
+
+        // Dedicated Underbelly Cavity Spotlights
+        const gatorCavityLight = new THREE.PointLight(0x2ecc71, 0.9, 120);
+        scene.add(gatorCavityLight);
+
+        const turtleCavityLight = new THREE.PointLight(0xf39c12, 0.9, 120);
+        scene.add(turtleCavityLight);
+
+        const fishCavityLight = new THREE.PointLight(0x3498db, 0.9, 120);
+        scene.add(fishCavityLight);
+
+        // Wireframe Box Ghost
+        function createBoxGhost(plateY) {
+            const group = new THREE.Group();
+            const geom = new THREE.BoxGeometry(CASE_LEN, CASE_HGT, CASE_WID);
+            const boxMesh = new THREE.Mesh(geom, matBoxGhost);
+            boxMesh.position.y = CASE_HGT / 2;
+            group.add(boxMesh);
+
+            const innerL = CASE_LEN - 8;
+            const innerW = CASE_WID - 8;
+            const pts = new Float32Array([
+                -innerL/2, plateY, -innerW/2,
+                 innerL/2, plateY, -innerW/2,
+                 innerL/2, plateY,  innerW/2,
+                -innerL/2, plateY,  innerW/2,
+                -innerL/2, plateY, -innerW/2
+            ]);
+            const g = new THREE.BufferGeometry();
+            g.setAttribute('position', new THREE.BufferAttribute(pts, 3));
+            const line = new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0x00f3ff, linewidth: 2 }));
+            group.add(line);
+
+            return group;
+        }
+
+        // --- Build Swamp Plate with TRUE Open Underbelly Cutouts Under Each Animal ---
+        function buildSwampPlateWithHoles(plateL, plateW, plateY, plateT, gatorPos, turtlePos, fishPos, rippleAmp) {
+            const segX = 80;
+            const segZ = 60;
+            const geom = new THREE.BufferGeometry();
+
+            const positions = [];
+            const normals = [];
+            const indices = [];
+
+            // Footprint test: returns true if (x, z) falls inside any animal's base cutout
+            const isInsideAnimalCutout = (x, z) => {
+                // Alligator: SW Corner (-52, 33) - Ellipse 36mm x 15mm rotated -20 deg
+                const dxG = x - gatorPos.x;
+                const dzG = z - gatorPos.z;
+                const cosG = Math.cos(0.35), sinG = Math.sin(0.35);
+                const xrG = dxG * cosG + dzG * sinG;
+                const zrG = -dxG * sinG + dzG * cosG;
+                if ((xrG*xrG)/(36*36) + (zrG*zrG)/(15*15) < 1.0) return true;
+
+                // Turtle: NE Corner (52, -36) - Ellipse 26mm x 26mm
+                const dxT = x - turtlePos.x;
+                const dzT = z - turtlePos.z;
+                if ((dxT*dxT)/(26*26) + (dzT*dzT)/(26*26) < 1.0) return true;
+
+                // Fish: SE Corner (52, 33) - Ellipse 30mm x 11mm rotated -30 deg
+                const dxF = x - fishPos.x;
+                const dzF = z - fishPos.z;
+                const cosF = Math.cos(0.5), sinF = Math.sin(0.5);
+                const xrF = dxF * cosF + dzF * sinF;
+                const zrF = -dxF * sinF + dzF * cosF;
+                if ((xrF*xrF)/(30*30) + (zrF*zrF)/(11*11) < 1.0) return true;
+
+                return false;
+            };
+
+            // Top surface grid
+            for (let j = 0; j <= segZ; j++) {
+                const z = -plateW/2 + (j / segZ) * plateW;
+                for (let i = 0; i <= segX; i++) {
+                    const x = -plateL/2 + (i / segX) * plateL;
+
+                    let y = Math.sin(x * 0.08) * Math.cos(z * 0.08) * rippleAmp;
+
+                    positions.push(x, plateY + y, z);
+                    normals.push(0, 1, 0);
+                }
+            }
+
+            // Top quads (omit any quad whose center is inside an animal cutout!)
+            for (let j = 0; j < segZ; j++) {
+                for (let i = 0; i < segX; i++) {
+                    const xMid = -plateL/2 + ((i + 0.5) / segX) * plateL;
+                    const zMid = -plateW/2 + ((j + 0.5) / segZ) * plateW;
+                    if (isInsideAnimalCutout(xMid, zMid)) continue; // LEAVE OPEN HOLE!
+
+                    const a = i + j * (segX + 1);
+                    const b = (i + 1) + j * (segX + 1);
+                    const c = i + (j + 1) * (segX + 1);
+                    const d = (i + 1) + (j + 1) * (segX + 1);
+                    indices.push(a, c, b);
+                    indices.push(b, c, d);
+                }
+            }
+
+            // Bottom Plate Surface (Offset down by plateT, with exact matching open cutouts!)
+            const botStart = positions.length / 3;
+            for (let j = 0; j <= segZ; j++) {
+                const z = -plateW/2 + (j / segZ) * plateW;
+                for (let i = 0; i <= segX; i++) {
+                    const topIdx = i + j * (segX + 1);
+                    const x = positions[topIdx * 3];
+                    const topY = positions[topIdx * 3 + 1];
+
+                    positions.push(x, topY - plateT, z);
+                    normals.push(0, -1, 0);
+                }
+            }
+
+            // Bottom quads (facing downwards, with open holes under animals!)
+            for (let j = 0; j < segZ; j++) {
+                for (let i = 0; i < segX; i++) {
+                    const xMid = -plateL/2 + ((i + 0.5) / segX) * plateL;
+                    const zMid = -plateW/2 + ((j + 0.5) / segZ) * plateW;
+                    if (isInsideAnimalCutout(xMid, zMid)) continue; // LEAVE OPEN HOLE!
+
+                    const a = botStart + i + j * (segX + 1);
+                    const b = botStart + (i + 1) + j * (segX + 1);
+                    const c = botStart + i + (j + 1) * (segX + 1);
+                    const d = botStart + (i + 1) + (j + 1) * (segX + 1);
+                    indices.push(a, b, c);
+                    indices.push(b, d, c);
+                }
+            }
+
+            // Outer Perimeter Thin Rim (plateT thickness)
+            for (let i = 0; i < segX; i++) {
+                indices.push(i, i + 1, botStart + i);
+                indices.push(i + 1, botStart + i + 1, botStart + i);
+                const sTop = segZ * (segX + 1);
+                const sBot = botStart + segZ * (segX + 1);
+                indices.push(sTop + i, sBot + i, sTop + i + 1);
+                indices.push(sTop + i + 1, sBot + i, sBot + i + 1);
+            }
+            for (let j = 0; j < segZ; j++) {
+                const t1 = j * (segX + 1), t2 = (j + 1) * (segX + 1);
+                indices.push(t1, botStart + t1, t2);
+                indices.push(t2, botStart + t1, botStart + t2);
+                const e1 = j * (segX + 1) + segX, e2 = (j + 1) * (segX + 1) + segX;
+                indices.push(e1, e2, botStart + e1);
+                indices.push(e2, botStart + e2, botStart + e1);
+            }
+
+            geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geom.setIndex(indices);
+            geom.computeVertexNormals();
+
+            const plateMesh = new THREE.Mesh(geom, matPlate);
+            plateMesh.receiveShadow = true;
+            plateMesh.castShadow = true;
+            return plateMesh;
+        }
+
+        // --- Foliage, Lily Pads & Driftwood Log ---
+        function createSwampScenery(plateY) {
+            const group = new THREE.Group();
+
+            // Driftwood Log dividing the center
+            const logGeom = new THREE.CylinderGeometry(4.0, 5.2, 70, 14);
+            logGeom.rotateZ(Math.PI / 2);
+            const logMesh = new THREE.Mesh(logGeom, matLog);
+            logMesh.position.set(-5, plateY + 3.2, -5);
+            logMesh.rotation.y = 0.55;
+            logMesh.castShadow = true;
+            group.add(logMesh);
+
+            // Lily Pads in the lagoon
+            const makeLilyPad = (x, z, r, rot) => {
+                const padGeom = new THREE.CylinderGeometry(r, r, 0.6, 24, 1, false, 0.4, Math.PI * 1.85);
+                const padMesh = new THREE.Mesh(padGeom, matLilyPad);
+                padMesh.position.set(x, plateY + 0.6, z);
+                padMesh.rotation.y = rot;
+                padMesh.castShadow = true;
+                return padMesh;
+            };
+
+            group.add(makeLilyPad(15, 38, 10, 0.8));
+            group.add(makeLilyPad(-10, 55, 9, 2.1));
+            group.add(makeLilyPad(65, 0, 9.5, 1.4));
+
+            return group;
+        }
+
+        // --- Load & Prepare Animal Models ---
+        const objLoader = new OBJLoader();
+
+        function loadModel(url, key) {
+            return new Promise((resolve) => {
+                objLoader.load(url, (obj) => {
+                    let geom = null;
+                    obj.traverse((child) => {
+                        if (child.isMesh && !geom) {
+                            geom = child.geometry.clone();
+                        }
+                    });
+                    if (geom) {
+                        geom.computeVertexNormals();
+                        rawGeoms[key] = geom;
+                    }
+                    resolve(geom);
+                }, undefined, (err) => {
+                    console.warn(`Could not load ${url}, creating fallback for ${key}`, err);
+                    resolve(null);
+                });
+            });
+        }
+
+        // --- Rebuild Scene Assembly ---
+        function rebuildHabitat() {
+            const margin       = +document.getElementById('margin').value;
+            const deckDrop     = +document.getElementById('deckDrop').value;
+            const plateT       = +document.getElementById('plateT').value;
+            const rippleAmp    = +document.getElementById('rippleAmp').value;
+            const motorD       = +document.getElementById('motorD').value;
+            const motorH       = +document.getElementById('motorH').value;
+
+            const plateL = CASE_LEN - margin * 2;
+            const plateW = CASE_WID - margin * 2;
+            const headroom = CASE_HGT - deckDrop;
+
+            document.getElementById('tele-plate-dims').textContent = `${plateL.toFixed(1)} × ${plateW.toFixed(1)} × ${plateT.toFixed(1)} mm`;
+            document.getElementById('tele-floor-drop').textContent = `${deckDrop} mm from bottom (${headroom}mm headroom)`;
+
+            Object.values(meshes).forEach(m => {
+                if (m && m.parent) m.parent.remove(m);
+            });
+            meshes = {};
+
+            // 1. Box Ghost Outline
+            if (showBox) {
+                meshes.box = createBoxGhost(deckDrop);
+                scene.add(meshes.box);
+            }
+
+            // Creature Corner Coordinates:
+            const gatorPos = { x: -plateL * 0.26, z: plateW * 0.22 };  // SW Corner: (-52, 33)
+            const turtlePos = { x: plateL * 0.26, z: -plateW * 0.24 }; // NE Corner: (52, -36) -> ~140mm diagonal separation!
+            const fishPos = { x: plateL * 0.26, z: plateW * 0.22 };    // SE Corner: (52, 33)
+
+            // Update underbelly light positions to illuminate the underside holes
+            underbellyLight.position.set(0, deckDrop - 30, 0);
+            gatorCavityLight.position.set(gatorPos.x, deckDrop + 6, gatorPos.z);
+            turtleCavityLight.position.set(turtlePos.x, deckDrop + 8, turtlePos.z);
+            fishCavityLight.position.set(fishPos.x, deckDrop + 5, fishPos.z);
+
+            // 2. Swamp Plate with REAL Open Cutouts Under Animals
+            meshes.plate = buildSwampPlateWithHoles(plateL, plateW, deckDrop, plateT, gatorPos, turtlePos, fishPos, rippleAmp);
+            scene.add(meshes.plate);
+
+            // 3. Foliage & Log
+            if (showScenery) {
+                meshes.scenery = createSwampScenery(deckDrop);
+                scene.add(meshes.scenery);
+            }
+
+            // 4. Hollow Animals with Open Bottoms (Seated above the cutouts)
+            // --- Alligator in SW Corner ---
+            const gatorY = deckDrop + 0.05;
+            if (rawGeoms.gator) {
+                const gatorMesh = new THREE.Mesh(rawGeoms.gator, matGator);
+                gatorMesh.position.set(gatorPos.x, gatorY, gatorPos.z);
+                gatorMesh.rotation.y = -0.35;
+                gatorMesh.castShadow = true;
+                scene.add(gatorMesh);
+                meshes.gator = gatorMesh;
+            }
+
+            // --- Snapping Turtle in NE Corner ---
+            const turtY = deckDrop + 0.05;
+            if (rawGeoms.turtle) {
+                const turtMesh = new THREE.Mesh(rawGeoms.turtle, matTurtle);
+                turtMesh.position.set(turtlePos.x, turtY, turtlePos.z);
+                turtMesh.rotation.y = 2.4;
+                turtMesh.castShadow = true;
+                scene.add(turtMesh);
+                meshes.turtle = turtMesh;
+            }
+
+            // --- Swamp Fish in SE Corner ---
+            const fishY = deckDrop + 0.05;
+            if (rawGeoms.fish) {
+                const fishMesh = new THREE.Mesh(rawGeoms.fish, matFish);
+                fishMesh.position.set(fishPos.x, fishY, fishPos.z);
+                fishMesh.rotation.y = -0.55;
+                fishMesh.castShadow = true;
+                scene.add(fishMesh);
+                meshes.fish = fishMesh;
+            }
+
+            // 5. Exposed 5V Coin Vibration Motors in Dorsal Pockets
+            if (showMotors) {
+                const motorGeom = new THREE.CylinderGeometry(motorD/2, motorD/2, motorH, 24);
+                const socketGeom = new THREE.CylinderGeometry(motorD/2 + 1.2, motorD/2 + 1.2, motorH + 1.0, 24, 1, true);
+
+                // Motor 1: Inside Alligator dorsal pocket
+                if (meshes.gator) {
+                    const motorGator = new THREE.Mesh(motorGeom, matCoinMotor);
+                    motorGator.position.set(3.5, 12.0 - motorH/2, 0.0);
+                    motorGator.castShadow = true;
+                    meshes.gator.add(motorGator);
+                    meshes.motorGator = motorGator;
+
+                    const sockG = new THREE.Mesh(socketGeom, matSocket);
+                    sockG.position.copy(motorGator.position);
+                    meshes.gator.add(sockG);
+
+                    const wireG = new THREE.CylinderGeometry(0.5, 0.5, 10, 8);
+                    const wRed = new THREE.Mesh(wireG, matWireRed);
+                    wRed.position.set(3.0, 6.0, 1.2);
+                    meshes.gator.add(wRed);
+                    const wBlk = new THREE.Mesh(wireG, matWireBlack);
+                    wBlk.position.set(4.0, 6.0, -1.2);
+                    meshes.gator.add(wBlk);
+                }
+
+                // Motor 2: Inside Turtle carapace dome pocket
+                if (meshes.turtle) {
+                    const motorTurtle = new THREE.Mesh(motorGeom, matCoinMotor);
+                    motorTurtle.position.set(0.0, 16.8 - motorH/2, -8.3);
+                    motorTurtle.castShadow = true;
+                    meshes.turtle.add(motorTurtle);
+                    meshes.motorTurtle = motorTurtle;
+
+                    const sockT = new THREE.Mesh(socketGeom, matSocket);
+                    sockT.position.copy(motorTurtle.position);
+                    meshes.turtle.add(sockT);
+
+                    const wireT = new THREE.CylinderGeometry(0.5, 0.5, 14, 8);
+                    const wRed = new THREE.Mesh(wireT, matWireRed);
+                    wRed.position.set(-1.0, 8.5, -7.0);
+                    meshes.turtle.add(wRed);
+                    const wBlk = new THREE.Mesh(wireT, matWireBlack);
+                    wBlk.position.set(1.0, 8.5, -9.5);
+                    meshes.turtle.add(wBlk);
+                }
+
+                // Motor 3: Inside Fish dorsal ridge pocket
+                if (meshes.fish) {
+                    const motorFish = new THREE.Mesh(motorGeom, matCoinMotor);
+                    motorFish.position.set(-1.5, 11.2 - motorH/2, 0.0);
+                    motorFish.castShadow = true;
+                    meshes.fish.add(motorFish);
+                    meshes.motorFish = motorFish;
+
+                    const sockF = new THREE.Mesh(socketGeom, matSocket);
+                    sockF.position.copy(motorFish.position);
+                    meshes.fish.add(sockF);
+
+                    const wireF = new THREE.CylinderGeometry(0.5, 0.5, 9, 8);
+                    const wRed = new THREE.Mesh(wireF, matWireRed);
+                    wRed.position.set(-2.0, 5.5, 1.0);
+                    meshes.fish.add(wRed);
+                    const wBlk = new THREE.Mesh(wireF, matWireBlack);
+                    wBlk.position.set(-1.0, 5.5, -1.0);
+                    meshes.fish.add(wBlk);
+                }
+
+                // Underbelly L298N Mini Driver in reverse chassis mount (24 x 22 x 8 mm)
+                const l298Geom = new THREE.BoxGeometry(24, 8, 22);
+                const l298Mesh = new THREE.Mesh(l298Geom, matPcb);
+                l298Mesh.position.set(-5, deckDrop - plateT - 4.0, -10);
+                scene.add(l298Mesh);
+                meshes.l298 = l298Mesh;
+
+                // Underbelly ESP32-C3 SuperMini in reverse chassis mount (18 x 25 x 4.5 mm)
+                const espGeom = new THREE.BoxGeometry(18, 4.5, 25);
+                const espMesh = new THREE.Mesh(espGeom, matPcb);
+                espMesh.position.set(15, deckDrop - plateT - 2.25, 5);
+                scene.add(espMesh);
+                meshes.esp = espMesh;
+            }
+
+            updateXrayStyle();
+        }
+
+        function updateXrayStyle() {
+            const op = isXray ? 0.35 : 1.0;
+            const tr = isXray;
+            [matPlate, matGator, matFish, matTurtle, matLog, matLilyPad].forEach(m => {
+                m.transparent = tr;
+                m.opacity = op;
+            });
+        }
+
+        // --- Camera Flip to Underbelly View (Look straight up into open animal cavities) ---
+        function toggleFlipView() {
+            isFlipped = !isFlipped;
+            const btn = document.getElementById('btn-flip-view');
+            const deckDrop = +document.getElementById('deckDrop').value;
+
+            if (isFlipped) {
+                // View from underside (looking directly into the open holes under the animals)
+                camera.position.set(0, deckDrop - 155, 65);
+                controls.target.set(0, deckDrop + 5, 0);
+                btn.textContent = "🌿 Flip to Habitat (Top)";
+                btn.classList.add('active');
+                gridHelper.visible = false;
+                underbellyLight.intensity = 2.4;
+                gatorCavityLight.intensity = 1.4;
+                turtleCavityLight.intensity = 1.4;
+                fishCavityLight.intensity = 1.4;
+            } else {
+                // View from top habitat
+                camera.position.set(130, 200, 210);
+                controls.target.set(0, 30, 0);
+                btn.textContent = "🔄 Flip to Underbelly";
+                btn.classList.remove('active');
+                gridHelper.visible = true;
+                underbellyLight.intensity = 1.5;
+                gatorCavityLight.intensity = 0.9;
+                turtleCavityLight.intensity = 0.9;
+                fishCavityLight.intensity = 0.9;
+            }
+        }
+
+        function focusCavity(animal) {
+            const deckDrop = +document.getElementById('deckDrop').value;
+            const plateL = CASE_LEN - (+document.getElementById('margin').value) * 2;
+            const plateW = CASE_WID - (+document.getElementById('margin').value) * 2;
+            const gatorPos = { x: -plateL * 0.26, z: plateW * 0.22 };
+            const turtlePos = { x: plateL * 0.26, z: -plateW * 0.24 };
+            const fishPos = { x: plateL * 0.26, z: plateW * 0.22 };
+
+            isFlipped = true;
+            document.getElementById('btn-flip-view').textContent = "🌿 Flip to Habitat (Top)";
+            document.getElementById('btn-flip-view').classList.add('active');
+            gridHelper.visible = false;
+            underbellyLight.intensity = 2.4;
+
+            if (animal === 'gator') {
+                camera.position.set(gatorPos.x, deckDrop - 50, gatorPos.z + 18);
+                controls.target.set(gatorPos.x, deckDrop + 10, gatorPos.z);
+            } else if (animal === 'turtle') {
+                camera.position.set(turtlePos.x, deckDrop - 55, turtlePos.z + 18);
+                controls.target.set(turtlePos.x, deckDrop + 14, turtlePos.z);
+            } else if (animal === 'fish') {
+                camera.position.set(fishPos.x, deckDrop - 45, fishPos.z + 18);
+                controls.target.set(fishPos.x, deckDrop + 9, fishPos.z);
+            }
+        }
+
+        // --- STL Exporter Logic (Single or Monolithic Merged Export) ---
+        function exportMeshesToSTL(meshList, filename) {
+            let stl = `solid ${filename}\n`;
+            meshList.forEach(mesh => {
+                if (!mesh || !mesh.geometry) return;
+                const geom = mesh.geometry.clone();
+                geom.applyMatrix4(mesh.matrixWorld);
+                geom.computeVertexNormals();
+
+                const pos = geom.getAttribute('position');
+                const index = geom.getIndex();
+                const numTriangles = index ? index.count / 3 : pos.count / 3;
+                for (let i = 0; i < numTriangles; i++) {
+                    const i1 = index ? index.getX(i * 3)     : i * 3;
+                    const i2 = index ? index.getX(i * 3 + 1) : i * 3 + 1;
+                    const i3 = index ? index.getX(i * 3 + 2) : i * 3 + 2;
+
+                    const v1 = [pos.getX(i1), pos.getY(i1), pos.getZ(i1)];
+                    const v2 = [pos.getX(i2), pos.getY(i2), pos.getZ(i2)];
+                    const v3 = [pos.getX(i3), pos.getY(i3), pos.getZ(i3)];
+
+                    stl += `facet normal 0 0 0\n  outer loop\n    vertex ${v1[0].toFixed(4)} ${v1[1].toFixed(4)} ${v1[2].toFixed(4)}\n    vertex ${v2[0].toFixed(4)} ${v2[1].toFixed(4)} ${v2[2].toFixed(4)}\n    vertex ${v3[0].toFixed(4)} ${v3[1].toFixed(4)} ${v3[2].toFixed(4)}\n  endloop\nendfacet\n`;
+                }
+            });
+            stl += `endsolid ${filename}\n`;
+
+            const blob = new Blob([stl], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${filename}.stl`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // --- Web Bluetooth Implementation ---
+        async function connectBLE() {
+            const btn = document.getElementById('btn-ble-connect');
+            const dot = document.getElementById('ble-status-dot');
+            const sideDot = document.getElementById('side-status-dot');
+            const sideTxt = document.getElementById('side-status-text');
+            const btnTxt = document.getElementById('ble-btn-text');
+
+            if (bleDevice && bleDevice.gatt.connected) {
+                bleDevice.gatt.disconnect();
+                return;
+            }
+
+            try {
+                btnTxt.textContent = "PAIRING...";
+                bleDevice = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: 'HapticZoo-Swamp' }],
+                    optionalServices: [BLE_SERVICE_UUID]
+                });
+
+                bleDevice.addEventListener('gattserverdisconnected', () => {
+                    dot.classList.remove('online');
+                    sideDot.classList.remove('online');
+                    btn.classList.remove('connected');
+                    sideTxt.textContent = "Disconnected";
+                    btnTxt.textContent = "CONNECT BLUETOOTH";
+                    bleChar = null;
+                });
+
+                const server = await bleDevice.gatt.connect();
+                const service = await server.getPrimaryService(BLE_SERVICE_UUID);
+                bleChar = await service.getCharacteristic(BLE_CHAR_UUID);
+
+                dot.classList.add('online');
+                sideDot.classList.add('online');
+                btn.classList.add('connected');
+                sideTxt.textContent = "Online (HapticZoo-Swamp)";
+                btnTxt.textContent = "DISCONNECT";
+                console.log("Connected to HapticZoo-Swamp ESP32-C3!");
+            } catch (err) {
+                console.warn("BLE Pairing error or cancelled:", err);
+                btnTxt.textContent = "CONNECT BLUETOOTH";
+            }
+        }
+
+        window.triggerHaptic = async function(channel, mode, val, param = 50) {
+            console.log(`[Haptic CMD] Ch:${channel} Mode:${mode} Val:${val} Param:${param}`);
+
+            if (mode === 0) {
+                if (channel === 0) document.getElementById('slider-gator').value = val;
+                if (channel === 1) document.getElementById('slider-fish').value = val;
+                if (channel === 2) document.getElementById('slider-turtle').value = val;
+                updateSliderLabels();
+            } else if (mode === 4) {
+                if (channel === 0 || channel === 255) document.getElementById('slider-gator').value = 0;
+                if (channel === 1 || channel === 255) document.getElementById('slider-fish').value = 0;
+                if (channel === 2 || channel === 255) document.getElementById('slider-turtle').value = 0;
+                updateSliderLabels();
+            }
+
+            if (bleChar) {
+                try {
+                    const data = new Uint8Array([channel, mode, val, param]);
+                    await bleChar.writeValue(data);
+                } catch (e) {
+                    console.warn("BLE Write error:", e);
+                }
+            }
+        };
+
+        function updateSliderLabels() {
+            const g = document.getElementById('slider-gator').value;
+            const f = document.getElementById('slider-fish').value;
+            const t = document.getElementById('slider-turtle').value;
+            document.getElementById('lbl-gator-val').textContent = `${Math.round(g/255*100)}%`;
+            document.getElementById('lbl-fish-val').textContent = `${Math.round(f/255*100)}%`;
+            document.getElementById('lbl-turtle-val').textContent = `${Math.round(t/255*100)}%`;
+        }
+
+        // --- Event Listeners & Sliders ---
+        document.querySelectorAll('input[type="range"]').forEach(input => {
+            input.addEventListener('input', () => {
+                const id = input.id;
+                const vEl = document.getElementById('v-' + id);
+                if (vEl) vEl.textContent = input.value;
+                if (id === 'slider-gator') window.triggerHaptic(0, 0, +input.value);
+                else if (id === 'slider-fish') window.triggerHaptic(1, 0, +input.value);
+                else if (id === 'slider-turtle') window.triggerHaptic(2, 0, +input.value);
+                else rebuildHabitat();
+            });
+        });
+
+        // Tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        // View Toggles
+        document.getElementById('btn-flip-view').onclick = toggleFlipView;
+        document.getElementById('btn-focus-gator').onclick = () => focusCavity('gator');
+        document.getElementById('btn-focus-turtle').onclick = () => focusCavity('turtle');
+        document.getElementById('btn-focus-fish').onclick = () => focusCavity('fish');
+
+        document.getElementById('btn-toggle-box').onclick = (e) => {
+            showBox = !showBox;
+            e.target.classList.toggle('active', showBox);
+            if (meshes.box) meshes.box.visible = showBox;
+        };
+        document.getElementById('btn-toggle-scenery').onclick = (e) => {
+            showScenery = !showScenery;
+            e.target.classList.toggle('active', showScenery);
+            if (meshes.scenery) meshes.scenery.visible = showScenery;
+        };
+        document.getElementById('btn-toggle-motors').onclick = (e) => {
+            showMotors = !showMotors;
+            e.target.classList.toggle('active', showMotors);
+            ['motorGator', 'motorFish', 'motorTurtle', 'l298', 'esp'].forEach(k => {
+                if (meshes[k]) meshes[k].visible = showMotors;
+            });
+        };
+        document.getElementById('btn-toggle-xray').onclick = (e) => {
+            isXray = !isXray;
+            e.target.classList.toggle('active', isXray);
+            updateXrayStyle();
+        };
+        document.getElementById('btn-reset-cam').onclick = () => {
+            isFlipped = false;
+            document.getElementById('btn-flip-view').textContent = "🔄 Flip to Underbelly";
+            document.getElementById('btn-flip-view').classList.remove('active');
+            gridHelper.visible = true;
+            underbellyLight.intensity = 1.5;
+            camera.position.set(130, 200, 210);
+            controls.target.set(0, 30, 0);
+        };
+
+        // Bluetooth button
+        document.getElementById('btn-ble-connect').onclick = connectBLE;
+
+        // STL Export buttons
+        document.getElementById('btn-export-gator').onclick  = () => exportMeshesToSTL([meshes.gator], "Alligator_Hollow_SW");
+        document.getElementById('btn-export-turtle').onclick = () => exportMeshesToSTL([meshes.turtle], "SnappingTurtle_Hollow_NE");
+        document.getElementById('btn-export-fish').onclick   = () => exportMeshesToSTL([meshes.fish], "Fish_Hollow_SE");
+        document.getElementById('btn-export-monolithic').onclick = () => {
+            const list = [];
+            if (meshes.plate) list.push(meshes.plate);
+            if (meshes.gator) list.push(meshes.gator);
+            if (meshes.fish) list.push(meshes.fish);
+            if (meshes.turtle) list.push(meshes.turtle);
+            if (meshes.scenery) {
+                meshes.scenery.children.forEach(c => list.push(c));
+            }
+            exportMeshesToSTL(list, "Monolithic_Swamp_Habitat_Plate");
+        };
+
+        // Window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+
+        // --- Init & Load Models ---
+        async function init() {
+            await Promise.all([
+                loadModel('./models/alligator.obj', 'gator'),
+                loadModel('./models/fish.obj', 'fish'),
+                loadModel('./models/turtle_opt.obj', 'turtle')
+            ]);
+
+            rebuildHabitat();
+
+            (function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            })();
+        }
+
+        init();
+    </script>
+</body>
+</html>

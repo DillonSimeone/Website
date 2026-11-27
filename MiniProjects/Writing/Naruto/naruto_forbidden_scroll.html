@@ -1,0 +1,434 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400&family=Share+Tech+Mono&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body, .root {
+    background: transparent;
+    color: var(--color-text-primary);
+  }
+
+  .root {
+    font-family: 'Share Tech Mono', monospace;
+    padding: 2rem 1rem 4rem;
+    max-width: 660px;
+    margin: 0 auto;
+  }
+
+  .chapter {
+    margin-bottom: 3.5rem;
+    opacity: 0;
+    transform: translateY(18px);
+    animation: rise 0.9s ease forwards;
+  }
+
+  .chapter:nth-child(1) { animation-delay: 0.1s; }
+  .chapter:nth-child(2) { animation-delay: 0.35s; }
+  .chapter:nth-child(3) { animation-delay: 0.6s; }
+  .chapter:nth-child(4) { animation-delay: 0.85s; }
+  .chapter:nth-child(5) { animation-delay: 1.1s; }
+  .chapter:nth-child(6) { animation-delay: 1.35s; }
+  .chapter:nth-child(7) { animation-delay: 1.6s; }
+  .chapter:nth-child(8) { animation-delay: 1.85s; }
+
+  @keyframes rise {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .chapter-label {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .chapter-label::after {
+    content: '';
+    flex: 1;
+    height: 0.5px;
+    background: var(--color-border-tertiary);
+  }
+
+  .prose {
+    font-family: 'Noto Serif JP', serif;
+    font-weight: 300;
+    font-size: 15px;
+    line-height: 2;
+    color: var(--color-text-primary);
+  }
+
+  .prose p {
+    margin-bottom: 1.2em;
+  }
+
+  .prose p:last-child {
+    margin-bottom: 0;
+  }
+
+  .glitch {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    border-left: 2px solid var(--color-border-secondary);
+    padding: 0.75rem 1rem;
+    margin: 1.5rem 0;
+    letter-spacing: 0.05em;
+    line-height: 1.9;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .count-block {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 1.5rem 0;
+  }
+
+  .count-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .count-bar {
+    height: 3px;
+    background: var(--color-border-secondary);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+
+  .count-label {
+    min-width: 60px;
+    font-size: 10px;
+  }
+
+  .diverge-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    margin: 1.5rem 0;
+  }
+
+  .diverge-table th {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--color-text-tertiary);
+    text-align: left;
+    padding: 4px 8px 8px 0;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    font-weight: 400;
+  }
+
+  .diverge-table td {
+    padding: 6px 8px 6px 0;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    color: var(--color-text-secondary);
+    vertical-align: top;
+  }
+
+  .diverge-table tr:last-child td {
+    border-bottom: none;
+    color: var(--color-text-tertiary);
+    font-style: italic;
+  }
+
+  .again {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--color-text-tertiary);
+    text-align: center;
+    padding: 1rem 0;
+    animation: flicker 3s infinite;
+  }
+
+  @keyframes flicker {
+    0%, 96%, 100% { opacity: 1; }
+    97% { opacity: 0.2; }
+    98% { opacity: 0.8; }
+    99% { opacity: 0.1; }
+  }
+
+  .coda {
+    text-align: center;
+    font-family: 'Noto Serif JP', serif;
+    font-weight: 300;
+    font-size: 13px;
+    color: var(--color-text-tertiary);
+    line-height: 2.4;
+    padding-top: 1rem;
+    border-top: 0.5px solid var(--color-border-tertiary);
+  }
+
+  .title-block {
+    text-align: center;
+    padding: 2rem 0 2.5rem;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    margin-bottom: 3rem;
+  }
+
+  .title-main {
+    font-family: 'Noto Serif JP', serif;
+    font-weight: 300;
+    font-size: 22px;
+    letter-spacing: 0.08em;
+    color: var(--color-text-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  .title-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+  }
+
+  .inline-mono {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+
+  .highlight-word {
+    color: var(--color-text-primary);
+    font-weight: 400;
+  }
+</style>
+
+<div class="root">
+
+  <div class="title-block chapter">
+    <div class="title-main">The Scroll, the Mountain, the Many</div>
+    <div class="title-sub">A record of anomalous event · Konohagakure · Year unknown</div>
+  </div>
+
+  <div class="chapter">
+    <div class="chapter-label">I — the night of the scroll</div>
+    <div class="prose">
+      <p>Mizuki watched him fall.</p>
+      <p>That was the first strange thing — not that Naruto fell, because all students fell when they tried techniques beyond their station. The strange thing was how. Most students collapsed sideways when chakra gave out. Naruto did not collapse sideways. He folded downward, precisely, as though he had been paused. His shadow did not behave the way shadows behave when a body drops. It moved before he did. Mizuki was not certain this was possible. He did not report it.</p>
+      <p>The coma lasted three hundred and seventy-one days.</p>
+      <p>Tsunade, who could count chakra reserves the way other people read faces, put her hand over his chest and said nothing for a long time. Later, to Kakashi, she said: <span class="inline-mono">"He isn't low. He's full. He's been full since we brought him in."</span></p>
+      <p>No one knew what to do with that. The chakra was his. The signature matched. But the signature had changed in a way she did not have words for. Like a word that still means the same thing but in a different language. You could use it. You could not explain it.</p>
+    </div>
+  </div>
+
+  <div class="chapter">
+    <div class="chapter-label">II — the waking</div>
+    <div class="prose">
+      <p>He came back on an unremarkable morning, in October, with rain on the window. He sat up. He looked at his hands for a very long time — not with the expression of someone who has forgotten what hands are, but with the expression of someone who has recently relearned it, and finds the learning interesting.</p>
+      <p>When Iruka rushed in, Naruto looked at him. Then he said, quietly: <span class="inline-mono">"You're the same."</span></p>
+      <p>Iruka assumed this was a normal thing to say, upon waking from a long sleep, to a person you recognize. He cried. He told Naruto how worried everyone had been. Naruto listened with an attention that felt, somehow, heavier than the moment warranted.</p>
+      <p>He did not ask for ramen.</p>
+      <p>He asked for paper.</p>
+    </div>
+  </div>
+
+  <div class="chapter">
+    <div class="chapter-label">III — the writing</div>
+    <div class="glitch">ANBU intelligence unit 7, transcription attempt 1:
+
+0x4E 0x61 0x72 0x75 0x74 0x6F — confirmed; UTF-8 clean.
+Remainder: non-standard glyph set. Cross-referenced: 0 matches.
+Cross-referenced against Mist cipher: 0 matches.
+Cross-referenced against Sound village scroll archives: 0 matches.
+Cross-referenced against pre-Sage of Six Paths historical corpus: 0 matches.
+
+Senior codebreaker Yamane note: "The notation has internal consistency. It is not random. There are repeating structures I cannot parse. The grammar, if it is grammar, is not based on anything I have seen. It feels less like a cipher and more like — and I understand this will read poorly in a report — it feels like mathematics for concepts we do not yet have."
+
+Yamane requested leave. Approved.</div>
+    <div class="prose">
+      <p>The writing was small and regular, with no corrections. He produced pages every morning and stacked them without urgency. He did not re-read them. When one of the ANBU teams confiscated a stack, he produced the same pages again from memory, without noticing the theft had occurred, or without caring.</p>
+      <p>Sakura asked him what he was writing.</p>
+      <p>He considered the question carefully, the way he now considered most things. <span class="inline-mono">"Records,"</span> he said, and she waited for more. Nothing more came. She went and told Kakashi. Kakashi went and asked himself. Naruto looked at him with something that was not hostility and was not warmth and was not anything Kakashi had a word for, and said the same thing. <span class="inline-mono">"Records."</span></p>
+      <p>Then, after a pause, as though adding a footnote: <span class="inline-mono">"There are more than you think. Of everything. I'm trying to get the count right."</span></p>
+    </div>
+  </div>
+
+  <div class="chapter">
+    <div class="chapter-label">IV — the first death</div>
+    <div class="prose">
+      <p>He was found in Training Ground Seven, on a Tuesday, face-down in the grass, with no wounds. The medics reported his body temperature was ambient. His chakra was absent in the way that it is absent from rocks and water, not in the way it is absent from corpses — corpses still hold a residue, a cooling signature. He held nothing. The absence was clean.</p>
+      <p>Tsunade sealed the information. She authorized cremation for the following morning.</p>
+      <p>At sundown, Naruto sat down across from her at her desk, in her locked office, without having opened the door.</p>
+      <p>She looked at him for a long time.</p>
+      <p><span class="inline-mono">"We thought you were dead,"</span> she said.</p>
+      <p><span class="inline-mono">"I was,"</span> he said. <span class="inline-mono">"Briefly."</span></p>
+      <p>He seemed unbothered. She told him about the body. He did not look disturbed. He looked thoughtful, in the new, heavy way he had of looking thoughtful. Then he said: <span class="inline-mono">"That one must have slipped. I'll be more careful."</span></p>
+      <p>She asked what that meant.</p>
+      <p>He looked at her hands, where they rested on the desk, and said: <span class="inline-mono">"You have very strong hands, Hokage-sama. I think that's going to matter."</span></p>
+      <p>She asked what that meant.</p>
+      <p>He said he had to go. He was not rude about it.</p>
+    </div>
+  </div>
+
+  <div class="chapter">
+    <div class="chapter-label">V — the accumulation</div>
+    <div class="count-block">
+      <div style="font-size: 10px; letter-spacing: 0.2em; color: var(--color-text-tertiary); margin-bottom: 8px;">CONFIRMED NARUTO EVENTS · ROLLING LOG</div>
+      <div class="count-row">
+        <span class="count-label">corpses</span>
+        <div class="count-bar" style="width: 18px;"></div>
+        <span>1</span>
+      </div>
+      <div class="count-row">
+        <span class="count-label">living</span>
+        <div class="count-bar" style="width: 12px;"></div>
+        <span>1</span>
+      </div>
+      <div style="font-size: 10px; color: var(--color-text-tertiary); margin: 6px 0 2px; letter-spacing: 0.1em;">— week 2 —</div>
+      <div class="count-row">
+        <span class="count-label">corpses</span>
+        <div class="count-bar" style="width: 55px;"></div>
+        <span>9</span>
+      </div>
+      <div class="count-row">
+        <span class="count-label">living</span>
+        <div class="count-bar" style="width: 36px;"></div>
+        <span>3 (simultaneous)</span>
+      </div>
+      <div style="font-size: 10px; color: var(--color-text-tertiary); margin: 6px 0 2px; letter-spacing: 0.1em;">— week 4 —</div>
+      <div class="count-row">
+        <span class="count-label">corpses</span>
+        <div class="count-bar" style="width: 200px;"></div>
+        <span>41</span>
+      </div>
+      <div class="count-row">
+        <span class="count-label">living</span>
+        <div class="count-bar" style="width: 120px;"></div>
+        <span>11+ (at peak)</span>
+      </div>
+      <div class="count-row" style="margin-top: 4px;">
+        <span class="count-label">morgue</span>
+        <div class="count-bar" style="width: 240px;"></div>
+        <span style="color: var(--color-text-tertiary); font-style: italic;">capacity exceeded</span>
+      </div>
+    </div>
+    <div class="prose">
+      <p>The mountain appeared in Training Ground Two, which had been cordoned off. There was no official name for it. In internal ANBU communications it appeared as <span class="inline-mono">THE ACCUMULATION</span>, which had the benefit of being accurate.</p>
+      <p>The bodies were arranged not as thrown things but as placed things. Each new Naruto who arrived would walk the perimeter of the mountain with unhurried attention, the way you might walk a market, pricing things. Then he would climb. Somewhere on the upper third, without drama, he would stop. Sit, or stand. And stop being alive.</p>
+      <p>They did not decompose. Tsunade had seventeen theories about why not, of which she believed none. The preservation was perfect, in the way that museum preservation is perfect — attentive, effortful, deliberate. As though something wanted the record kept.</p>
+    </div>
+  </div>
+
+  <div class="chapter">
+    <div class="chapter-label">VI — the divergence</div>
+    <table class="diverge-table">
+      <thead>
+        <tr>
+          <th>visitor</th>
+          <th>height delta</th>
+          <th>notable anomaly</th>
+          <th>duration before departure</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>#001</td>
+          <td>+0 cm</td>
+          <td>none detected</td>
+          <td>47 min</td>
+        </tr>
+        <tr>
+          <td>#007</td>
+          <td>+1.2 cm</td>
+          <td>small scar, left palm, no known origin</td>
+          <td>1h 03m</td>
+        </tr>
+        <tr>
+          <td>#019</td>
+          <td>+2.8 cm</td>
+          <td>refers to "Gaara" as deceased; discrepancy unverified</td>
+          <td>55 min</td>
+        </tr>
+        <tr>
+          <td>#034</td>
+          <td>+4.1 cm</td>
+          <td>chakra signature shifted (seal intact; interior altered)</td>
+          <td>1h 22m</td>
+        </tr>
+        <tr>
+          <td>#051</td>
+          <td>+6.6 cm</td>
+          <td>does not recognize Sakura; addresses her as "Medic"</td>
+          <td>38 min</td>
+        </tr>
+        <tr>
+          <td>#088</td>
+          <td>+11.3 cm</td>
+          <td>eyes: changed. coloration unclassified. responds to name.</td>
+          <td>12 min</td>
+        </tr>
+        <tr>
+          <td>#112</td>
+          <td>+19 cm (est.)</td>
+          <td>does not speak. leaves object on mountain summit. object unidentified. ANBU unable to approach object.</td>
+          <td>4 min</td>
+        </tr>
+        <tr>
+          <td>#???</td>
+          <td>unknown</td>
+          <td>did not arrive on foot. ANBU did not observe arrival. was simply present. looked at the mountain for a long time. wept. left without climbing.</td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="chapter">
+    <div class="chapter-label">VII — what the original said</div>
+    <div class="prose">
+      <p>There remained, throughout, one Naruto who slept in his apartment, who ate, who received visitors, who answered questions with patience. The village called him the original. He did not correct them.</p>
+      <p>Kakashi sat with him in the last week of the second month. Outside, the skies had not been right. The quality of the light was wrong in a way that the meteorology office attributed to atmospheric refraction before quietly withdrawing the report.</p>
+      <p><span class="inline-mono">"Do you know what's happening?"</span> Kakashi asked.</p>
+      <p><span class="inline-mono">"Yes,"</span> Naruto said.</p>
+      <p><span class="inline-mono">"Can you stop it?"</span></p>
+      <p>He thought about this for what felt like a long time. <span class="inline-mono">"Not anymore. I could have. Before I understood what I was doing. Now I understand what I was doing, so the question changes."</span></p>
+      <p><span class="inline-mono">"What's the question?"</span></p>
+      <p><span class="inline-mono">"Whether I should."</span></p>
+      <p>He was quiet for a while. On the table between them, his hands. His orange jacket had not been worn since October. He had switched to something plain, gray-blue, with no insignia. Kakashi had asked about it once. Naruto had said, simply, that colors had started to feel very loud.</p>
+      <p><span class="inline-mono">"The scroll,"</span> Kakashi said, finally. <span class="inline-mono">"The shadow clone technique."</span></p>
+      <p><span class="inline-mono">"Yes."</span></p>
+      <p><span class="inline-mono">"What did you do wrong?"</span></p>
+      <p>Naruto looked out the window at the altered sky. When he answered, his voice was calm with the calm of someone who has stopped being afraid of a thing through understanding it, rather than through distance.</p>
+      <p><span class="inline-mono">"I understood it. Not just the hand-signs. The idea underneath. What a clone is, really. If a clone is a version of you — real enough to fight, real enough to die, real enough to love people — then what makes the original original? I started to think about that. During the coma. I had a lot of time to think."</span></p>
+      <p>He turned back from the window.</p>
+      <p><span class="inline-mono">"I think the problem,"</span> he said, <span class="inline-mono">"is that I came up with an answer."</span></p>
+    </div>
+  </div>
+
+  <div class="chapter">
+    <div class="chapter-label">VIII — the mountain, in the end</div>
+    <div class="prose">
+      <p>The mountain stopped growing on a morning in winter, when the temperature was below freezing and the mountain had reached, by the best estimate of the engineering division, four stories in height. The last Naruto who arrived was very tall, and moved with an economy that suggested he had shed every unnecessary thing from how a body could move, and he did not walk to the mountain. He stood at its base for some time. He looked up. He set one hand against the topmost reachable layer and closed his eyes. And then he was not there.</p>
+      <p>The mountain did not change after that. The bodies remained. The village sealed the training ground. There were ongoing discussions about what to do. The discussions continued for years. Nothing was decided.</p>
+      <p>Naruto — the one in the gray-blue jacket, the one who ate and slept and answered questions — came to look at it, sometimes, in the early mornings. The ANBU team assigned to monitor the site learned not to approach him on these occasions. He was never threatening. But he carried around him, in those moments, the weight of something they did not have the capacity to understand, and proximity to things you cannot understand is its own kind of danger.</p>
+      <p>Iruka, who came once and stood beside him without asking anything, reported afterward that Naruto had said only one thing during the two hours they stood there together.</p>
+      <p>He had said: <span class="inline-mono">"I wonder if any of them made it."</span></p>
+      <p>Iruka had asked: made it where?</p>
+      <p>Naruto had looked at the mountain for a long time.</p>
+      <p><span class="inline-mono">"Further,"</span> he said. <span class="inline-mono">"Than I did."</span></p>
+    </div>
+    <div class="again">again . again . again . again . again</div>
+  </div>
+
+  <div class="coda chapter">
+    <p>shadow clone technique: classified // scroll: sealed // training ground two: permanent exclusion zone</p>
+    <p>subject: uzumaki naruto // status: alive // threat assessment: [REDACTED BY ORDER OF HOKAGE]</p>
+    <p>the mountain does not rot</p>
+    <p>the mountain does not rot</p>
+    <p>the mountain does not rot</p>
+  </div>
+
+</div>
