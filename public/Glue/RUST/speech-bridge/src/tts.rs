@@ -97,7 +97,7 @@ enum TtsCommand {
         rate: f64,
         output_device: Option<String>,
         gate_stt: bool,
-        vibe_on: bool,
+        vibe_persona: Option<String>,
     },
     Benchmark {
         voices: Vec<VoiceEntry>,
@@ -367,7 +367,7 @@ impl TtsEngine {
         let _ = self.tx.send(TtsCommand::Prewarm { voice, rate });
     }
 
-    /// Queues text to be spoken with the given optional voice, speaking rate, target output device, and Vibe mode.
+    /// Queues text to be spoken with the given optional voice, speaking rate, target output device, and optional Vibe persona prompt.
     pub fn speak(
         &self,
         text: String,
@@ -375,7 +375,7 @@ impl TtsEngine {
         rate: f64,
         output_device: Option<String>,
         gate_stt: bool,
-        vibe_on: bool,
+        vibe_persona: Option<String>,
     ) {
         self.cancel_flag.store(true, Ordering::Relaxed);
         self.word_tracker.clear();
@@ -388,7 +388,7 @@ impl TtsEngine {
             rate,
             output_device,
             gate_stt,
-            vibe_on,
+            vibe_persona,
         });
     }
 
@@ -901,7 +901,7 @@ fn synthesize_with_vibe(
     text: &str,
     rate: f64,
 ) -> Vec<u8> {
-    let beats = shared_llm.direct_prosody(text, recent_replies, persona);
+    let (beats, _llm_used) = shared_llm.direct_prosody(text, recent_replies, persona);
     synthesize_beats_wav(synth, piper_exe, piper_pool, openvoice, voice, &beats, rate)
 }
 
@@ -983,7 +983,15 @@ pub fn render_vibe_demo_segment(
     let persona = load_vibe_persona();
 
     let wav = if vibe_on {
-        let beats = shared_llm.direct_prosody(text, &[], &persona);
+        let (beats, llm_used) = shared_llm.direct_prosody(text, &[], &persona);
+        println!(
+            "    [DIRECTOR] {}",
+            if llm_used {
+                "LLM-DIRECTED (Qwen2.5-1.5B)"
+            } else {
+                "FALLBACK (deterministic)"
+            }
+        );
         for (i, b) in beats.iter().enumerate() {
             println!(
                 "    [BEAT {}] spd={:.2} pitch={:+.1}st eng={:.2} pause={}ms | {}",
@@ -1053,7 +1061,6 @@ fn tts_worker_loop(
     let mut openvoice: Option<OpenVoiceDaemon> = None;
     let mut active_wav: Vec<u8> = Vec::new();
     let mut recent_replies: VecDeque<String> = VecDeque::with_capacity(4);
-    let vibe_persona = load_vibe_persona();
 
     while let Ok(cmd) = rx.recv() {
         match cmd {
@@ -1087,7 +1094,7 @@ fn tts_worker_loop(
                 rate,
                 output_device,
                 gate_stt,
-                vibe_on,
+                vibe_persona,
             } => {
                 cancel_bg.store(false, Ordering::Relaxed);
                 let recent_vec: Vec<String> = recent_replies.iter().cloned().collect();
@@ -1099,7 +1106,7 @@ fn tts_worker_loop(
                     &mut openvoice,
                     &shared_llm,
                     &recent_vec,
-                    &vibe_persona,
+                    vibe_persona.as_deref(),
                     &cancel_bg,
                     &echo_gate,
                     &word_tracker,
@@ -1109,7 +1116,6 @@ fn tts_worker_loop(
                     rate,
                     output_device.as_deref(),
                     gate_stt,
-                    vibe_on,
                 );
                 if recent_replies.len() == 3 {
                     recent_replies.pop_front();
@@ -1165,7 +1171,7 @@ fn handle_speak(
     openvoice: &mut Option<OpenVoiceDaemon>,
     shared_llm: &SharedLlmServer,
     recent_replies: &[String],
-    vibe_persona: &str,
+    vibe_persona: Option<&str>,
     cancel_bg: &AtomicBool,
     echo_gate: &TtsEchoGate,
     word_tracker: &TtsWordTracker,
@@ -1175,10 +1181,9 @@ fn handle_speak(
     rate: f64,
     output_device: Option<&str>,
     gate_stt: bool,
-    vibe_on: bool,
 ) {
     post_app_msg(notify_hwnd, WM_APP_TTS_STATUS, 1);
-    let wav = if vibe_on && text.split_whitespace().count() >= 4 {
+    let wav = if let Some(persona) = vibe_persona.filter(|_| text.split_whitespace().count() >= 4) {
         synthesize_with_vibe(
             synth,
             piper_exe,
@@ -1186,7 +1191,7 @@ fn handle_speak(
             openvoice,
             shared_llm,
             recent_replies,
-            vibe_persona,
+            persona,
             voice,
             text,
             rate,

@@ -14,6 +14,7 @@ use windows::core::PCWSTR;
 use windows::Win32::Foundation::{
     COLORREF, HANDLE, HINSTANCE, HWND, LPARAM, LRESULT, POINT, RECT, SIZE, WPARAM,
 };
+use windows::Win32::Graphics::Dwm::{DwmSetWindowAttribute, DWMWA_USE_IMMERSIVE_DARK_MODE};
 use windows::Win32::Graphics::Gdi::{
     BeginPaint, BitBlt, ClientToScreen, CreateCompatibleBitmap, CreateCompatibleDC, CreateFontW,
     CreatePen, CreateSolidBrush, DeleteDC, DeleteObject, DrawTextW, Ellipse, EndPaint, FillRect,
@@ -26,26 +27,31 @@ use windows::Win32::Graphics::Gdi::{
 use windows::Win32::System::DataExchange::{
     CloseClipboard, EmptyClipboard, OpenClipboard, SetClipboardData,
 };
+use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::System::Memory::{GlobalAlloc, GlobalLock, GlobalUnlock, GMEM_MOVEABLE};
 use windows::Win32::System::SystemInformation::GetLocalTime;
 use windows::Win32::UI::Input::KeyboardAndMouse::{
-    GetKeyState, SetFocus, VK_ADD, VK_CONTROL, VK_ESCAPE, VK_OEM_MINUS, VK_OEM_PLUS, VK_SHIFT,
-    VK_SUBTRACT,
+    EnableWindow, GetKeyState, SetFocus, VK_ADD, VK_CONTROL, VK_ESCAPE, VK_OEM_MINUS, VK_OEM_PLUS,
+    VK_SHIFT, VK_SUBTRACT,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     AppendMenuW, CallWindowProcW, CreatePopupMenu, CreateWindowExW, DefWindowProcW, DestroyMenu,
-    GetClientRect, GetCursorPos, GetParent, GetWindowLongPtrW, GetWindowTextLengthW,
-    GetWindowTextW, LoadCursorW, MoveWindow, PostMessageW, PostQuitMessage, SendMessageW,
-    SetCursor, SetWindowLongPtrW, SetWindowPos, SetWindowTextW, TrackPopupMenu, ES_AUTOVSCROLL,
-    ES_MULTILINE, ES_WANTRETURN, GWLP_USERDATA, GWLP_WNDPROC, HMENU, HWND_NOTOPMOST, HWND_TOPMOST,
-    IDC_HAND, MF_CHECKED, MF_SEPARATOR, MF_STRING, MF_UNCHECKED, SWP_NOMOVE, SWP_NOSIZE,
-    TPM_LEFTALIGN, TPM_RETURNCMD, TPM_TOPALIGN, WM_APP, WM_CHAR, WM_CREATE, WM_CTLCOLOREDIT,
-    WM_DESTROY, WM_ERASEBKGND, WM_KEYDOWN, WM_LBUTTONDOWN, WM_MOUSEMOVE, WM_MOUSEWHEEL,
-    WM_NCDESTROY, WM_PAINT, WM_SETCURSOR, WM_SETFONT, WM_SIZE, WNDPROC, WS_CHILD, WS_TABSTOP,
+    DestroyWindow, DispatchMessageW, GetClientRect, GetCursorPos, GetMessageW, GetParent,
+    GetWindowLongPtrW, GetWindowRect, GetWindowTextLengthW, GetWindowTextW, IsDialogMessageW,
+    LoadCursorW, MoveWindow, PostMessageW, PostQuitMessage, RegisterClassW, SendMessageW,
+    SetCursor, SetForegroundWindow, SetWindowLongPtrW, SetWindowPos, SetWindowTextW,
+    TrackPopupMenu, TranslateMessage, BS_DEFPUSHBUTTON, BS_PUSHBUTTON, CS_HREDRAW, CS_VREDRAW,
+    ES_AUTOHSCROLL, ES_AUTOVSCROLL, ES_MULTILINE, ES_WANTRETURN, GWLP_USERDATA, GWLP_WNDPROC,
+    HMENU, HWND_NOTOPMOST, HWND_TOPMOST, IDC_ARROW, IDC_HAND, MF_CHECKED, MF_SEPARATOR, MF_STRING,
+    MF_UNCHECKED, MSG, SWP_NOMOVE, SWP_NOSIZE, TPM_LEFTALIGN, TPM_RETURNCMD, TPM_TOPALIGN,
+    WINDOW_EX_STYLE, WINDOW_STYLE, WM_APP, WM_CHAR, WM_CLOSE, WM_COMMAND, WM_CREATE,
+    WM_CTLCOLOREDIT, WM_CTLCOLORSTATIC, WM_DESTROY, WM_ERASEBKGND, WM_KEYDOWN, WM_LBUTTONDOWN,
+    WM_MOUSEMOVE, WM_MOUSEWHEEL, WM_NCDESTROY, WM_PAINT, WM_SETCURSOR, WM_SETFONT, WM_SIZE,
+    WNDCLASSW, WNDPROC, WS_BORDER, WS_CAPTION, WS_CHILD, WS_POPUP, WS_SYSMENU, WS_TABSTOP,
     WS_VISIBLE,
 };
 
-use crate::llm_polish::SharedLlmServer;
+use crate::llm_polish::{load_vibe_personas, save_vibe_persona, SharedLlmServer, VibePersona};
 use crate::meter::{list_input_devices, AudioSource, MicMeter, SignalStatus, BANDS};
 use crate::stream_decoder::DenoiseMode;
 use crate::stt::{SttBackend, SttEngine, SttEvent, SttEventQueue};
@@ -140,6 +146,7 @@ enum HitTarget {
     BtnOutputDevice,
     BtnGapWait,
     BtnVibe,
+    BtnPersona,
     BtnTestVoices,
     BtnRate,
     BtnPin,
@@ -179,6 +186,8 @@ pub struct AppState {
     output_device: Option<String>,
     wait_for_gap: bool,
     vibe_on: bool,
+    personas: Vec<VibePersona>,
+    selected_persona: usize,
     queued_reply: Option<(usize, String)>,
     rate_idx: usize,
     pinned: bool,
@@ -225,6 +234,7 @@ pub struct AppState {
     rect_output: RECT,
     rect_gap: RECT,
     rect_vibe: RECT,
+    rect_persona: RECT,
     rect_bench: RECT,
     rect_rate: RECT,
     rect_pin: RECT,
@@ -548,14 +558,113 @@ impl AppState {
         self.redraw();
     }
 
+    fn selected_persona_name(&self) -> &str {
+        self.personas
+            .get(self.selected_persona)
+            .map(|p| p.name.as_str())
+            .unwrap_or("Mad Scientist")
+    }
+
+    fn selected_persona_prompt(&self) -> String {
+        self.personas
+            .get(self.selected_persona)
+            .map(|p| p.prompt.clone())
+            .unwrap_or_else(crate::llm_polish::load_vibe_persona)
+    }
+
+    fn short_persona_label(&self) -> String {
+        let name = self.selected_persona_name();
+        let trimmed: String = if name.chars().count() > 12 {
+            format!("{}..", name.chars().take(10).collect::<String>())
+        } else {
+            name.to_string()
+        };
+        format!("{trimmed} \u{25BE}")
+    }
+
     fn toggle_vibe(&mut self) {
         self.vibe_on = !self.vibe_on;
+        let pname = self.selected_persona_name().to_string();
         self.status_text = if self.vibe_on {
-            ">> VIBE: ON (Qwen2.5 Mad-Scientist Prosody Director)".to_string()
+            format!(">> VIBE: ON ({pname} :: Qwen2.5 Prosody)")
         } else {
             ">> VIBE: OFF (Neutral Steady Delivery)".to_string()
         };
         self.redraw();
+    }
+
+    fn show_persona_menu(&mut self) {
+        // Refresh from vibes/ folder so manually edited .txt files appear immediately.
+        let prev_name = self.selected_persona_name().to_string();
+        self.personas = load_vibe_personas();
+        self.selected_persona = self
+            .personas
+            .iter()
+            .position(|p| p.name == prev_name)
+            .unwrap_or(0);
+
+        unsafe {
+            let Ok(menu) = CreatePopupMenu() else {
+                return;
+            };
+            for (i, p) in self.personas.iter().enumerate() {
+                let lbl = to_wide(&p.name);
+                let flags = MF_STRING
+                    | if i == self.selected_persona {
+                        MF_CHECKED
+                    } else {
+                        MF_UNCHECKED
+                    };
+                let _ = AppendMenuW(menu, flags, 100 + i, PCWSTR(lbl.as_ptr()));
+            }
+            let _ = AppendMenuW(menu, MF_SEPARATOR, 0, PCWSTR::null());
+            let add_lbl = to_wide("+ Add New Persona...");
+            let _ = AppendMenuW(menu, MF_STRING, 9999, PCWSTR(add_lbl.as_ptr()));
+
+            let mut pt = POINT {
+                x: self.rect_persona.left,
+                y: self.rect_persona.bottom + 2,
+            };
+            let _ = ClientToScreen(self.hwnd, &mut pt);
+            let cmd = TrackPopupMenu(
+                menu,
+                TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RETURNCMD,
+                pt.x,
+                pt.y,
+                0,
+                self.hwnd,
+                None,
+            );
+            let _ = DestroyMenu(menu);
+
+            if cmd.0 == 9999 {
+                if let Some((name, prompt)) = show_add_persona_dialog(self.hwnd, self.font_mono, self.font_bold) {
+                    match save_vibe_persona(&name, &prompt) {
+                        Ok(saved) => {
+                            self.personas = load_vibe_personas();
+                            if let Some(pos) = self.personas.iter().position(|p| p.name == saved.name) {
+                                self.selected_persona = pos;
+                            }
+                            self.vibe_on = true;
+                            self.status_text = format!(">> ADDED PERSONA: {} (VIBE ON)", saved.name);
+                        }
+                        Err(e) => {
+                            self.status_text = format!(">> PERSONA ERR: {e}");
+                        }
+                    }
+                    self.redraw();
+                }
+            } else if cmd.0 >= 100 {
+                let idx = (cmd.0 as usize) - 100;
+                if let Some(chosen) = self.personas.get(idx) {
+                    self.selected_persona = idx;
+                    let name = chosen.name.clone();
+                    self.vibe_on = true;
+                    self.status_text = format!(">> VIBE PERSONA: {name} (ON)");
+                    self.redraw();
+                }
+            }
+        }
     }
 
     fn toggle_benchmark(&mut self) {
@@ -594,13 +703,18 @@ impl AppState {
         self.queued_reply = None;
         self.active_reply_idx = card_idx;
         let voice = self.selected_voice_entry();
+        let vibe_persona = if self.vibe_on {
+            Some(self.selected_persona_prompt())
+        } else {
+            None
+        };
         self.tts.speak(
             text,
             voice,
             self.current_rate(),
             self.output_device.clone(),
             self.should_gate_stt(),
-            self.vibe_on,
+            vibe_persona,
         );
         self.redraw();
     }
@@ -1046,27 +1160,29 @@ impl AppState {
             bottom: row1_y + row_h,
         };
 
-        // --- Row 2: Preset | Voice | Output Device | Gap Wait | Vibe | Test | Rate | Pin | Export | Clear | Status ---
+        // --- Row 2: Preset | Voice | Output Device | Gap Wait | Vibe | Persona | Test | Rate | Pin | Export | Clear | Status ---
         let mut x2 = pad;
-        self.rect_preset = RECT { left: x2, top: row2_y, right: x2 + 102, bottom: row2_y + row_h };
+        self.rect_preset = RECT { left: x2, top: row2_y, right: x2 + 94, bottom: row2_y + row_h };
         x2 = self.rect_preset.right + 4;
-        self.rect_voice = RECT { left: x2, top: row2_y, right: x2 + 144, bottom: row2_y + row_h };
+        self.rect_voice = RECT { left: x2, top: row2_y, right: x2 + 130, bottom: row2_y + row_h };
         x2 = self.rect_voice.right + 4;
-        self.rect_output = RECT { left: x2, top: row2_y, right: x2 + 118, bottom: row2_y + row_h };
+        self.rect_output = RECT { left: x2, top: row2_y, right: x2 + 108, bottom: row2_y + row_h };
         x2 = self.rect_output.right + 4;
-        self.rect_gap = RECT { left: x2, top: row2_y, right: x2 + 64, bottom: row2_y + row_h };
+        self.rect_gap = RECT { left: x2, top: row2_y, right: x2 + 60, bottom: row2_y + row_h };
         x2 = self.rect_gap.right + 4;
-        self.rect_vibe = RECT { left: x2, top: row2_y, right: x2 + 72, bottom: row2_y + row_h };
+        self.rect_vibe = RECT { left: x2, top: row2_y, right: x2 + 66, bottom: row2_y + row_h };
         x2 = self.rect_vibe.right + 4;
-        self.rect_bench = RECT { left: x2, top: row2_y, right: x2 + 48, bottom: row2_y + row_h };
+        self.rect_persona = RECT { left: x2, top: row2_y, right: x2 + 114, bottom: row2_y + row_h };
+        x2 = self.rect_persona.right + 4;
+        self.rect_bench = RECT { left: x2, top: row2_y, right: x2 + 44, bottom: row2_y + row_h };
         x2 = self.rect_bench.right + 4;
-        self.rect_rate = RECT { left: x2, top: row2_y, right: x2 + 42, bottom: row2_y + row_h };
+        self.rect_rate = RECT { left: x2, top: row2_y, right: x2 + 38, bottom: row2_y + row_h };
         x2 = self.rect_rate.right + 4;
-        self.rect_pin = RECT { left: x2, top: row2_y, right: x2 + 44, bottom: row2_y + row_h };
+        self.rect_pin = RECT { left: x2, top: row2_y, right: x2 + 40, bottom: row2_y + row_h };
         x2 = self.rect_pin.right + 4;
-        self.rect_export = RECT { left: x2, top: row2_y, right: x2 + 44, bottom: row2_y + row_h };
+        self.rect_export = RECT { left: x2, top: row2_y, right: x2 + 38, bottom: row2_y + row_h };
         x2 = self.rect_export.right + 4;
-        self.rect_clear = RECT { left: x2, top: row2_y, right: x2 + 44, bottom: row2_y + row_h };
+        self.rect_clear = RECT { left: x2, top: row2_y, right: x2 + 38, bottom: row2_y + row_h };
         self.rect_status = RECT {
             left: self.rect_clear.right + 8,
             top: row2_y,
@@ -1167,6 +1283,9 @@ impl AppState {
         }
         if pt_in_rect(pt, self.rect_vibe) {
             return HitTarget::BtnVibe;
+        }
+        if pt_in_rect(pt, self.rect_persona) {
+            return HitTarget::BtnPersona;
         }
         if pt_in_rect(pt, self.rect_bench) {
             return HitTarget::BtnTestVoices;
@@ -1361,6 +1480,15 @@ impl AppState {
                 if self.vibe_on { "VIBE:ON" } else { "VIBE:OFF" },
                 self.hover == HitTarget::BtnVibe,
                 if self.vibe_on { C_CORAL } else { C_MUTED },
+                self.vibe_on,
+            );
+            let persona_lbl = self.short_persona_label();
+            self.draw_button(
+                mem_dc,
+                self.rect_persona,
+                &persona_lbl,
+                self.hover == HitTarget::BtnPersona,
+                if self.vibe_on { C_CORAL } else { C_CYAN },
                 self.vibe_on,
             );
             self.draw_button(
@@ -2229,6 +2357,7 @@ pub unsafe extern "system" fn main_wnd_proc(
                     HitTarget::BtnOutputDevice => st.show_output_device_menu(),
                     HitTarget::BtnGapWait => st.toggle_gap_wait(),
                     HitTarget::BtnVibe => st.toggle_vibe(),
+                    HitTarget::BtnPersona => st.show_persona_menu(),
                     HitTarget::BtnTestVoices => st.toggle_benchmark(),
                     HitTarget::BtnRate => st.cycle_rate(),
                     HitTarget::BtnPin => st.toggle_pin(),
@@ -2516,6 +2645,8 @@ unsafe fn create_app_state(hwnd: HWND) -> Box<AppState> {
         output_device: None,
         wait_for_gap: false,
         vibe_on: false,
+        personas: load_vibe_personas(),
+        selected_persona: 0,
         queued_reply: None,
         rate_idx: 1,
         pinned: false,
@@ -2560,6 +2691,7 @@ unsafe fn create_app_state(hwnd: HWND) -> Box<AppState> {
         rect_output: RECT::default(),
         rect_gap: RECT::default(),
         rect_vibe: RECT::default(),
+        rect_persona: RECT::default(),
         rect_bench: RECT::default(),
         rect_rate: RECT::default(),
         rect_pin: RECT::default(),
@@ -2636,7 +2768,11 @@ fn tooltip_for(target: HitTarget) -> Option<(&'static str, &'static str)> {
         )),
         HitTarget::BtnVibe => Some((
             "LLM PROSODY DIRECTOR (VIBE MODE)",
-            "Reuses your already-loaded Qwen2.5-1.5B GPU model (0 MB extra VRAM) to direct speed, pitch arc, emphasis, and comedic/dramatic pauses from vibe.txt so your voice builds energy instead of sounding flat!",
+            "Reuses your already-loaded Qwen2.5-1.5B GPU model (0 MB extra VRAM) to direct speed, pitch arc, emphasis, and dramatic pauses using the selected Vibe Persona!",
+        )),
+        HitTarget::BtnPersona => Some((
+            "VIBE PERSONA PRESETS (+ ADD CUSTOM)",
+            "Choose a speaking persona from vibes/ (Mad Scientist, Deadpan Dry, Warm & Friendly, Hype Storytelling, Calm & Serious) or click '+ Add New Persona...' to create and save your own!",
         )),
         HitTarget::BtnTestVoices => Some((
             "AUDITION ALL VOICES (FOR LISTENERS)",
@@ -2932,4 +3068,275 @@ fn get_window_text(hwnd: HWND) -> String {
         let copied = GetWindowTextW(hwnd, &mut buf);
         String::from_utf16_lossy(&buf[..copied as usize])
     }
+}
+
+// ============================================================================
+// Dark-Themed Native Win32 Modal Dialog: "+ Add New Persona..."
+// ============================================================================
+
+const ID_DLG_NAME: usize = 9101;
+const ID_DLG_PROMPT: usize = 9102;
+const ID_DLG_SAVE: usize = 9103;
+const ID_DLG_CANCEL: usize = 9104;
+
+struct PersonaDialogState {
+    edit_name: HWND,
+    edit_prompt: HWND,
+    brush_bg: HBRUSH,
+    brush_edit: HBRUSH,
+    saved: Option<(String, String)>,
+    done: bool,
+}
+
+unsafe extern "system" fn persona_dlg_proc(
+    hwnd: HWND,
+    msg: u32,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
+    let ptr = GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *mut PersonaDialogState;
+    match msg {
+        WM_CTLCOLORSTATIC => {
+            if !ptr.is_null() {
+                let hdc = HDC(wparam.0 as *mut _);
+                SetTextColor(hdc, C_TEXT_CYAN);
+                SetBkColor(hdc, C_PANE);
+                return LRESULT((*ptr).brush_bg.0 as isize);
+            }
+        }
+        WM_CTLCOLOREDIT => {
+            if !ptr.is_null() {
+                let hdc = HDC(wparam.0 as *mut _);
+                SetTextColor(hdc, C_TEXT);
+                SetBkColor(hdc, C_CARD);
+                return LRESULT((*ptr).brush_edit.0 as isize);
+            }
+        }
+        WM_COMMAND => {
+            let cmd_id = (wparam.0 & 0xFFFF) as usize;
+            if !ptr.is_null() {
+                if cmd_id == ID_DLG_SAVE || cmd_id == 1 {
+                    let name = get_window_text((*ptr).edit_name).trim().to_string();
+                    let prompt = get_window_text((*ptr).edit_prompt).trim().to_string();
+                    if !name.is_empty() && !prompt.is_empty() {
+                        (*ptr).saved = Some((name, prompt));
+                        (*ptr).done = true;
+                        let _ = DestroyWindow(hwnd);
+                    }
+                    return LRESULT(0);
+                } else if cmd_id == ID_DLG_CANCEL || cmd_id == 2 {
+                    (*ptr).done = true;
+                    let _ = DestroyWindow(hwnd);
+                    return LRESULT(0);
+                }
+            }
+        }
+        WM_CLOSE => {
+            if !ptr.is_null() {
+                (*ptr).done = true;
+            }
+            let _ = DestroyWindow(hwnd);
+            return LRESULT(0);
+        }
+        _ => {}
+    }
+    DefWindowProcW(hwnd, msg, wparam, lparam)
+}
+
+unsafe fn show_add_persona_dialog(
+    parent: HWND,
+    font_mono: HFONT,
+    font_bold: HFONT,
+) -> Option<(String, String)> {
+    static REG_ONCE: std::sync::Once = std::sync::Once::new();
+    let class_name = to_wide("SpeechBridgeAddPersonaDlg");
+    let hinst: HINSTANCE = GetModuleHandleW(None).unwrap_or_default().into();
+
+    REG_ONCE.call_once(|| {
+        let wc = WNDCLASSW {
+            style: CS_HREDRAW | CS_VREDRAW,
+            lpfnWndProc: Some(persona_dlg_proc),
+            hInstance: hinst,
+            hCursor: LoadCursorW(None, IDC_ARROW).unwrap_or_default(),
+            hbrBackground: CreateSolidBrush(C_PANE),
+            lpszClassName: PCWSTR(class_name.as_ptr()),
+            ..Default::default()
+        };
+        let _ = RegisterClassW(&wc);
+    });
+
+    let dlg_w = 460;
+    let dlg_h = 278;
+    let mut prc = RECT::default();
+    let _ = GetWindowRect(parent, &mut prc);
+    let x = prc.left + ((prc.right - prc.left) - dlg_w) / 2;
+    let y = prc.top + ((prc.bottom - prc.top) - dlg_h) / 2;
+
+    let title = to_wide("Add New Vibe Persona");
+    let Ok(dlg) = CreateWindowExW(
+        WINDOW_EX_STYLE(0),
+        PCWSTR(class_name.as_ptr()),
+        PCWSTR(title.as_ptr()),
+        WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE,
+        x.max(40),
+        y.max(40),
+        dlg_w,
+        dlg_h,
+        parent,
+        None,
+        hinst,
+        None,
+    ) else {
+        return None;
+    };
+
+    let dark: i32 = 1;
+    let _ = DwmSetWindowAttribute(
+        dlg,
+        DWMWA_USE_IMMERSIVE_DARK_MODE,
+        &dark as *const _ as *const _,
+        std::mem::size_of::<i32>() as u32,
+    );
+
+    let cls_static = to_wide("STATIC");
+    let cls_edit = to_wide("EDIT");
+    let cls_btn = to_wide("BUTTON");
+
+    let lbl1_txt = to_wide("Persona Name (saved as vibes/<Name>.txt):");
+    let lbl1 = CreateWindowExW(
+        WINDOW_EX_STYLE(0),
+        PCWSTR(cls_static.as_ptr()),
+        PCWSTR(lbl1_txt.as_ptr()),
+        WS_CHILD | WS_VISIBLE,
+        16,
+        14,
+        412,
+        20,
+        dlg,
+        None,
+        hinst,
+        None,
+    )
+    .unwrap_or_default();
+
+    let edit_name = CreateWindowExW(
+        WINDOW_EX_STYLE(0),
+        PCWSTR(cls_edit.as_ptr()),
+        PCWSTR::null(),
+        WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WINDOW_STYLE(ES_AUTOHSCROLL as u32),
+        16,
+        36,
+        412,
+        26,
+        dlg,
+        HMENU(ID_DLG_NAME as *mut _),
+        hinst,
+        None,
+    )
+    .unwrap_or_default();
+
+    let lbl2_txt = to_wide("Vibe Description (how should pacing, pitch & energy move?):");
+    let lbl2 = CreateWindowExW(
+        WINDOW_EX_STYLE(0),
+        PCWSTR(cls_static.as_ptr()),
+        PCWSTR(lbl2_txt.as_ptr()),
+        WS_CHILD | WS_VISIBLE,
+        16,
+        74,
+        412,
+        20,
+        dlg,
+        None,
+        hinst,
+        None,
+    )
+    .unwrap_or_default();
+
+    let edit_prompt = CreateWindowExW(
+        WINDOW_EX_STYLE(0),
+        PCWSTR(cls_edit.as_ptr()),
+        PCWSTR::null(),
+        WS_CHILD
+            | WS_VISIBLE
+            | WS_BORDER
+            | WS_TABSTOP
+            | WINDOW_STYLE((ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN) as u32),
+        16,
+        96,
+        412,
+        92,
+        dlg,
+        HMENU(ID_DLG_PROMPT as *mut _),
+        hinst,
+        None,
+    )
+    .unwrap_or_default();
+
+    let save_txt = to_wide("Save Persona");
+    let btn_save = CreateWindowExW(
+        WINDOW_EX_STYLE(0),
+        PCWSTR(cls_btn.as_ptr()),
+        PCWSTR(save_txt.as_ptr()),
+        WS_CHILD | WS_VISIBLE | WS_TABSTOP | WINDOW_STYLE(BS_DEFPUSHBUTTON as u32),
+        220,
+        202,
+        106,
+        28,
+        dlg,
+        HMENU(ID_DLG_SAVE as *mut _),
+        hinst,
+        None,
+    )
+    .unwrap_or_default();
+
+    let cancel_txt = to_wide("Cancel");
+    let btn_cancel = CreateWindowExW(
+        WINDOW_EX_STYLE(0),
+        PCWSTR(cls_btn.as_ptr()),
+        PCWSTR(cancel_txt.as_ptr()),
+        WS_CHILD | WS_VISIBLE | WS_TABSTOP | WINDOW_STYLE(BS_PUSHBUTTON as u32),
+        336,
+        202,
+        92,
+        28,
+        dlg,
+        HMENU(ID_DLG_CANCEL as *mut _),
+        hinst,
+        None,
+    )
+    .unwrap_or_default();
+
+    for ctl in [lbl1, lbl2, btn_save, btn_cancel] {
+        SendMessageW(ctl, WM_SETFONT, WPARAM(font_bold.0 as usize), LPARAM(1));
+    }
+    for ctl in [edit_name, edit_prompt] {
+        SendMessageW(ctl, WM_SETFONT, WPARAM(font_mono.0 as usize), LPARAM(1));
+    }
+
+    let mut state = Box::new(PersonaDialogState {
+        edit_name,
+        edit_prompt,
+        brush_bg: CreateSolidBrush(C_PANE),
+        brush_edit: CreateSolidBrush(C_CARD),
+        saved: None,
+        done: false,
+    });
+    SetWindowLongPtrW(dlg, GWLP_USERDATA, (&mut *state as *mut PersonaDialogState) as isize);
+
+    let _ = EnableWindow(parent, false);
+    let _ = SetFocus(edit_name);
+
+    let mut msg = MSG::default();
+    while !state.done && GetMessageW(&mut msg, None, 0, 0).as_bool() {
+        if !IsDialogMessageW(dlg, &msg).as_bool() {
+            let _ = TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    }
+
+    let _ = EnableWindow(parent, true);
+    let _ = SetForegroundWindow(parent);
+    let _ = DeleteObject(state.brush_bg);
+    let _ = DeleteObject(state.brush_edit);
+    state.saved.take()
 }

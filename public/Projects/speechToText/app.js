@@ -1785,4 +1785,43 @@
     { url: "../../Glue/RUST/RustyVoiceCloner/openvoice_worker/Setup.ps1", zipPath: "RustyVoiceCloner/openvoice_worker/Setup.ps1" },
     { url: "../../Glue/RUST/RustyVoiceCloner/openvoice_worker/worker.py", zipPath: "RustyVoiceCloner/openvoice_worker/worker.py" },
   ]);
+
+  // Section 08: Going Beyond (Vibe Showcase chapter jump buttons)
+  const vibeAudio = document.getElementById("vibeShowcaseAudio");
+  const vibeChapWrap = document.getElementById("vibeChapters");
+  if (vibeAudio && vibeChapWrap) {
+    const chapBtns = Array.from(vibeChapWrap.querySelectorAll(".vibe-chap-btn"));
+    const chapStarts = chapBtns.map((b) => parseFloat(b.dataset.start || "0"));
+
+    function highlightChapter(timeSec) {
+      let activeIdx = 0;
+      for (let i = 0; i < chapStarts.length; i++) {
+        if (timeSec + 0.15 >= chapStarts[i]) activeIdx = i;
+      }
+      chapBtns.forEach((btn, idx) => {
+        btn.classList.toggle("active", idx === activeIdx);
+      });
+    }
+
+    chapBtns.forEach((btn, idx) => {
+      btn.addEventListener("click", () => {
+        const target = chapStarts[idx] || 0;
+        const seekAndPlay = () => {
+          vibeAudio.currentTime = target;
+          highlightChapter(target);
+          vibeAudio.play().catch(() => {});
+        };
+        if (vibeAudio.readyState >= 1) {
+          seekAndPlay();
+        } else {
+          vibeAudio.addEventListener("loadedmetadata", seekAndPlay, { once: true });
+          vibeAudio.load();
+        }
+      });
+    });
+
+    vibeAudio.addEventListener("timeupdate", () => {
+      highlightChapter(vibeAudio.currentTime || 0);
+    });
+  }
 })();

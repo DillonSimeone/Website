@@ -162,52 +162,56 @@ impl LlmPolisher {
     }
 
     /// Directs expressive speech prosody (speed, pitch arc, energy, dramatic pauses) for TTS
-    /// using the already-loaded local Qwen2.5-1.5B CUDA server. Never alters the spoken words.
+    /// using the already-loaded local Qwen2.5-1.5B CUDA server.
+    /// Splits beats in Rust first and asks Qwen ONLY for numeric direction per beat so zero words
+    /// can ever be altered, dropped, or hallucinated.
     pub fn direct_prosody(
         &self,
         text: &str,
         recent_replies: &[String],
         persona: &str,
-    ) -> Vec<ProsodyBeat> {
+    ) -> (Vec<ProsodyBeat>, bool) {
         let trimmed = text.trim();
-        if trimmed.is_empty() {
-            return Vec::new();
+        let raw_beats = split_spoken_beats(trimmed);
+        if raw_beats.is_empty() {
+            return (Vec::new(), false);
         }
+
         let mut user_msg = String::with_capacity(768);
-        user_msg.push_str("Vibe persona: ");
+        user_msg.push_str("Persona: ");
         user_msg.push_str(persona.trim());
         user_msg.push('\n');
         if !recent_replies.is_empty() {
-            user_msg.push_str("Previous messages (for escalation context):\n");
+            user_msg.push_str("Recent prior replies:\n");
             for r in recent_replies.iter().rev().take(2).rev() {
                 user_msg.push_str("- ");
                 user_msg.push_str(r);
                 user_msg.push('\n');
             }
         }
-        user_msg.push_str("Split this message into 2 to 6 natural spoken beats and assign expressive vocal direction.\n");
-        user_msg.push_str("Message: ");
-        user_msg.push_str(trimmed);
+        user_msg.push_str("Numbered beats to direct:\n");
+        for (i, b) in raw_beats.iter().enumerate() {
+            user_msg.push_str(&format!("{}: {}\n", i + 1, b));
+        }
 
-        let sys_prompt = "You are a voice acting director for a text-to-speech engine. \
-            Split the user's message into expressive beats WITHOUT changing, adding, or dropping a single word. \
-            Output ONLY lines in this exact format: SPEED|PITCH|ENERGY|PAUSE_MS|BEAT_TEXT \
-            Ranges: SPEED 0.85 to 1.22 (0.88=slow deadpan, 1.18=excited fast), \
-            PITCH -1.5 to +2.8 semitones (-1.0=low conspiratorial, +2.4=animated excited), \
-            ENERGY 0.82 to 1.28 (0.85=quiet setup, 1.25=emphatic punchline), \
-            PAUSE_MS 40 to 380 (pause AFTER this beat; use 260-360 before punchlines or after '...'). \
-            Start calmer and build animation/pitch/energy toward exciting realizations or exclamations. \
-            No markdown, no commentary, ONLY pipe lines.";
+        let sys_prompt = "You are a voice acting director. For each numbered beat, output ONLY its numeric vocal direction on one line in this exact format: \
+            NUM|SPEED|PITCH|ENERGY|PAUSE_MS \
+            Do NOT repeat the text. \
+            Ranges: SPEED 0.84 to 1.24 (0.88=slow deadpan, 1.20=fast excited), \
+            PITCH -2.0 to +3.0 semitones (-1.2=low dry, +2.6=animated high), \
+            ENERGY 0.80 to 1.30 (0.85=quiet, 1.26=punchy climax), \
+            PAUSE_MS 40 to 400 (pause AFTER the beat; use 280-380 after '...' or before punchlines). \
+            Make the persona clearly audible across the beats. Output ONLY lines of numbers separated by '|'.";
 
-        let max_tokens = (trimmed.split_whitespace().count() * 3 + 96).clamp(120, 420);
+        let max_tokens = (raw_beats.len() * 18 + 32).clamp(48, 280);
         let body = format!(
-            "{{\"model\":\"local\",\"temperature\":0.2,\"max_tokens\":{max_tokens},\"messages\":[{{\"role\":\"system\",\"content\":{}}}, {{\"role\":\"user\",\"content\":{}}}]}}",
+            "{{\"model\":\"local\",\"temperature\":0.25,\"max_tokens\":{max_tokens},\"messages\":[{{\"role\":\"system\",\"content\":{}}}, {{\"role\":\"user\",\"content\":{}}}]}}",
             json_quote(sys_prompt),
             json_quote(&user_msg),
         );
 
         let Ok(mut stream) = TcpStream::connect(format!("127.0.0.1:{}", self.port)) else {
-            return fallback_prosody_beats(trimmed);
+            return (fallback_prosody_beats(trimmed), false);
         };
         let _ = stream.set_read_timeout(Some(Duration::from_secs(6)));
 
@@ -218,15 +222,19 @@ impl LlmPolisher {
             body
         );
         if stream.write_all(req.as_bytes()).is_err() {
-            return fallback_prosody_beats(trimmed);
+            return (fallback_prosody_beats(trimmed), false);
         }
         let mut resp = String::new();
         if stream.read_to_string(&mut resp).is_err() {
-            return fallback_prosody_beats(trimmed);
+            return (fallback_prosody_beats(trimmed), false);
         }
         let json_body = resp.split_once("\r\n\r\n").map(|(_, b)| b).unwrap_or(&resp);
         let content = extract_chat_content(json_body);
-        parse_prosody_beats(trimmed, &content).unwrap_or_else(|| fallback_prosody_beats(trimmed))
+        if let Some(directed) = parse_numbered_prosody_scores(&raw_beats, &content) {
+            (directed, true)
+        } else {
+            (fallback_prosody_beats(trimmed), false)
+        }
     }
 }
 
@@ -240,74 +248,141 @@ pub struct ProsodyBeat {
     pub pause_ms: u32,
 }
 
-/// Reads optional custom vibe persona from `vibe.txt` (falls back to Mad Scientist vibe).
-pub fn load_vibe_persona() -> String {
-    if let Some(path) = resolve_asset_path(&["vibe.txt"], false) {
-        if let Ok(txt) = std::fs::read_to_string(path) {
-            let clean = txt.trim();
-            if !clean.is_empty() {
-                return clean.to_string();
+/// A named vocal persona stored as a `.txt` file inside `vibes/`.
+#[derive(Clone, Debug)]
+pub struct VibePersona {
+    pub name: String,
+    pub prompt: String,
+}
+
+const DEFAULT_PERSONAS: &[(&str, &str)] = &[
+    (
+        "Mad Scientist",
+        "Mad scientist vibe: start calm, deadpan, or conspiratorially curious, then steadily wind up with rising pitch, faster animated pace, punchier emphasis, and crisp dramatic pauses right before wild realizations or punchlines.",
+    ),
+    (
+        "Deadpan Dry",
+        "Dry deadpan comedian: steady unbothered low pitch (-1.2 to -0.3 semitones), measured deliberate pacing (0.88-0.96 speed), understated energy, with well-timed 280-360ms pauses right before absurd punchlines.",
+    ),
+    (
+        "Warm & Friendly",
+        "Warm conversational friend: gentle welcoming pace (0.96-1.05), subtle upbeat pitch lift (+0.4 to +1.2 semitones), natural relaxed energy, smooth short pauses.",
+    ),
+    (
+        "Hype Storytelling",
+        "High-energy storyteller: brisk enthusiastic pace (1.06-1.22), wide animated pitch swings (+0.5 to +2.8 semitones), punchy emphasis on exciting twists, tight energetic pauses.",
+    ),
+    (
+        "Calm & Serious",
+        "Clear, grounded professional tone: balanced neutral pace (0.94-1.00), steady low-neutral pitch (-0.3 to +0.2 semitones), consistent clear energy, crisp 180-220ms sentence pauses.",
+    ),
+];
+
+fn vibes_dir() -> PathBuf {
+    if let Some(existing) = resolve_asset_path(&["vibes"], true) {
+        return existing;
+    }
+    std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|d| d.join("vibes")))
+        .unwrap_or_else(|| PathBuf::from("vibes"))
+}
+
+/// Ensures starter persona `.txt` files exist in `vibes/` and returns all loaded personas.
+pub fn load_vibe_personas() -> Vec<VibePersona> {
+    let dir = vibes_dir();
+    let _ = std::fs::create_dir_all(&dir);
+
+    let has_any = std::fs::read_dir(&dir)
+        .map(|rd| {
+            rd.flatten()
+                .any(|e| e.path().extension().and_then(|s| s.to_str()) == Some("txt"))
+        })
+        .unwrap_or(false);
+
+    if !has_any {
+        for &(name, prompt) in DEFAULT_PERSONAS {
+            let _ = std::fs::write(dir.join(format!("{name}.txt")), prompt);
+        }
+    }
+
+    let mut out = Vec::new();
+    if let Ok(rd) = std::fs::read_dir(&dir) {
+        let mut files: Vec<PathBuf> = rd
+            .flatten()
+            .map(|e| e.path())
+            .filter(|p| p.extension().and_then(|s| s.to_str()) == Some("txt"))
+            .collect();
+        files.sort();
+        for p in files {
+            if let (Some(stem), Ok(txt)) = (
+                p.file_stem().and_then(|s| s.to_str()),
+                std::fs::read_to_string(&p),
+            ) {
+                let clean = txt.trim();
+                if !clean.is_empty() {
+                    out.push(VibePersona {
+                        name: stem.to_string(),
+                        prompt: clean.to_string(),
+                    });
+                }
             }
         }
     }
-    "Mad scientist vibe: start calm, deadpan, or conspiratorially curious, then steadily wind up with rising pitch, faster animated pace, punchier emphasis, and crisp dramatic pauses right before wild realizations or punchlines.".to_string()
-}
 
-/// Parses `SPEED|PITCH|ENERGY|PAUSE|TEXT` lines and verifies word preservation so the LLM can never alter speech content.
-pub fn parse_prosody_beats(original: &str, raw_output: &str) -> Option<Vec<ProsodyBeat>> {
-    let mut beats = Vec::new();
-    for line in raw_output.lines() {
-        let l = line.trim();
-        if l.is_empty() || !l.contains('|') {
-            continue;
-        }
-        let parts: Vec<&str> = l.splitn(5, '|').collect();
-        if parts.len() != 5 {
-            continue;
-        }
-        let speed = parts[0].trim().parse::<f32>().ok()?.clamp(0.84, 1.24);
-        let pitch_st = parts[1].trim().parse::<f32>().ok()?.clamp(-2.0, 3.0);
-        let energy = parts[2].trim().parse::<f32>().ok()?.clamp(0.78, 1.30);
-        let pause_ms = parts[3].trim().parse::<u32>().ok()?.clamp(30, 420);
-        let beat_text = parts[4].trim().trim_matches('"').to_string();
-        if !beat_text.is_empty() {
-            beats.push(ProsodyBeat {
-                text: beat_text,
-                speed,
-                pitch_st,
-                energy,
-                pause_ms,
+    if out.is_empty() {
+        for &(name, prompt) in DEFAULT_PERSONAS {
+            out.push(VibePersona {
+                name: name.to_string(),
+                prompt: prompt.to_string(),
             });
         }
     }
-    if beats.is_empty() {
-        return None;
-    }
 
-    // Strict word-preservation guard: normalized word count must match within ~10% so LLM never drops or invents words.
-    let orig_words: Vec<String> = original
-        .split_whitespace()
-        .map(norm_word)
-        .filter(|w| !w.is_empty())
-        .collect();
-    let beat_words: Vec<String> = beats
+    // Put "Mad Scientist" first if present so it is the default persona.
+    if let Some(pos) = out
         .iter()
-        .flat_map(|b| b.text.split_whitespace())
-        .map(norm_word)
-        .filter(|w| !w.is_empty())
-        .collect();
-    if orig_words.is_empty() || beat_words.is_empty() {
-        return None;
+        .position(|p| p.name.eq_ignore_ascii_case("Mad Scientist"))
+    {
+        if pos > 0 {
+            let ms = out.remove(pos);
+            out.insert(0, ms);
+        }
     }
-    let edits = word_levenshtein(&orig_words, &beat_words);
-    if (edits as f32 / orig_words.len() as f32) > 0.12 {
-        return None;
-    }
-    Some(beats)
+    out
 }
 
-/// Deterministic mad-scientist escalation fallback if the LLM server isn't ready yet.
-pub fn fallback_prosody_beats(text: &str) -> Vec<ProsodyBeat> {
+/// Saves a new custom persona into `vibes/<Name>.txt` so it persists across restarts.
+pub fn save_vibe_persona(name: &str, prompt: &str) -> Result<VibePersona, String> {
+    let clean_name: String = name
+        .trim()
+        .chars()
+        .filter(|c| !matches!(c, '\\' | '/' | ':' | '*' | '?' | '"' | '<' | '>' | '|'))
+        .collect();
+    let clean_prompt = prompt.trim();
+    if clean_name.is_empty() || clean_prompt.is_empty() {
+        return Err("Persona name and description cannot be empty".to_string());
+    }
+    let dir = vibes_dir();
+    std::fs::create_dir_all(&dir).map_err(|e| format!("create vibes dir: {e}"))?;
+    let path = dir.join(format!("{clean_name}.txt"));
+    std::fs::write(&path, clean_prompt).map_err(|e| format!("write persona: {e}"))?;
+    Ok(VibePersona {
+        name: clean_name,
+        prompt: clean_prompt.to_string(),
+    })
+}
+
+/// Reads optional custom vibe persona (first persona from `vibes/` or `vibe.txt` fallback).
+pub fn load_vibe_persona() -> String {
+    if let Some(first) = load_vibe_personas().into_iter().next() {
+        return first.prompt;
+    }
+    DEFAULT_PERSONAS[0].1.to_string()
+}
+
+/// Splits text into natural spoken beats at ellipses, exclamations, questions, newlines, and sentences.
+pub fn split_spoken_beats(text: &str) -> Vec<String> {
     let mut chunks: Vec<String> = Vec::new();
     let mut cur = String::new();
     let chars: Vec<char> = text.chars().collect();
@@ -315,7 +390,8 @@ pub fn fallback_prosody_beats(text: &str) -> Vec<ProsodyBeat> {
     while i < chars.len() {
         let c = chars[i];
         cur.push(c);
-        let is_ellipsis = c == '.' && i + 2 < chars.len() && chars[i + 1] == '.' && chars[i + 2] == '.';
+        let is_ellipsis =
+            c == '.' && i + 2 < chars.len() && chars[i + 1] == '.' && chars[i + 2] == '.';
         if is_ellipsis {
             cur.push('.');
             cur.push('.');
@@ -325,7 +401,9 @@ pub fn fallback_prosody_beats(text: &str) -> Vec<ProsodyBeat> {
                 chunks.push(trimmed);
             }
             cur.clear();
-        } else if matches!(c, '!' | '?' | '\n') || (c == '.' && cur.split_whitespace().count() >= 5) {
+        } else if matches!(c, '!' | '?' | '\n')
+            || (c == '.' && cur.split_whitespace().count() >= 4)
+        {
             let trimmed = cur.trim().to_string();
             if !trimmed.is_empty() {
                 chunks.push(trimmed);
@@ -337,10 +415,80 @@ pub fn fallback_prosody_beats(text: &str) -> Vec<ProsodyBeat> {
     if !cur.trim().is_empty() {
         chunks.push(cur.trim().to_string());
     }
+    chunks
+}
+
+/// Parses Qwen2.5-1.5B's `NUM|SPEED|PITCH|ENERGY|PAUSE_MS` numeric lines and applies them to `beats`.
+pub fn parse_numbered_prosody_scores(beats: &[String], raw_output: &str) -> Option<Vec<ProsodyBeat>> {
+    if beats.is_empty() {
+        return None;
+    }
+    let mut scores: Vec<Option<(f32, f32, f32, u32)>> = vec![None; beats.len()];
+    let mut matched = 0usize;
+
+    for line in raw_output.lines() {
+        let l = line.trim().trim_start_matches('-').trim();
+        if !l.contains('|') {
+            continue;
+        }
+        let parts: Vec<&str> = l.split('|').collect();
+        if parts.len() < 5 {
+            continue;
+        }
+        // Accept "1|..." or "1:|..." or "Beat 1|..."
+        let idx_str: String = parts[0].chars().filter(|c| c.is_ascii_digit()).collect();
+        let Ok(num) = idx_str.parse::<usize>() else {
+            continue;
+        };
+        if num == 0 || num > beats.len() {
+            continue;
+        }
+        let parse_f = |s: &str| -> Option<f32> {
+            let cleaned: String = s
+                .chars()
+                .filter(|c| c.is_ascii_digit() || matches!(c, '.' | '-' | '+'))
+                .collect();
+            cleaned.parse::<f32>().ok()
+        };
+        let Some(spd) = parse_f(parts[1]) else { continue };
+        let Some(pit) = parse_f(parts[2]) else { continue };
+        let Some(eng) = parse_f(parts[3]) else { continue };
+        let Some(pau) = parse_f(parts[4]) else { continue };
+
+        scores[num - 1] = Some((
+            spd.clamp(0.84, 1.24),
+            pit.clamp(-2.0, 3.0),
+            eng.clamp(0.78, 1.30),
+            (pau.round() as i32).clamp(40, 420) as u32,
+        ));
+        matched += 1;
+    }
+
+    // Require at least half the beats to be LLM-directed; fill any missing beat with neutral interpolation.
+    if matched == 0 || matched * 2 < beats.len() {
+        return None;
+    }
+
+    let mut out = Vec::with_capacity(beats.len());
+    for (i, text) in beats.iter().enumerate() {
+        let (speed, pitch_st, energy, pause_ms) = scores[i].unwrap_or((1.0, 0.0, 1.0, 160));
+        out.push(ProsodyBeat {
+            text: text.clone(),
+            speed,
+            pitch_st,
+            energy,
+            pause_ms,
+        });
+    }
+    Some(out)
+}
+
+/// Deterministic escalation fallback if the LLM server isn't ready yet.
+pub fn fallback_prosody_beats(text: &str) -> Vec<ProsodyBeat> {
+    let chunks = split_spoken_beats(text);
     if chunks.is_empty() {
         return Vec::new();
     }
-
     let n = chunks.len().max(1) as f32;
     chunks
         .into_iter()
@@ -430,9 +578,9 @@ impl SharedLlmServer {
         text: &str,
         recent_replies: &[String],
         persona: &str,
-    ) -> Vec<ProsodyBeat> {
+    ) -> (Vec<ProsodyBeat>, bool) {
         let Ok(mut g) = self.inner.lock() else {
-            return fallback_prosody_beats(text);
+            return (fallback_prosody_beats(text), false);
         };
         if g.engine.is_none() && !g.init_failed {
             match LlmPolisher::spawn() {
@@ -442,7 +590,7 @@ impl SharedLlmServer {
         }
         match g.engine.as_ref() {
             Some(p) => p.direct_prosody(text, recent_replies, persona),
-            None => fallback_prosody_beats(text),
+            None => (fallback_prosody_beats(text), false),
         }
     }
 }
@@ -743,5 +891,19 @@ mod tests {
             "Sure! Here is a completely rewritten explanation about coffee orders.",
         );
         assert!(rej.is_none());
+    }
+
+    #[test]
+    fn numbered_prosody_parser_preserves_exact_text_and_clamps_scores() {
+        let beats = split_spoken_beats("A bag of flour... It is flammable! Borderline napalm!");
+        assert_eq!(beats.len(), 3);
+        let raw = "1|0.90|-0.8|0.88|320\n2|1.08|+1.2|1.10|190\n3|1.18|+2.4|1.24|240";
+        let parsed = parse_numbered_prosody_scores(&beats, raw).expect("should parse 3 beats");
+        assert_eq!(parsed.len(), 3);
+        assert_eq!(parsed[0].text, "A bag of flour...");
+        assert_eq!(parsed[2].text, "Borderline napalm!");
+        assert!((parsed[0].speed - 0.90).abs() < 1e-3);
+        assert!((parsed[2].pitch_st - 2.4).abs() < 1e-3);
+        assert_eq!(parsed[0].pause_ms, 320);
     }
 }
