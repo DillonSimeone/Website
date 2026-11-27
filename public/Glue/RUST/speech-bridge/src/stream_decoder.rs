@@ -215,6 +215,8 @@ pub struct StreamDecoder {
     last_overlap_tail_words: Vec<String>,
     hp_prev_x: f32,
     hp_prev_y: f32,
+    gap_noise_floor: f32,
+    last_instant_speech: bool,
     pub denoise_mode: DenoiseMode,
     pub speaker_labels: bool,
     pub partial_cadence_samples: usize,
@@ -237,6 +239,8 @@ impl StreamDecoder {
             last_overlap_tail_words: Vec::new(),
             hp_prev_x: 0.0,
             hp_prev_y: 0.0,
+            gap_noise_floor: 0.002,
+            last_instant_speech: false,
             denoise_mode,
             speaker_labels,
             partial_cadence_samples: PARTIAL_CADENCE_SAMPLES,
@@ -246,6 +250,12 @@ impl StreamDecoder {
 
     pub fn is_in_speech(&self) -> bool {
         self.in_speech
+    }
+
+    /// 0 ms-onset hybrid speech signal (`Instant Adaptive RMS || Raw Silero VAD`) for
+    /// responsive, barge-in-free conversational gap detection.
+    pub fn is_instant_speech(&self) -> bool {
+        self.last_instant_speech
     }
 
     pub fn reset(&mut self) {
@@ -273,17 +283,25 @@ impl StreamDecoder {
         speaker: Option<&mut (dyn SpeakerIdModel + 's)>,
         out_events: &mut Vec<StreamEvent>,
     ) -> Result<(), String> {
-        // Stack-allocated 512-sample high-pass buffer (~120 Hz @ 16 kHz).
+        // Stack-allocated 512-sample high-pass buffer (~120 Hz @ 16 kHz) + instant RMS for 0ms-onset gap detection.
         let mut hp_f32 = [0.0f32; CHUNK_SAMPLES];
         const HP_ALPHA: f32 = 0.955;
         let len = pcm_i16.len().min(CHUNK_SAMPLES);
+        let mut sum_sq = 0.0f32;
         for i in 0..len {
             let x = pcm_i16[i] as f32 / 32768.0;
             let y = HP_ALPHA * (self.hp_prev_y + x - self.hp_prev_x);
             self.hp_prev_x = x;
             self.hp_prev_y = y;
-            hp_f32[i] = y.clamp(-1.0, 1.0);
+            let v = y.clamp(-1.0, 1.0);
+            hp_f32[i] = v;
+            sum_sq += v * v;
         }
+        let chunk_rms = (sum_sq / len.max(1) as f32).sqrt();
+        if chunk_rms < self.gap_noise_floor * 1.6 {
+            self.gap_noise_floor = (self.gap_noise_floor * 0.95 + chunk_rms * 0.05).max(0.0015);
+        }
+        let instant_energy = chunk_rms > (self.gap_noise_floor * 3.0).max(0.010);
 
         // Run O(1) streaming neural speech enhancement into a stack buffer ONCE per 32 ms chunk.
         let mut clean_buf = [0.0f32; CHUNK_SAMPLES];
@@ -298,6 +316,7 @@ impl StreamDecoder {
 
         let vad_input: &[f32] = if got_clean { &clean_buf[..len] } else { &hp_f32[..len] };
         let is_voice = vad.is_speech(vad_input);
+        self.last_instant_speech = instant_energy || is_voice;
 
         if is_voice {
             if !self.in_speech {

@@ -45,6 +45,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
     WS_VISIBLE,
 };
 
+use crate::llm_polish::SharedLlmServer;
 use crate::meter::{list_input_devices, AudioSource, MicMeter, SignalStatus, BANDS};
 use crate::stream_decoder::DenoiseMode;
 use crate::stt::{SttBackend, SttEngine, SttEvent, SttEventQueue};
@@ -107,6 +108,21 @@ fn speaker_color(id: Option<u8>) -> COLORREF {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
+enum PresetMode {
+    InPerson,
+    Online,
+}
+
+impl PresetMode {
+    fn button_label(self) -> &'static str {
+        match self {
+            Self::InPerson => "IN-PERSON \u{25BE}",
+            Self::Online => "ONLINE \u{25BE}",
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
 enum HitTarget {
     None,
     BtnMic,
@@ -119,9 +135,11 @@ enum HitTarget {
     BtnFontUp,
     HealthBadge,
     MeterBadge,
+    BtnPreset,
     BtnVoice,
     BtnOutputDevice,
     BtnGapWait,
+    BtnVibe,
     BtnTestVoices,
     BtnRate,
     BtnPin,
@@ -157,8 +175,10 @@ pub struct AppState {
     brush_input: HBRUSH,
     voices: Vec<VoiceEntry>,
     selected_voice: usize,
+    preset: PresetMode,
     output_device: Option<String>,
     wait_for_gap: bool,
+    vibe_on: bool,
     queued_reply: Option<(usize, String)>,
     rate_idx: usize,
     pinned: bool,
@@ -199,10 +219,12 @@ pub struct AppState {
     rect_font_up: RECT,
     rect_health: RECT,
     rect_meter: RECT,
-    // Row 2 controls (TTS & Session)
+    // Row 2 controls (Preset, TTS & Session)
+    rect_preset: RECT,
     rect_voice: RECT,
     rect_output: RECT,
     rect_gap: RECT,
+    rect_vibe: RECT,
     rect_bench: RECT,
     rect_rate: RECT,
     rect_pin: RECT,
@@ -235,15 +257,20 @@ impl AppState {
         let Some(ref dev) = self.output_device else {
             return "OUT: SPK \u{25BE}".to_string();
         };
-        let trimmed = dev
-            .strip_prefix("CABLE Input (")
-            .map(|_| "CABLE In")
-            .or_else(|| dev.strip_prefix("Speakers ("))
-            .unwrap_or(dev.as_str());
-        let short: String = if trimmed.chars().count() <= 8 {
-            trimmed.to_string()
+        let lower = dev.to_ascii_lowercase();
+        let short = if lower.contains("vb-audio virtual cable") || lower.contains("cable input") {
+            "VB-CABLE".to_string()
         } else {
-            trimmed.chars().take(7).collect::<String>() + "\u{2026}"
+            let trimmed = dev
+                .strip_prefix("Speakers (")
+                .or_else(|| dev.strip_prefix("Speaker ("))
+                .unwrap_or(dev.as_str())
+                .trim_end_matches(')');
+            if trimmed.chars().count() <= 8 {
+                trimmed.to_string()
+            } else {
+                trimmed.chars().take(7).collect::<String>() + "\u{2026}"
+            }
         };
         format!("OUT: {short} \u{25BE}")
     }
@@ -514,9 +541,19 @@ impl AppState {
             }
         }
         self.status_text = if self.wait_for_gap {
-            ">> GAP WAIT ON (waits for 650ms pause before speaking)".to_string()
+            ">> GAP WAIT ON (waits for 500ms pause before speaking)".to_string()
         } else {
             ">> GAP WAIT OFF (speaks immediately)".to_string()
+        };
+        self.redraw();
+    }
+
+    fn toggle_vibe(&mut self) {
+        self.vibe_on = !self.vibe_on;
+        self.status_text = if self.vibe_on {
+            ">> VIBE: ON (Qwen2.5 Mad-Scientist Prosody Director)".to_string()
+        } else {
+            ">> VIBE: OFF (Neutral Steady Delivery)".to_string()
         };
         self.redraw();
     }
@@ -563,12 +600,13 @@ impl AppState {
             self.current_rate(),
             self.output_device.clone(),
             self.should_gate_stt(),
+            self.vibe_on,
         );
         self.redraw();
     }
 
     fn queue_or_speak(&mut self, text: String, card_idx: usize, force_now: bool) {
-        const GAP_SILENCE_MS: u64 = 650;
+        const GAP_SILENCE_MS: u64 = 500;
         if !force_now
             && self.wait_for_gap
             && (self.tts_speaking || self.meter.speech_activity.is_talking_or_recent(GAP_SILENCE_MS))
@@ -582,7 +620,7 @@ impl AppState {
     }
 
     fn check_gap_queue(&mut self) {
-        const GAP_SILENCE_MS: u64 = 650;
+        const GAP_SILENCE_MS: u64 = 500;
         if self.tts_speaking {
             return;
         }
@@ -678,6 +716,116 @@ impl AppState {
         self.stt.reset_speakers();
         self.status_text = ">> CLEARED (SPEAKERS RESET)".to_string();
         self.redraw();
+    }
+
+    fn apply_preset(&mut self, mode: PresetMode) {
+        self.preset = mode;
+        match mode {
+            PresetMode::InPerson => {
+                self.source = AudioSource::Mic;
+                self.meter.set_source(AudioSource::Mic);
+                self.denoise_mode = DenoiseMode::Balanced;
+                self.stt.set_denoise_mode(DenoiseMode::Balanced);
+                self.speaker_labels = true;
+                self.stt.set_speaker_labels(true);
+                self.llm_polish = true;
+                self.stt.set_llm_polish(true);
+                self.output_device = None;
+                self.wait_for_gap = false;
+                if let Some((idx, text)) = self.queued_reply.take() {
+                    self.speak_text(text, Some(idx));
+                    return;
+                }
+                self.status_text =
+                    ">> PRESET: IN-PERSON (Mic + GTCRN + Local Speakers)".to_string();
+            }
+            PresetMode::Online => {
+                self.source = AudioSource::Loopback;
+                self.meter.set_source(AudioSource::Loopback);
+                self.denoise_mode = DenoiseMode::Off;
+                self.stt.set_denoise_mode(DenoiseMode::Off);
+                self.speaker_labels = true;
+                self.stt.set_speaker_labels(true);
+                self.llm_polish = true;
+                self.stt.set_llm_polish(true);
+                self.wait_for_gap = true;
+
+                // Prefer VB-Cable's standard "CABLE Input" endpoint over "CABLE In 16ch".
+                let devs = list_output_devices();
+                let cable = devs
+                    .iter()
+                    .find(|d| {
+                        let l = d.to_ascii_lowercase();
+                        l.contains("cable input") && !l.contains("16ch")
+                    })
+                    .or_else(|| {
+                        devs.iter().find(|d| {
+                            let l = d.to_ascii_lowercase();
+                            (l.contains("vb-audio virtual cable") || l.contains("voicemeeter"))
+                                && !l.contains("16ch")
+                        })
+                    })
+                    .cloned();
+
+                if let Some(dev) = cable {
+                    self.output_device = Some(dev);
+                    self.status_text =
+                        ">> PRESET: ONLINE (System Loopback + VB-Cable Mic + Gap Wait)"
+                            .to_string();
+                } else {
+                    self.output_device = None;
+                    self.status_text =
+                        ">> PRESET: ONLINE (Loopback + Gap Wait; install VB-Cable for Virtual Mic)"
+                            .to_string();
+                }
+            }
+        }
+        self.redraw();
+    }
+
+    fn show_preset_menu(&mut self) {
+        unsafe {
+            let Ok(menu) = CreatePopupMenu() else {
+                return;
+            };
+            let p1 = to_wide("In-Person  (Mic + GTCRN Denoise + Speakers + Instant TTS)");
+            let p2 = to_wide("Online Meeting  (System Audio + VB-Cable Virtual Mic + Wait Gap)");
+            let f1 = MF_STRING
+                | if self.preset == PresetMode::InPerson {
+                    MF_CHECKED
+                } else {
+                    MF_UNCHECKED
+                };
+            let f2 = MF_STRING
+                | if self.preset == PresetMode::Online {
+                    MF_CHECKED
+                } else {
+                    MF_UNCHECKED
+                };
+            let _ = AppendMenuW(menu, f1, 1, PCWSTR(p1.as_ptr()));
+            let _ = AppendMenuW(menu, f2, 2, PCWSTR(p2.as_ptr()));
+
+            let mut pt = POINT {
+                x: self.rect_preset.left,
+                y: self.rect_preset.bottom + 2,
+            };
+            let _ = ClientToScreen(self.hwnd, &mut pt);
+            let cmd = TrackPopupMenu(
+                menu,
+                TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RETURNCMD,
+                pt.x,
+                pt.y,
+                0,
+                self.hwnd,
+                None,
+            );
+            let _ = DestroyMenu(menu);
+            match cmd.0 {
+                1 => self.apply_preset(PresetMode::InPerson),
+                2 => self.apply_preset(PresetMode::Online),
+                _ => {}
+            }
+        }
     }
 
     fn show_output_device_menu(&mut self) {
@@ -898,23 +1046,27 @@ impl AppState {
             bottom: row1_y + row_h,
         };
 
-        // --- Row 2: Voice | Output Device | Gap Wait | Test | Rate | Pin | Export | Clear | Status ---
+        // --- Row 2: Preset | Voice | Output Device | Gap Wait | Vibe | Test | Rate | Pin | Export | Clear | Status ---
         let mut x2 = pad;
-        self.rect_voice = RECT { left: x2, top: row2_y, right: x2 + 152, bottom: row2_y + row_h };
-        x2 = self.rect_voice.right + 5;
-        self.rect_output = RECT { left: x2, top: row2_y, right: x2 + 132, bottom: row2_y + row_h };
-        x2 = self.rect_output.right + 5;
-        self.rect_gap = RECT { left: x2, top: row2_y, right: x2 + 72, bottom: row2_y + row_h };
-        x2 = self.rect_gap.right + 5;
-        self.rect_bench = RECT { left: x2, top: row2_y, right: x2 + 54, bottom: row2_y + row_h };
-        x2 = self.rect_bench.right + 5;
-        self.rect_rate = RECT { left: x2, top: row2_y, right: x2 + 48, bottom: row2_y + row_h };
-        x2 = self.rect_rate.right + 5;
-        self.rect_pin = RECT { left: x2, top: row2_y, right: x2 + 50, bottom: row2_y + row_h };
-        x2 = self.rect_pin.right + 5;
-        self.rect_export = RECT { left: x2, top: row2_y, right: x2 + 50, bottom: row2_y + row_h };
-        x2 = self.rect_export.right + 5;
-        self.rect_clear = RECT { left: x2, top: row2_y, right: x2 + 50, bottom: row2_y + row_h };
+        self.rect_preset = RECT { left: x2, top: row2_y, right: x2 + 102, bottom: row2_y + row_h };
+        x2 = self.rect_preset.right + 4;
+        self.rect_voice = RECT { left: x2, top: row2_y, right: x2 + 144, bottom: row2_y + row_h };
+        x2 = self.rect_voice.right + 4;
+        self.rect_output = RECT { left: x2, top: row2_y, right: x2 + 118, bottom: row2_y + row_h };
+        x2 = self.rect_output.right + 4;
+        self.rect_gap = RECT { left: x2, top: row2_y, right: x2 + 64, bottom: row2_y + row_h };
+        x2 = self.rect_gap.right + 4;
+        self.rect_vibe = RECT { left: x2, top: row2_y, right: x2 + 72, bottom: row2_y + row_h };
+        x2 = self.rect_vibe.right + 4;
+        self.rect_bench = RECT { left: x2, top: row2_y, right: x2 + 48, bottom: row2_y + row_h };
+        x2 = self.rect_bench.right + 4;
+        self.rect_rate = RECT { left: x2, top: row2_y, right: x2 + 42, bottom: row2_y + row_h };
+        x2 = self.rect_rate.right + 4;
+        self.rect_pin = RECT { left: x2, top: row2_y, right: x2 + 44, bottom: row2_y + row_h };
+        x2 = self.rect_pin.right + 4;
+        self.rect_export = RECT { left: x2, top: row2_y, right: x2 + 44, bottom: row2_y + row_h };
+        x2 = self.rect_export.right + 4;
+        self.rect_clear = RECT { left: x2, top: row2_y, right: x2 + 44, bottom: row2_y + row_h };
         self.rect_status = RECT {
             left: self.rect_clear.right + 8,
             top: row2_y,
@@ -1001,6 +1153,9 @@ impl AppState {
         if pt_in_rect(pt, self.rect_meter) {
             return HitTarget::MeterBadge;
         }
+        if pt_in_rect(pt, self.rect_preset) {
+            return HitTarget::BtnPreset;
+        }
         if pt_in_rect(pt, self.rect_voice) {
             return HitTarget::BtnVoice;
         }
@@ -1009,6 +1164,9 @@ impl AppState {
         }
         if pt_in_rect(pt, self.rect_gap) {
             return HitTarget::BtnGapWait;
+        }
+        if pt_in_rect(pt, self.rect_vibe) {
+            return HitTarget::BtnVibe;
         }
         if pt_in_rect(pt, self.rect_bench) {
             return HitTarget::BtnTestVoices;
@@ -1154,7 +1312,19 @@ impl AppState {
             self.draw_signal_health(mem_dc);
             self.draw_freq_meter(mem_dc);
 
-            // Row 2: TTS Voice + Output Device + Gap Wait + Test Voices + Rate + Pin + Export + Clear + Status
+            // Row 2: Preset + TTS Voice + Output Device + Gap Wait + Test Voices + Rate + Pin + Export + Clear + Status
+            let preset_acc = match self.preset {
+                PresetMode::InPerson => C_GREEN,
+                PresetMode::Online => C_CYAN,
+            };
+            self.draw_button(
+                mem_dc,
+                self.rect_preset,
+                self.preset.button_label(),
+                self.hover == HitTarget::BtnPreset,
+                preset_acc,
+                true,
+            );
             let short_voice = self
                 .selected_voice_label()
                 .strip_prefix("Microsoft ")
@@ -1184,6 +1354,14 @@ impl AppState {
                 self.hover == HitTarget::BtnGapWait,
                 if self.wait_for_gap { C_AMBER } else { C_MUTED },
                 self.wait_for_gap,
+            );
+            self.draw_button(
+                mem_dc,
+                self.rect_vibe,
+                if self.vibe_on { "VIBE:ON" } else { "VIBE:OFF" },
+                self.hover == HitTarget::BtnVibe,
+                if self.vibe_on { C_CORAL } else { C_MUTED },
+                self.vibe_on,
             );
             self.draw_button(
                 mem_dc,
@@ -2046,9 +2224,11 @@ pub unsafe extern "system" fn main_wnd_proc(
                     HitTarget::BtnLlm => st.toggle_llm_polish(),
                     HitTarget::BtnFontDown => st.adjust_caption_font(-2),
                     HitTarget::BtnFontUp => st.adjust_caption_font(2),
+                    HitTarget::BtnPreset => st.show_preset_menu(),
                     HitTarget::BtnVoice => st.show_voice_menu(),
                     HitTarget::BtnOutputDevice => st.show_output_device_menu(),
                     HitTarget::BtnGapWait => st.toggle_gap_wait(),
+                    HitTarget::BtnVibe => st.toggle_vibe(),
                     HitTarget::BtnTestVoices => st.toggle_benchmark(),
                     HitTarget::BtnRate => st.cycle_rate(),
                     HitTarget::BtnPin => st.toggle_pin(),
@@ -2303,14 +2483,16 @@ unsafe fn create_app_state(hwnd: HWND) -> Box<AppState> {
     let initial_llm = true;
     let initial_backend = SttBackend::ParakeetGpu;
 
+    let shared_llm = SharedLlmServer::new();
     let stt = SttEngine::new(
         Arc::clone(&stt_queue),
         Arc::clone(&meter),
+        Arc::clone(&shared_llm),
         initial_denoise,
         initial_speakers,
         initial_llm,
     );
-    let tts = TtsEngine::new(hwnd_raw, echo_gate);
+    let tts = TtsEngine::new(hwnd_raw, echo_gate, shared_llm);
 
     // Pre-warm Piper + OpenVoice CUDA TTS in the background on startup so Enter speaks instantly!
     tts.prewarm(voices.first().cloned(), RATES[1]);
@@ -2330,8 +2512,10 @@ unsafe fn create_app_state(hwnd: HWND) -> Box<AppState> {
         brush_input,
         voices,
         selected_voice: 0,
+        preset: PresetMode::InPerson,
         output_device: None,
         wait_for_gap: false,
+        vibe_on: false,
         queued_reply: None,
         rate_idx: 1,
         pinned: false,
@@ -2371,9 +2555,11 @@ unsafe fn create_app_state(hwnd: HWND) -> Box<AppState> {
         rect_font_up: RECT::default(),
         rect_health: RECT::default(),
         rect_meter: RECT::default(),
+        rect_preset: RECT::default(),
         rect_voice: RECT::default(),
         rect_output: RECT::default(),
         rect_gap: RECT::default(),
+        rect_vibe: RECT::default(),
         rect_bench: RECT::default(),
         rect_rate: RECT::default(),
         rect_pin: RECT::default(),
@@ -2432,6 +2618,10 @@ fn tooltip_for(target: HitTarget) -> Option<(&'static str, &'static str)> {
             "24-BAND LIVE FREQUENCY SPECTRUM",
             "Real-time Goertzel audio spectrum from 85 Hz (rumble) to 7.2 kHz (consonants). Confirms your mic is live and picking up speech.",
         )),
+        HitTarget::BtnPreset => Some((
+            "1-CLICK MODE PRESETS (IN-PERSON / ONLINE)",
+            "Switch every audio & meeting setting in one click: IN-PERSON (Mic + GTCRN Denoise + Local Speakers) or ONLINE (System Loopback + VB-Cable Virtual Mic + Auto-Gap Wait).",
+        )),
         HitTarget::BtnVoice => Some((
             "OUTBOUND TTS VOICE PICKER",
             "Choose which local cloned, neural Piper, or Windows voice speaks aloud when you type a reply and press Enter.",
@@ -2442,7 +2632,11 @@ fn tooltip_for(target: HitTarget) -> Option<(&'static str, &'static str)> {
         )),
         HitTarget::BtnGapWait => Some((
             "WAIT FOR CONVERSATION GAP (AUTO-TURN)",
-            "When ON, pressing Enter while someone is talking queues your reply and waits for a 650 ms pause before speaking so you never talk over people. Click the queued card to speak immediately.",
+            "When ON, pressing Enter while someone is talking queues your reply and waits for a 500 ms pause (0 ms onset guard) before speaking so you never talk over people. Click the queued card to speak immediately.",
+        )),
+        HitTarget::BtnVibe => Some((
+            "LLM PROSODY DIRECTOR (VIBE MODE)",
+            "Reuses your already-loaded Qwen2.5-1.5B GPU model (0 MB extra VRAM) to direct speed, pitch arc, emphasis, and comedic/dramatic pauses from vibe.txt so your voice builds energy instead of sounding flat!",
         )),
         HitTarget::BtnTestVoices => Some((
             "AUDITION ALL VOICES (FOR LISTENERS)",

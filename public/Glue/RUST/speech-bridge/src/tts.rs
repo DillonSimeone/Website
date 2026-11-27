@@ -2,6 +2,7 @@
 //! plus a sequential Voice Benchmark mode.
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+use std::collections::{HashMap, VecDeque};
 use std::fs;
 use std::io::{BufRead, BufReader, Write};
 use std::os::windows::process::CommandExt;
@@ -17,6 +18,7 @@ use windows::Media::SpeechSynthesis::{SpeechSynthesizer, VoiceInformation};
 use windows::Storage::Streams::{DataReader, IInputStream};
 use windows::Win32::Media::Audio::{PlaySoundW, SND_ASYNC, SND_MEMORY, SND_NODEFAULT, SND_SYNC};
 
+use crate::llm_polish::{load_vibe_persona, ProsodyBeat, SharedLlmServer};
 use crate::ui::{WM_APP_BENCH_PROGRESS, WM_APP_TTS_STATUS};
 use crate::win_util::{post_app_msg, resolve_asset_path, ComGuard, CREATE_NO_WINDOW};
 
@@ -70,6 +72,10 @@ pub enum VoiceKind {
         se_path: PathBuf,
         src_key: String,
     },
+    PiperClonedCycle {
+        variants: Vec<(PathBuf, String)>,
+        se_path: PathBuf,
+    },
 }
 
 /// Metadata for a local Windows 11 or Piper neural voice.
@@ -91,6 +97,7 @@ enum TtsCommand {
         rate: f64,
         output_device: Option<String>,
         gate_stt: bool,
+        vibe_on: bool,
     },
     Benchmark {
         voices: Vec<VoiceEntry>,
@@ -315,7 +322,11 @@ pub struct TtsEngine {
 
 impl TtsEngine {
     /// Spawns the TTS worker thread and returns a handle for queuing speech.
-    pub fn new(notify_hwnd: isize, echo_gate: Arc<TtsEchoGate>) -> Self {
+    pub fn new(
+        notify_hwnd: isize,
+        echo_gate: Arc<TtsEchoGate>,
+        shared_llm: Arc<SharedLlmServer>,
+    ) -> Self {
         let (tx, rx) = mpsc::channel::<TtsCommand>();
         let cancel_flag = Arc::new(AtomicBool::new(false));
         let bench_status = Arc::new(Mutex::new(String::new()));
@@ -326,7 +337,15 @@ impl TtsEngine {
         let tracker_bg = Arc::clone(&word_tracker);
 
         thread::spawn(move || {
-            tts_worker_loop(rx, notify_hwnd, cancel_bg, status_bg, gate_bg, tracker_bg)
+            tts_worker_loop(
+                rx,
+                notify_hwnd,
+                cancel_bg,
+                status_bg,
+                gate_bg,
+                tracker_bg,
+                shared_llm,
+            )
         });
 
         Self {
@@ -348,7 +367,7 @@ impl TtsEngine {
         let _ = self.tx.send(TtsCommand::Prewarm { voice, rate });
     }
 
-    /// Queues text to be spoken with the given optional voice, speaking rate, and target output device.
+    /// Queues text to be spoken with the given optional voice, speaking rate, target output device, and Vibe mode.
     pub fn speak(
         &self,
         text: String,
@@ -356,6 +375,7 @@ impl TtsEngine {
         rate: f64,
         output_device: Option<String>,
         gate_stt: bool,
+        vibe_on: bool,
     ) {
         self.cancel_flag.store(true, Ordering::Relaxed);
         self.word_tracker.clear();
@@ -368,6 +388,7 @@ impl TtsEngine {
             rate,
             output_device,
             gate_stt,
+            vibe_on,
         });
     }
 
@@ -427,9 +448,11 @@ pub fn list_local_voices() -> Vec<VoiceEntry> {
             paths.sort();
 
             for (profile_name, se_path) in &cloned_profiles {
+                let mut cycle_variants: Vec<(PathBuf, String)> = Vec::new();
                 for p in &paths {
                     let stem = p.file_stem().and_then(|s| s.to_str()).unwrap_or("piper");
                     let (lang, name) = parse_piper_stem(stem);
+                    cycle_variants.push((p.clone(), name.clone()));
                     out.push(VoiceEntry {
                         display_name: format!("{name}-{profile_name}"),
                         language: lang,
@@ -437,6 +460,16 @@ pub fn list_local_voices() -> Vec<VoiceEntry> {
                             model_path: p.clone(),
                             se_path: se_path.clone(),
                             src_key: name,
+                        },
+                    });
+                }
+                if cycle_variants.len() >= 2 {
+                    out.push(VoiceEntry {
+                        display_name: format!("CYCLE-{profile_name}"),
+                        language: "multi".to_string(),
+                        kind: VoiceKind::PiperClonedCycle {
+                            variants: cycle_variants,
+                            se_path: se_path.clone(),
                         },
                     });
                 }
@@ -497,13 +530,19 @@ fn winrt_voice_to_entry(voice: &VoiceInformation) -> Option<VoiceEntry> {
 fn synthesize_voice(
     synth: Option<&SpeechSynthesizer>,
     piper_exe: Option<&Path>,
-    piper_daemon: &mut Option<PiperDaemon>,
+    piper_pool: &mut HashMap<(PathBuf, i32), PiperDaemon>,
     openvoice: &mut Option<OpenVoiceDaemon>,
     voice: Option<&VoiceEntry>,
     text: &str,
     rate: f64,
 ) -> Vec<u8> {
     match voice.map(|v| &v.kind) {
+        Some(VoiceKind::PiperClonedCycle { variants, se_path }) => {
+            let Some(exe) = piper_exe else {
+                return Vec::new();
+            };
+            synthesize_cycle_cloned_wav(exe, piper_pool, openvoice, variants, se_path, text, rate)
+        }
         Some(VoiceKind::PiperCloned {
             model_path,
             se_path,
@@ -512,7 +551,7 @@ fn synthesize_voice(
             let Some(exe) = piper_exe else {
                 return Vec::new();
             };
-            let Ok(piper_wav) = synthesize_piper_cached(exe, piper_daemon, model_path, text, rate)
+            let Ok(piper_wav) = synthesize_piper_pooled(exe, piper_pool, model_path, text, rate)
             else {
                 return Vec::new();
             };
@@ -528,7 +567,7 @@ fn synthesize_voice(
             piper_wav
         }
         Some(VoiceKind::Piper { model_path }) => piper_exe
-            .and_then(|exe| synthesize_piper_cached(exe, piper_daemon, model_path, text, rate).ok())
+            .and_then(|exe| synthesize_piper_pooled(exe, piper_pool, model_path, text, rate).ok())
             .unwrap_or_default(),
         other => {
             let Some(synth) = synth else {
@@ -552,6 +591,452 @@ fn synthesize_voice(
     }
 }
 
+/// Synthesizes text word-by-word, rapidly cycling through all cloned Dillon voices and stitching
+/// each word seamlessly with a 12 ms crossfade into one continuous 22.05 kHz mono PCM WAV.
+#[allow(clippy::too_many_arguments)]
+fn synthesize_cycle_cloned_wav(
+    piper_exe: &Path,
+    piper_pool: &mut HashMap<(PathBuf, i32), PiperDaemon>,
+    openvoice: &mut Option<OpenVoiceDaemon>,
+    variants: &[(PathBuf, String)],
+    se_path: &Path,
+    text: &str,
+    rate: f64,
+) -> Vec<u8> {
+    const OUT_SR: u32 = 22_050;
+    const XFADE_SAMPLES: usize = 264; // 12 ms @ 22.05 kHz
+    const EDGE_PAD: usize = 350;      // ~16 ms breath margin around each word
+
+    if variants.is_empty() {
+        return Vec::new();
+    }
+    let words: Vec<&str> = text.split_whitespace().collect();
+    if words.is_empty() {
+        return Vec::new();
+    }
+    if openvoice.is_none() {
+        *openvoice = OpenVoiceDaemon::spawn().ok();
+    }
+
+    let mut stitched: Vec<i16> = Vec::with_capacity(words.len() * (OUT_SR as usize / 2));
+    let mut voice_cursor = 0usize;
+
+    for (wi, word) in words.iter().enumerate() {
+        let mut word_pcm: Option<Vec<i16>> = None;
+
+        // Try the next voice in sequence; if a Piper model rejects a phoneme, advance cleanly.
+        for attempt in 0..variants.len() {
+            let idx = (voice_cursor + attempt) % variants.len();
+            let (ref model_path, ref src_key) = variants[idx];
+            let Ok(piper_wav) = synthesize_piper_pooled(piper_exe, piper_pool, model_path, word, rate)
+            else {
+                continue;
+            };
+            if piper_wav.len() < 100 {
+                continue;
+            }
+            let final_wav = if let Some(ov) = openvoice.as_mut() {
+                ov.convert_wav(&piper_wav, src_key, se_path).unwrap_or(piper_wav)
+            } else {
+                piper_wav
+            };
+            if let Some(samples) = extract_trimmed_mono_22k(&final_wav, OUT_SR, EDGE_PAD) {
+                if !samples.is_empty() {
+                    voice_cursor = (idx + 1) % variants.len();
+                    word_pcm = Some(samples);
+                    break;
+                }
+            }
+        }
+
+        let Some(seg) = word_pcm else {
+            continue;
+        };
+
+        append_with_crossfade(&mut stitched, &seg, XFADE_SAMPLES);
+
+        // Add subtle natural punctuation pauses between clauses/sentences.
+        if wi + 1 < words.len() {
+            if let Some(last_ch) = word.chars().last() {
+                let pause_ms = match last_ch {
+                    ',' | ';' | ':' => 110,
+                    '.' | '!' | '?' => 210,
+                    _ => 0,
+                };
+                if pause_ms > 0 {
+                    let zeros = ((OUT_SR as usize) * pause_ms) / 1000;
+                    stitched.resize(stitched.len() + zeros, 0);
+                }
+            }
+        }
+    }
+
+    if stitched.is_empty() {
+        return Vec::new();
+    }
+    encode_pcm16_wav(&stitched, OUT_SR)
+}
+
+fn extract_trimmed_mono_22k(wav: &[u8], target_sr: u32, edge_pad: usize) -> Option<Vec<i16>> {
+    let (sr, ch, bits, data) = parse_pcm_wav(wav)?;
+    if bits != 16 {
+        return None;
+    }
+    let ch_u = ch.max(1) as usize;
+    let frames = data.len() / (2 * ch_u);
+    if frames == 0 {
+        return None;
+    }
+    let mut mono = Vec::with_capacity(frames);
+    for f in 0..frames {
+        let mut acc = 0i32;
+        for c in 0..ch_u {
+            let off = (f * ch_u + c) * 2;
+            acc += i16::from_le_bytes([data[off], data[off + 1]]) as i32;
+        }
+        mono.push((acc / ch_u as i32) as i16);
+    }
+
+    let resampled = if sr == target_sr {
+        mono
+    } else {
+        let out_len = ((mono.len() as u64 * target_sr as u64) / sr.max(1) as u64).max(1) as usize;
+        let ratio = sr as f64 / target_sr as f64;
+        let mut out = Vec::with_capacity(out_len);
+        for i in 0..out_len {
+            let pos = i as f64 * ratio;
+            let idx = (pos as usize).min(mono.len() - 1);
+            let frac = pos - idx as f64;
+            let a = mono[idx] as f64;
+            let b = mono[(idx + 1).min(mono.len() - 1)] as f64;
+            out.push((a + (b - a) * frac).round().clamp(-32768.0, 32767.0) as i16);
+        }
+        out
+    };
+
+    let first = resampled.iter().position(|&s| s.unsigned_abs() > 380).unwrap_or(0);
+    let last = resampled
+        .iter()
+        .rposition(|&s| s.unsigned_abs() > 380)
+        .unwrap_or(resampled.len().saturating_sub(1));
+    if last <= first {
+        return Some(resampled);
+    }
+    let a = first.saturating_sub(edge_pad);
+    let b = (last + 1 + edge_pad).min(resampled.len());
+    Some(resampled[a..b].to_vec())
+}
+
+fn append_with_crossfade(dst: &mut Vec<i16>, seg: &[i16], xfade: usize) {
+    if dst.is_empty() {
+        dst.extend_from_slice(seg);
+        return;
+    }
+    let n = xfade.min(dst.len()).min(seg.len());
+    if n == 0 {
+        dst.extend_from_slice(seg);
+        return;
+    }
+    let dst_start = dst.len() - n;
+    for i in 0..n {
+        let alpha = (i as f32 + 1.0) / (n as f32 + 1.0);
+        let mixed = dst[dst_start + i] as f32 * (1.0 - alpha) + seg[i] as f32 * alpha;
+        dst[dst_start + i] = mixed.round().clamp(-32768.0, 32767.0) as i16;
+    }
+    dst.extend_from_slice(&seg[n..]);
+}
+
+fn encode_pcm16_wav(samples: &[i16], sample_rate: u32) -> Vec<u8> {
+    let data_bytes = (samples.len() * 2) as u32;
+    let mut out = Vec::with_capacity(44 + data_bytes as usize);
+    out.extend_from_slice(b"RIFF");
+    out.extend_from_slice(&(36 + data_bytes).to_le_bytes());
+    out.extend_from_slice(b"WAVE");
+    out.extend_from_slice(b"fmt ");
+    out.extend_from_slice(&16u32.to_le_bytes());
+    out.extend_from_slice(&1u16.to_le_bytes()); // PCM
+    out.extend_from_slice(&1u16.to_le_bytes()); // Mono
+    out.extend_from_slice(&sample_rate.to_le_bytes());
+    out.extend_from_slice(&(sample_rate * 2).to_le_bytes()); // byte rate
+    out.extend_from_slice(&2u16.to_le_bytes()); // block align
+    out.extend_from_slice(&16u16.to_le_bytes()); // bits per sample
+    out.extend_from_slice(b"data");
+    out.extend_from_slice(&data_bytes.to_le_bytes());
+    for &s in samples {
+        out.extend_from_slice(&s.to_le_bytes());
+    }
+    out
+}
+
+/// Pure-Rust WSOLA time-scaler: stretches or compresses speech duration cleanly without
+/// distorting pitch (window ~28 ms, overlap 50%, cross-correlation alignment).
+fn wsola_time_scale(samples: &[i16], sr: u32, stretch_factor: f32) -> Vec<i16> {
+    if samples.len() < 1024 || (stretch_factor - 1.0).abs() < 0.015 {
+        return samples.to_vec();
+    }
+    let win = ((sr as usize * 28) / 1000).max(256) & !1; // ~616 samples @ 22.05kHz
+    let half = win / 2;
+    let search = (half / 3).max(32);
+    let out_len = ((samples.len() as f64) * (stretch_factor as f64)).round() as usize;
+    if out_len < win {
+        return samples.to_vec();
+    }
+
+    // Precompute Hann window for smooth 50% overlap-add.
+    let mut hann = Vec::with_capacity(win);
+    for i in 0..win {
+        let w = 0.5 * (1.0 - (2.0 * std::f32::consts::PI * i as f32 / win as f32).cos());
+        hann.push(w);
+    }
+
+    let mut out = vec![0.0f32; out_len + win];
+    let mut norm = vec![0.0f32; out_len + win];
+    let mut out_pos = 0usize;
+    let mut prev_src = 0usize;
+
+    while out_pos + win <= out.len() {
+        let ideal_src = ((out_pos as f64) / (stretch_factor as f64)).round() as usize;
+        if ideal_src + win > samples.len() {
+            break;
+        }
+        // Search around ideal_src to maximize waveform correlation with previous tail.
+        let mut best_src = ideal_src;
+        if out_pos > 0 && prev_src + half + win <= samples.len() {
+            let ref_pos = prev_src + half;
+            let lo = ideal_src.saturating_sub(search);
+            let hi = (ideal_src + search).min(samples.len().saturating_sub(win));
+            let mut best_score = f32::NEG_INFINITY;
+            for cand in (lo..=hi).step_by(4) {
+                let mut dot = 0.0f32;
+                let mut e_ref = 1.0f32;
+                let mut e_cand = 1.0f32;
+                for k in (0..half).step_by(2) {
+                    let a = samples[ref_pos + k] as f32;
+                    let b = samples[cand + k] as f32;
+                    dot += a * b;
+                    e_ref += a * a;
+                    e_cand += b * b;
+                }
+                let score = dot / (e_ref * e_cand).sqrt();
+                if score > best_score {
+                    best_score = score;
+                    best_src = cand;
+                }
+            }
+        }
+
+        for i in 0..win {
+            let w = hann[i];
+            out[out_pos + i] += samples[best_src + i] as f32 * w;
+            norm[out_pos + i] += w;
+        }
+        prev_src = best_src;
+        out_pos += half;
+    }
+
+    let final_len = out_pos.min(out_len).max(1);
+    let mut res = Vec::with_capacity(final_len);
+    for i in 0..final_len {
+        let v = if norm[i] > 1e-4 { out[i] / norm[i] } else { 0.0 };
+        res.push(v.round().clamp(-32768.0, 32767.0) as i16);
+    }
+    res
+}
+
+/// Applies independent speed (`0.84..1.24`), pitch (`-2.0..+3.0` semitones), and vocal energy
+/// (`0.78..1.30`, soft-limited) to a 22.05 kHz mono PCM16 beat.
+fn sculpt_prosody_pcm16(
+    samples: &[i16],
+    sr: u32,
+    speed: f32,
+    pitch_st: f32,
+    energy: f32,
+) -> Vec<i16> {
+    if samples.is_empty() {
+        return Vec::new();
+    }
+    let pitch_ratio = 2.0f32.powf(pitch_st.clamp(-2.5, 3.5) / 12.0);
+    let speed_clamped = speed.clamp(0.80, 1.28);
+    // Resampling by `pitch_ratio` speeds audio up by `pitch_ratio`, so WSOLA stretches by
+    // `pitch_ratio / speed` first -> net duration is `1 / speed` AND net pitch is `pitch_ratio`!
+    let wsola_stretch = (pitch_ratio / speed_clamped).clamp(0.68, 1.55);
+    let stretched = wsola_time_scale(samples, sr, wsola_stretch);
+
+    let out_len = ((stretched.len() as f64) / (pitch_ratio as f64)).round().max(1.0) as usize;
+    let mut out = Vec::with_capacity(out_len);
+    let gain = energy.clamp(0.75, 1.35);
+
+    for i in 0..out_len {
+        let pos = (i as f64) * (pitch_ratio as f64);
+        let idx = (pos as usize).min(stretched.len().saturating_sub(1));
+        let frac = (pos - idx as f64) as f32;
+        let a = stretched[idx] as f32 / 32768.0;
+        let b = stretched[(idx + 1).min(stretched.len() - 1)] as f32 / 32768.0;
+        let v = (a + (b - a) * frac) * gain;
+        // Gentle tanh soft-limiter preserves punch without harsh digital clipping.
+        let limited = if v.abs() > 0.85 {
+            v.signum() * (0.85 + 0.13 * ((v.abs() - 0.85) / 0.15).tanh())
+        } else {
+            v
+        };
+        out.push((limited * 32767.0).round().clamp(-32768.0, 32767.0) as i16);
+    }
+    out
+}
+
+/// Synthesizes expressive speech by asking the shared Qwen2.5-1.5B CUDA server to break the text
+/// into vocal beats (`speed`, `pitch_st`, `energy`, `pause_ms`), synthesizing each beat through
+/// the chosen voice (single cloned voice OR `CYCLE-Dillon`), sculpting its prosody, and stitching
+/// seamlessly with 12 ms crossfades.
+#[allow(clippy::too_many_arguments)]
+fn synthesize_with_vibe(
+    synth: Option<&SpeechSynthesizer>,
+    piper_exe: Option<&Path>,
+    piper_pool: &mut HashMap<(PathBuf, i32), PiperDaemon>,
+    openvoice: &mut Option<OpenVoiceDaemon>,
+    shared_llm: &SharedLlmServer,
+    recent_replies: &[String],
+    persona: &str,
+    voice: Option<&VoiceEntry>,
+    text: &str,
+    rate: f64,
+) -> Vec<u8> {
+    let beats = shared_llm.direct_prosody(text, recent_replies, persona);
+    synthesize_beats_wav(synth, piper_exe, piper_pool, openvoice, voice, &beats, rate)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn synthesize_beats_wav(
+    synth: Option<&SpeechSynthesizer>,
+    piper_exe: Option<&Path>,
+    piper_pool: &mut HashMap<(PathBuf, i32), PiperDaemon>,
+    openvoice: &mut Option<OpenVoiceDaemon>,
+    voice: Option<&VoiceEntry>,
+    beats: &[ProsodyBeat],
+    rate: f64,
+) -> Vec<u8> {
+    const OUT_SR: u32 = 22_050;
+    const XFADE_SAMPLES: usize = 264;
+    const EDGE_PAD: usize = 320;
+
+    if beats.is_empty() {
+        return Vec::new();
+    }
+
+    let mut stitched: Vec<i16> = Vec::with_capacity(OUT_SR as usize * 6);
+    for (bi, beat) in beats.iter().enumerate() {
+        let raw_wav = synthesize_voice(
+            synth,
+            piper_exe,
+            piper_pool,
+            openvoice,
+            voice,
+            &beat.text,
+            rate,
+        );
+        let Some(trimmed) = extract_trimmed_mono_22k(&raw_wav, OUT_SR, EDGE_PAD) else {
+            continue;
+        };
+        if trimmed.is_empty() {
+            continue;
+        }
+        let sculpted = sculpt_prosody_pcm16(&trimmed, OUT_SR, beat.speed, beat.pitch_st, beat.energy);
+        append_with_crossfade(&mut stitched, &sculpted, XFADE_SAMPLES);
+
+        if bi + 1 < beats.len() && beat.pause_ms > 0 {
+            let zeros = ((OUT_SR as usize) * (beat.pause_ms as usize)) / 1000;
+            stitched.resize(stitched.len() + zeros, 0);
+        }
+    }
+
+    if stitched.is_empty() {
+        return Vec::new();
+    }
+    encode_pcm16_wav(&stitched, OUT_SR)
+}
+
+/// Public helper for rendering a single or cycling cloned voice segment with optional Qwen2.5 Vibe
+/// prosody from CLI (`speech-bench --render-vibe-demo`).
+pub fn render_vibe_demo_segment(
+    text: &str,
+    cycle: bool,
+    vibe_on: bool,
+    shared_llm: &SharedLlmServer,
+    rate: f64,
+) -> Result<Vec<u8>, String> {
+    let piper_exe = find_piper_exe().ok_or("piper.exe not found")?;
+    let voices = list_local_voices();
+    let chosen = if cycle {
+        voices
+            .into_iter()
+            .find(|v| matches!(v.kind, VoiceKind::PiperClonedCycle { .. }))
+            .ok_or("No CYCLE cloned voice found")?
+    } else {
+        voices
+            .into_iter()
+            .find(|v| matches!(v.kind, VoiceKind::PiperCloned { .. }))
+            .ok_or("No single cloned voice found")?
+    };
+
+    let mut pool: HashMap<(PathBuf, i32), PiperDaemon> = HashMap::new();
+    let mut ov: Option<OpenVoiceDaemon> = None;
+    let persona = load_vibe_persona();
+
+    let wav = if vibe_on {
+        let beats = shared_llm.direct_prosody(text, &[], &persona);
+        for (i, b) in beats.iter().enumerate() {
+            println!(
+                "    [BEAT {}] spd={:.2} pitch={:+.1}st eng={:.2} pause={}ms | {}",
+                i + 1,
+                b.speed,
+                b.pitch_st,
+                b.energy,
+                b.pause_ms,
+                b.text
+            );
+        }
+        synthesize_beats_wav(None, Some(&piper_exe), &mut pool, &mut ov, Some(&chosen), &beats, rate)
+    } else {
+        synthesize_voice(None, Some(&piper_exe), &mut pool, &mut ov, Some(&chosen), text, rate)
+    };
+
+    for (_, mut pd) in pool {
+        pd.shutdown();
+    }
+    if let Some(mut o) = ov {
+        o.shutdown();
+    }
+    if wav.is_empty() {
+        Err("Empty WAV output".to_string())
+    } else {
+        Ok(wav)
+    }
+}
+
+/// Public helper for rendering a word-by-word `CYCLE-Dillon` WAV file from CLI (`speech-bench`).
+pub fn render_cycle_cloned_wav(text: &str, rate: f64) -> Result<Vec<u8>, String> {
+    let piper_exe = find_piper_exe().ok_or("piper.exe not found")?;
+    let voices = list_local_voices();
+    let cycle = voices
+        .into_iter()
+        .find(|v| matches!(v.kind, VoiceKind::PiperClonedCycle { .. }))
+        .ok_or("No CYCLE cloned voice available (need 2+ Piper voices and a cloned .pth profile)")?;
+    let mut pool: HashMap<(PathBuf, i32), PiperDaemon> = HashMap::new();
+    let mut ov: Option<OpenVoiceDaemon> = None;
+    let wav = synthesize_voice(None, Some(&piper_exe), &mut pool, &mut ov, Some(&cycle), text, rate);
+    for (_, mut pd) in pool {
+        pd.shutdown();
+    }
+    if let Some(mut o) = ov {
+        o.shutdown();
+    }
+    if wav.is_empty() {
+        Err("CYCLE voice synthesis produced empty WAV".to_string())
+    } else {
+        Ok(wav)
+    }
+}
+
 fn tts_worker_loop(
     rx: Receiver<TtsCommand>,
     notify_hwnd: isize,
@@ -559,13 +1044,16 @@ fn tts_worker_loop(
     status_bg: Arc<Mutex<String>>,
     echo_gate: Arc<TtsEchoGate>,
     word_tracker: Arc<TtsWordTracker>,
+    shared_llm: Arc<SharedLlmServer>,
 ) {
     let _com = ComGuard::mta();
     let synth = SpeechSynthesizer::new().ok();
     let piper_exe = find_piper_exe();
-    let mut piper_daemon: Option<PiperDaemon> = None;
+    let mut piper_pool: HashMap<(PathBuf, i32), PiperDaemon> = HashMap::new();
     let mut openvoice: Option<OpenVoiceDaemon> = None;
     let mut active_wav: Vec<u8> = Vec::new();
+    let mut recent_replies: VecDeque<String> = VecDeque::with_capacity(4);
+    let vibe_persona = load_vibe_persona();
 
     while let Ok(cmd) = rx.recv() {
         match cmd {
@@ -575,7 +1063,7 @@ fn tts_worker_loop(
                     let _ = synthesize_voice(
                         synth.as_ref(),
                         piper_exe.as_deref(),
-                        &mut piper_daemon,
+                        &mut piper_pool,
                         &mut openvoice,
                         Some(v),
                         "Ready.",
@@ -599,14 +1087,19 @@ fn tts_worker_loop(
                 rate,
                 output_device,
                 gate_stt,
+                vibe_on,
             } => {
                 cancel_bg.store(false, Ordering::Relaxed);
+                let recent_vec: Vec<String> = recent_replies.iter().cloned().collect();
                 handle_speak(
                     notify_hwnd,
                     synth.as_ref(),
                     piper_exe.as_deref(),
-                    &mut piper_daemon,
+                    &mut piper_pool,
                     &mut openvoice,
+                    &shared_llm,
+                    &recent_vec,
+                    &vibe_persona,
                     &cancel_bg,
                     &echo_gate,
                     &word_tracker,
@@ -616,7 +1109,12 @@ fn tts_worker_loop(
                     rate,
                     output_device.as_deref(),
                     gate_stt,
+                    vibe_on,
                 );
+                if recent_replies.len() == 3 {
+                    recent_replies.pop_front();
+                }
+                recent_replies.push_back(text);
             }
             TtsCommand::Benchmark {
                 voices,
@@ -630,7 +1128,7 @@ fn tts_worker_loop(
                     notify_hwnd,
                     synth.as_ref(),
                     piper_exe.as_deref(),
-                    &mut piper_daemon,
+                    &mut piper_pool,
                     &mut openvoice,
                     &cancel_bg,
                     &status_bg,
@@ -645,7 +1143,7 @@ fn tts_worker_loop(
         }
     }
 
-    if let Some(mut pd) = piper_daemon.take() {
+    for (_, mut pd) in piper_pool {
         pd.shutdown();
     }
     if let Some(mut ov) = openvoice.take() {
@@ -663,8 +1161,11 @@ fn handle_speak(
     notify_hwnd: isize,
     synth: Option<&SpeechSynthesizer>,
     piper_exe: Option<&Path>,
-    piper_daemon: &mut Option<PiperDaemon>,
+    piper_pool: &mut HashMap<(PathBuf, i32), PiperDaemon>,
     openvoice: &mut Option<OpenVoiceDaemon>,
+    shared_llm: &SharedLlmServer,
+    recent_replies: &[String],
+    vibe_persona: &str,
     cancel_bg: &AtomicBool,
     echo_gate: &TtsEchoGate,
     word_tracker: &TtsWordTracker,
@@ -674,17 +1175,33 @@ fn handle_speak(
     rate: f64,
     output_device: Option<&str>,
     gate_stt: bool,
+    vibe_on: bool,
 ) {
     post_app_msg(notify_hwnd, WM_APP_TTS_STATUS, 1);
-    let wav = synthesize_voice(
-        synth,
-        piper_exe,
-        piper_daemon,
-        openvoice,
-        voice,
-        text,
-        rate,
-    );
+    let wav = if vibe_on && text.split_whitespace().count() >= 4 {
+        synthesize_with_vibe(
+            synth,
+            piper_exe,
+            piper_pool,
+            openvoice,
+            shared_llm,
+            recent_replies,
+            vibe_persona,
+            voice,
+            text,
+            rate,
+        )
+    } else {
+        synthesize_voice(
+            synth,
+            piper_exe,
+            piper_pool,
+            openvoice,
+            voice,
+            text,
+            rate,
+        )
+    };
     if !wav.is_empty() && !cancel_bg.load(Ordering::Relaxed) {
         if gate_stt {
             echo_gate.set_speaking(true);
@@ -704,7 +1221,7 @@ fn handle_benchmark(
     notify_hwnd: isize,
     synth: Option<&SpeechSynthesizer>,
     piper_exe: Option<&Path>,
-    piper_daemon: &mut Option<PiperDaemon>,
+    piper_pool: &mut HashMap<(PathBuf, i32), PiperDaemon>,
     openvoice: &mut Option<OpenVoiceDaemon>,
     cancel_bg: &AtomicBool,
     status_bg: &Mutex<String>,
@@ -733,7 +1250,7 @@ fn handle_benchmark(
         let wav = synthesize_voice(
             synth,
             piper_exe,
-            piper_daemon,
+            piper_pool,
             openvoice,
             Some(v),
             &phrase,
@@ -784,7 +1301,7 @@ fn play_wav_routed(
     }
 }
 
-fn play_wav_cpal(wav: &[u8], output_device: Option<&str>, cancel: &AtomicBool) -> bool {
+pub fn play_wav_cpal(wav: &[u8], output_device: Option<&str>, cancel: &AtomicBool) -> bool {
     let Some((src_rate, src_ch, bits, data_bytes)) = parse_pcm_wav(wav) else {
         return false;
     };
@@ -925,8 +1442,6 @@ fn play_wav_cpal(wav: &[u8], output_device: Option<&str>, cancel: &AtomicBool) -
 /// Persistent `piper.exe --json-input` daemon keeping the 63 MB ONNX voice model warm in RAM
 /// (~110 ms/sentence instead of ~500+ ms cold process spawns).
 struct PiperDaemon {
-    model_path: PathBuf,
-    rate_key: i32,
     child: Child,
     stdin: ChildStdin,
     stdout: BufReader<ChildStdout>,
@@ -934,7 +1449,6 @@ struct PiperDaemon {
 
 impl PiperDaemon {
     fn spawn(piper_exe: &Path, model_path: &Path, rate: f64) -> std::io::Result<Self> {
-        let rate_key = (rate.clamp(0.5, 2.0) * 100.0).round() as i32;
         let length_scale = (1.0 / rate.clamp(0.5, 2.0)).to_string();
         let mut child = Command::new(piper_exe)
             .arg("--model")
@@ -958,17 +1472,10 @@ impl PiperDaemon {
             .take()
             .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::Other, "Missing piper stdout"))?;
         Ok(Self {
-            model_path: model_path.to_path_buf(),
-            rate_key,
             child,
             stdin,
             stdout: BufReader::new(stdout_raw),
         })
-    }
-
-    fn matches(&self, model_path: &Path, rate: f64) -> bool {
-        let rate_key = (rate.clamp(0.5, 2.0) * 100.0).round() as i32;
-        self.model_path == model_path && self.rate_key == rate_key
     }
 
     fn synthesize(&mut self, text: &str) -> std::io::Result<Vec<u8>> {
@@ -1001,33 +1508,35 @@ impl PiperDaemon {
     }
 }
 
-fn synthesize_piper_cached(
+fn synthesize_piper_pooled(
     piper_exe: &Path,
-    cache: &mut Option<PiperDaemon>,
+    pool: &mut HashMap<(PathBuf, i32), PiperDaemon>,
     model_path: &Path,
     text: &str,
     rate: f64,
 ) -> std::io::Result<Vec<u8>> {
-    let need_spawn = match cache {
-        Some(pd) if pd.matches(model_path, rate) => false,
-        _ => true,
-    };
-    if need_spawn {
-        if let Some(mut old) = cache.take() {
-            old.shutdown();
+    let rate_key = (rate.clamp(0.5, 2.0) * 100.0).round() as i32;
+    let key = (model_path.to_path_buf(), rate_key);
+    if !pool.contains_key(&key) {
+        // Keep pool bounded to 8 warm daemons to prevent RAM growth across rate changes.
+        if pool.len() >= 8 {
+            if let Some(old_k) = pool.keys().next().cloned() {
+                if let Some(mut old) = pool.remove(&old_k) {
+                    old.shutdown();
+                }
+            }
         }
         if let Ok(pd) = PiperDaemon::spawn(piper_exe, model_path, rate) {
-            *cache = Some(pd);
+            pool.insert(key.clone(), pd);
         }
     }
-    if let Some(pd) = cache.as_mut() {
+    if let Some(pd) = pool.get_mut(&key) {
         if let Ok(wav) = pd.synthesize(text) {
             if !wav.is_empty() {
                 return Ok(wav);
             }
         }
-        // Daemon died or errored: clear cache and fall back to one-shot spawn
-        if let Some(mut old) = cache.take() {
+        if let Some(mut old) = pool.remove(&key) {
             old.shutdown();
         }
     }

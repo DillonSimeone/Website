@@ -10,7 +10,7 @@ use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::mpsc::{self, Receiver, Sender};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -160,6 +160,291 @@ impl LlmPolisher {
         let candidate = extract_chat_content(json_body);
         Ok(guard_polish_candidate(trimmed, &candidate))
     }
+
+    /// Directs expressive speech prosody (speed, pitch arc, energy, dramatic pauses) for TTS
+    /// using the already-loaded local Qwen2.5-1.5B CUDA server. Never alters the spoken words.
+    pub fn direct_prosody(
+        &self,
+        text: &str,
+        recent_replies: &[String],
+        persona: &str,
+    ) -> Vec<ProsodyBeat> {
+        let trimmed = text.trim();
+        if trimmed.is_empty() {
+            return Vec::new();
+        }
+        let mut user_msg = String::with_capacity(768);
+        user_msg.push_str("Vibe persona: ");
+        user_msg.push_str(persona.trim());
+        user_msg.push('\n');
+        if !recent_replies.is_empty() {
+            user_msg.push_str("Previous messages (for escalation context):\n");
+            for r in recent_replies.iter().rev().take(2).rev() {
+                user_msg.push_str("- ");
+                user_msg.push_str(r);
+                user_msg.push('\n');
+            }
+        }
+        user_msg.push_str("Split this message into 2 to 6 natural spoken beats and assign expressive vocal direction.\n");
+        user_msg.push_str("Message: ");
+        user_msg.push_str(trimmed);
+
+        let sys_prompt = "You are a voice acting director for a text-to-speech engine. \
+            Split the user's message into expressive beats WITHOUT changing, adding, or dropping a single word. \
+            Output ONLY lines in this exact format: SPEED|PITCH|ENERGY|PAUSE_MS|BEAT_TEXT \
+            Ranges: SPEED 0.85 to 1.22 (0.88=slow deadpan, 1.18=excited fast), \
+            PITCH -1.5 to +2.8 semitones (-1.0=low conspiratorial, +2.4=animated excited), \
+            ENERGY 0.82 to 1.28 (0.85=quiet setup, 1.25=emphatic punchline), \
+            PAUSE_MS 40 to 380 (pause AFTER this beat; use 260-360 before punchlines or after '...'). \
+            Start calmer and build animation/pitch/energy toward exciting realizations or exclamations. \
+            No markdown, no commentary, ONLY pipe lines.";
+
+        let max_tokens = (trimmed.split_whitespace().count() * 3 + 96).clamp(120, 420);
+        let body = format!(
+            "{{\"model\":\"local\",\"temperature\":0.2,\"max_tokens\":{max_tokens},\"messages\":[{{\"role\":\"system\",\"content\":{}}}, {{\"role\":\"user\",\"content\":{}}}]}}",
+            json_quote(sys_prompt),
+            json_quote(&user_msg),
+        );
+
+        let Ok(mut stream) = TcpStream::connect(format!("127.0.0.1:{}", self.port)) else {
+            return fallback_prosody_beats(trimmed);
+        };
+        let _ = stream.set_read_timeout(Some(Duration::from_secs(6)));
+
+        let req = format!(
+            "POST /v1/chat/completions HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+            self.port,
+            body.len(),
+            body
+        );
+        if stream.write_all(req.as_bytes()).is_err() {
+            return fallback_prosody_beats(trimmed);
+        }
+        let mut resp = String::new();
+        if stream.read_to_string(&mut resp).is_err() {
+            return fallback_prosody_beats(trimmed);
+        }
+        let json_body = resp.split_once("\r\n\r\n").map(|(_, b)| b).unwrap_or(&resp);
+        let content = extract_chat_content(json_body);
+        parse_prosody_beats(trimmed, &content).unwrap_or_else(|| fallback_prosody_beats(trimmed))
+    }
+}
+
+/// One expressive vocal beat directed by Qwen2.5-1.5B (or deterministic fallback).
+#[derive(Clone, Debug)]
+pub struct ProsodyBeat {
+    pub text: String,
+    pub speed: f32,
+    pub pitch_st: f32,
+    pub energy: f32,
+    pub pause_ms: u32,
+}
+
+/// Reads optional custom vibe persona from `vibe.txt` (falls back to Mad Scientist vibe).
+pub fn load_vibe_persona() -> String {
+    if let Some(path) = resolve_asset_path(&["vibe.txt"], false) {
+        if let Ok(txt) = std::fs::read_to_string(path) {
+            let clean = txt.trim();
+            if !clean.is_empty() {
+                return clean.to_string();
+            }
+        }
+    }
+    "Mad scientist vibe: start calm, deadpan, or conspiratorially curious, then steadily wind up with rising pitch, faster animated pace, punchier emphasis, and crisp dramatic pauses right before wild realizations or punchlines.".to_string()
+}
+
+/// Parses `SPEED|PITCH|ENERGY|PAUSE|TEXT` lines and verifies word preservation so the LLM can never alter speech content.
+pub fn parse_prosody_beats(original: &str, raw_output: &str) -> Option<Vec<ProsodyBeat>> {
+    let mut beats = Vec::new();
+    for line in raw_output.lines() {
+        let l = line.trim();
+        if l.is_empty() || !l.contains('|') {
+            continue;
+        }
+        let parts: Vec<&str> = l.splitn(5, '|').collect();
+        if parts.len() != 5 {
+            continue;
+        }
+        let speed = parts[0].trim().parse::<f32>().ok()?.clamp(0.84, 1.24);
+        let pitch_st = parts[1].trim().parse::<f32>().ok()?.clamp(-2.0, 3.0);
+        let energy = parts[2].trim().parse::<f32>().ok()?.clamp(0.78, 1.30);
+        let pause_ms = parts[3].trim().parse::<u32>().ok()?.clamp(30, 420);
+        let beat_text = parts[4].trim().trim_matches('"').to_string();
+        if !beat_text.is_empty() {
+            beats.push(ProsodyBeat {
+                text: beat_text,
+                speed,
+                pitch_st,
+                energy,
+                pause_ms,
+            });
+        }
+    }
+    if beats.is_empty() {
+        return None;
+    }
+
+    // Strict word-preservation guard: normalized word count must match within ~10% so LLM never drops or invents words.
+    let orig_words: Vec<String> = original
+        .split_whitespace()
+        .map(norm_word)
+        .filter(|w| !w.is_empty())
+        .collect();
+    let beat_words: Vec<String> = beats
+        .iter()
+        .flat_map(|b| b.text.split_whitespace())
+        .map(norm_word)
+        .filter(|w| !w.is_empty())
+        .collect();
+    if orig_words.is_empty() || beat_words.is_empty() {
+        return None;
+    }
+    let edits = word_levenshtein(&orig_words, &beat_words);
+    if (edits as f32 / orig_words.len() as f32) > 0.12 {
+        return None;
+    }
+    Some(beats)
+}
+
+/// Deterministic mad-scientist escalation fallback if the LLM server isn't ready yet.
+pub fn fallback_prosody_beats(text: &str) -> Vec<ProsodyBeat> {
+    let mut chunks: Vec<String> = Vec::new();
+    let mut cur = String::new();
+    let chars: Vec<char> = text.chars().collect();
+    let mut i = 0;
+    while i < chars.len() {
+        let c = chars[i];
+        cur.push(c);
+        let is_ellipsis = c == '.' && i + 2 < chars.len() && chars[i + 1] == '.' && chars[i + 2] == '.';
+        if is_ellipsis {
+            cur.push('.');
+            cur.push('.');
+            i += 2;
+            let trimmed = cur.trim().to_string();
+            if !trimmed.is_empty() {
+                chunks.push(trimmed);
+            }
+            cur.clear();
+        } else if matches!(c, '!' | '?' | '\n') || (c == '.' && cur.split_whitespace().count() >= 5) {
+            let trimmed = cur.trim().to_string();
+            if !trimmed.is_empty() {
+                chunks.push(trimmed);
+            }
+            cur.clear();
+        }
+        i += 1;
+    }
+    if !cur.trim().is_empty() {
+        chunks.push(cur.trim().to_string());
+    }
+    if chunks.is_empty() {
+        return Vec::new();
+    }
+
+    let n = chunks.len().max(1) as f32;
+    chunks
+        .into_iter()
+        .enumerate()
+        .map(|(idx, chunk)| {
+            let progress = if n <= 1.0 { 0.5 } else { idx as f32 / (n - 1.0) };
+            let exclaim = chunk.ends_with('!');
+            let ellipsis = chunk.ends_with("...");
+            let speed = (0.92 + progress * 0.20 + if exclaim { 0.06 } else { 0.0 } - if ellipsis { 0.06 } else { 0.0 })
+                .clamp(0.86, 1.20);
+            let pitch_st = (-0.6 + progress * 2.4 + if exclaim { 0.5 } else { 0.0 } - if ellipsis { 0.4 } else { 0.0 })
+                .clamp(-1.5, 2.8);
+            let energy = (0.88 + progress * 0.28 + if exclaim { 0.08 } else { 0.0 }).clamp(0.84, 1.26);
+            let pause_ms = if ellipsis {
+                320
+            } else if exclaim {
+                220
+            } else {
+                150
+            };
+            ProsodyBeat {
+                text: chunk,
+                speed,
+                pitch_st,
+                energy,
+                pause_ms,
+            }
+        })
+        .collect()
+}
+
+/// Shared single-instance `llama-server.exe` CUDA host used by BOTH STT phonetic polish and
+/// TTS Prosody Director (0 MB extra VRAM!).
+struct SharedLlmInner {
+    engine: Option<LlmPolisher>,
+    init_failed: bool,
+}
+
+pub struct SharedLlmServer {
+    inner: Mutex<SharedLlmInner>,
+}
+
+impl SharedLlmServer {
+    pub fn new() -> Arc<Self> {
+        Arc::new(Self {
+            inner: Mutex::new(SharedLlmInner {
+                engine: None,
+                init_failed: false,
+            }),
+        })
+    }
+
+    pub fn prewarm(&self) {
+        let Ok(mut g) = self.inner.lock() else {
+            return;
+        };
+        if g.engine.is_none() && !g.init_failed {
+            match LlmPolisher::spawn() {
+                Ok(p) => g.engine = Some(p),
+                Err(_) => g.init_failed = true,
+            }
+        }
+    }
+
+    pub fn polish(
+        &self,
+        raw_text: &str,
+        context: &[String],
+        hotwords: &[String],
+    ) -> Option<String> {
+        let Ok(mut g) = self.inner.lock() else {
+            return None;
+        };
+        if g.engine.is_none() && !g.init_failed {
+            match LlmPolisher::spawn() {
+                Ok(p) => g.engine = Some(p),
+                Err(_) => g.init_failed = true,
+            }
+        }
+        g.engine
+            .as_ref()
+            .and_then(|p| p.polish(raw_text, context, hotwords).ok().flatten())
+    }
+
+    pub fn direct_prosody(
+        &self,
+        text: &str,
+        recent_replies: &[String],
+        persona: &str,
+    ) -> Vec<ProsodyBeat> {
+        let Ok(mut g) = self.inner.lock() else {
+            return fallback_prosody_beats(text);
+        };
+        if g.engine.is_none() && !g.init_failed {
+            match LlmPolisher::spawn() {
+                Ok(p) => g.engine = Some(p),
+                Err(_) => g.init_failed = true,
+            }
+        }
+        match g.engine.as_ref() {
+            Some(p) => p.direct_prosody(text, recent_replies, persona),
+            None => fallback_prosody_beats(text),
+        }
+    }
 }
 
 impl Drop for LlmPolisher {
@@ -186,9 +471,9 @@ pub struct AsyncLlmPolisher {
 }
 
 impl AsyncLlmPolisher {
-    pub fn spawn_worker(events: Arc<SttEventQueue>) -> Self {
+    pub fn spawn_worker(events: Arc<SttEventQueue>, shared: Arc<SharedLlmServer>) -> Self {
         let (tx, rx) = mpsc::channel::<PolishCmd>();
-        thread::spawn(move || polish_worker_loop(rx, events));
+        thread::spawn(move || polish_worker_loop(rx, events, shared));
         Self { tx }
     }
 
@@ -218,20 +503,16 @@ impl Drop for AsyncLlmPolisher {
     }
 }
 
-fn polish_worker_loop(rx: Receiver<PolishCmd>, events: Arc<SttEventQueue>) {
-    let mut engine: Option<LlmPolisher> = None;
-    let mut init_failed = false;
-
+fn polish_worker_loop(
+    rx: Receiver<PolishCmd>,
+    events: Arc<SttEventQueue>,
+    shared: Arc<SharedLlmServer>,
+) {
     while let Ok(cmd) = rx.recv() {
         match cmd {
             PolishCmd::Shutdown => break,
             PolishCmd::Prewarm => {
-                if engine.is_none() && !init_failed {
-                    match LlmPolisher::spawn() {
-                        Ok(p) => engine = Some(p),
-                        Err(_) => init_failed = true,
-                    }
-                }
+                shared.prewarm();
             }
             PolishCmd::Polish {
                 card_id,
@@ -239,19 +520,11 @@ fn polish_worker_loop(rx: Receiver<PolishCmd>, events: Arc<SttEventQueue>) {
                 context,
                 hotwords,
             } => {
-                if engine.is_none() && !init_failed {
-                    match LlmPolisher::spawn() {
-                        Ok(p) => engine = Some(p),
-                        Err(_) => init_failed = true,
-                    }
-                }
-                if let Some(ref polisher) = engine {
-                    if let Ok(Some(polished)) = polisher.polish(&raw_text, &context, &hotwords) {
-                        events.push(SttEvent::Polished {
-                            card_id,
-                            text: polished,
-                        });
-                    }
+                if let Some(polished) = shared.polish(&raw_text, &context, &hotwords) {
+                    events.push(SttEvent::Polished {
+                        card_id,
+                        text: polished,
+                    });
                 }
             }
         }

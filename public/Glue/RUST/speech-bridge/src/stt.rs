@@ -13,7 +13,7 @@ use std::time::Duration;
 
 use crate::denoise::LegacySnrVad;
 use crate::live_captions::{run_live_captions_loop, LcCommand};
-use crate::llm_polish::{load_hotwords, AsyncLlmPolisher};
+use crate::llm_polish::{load_hotwords, AsyncLlmPolisher, SharedLlmServer};
 use crate::meter::{AudioFrame, MicMeter};
 use crate::sherpa_ffi::{
     DenoiserKind, NeuralDenoiser, ParakeetAsr, SherpaRuntime, SileroVad, WeSpeakerTracker,
@@ -149,6 +149,7 @@ impl SttEngine {
     pub fn new(
         events: Arc<SttEventQueue>,
         meter: Arc<MicMeter>,
+        shared_llm: Arc<SharedLlmServer>,
         initial_denoise: DenoiseMode,
         initial_speakers: bool,
         initial_llm: bool,
@@ -160,6 +161,7 @@ impl SttEngine {
                 rx,
                 events,
                 meter_bg,
+                shared_llm,
                 initial_denoise,
                 initial_speakers,
                 initial_llm,
@@ -278,9 +280,15 @@ impl WorkerResources {
         }
     }
 
-    fn ensure_llm_worker(&mut self, events: &Arc<SttEventQueue>, prewarm: bool) {
+    fn ensure_llm_worker(
+        &mut self,
+        events: &Arc<SttEventQueue>,
+        shared_llm: &Arc<SharedLlmServer>,
+        prewarm: bool,
+    ) {
         if self.llm_worker.is_none() {
-            let worker = AsyncLlmPolisher::spawn_worker(Arc::clone(events));
+            let worker =
+                AsyncLlmPolisher::spawn_worker(Arc::clone(events), Arc::clone(shared_llm));
             if prewarm {
                 worker.prewarm();
             }
@@ -373,6 +381,7 @@ fn stt_worker(
     rx: Receiver<SttCommand>,
     events: Arc<SttEventQueue>,
     meter: Arc<MicMeter>,
+    shared_llm: Arc<SharedLlmServer>,
     mut denoise_mode: DenoiseMode,
     mut speaker_labels: bool,
     mut llm_polish: bool,
@@ -404,7 +413,7 @@ fn stt_worker(
             SttCommand::SetLlmPolish(en) => {
                 llm_polish = en;
                 if en {
-                    res.ensure_llm_worker(&events, true);
+                    res.ensure_llm_worker(&events, &shared_llm, true);
                 }
             }
             SttCommand::ResetSpeakers => {
@@ -474,7 +483,7 @@ fn stt_worker(
                     res.ensure_voxlock();
                 }
                 if llm_polish {
-                    res.ensure_llm_worker(&events, true);
+                    res.ensure_llm_worker(&events, &shared_llm, true);
                 }
 
                 let outcome = run_neural_streaming_session(
@@ -482,6 +491,7 @@ fn stt_worker(
                     &rx,
                     &events,
                     &meter,
+                    &shared_llm,
                     &mut res,
                     &mut denoise_mode,
                     &mut speaker_labels,
@@ -516,6 +526,7 @@ fn run_neural_streaming_session(
     rx: &Receiver<SttCommand>,
     events: &Arc<SttEventQueue>,
     meter: &MicMeter,
+    shared_llm: &Arc<SharedLlmServer>,
     res: &mut WorkerResources,
     denoise_mode: &mut DenoiseMode,
     speaker_labels: &mut bool,
@@ -597,7 +608,7 @@ fn run_neural_streaming_session(
                 Ok(SttCommand::SetLlmPolish(enabled)) => {
                     *llm_polish = enabled;
                     if enabled {
-                        res.ensure_llm_worker(events, true);
+                        res.ensure_llm_worker(events, shared_llm, true);
                     }
                 }
                 Ok(SttCommand::ResetSpeakers) => {
@@ -650,7 +661,7 @@ fn run_neural_streaming_session(
                     events.push(SttEvent::Error(err));
                     return SessionExit::Stop;
                 }
-                meter.speech_activity.mark_speech(decoder.is_in_speech());
+                meter.speech_activity.mark_speech(decoder.is_instant_speech());
 
                 for ev in out_events.drain(..) {
                     match ev {

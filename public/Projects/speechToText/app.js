@@ -1332,6 +1332,7 @@
     { name: "Kristin-Dillon", src: "./audio/Kristin-Dillon.mp3" },
     { name: "Lessac-Dillon", src: "./audio/Lessac-Dillon.mp3" },
     { name: "Ryan-Dillon", src: "./audio/Ryan-Dillon.mp3" },
+    { name: "CYCLE-Dillon (All!)", src: "./audio/Cycle-Dillon.mp3" },
   ];
   let idx = 0;
 
@@ -1367,12 +1368,16 @@
   }
 
   function loadVoice(autoplay) {
-    audio.src = VOICES[idx].src;
+    const v = VOICES[idx];
+    audio.pause();
+    audio.setAttribute("src", v.src);
+    audio.load();
     audio.currentTime = 0;
+    syncUI(autoplay ? `Loading ${v.name}...` : "Ready · Real OpenVoice v2 clone", false);
     if (autoplay) {
-      audio.play().catch(() => {});
-    } else {
-      syncUI("Ready · Real OpenVoice v2 clone", false);
+      audio.play().catch(() => {
+        syncUI(`Tap Play to hear ${v.name}`, false);
+      });
     }
   }
 
@@ -1390,9 +1395,15 @@
     });
 
     w.play.addEventListener("click", () => {
+      const v = VOICES[idx];
       if (audio.paused) {
-        if (!audio.src) audio.src = VOICES[idx].src;
-        audio.play().catch(() => {});
+        if (audio.getAttribute("src") !== v.src) {
+          loadVoice(true);
+          return;
+        }
+        audio.play().catch(() => {
+          syncUI(`Tap Play to hear ${v.name}`, false);
+        });
       } else {
         audio.pause();
         audio.currentTime = 0;
@@ -1400,7 +1411,11 @@
     });
 
     w.restart?.addEventListener("click", () => {
-      if (!audio.src) audio.src = VOICES[idx].src;
+      const v = VOICES[idx];
+      if (audio.getAttribute("src") !== v.src) {
+        loadVoice(true);
+        return;
+      }
       audio.currentTime = 0;
       audio.play().catch(() => {});
     });

@@ -1,10 +1,16 @@
 #![windows_subsystem = "windows"]
 
 use windows::core::PCWSTR;
-use windows::Win32::Foundation::{LPARAM, WPARAM};
+use windows::Win32::Foundation::{HANDLE, LPARAM, WPARAM};
 use windows::Win32::Graphics::Dwm::{DwmSetWindowAttribute, DWMWA_USE_IMMERSIVE_DARK_MODE};
 use windows::Win32::Graphics::Gdi::CreateSolidBrush;
+use windows::Win32::System::JobObjects::{
+    AssignProcessToJobObject, CreateJobObjectW, JobObjectExtendedLimitInformation,
+    SetInformationJobObject, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
+    JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
+use windows::Win32::System::Threading::GetCurrentProcess;
 use windows::Win32::UI::HiDpi::{
     SetProcessDpiAwarenessContext, DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2,
 };
@@ -18,8 +24,30 @@ use speech_bridge::icon::create_cyber_icon;
 use speech_bridge::ui::{main_wnd_proc, C_BG};
 use speech_bridge::win_util::{to_wide, ComGuard};
 
+/// Assigns this process to a Win32 Job Object with `KILL_ON_JOB_CLOSE` so the Windows kernel
+/// automatically terminates all child processes (`llama-server`, `whisper-server`, `piper`,
+/// `python`) if `speech-bridge.exe` exits, crashes, or is force-killed — preventing zombie RAM leaks.
+unsafe fn attach_kill_on_close_job() -> Option<HANDLE> {
+    let job = CreateJobObjectW(None, PCWSTR::null()).ok()?;
+    let mut info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION::default();
+    info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+    let ok = SetInformationJobObject(
+        job,
+        JobObjectExtendedLimitInformation,
+        &info as *const _ as *const core::ffi::c_void,
+        std::mem::size_of::<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>() as u32,
+    );
+    if ok.is_ok() {
+        let _ = AssignProcessToJobObject(job, GetCurrentProcess());
+        Some(job)
+    } else {
+        None
+    }
+}
+
 fn main() {
     unsafe {
+        let _job_guard = attach_kill_on_close_job();
         let _ = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
         let _com = ComGuard::sta();
 
